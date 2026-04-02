@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Изометрическая игра</title>
+    <link rel="stylesheet" href="css/style.css?v=20260402aa">
+</head>
+<body>
+    <div class="game-shell">
+        <aside class="hud-panel hud-panel--left">
+            <section class="hud-card hud-card--tall hud-card--status">
+                <p class="hud-kicker">Персонаж</p>
+                <h1 class="hud-title">Характеристики</h1>
+                <div class="stats-list">
+                    <div class="stat-card stat-card--hunger">
+                        <div class="stat-card__header">
+                            <span>Голод</span>
+                            <span id="statHungerValue">84%</span>
+                        </div>
+                        <div class="stat-bar"><span id="statHungerBar"></span></div>
+                    </div>
+                    <div class="stat-card stat-card--energy">
+                        <div class="stat-card__header">
+                            <span>Энергия</span>
+                            <span id="statEnergyValue">76%</span>
+                        </div>
+                        <div class="stat-bar"><span id="statEnergyBar"></span></div>
+                    </div>
+                    <div class="stat-card stat-card--sleep">
+                        <div class="stat-card__header">
+                            <span>Сон</span>
+                            <span id="statSleepValue">68%</span>
+                        </div>
+                        <div class="stat-bar"><span id="statSleepBar"></span></div>
+                    </div>
+                    <div class="stat-card stat-card--cold">
+                        <div class="stat-card__header">
+                            <span>Холод</span>
+                            <span id="statColdValue">72%</span>
+                        </div>
+                        <div class="stat-bar"><span id="statColdBar"></span></div>
+                    </div>
+                    <div class="stat-card stat-card--focus">
+                        <div class="stat-card__header">
+                            <span>Фокус</span>
+                            <span id="statFocusValue">91%</span>
+                        </div>
+                        <div class="stat-bar"><span id="statFocusBar"></span></div>
+                    </div>
+                </div>
+                <div class="hud-note">
+                    <p id="locationSummary">На открытой местности</p>
+                    <p id="routeSummary">Маршрут пока не проложен</p>
+                    <p id="progressSummary">Остров 1 из 30</p>
+                    <p id="economySummary">Золото: 0 · Цена шага x1.00</p>
+                </div>
+            </section>
+        </aside>
+
+        <main class="scene-column">
+            <section class="scene-frame" id="sceneViewport">
+                <div id="instructions" class="overlay-card">
+                    Кликайте по клеткам, чтобы строить маршрут. Нажмите пробел для запуска движения.
+                    Камни блокируют путь, а мосты помогают пересекать воду.
+                </div>
+                <!-- <div id="debugPanel" class="overlay-card overlay-card--debug" aria-live="polite"></div> -->
+                <div id="conditionOverlay" class="condition-overlay" aria-hidden="true">
+                    <div id="conditionDeathLabel" class="condition-overlay__death" hidden>ты умер</div>
+                </div>
+                <div id="pauseOverlay" class="pause-overlay" aria-hidden="true">
+                    <div class="pause-overlay__panel">
+                        <p id="statusOverlayKicker" class="hud-kicker">Меню</p>
+                        <h2 id="statusOverlayTitle" class="hud-title hud-title--compact">Пауза</h2>
+                        <p id="statusOverlayMessage" class="panel-copy">
+                            Игра остановлена. Нажми кнопку ещё раз или клавишу Esc, чтобы вернуться.
+                        </p>
+                    </div>
+                </div>
+                <aside id="merchantPanel" class="merchant-panel" hidden aria-live="polite">
+                    <div class="merchant-panel__header">
+                        <div>
+                            <p class="hud-kicker">Торговец</p>
+                            <h2 id="merchantPanelTitle" class="hud-title hud-title--compact">Лавка</h2>
+                        </div>
+                        <button id="merchantPanelClose" class="hud-button merchant-panel__close" type="button" aria-label="Закрыть">×</button>
+                    </div>
+                    <p id="merchantPanelSummary" class="panel-copy merchant-panel__summary"></p>
+                    <p id="merchantPanelGold" class="panel-copy merchant-panel__gold"></p>
+                    <div id="merchantPanelContent" class="merchant-panel__content"></div>
+                </aside>
+                <aside id="mapPanel" class="map-panel" hidden aria-live="polite">
+                    <div class="map-panel__header">
+                        <div>
+                            <p class="hud-kicker">Карта</p>
+                            <h2 id="mapPanelTitle" class="hud-title hud-title--compact">Архипелаг</h2>
+                        </div>
+                        <div class="map-panel__actions">
+                            <div class="map-panel__zoom" aria-label="Управление масштабом карты">
+                                <button id="mapZoomOut" class="hud-button map-panel__zoom-button" type="button" aria-label="Отдалить карту">-</button>
+                                <span id="mapZoomValue" class="map-panel__zoom-value">100%</span>
+                                <button id="mapZoomIn" class="hud-button map-panel__zoom-button" type="button" aria-label="Приблизить карту">+</button>
+                            </div>
+                            <button id="mapPanelClose" class="hud-button merchant-panel__close" type="button" aria-label="Закрыть">×</button>
+                        </div>
+                    </div>
+                    <p id="mapPanelSummary" class="panel-copy map-panel__summary"></p>
+                    <div class="map-panel__canvas-wrap">
+                        <canvas id="mapCanvas" class="map-panel__canvas" width="960" height="640" aria-label="Карта архипелага"></canvas>
+                    </div>
+                    <div class="map-panel__legend">
+                        <span><i class="map-legend__swatch map-legend__swatch--land"></i>Исследованная суша</span>
+                        <span><i class="map-legend__swatch map-legend__swatch--water"></i>Вода и русла</span>
+                        <span><i class="map-legend__swatch map-legend__swatch--house"></i>Дома</span>
+                        <span><i class="map-legend__swatch map-legend__swatch--quest"></i>Квестодатель</span>
+                        <span><i class="map-legend__swatch map-legend__swatch--resource"></i>Ресурсы</span>
+                    </div>
+                </aside>
+                <canvas id="gameCanvas"></canvas>
+            </section>
+        </main>
+
+        <aside class="hud-panel hud-panel--right">
+            <section class="hud-card hud-card--tall hud-card--inventory">
+                <p class="hud-kicker">Сумка</p>
+                <h2 class="hud-title">Инвентарь</h2>
+                <div id="inventoryGrid" class="inventory-grid" aria-live="polite"></div>
+            </section>
+        </aside>
+
+        <footer class="bottom-bar">
+            <section class="hud-card character-card">
+                <p class="hud-kicker">Выбранный персонаж</p>
+                <div class="character-card__content">
+                    <canvas id="selectedCharacterPortrait" width="120" height="120" aria-label="Портрет персонажа"></canvas>
+                    <div class="character-card__meta">
+                        <h2 id="selectedCharacterName" class="hud-title hud-title--compact">Путешественник</h2>
+                        <p id="selectedCharacterRole" class="panel-copy">Исследователь округа</p>
+                        <p id="selectedCharacterState" class="panel-copy">Ожидает команду</p>
+                        <p id="selectedCharacterTile" class="panel-copy">Текущий тайл: трава</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="hud-card message-card">
+                <p class="hud-kicker">Событие</p>
+                <p id="actionHint" class="panel-copy">
+                    Выбери действие или предмет из инвентаря.
+                </p>
+            </section>
+
+            <section class="hud-card action-card">
+                <p class="hud-kicker">Окружение</p>
+                <h2 class="hud-title hud-title--compact">Взаимодействие</h2>
+                <div class="action-grid">
+                    <button class="hud-button" type="button" data-action="drop">Выбросить</button>
+                    <button class="hud-button" type="button" data-action="use">Использовать</button>
+                    <button class="hud-button" type="button" data-action="talk">Говорить</button>
+                    <button class="hud-button" type="button" data-action="sleep">Спать</button>
+                    <button class="hud-button" type="button" data-action="inspect">Осмотреть</button>
+                </div>
+            </section>
+
+            <section class="hud-card pause-card">
+                <p class="hud-kicker">Система</p>
+                <button id="pauseButton" class="hud-button hud-button--pause" type="button">Пауза</button>
+            </section>
+        </footer>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/state/game-state-schema.js?v=20260402e"></script>
+    <script src="js/game-state.js"></script>
+    <script src="js/state/save-load.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/content-registry.js?v=20260329h"></script>
+    <script src="js/world/chunk-store.js"></script>
+    <script src="js/world/tile-query.js"></script>
+    <script src="js/world-system.js"></script>
+    <script src="js/inventory/item-catalog.js?v=20260402aa"></script>
+    <script src="js/inventory/item-registry.js?v=20260402m"></script>
+    <script src="js/economy/pricing.js"></script>
+    <script src="js/economy/reward-scaling.js"></script>
+    <script src="js/quests/quest-registry.js"></script>
+    <script src="js/quests/bag-upgrade-data.js?v=20260402aa"></script>
+    <script src="js/quests/bag-upgrade-runtime.js?v=20260402aa"></script>
+    <script src="js/quests/quest-runtime.js?v=20260402e"></script>
+    <script src="js/economy/shop-runtime.js?v=20260402m"></script>
+    <script src="js/loot-system.js?v=20260402m"></script>
+    <script src="js/expedition-system.js?v=20260402a"></script>
+    <script src="js/expedition/expedition-shared.js"></script>
+    <script src="js/expedition/shape-builders.js"></script>
+    <script src="js/expedition/house-profiles.js?v=20260402aa"></script>
+    <script src="js/expedition/island-layout.js?v=20260402i"></script>
+    <script src="js/expedition/progression.js"></script>
+    <script src="js/expedition/weather-runtime.js?v=20260402b"></script>
+    <script src="js/expedition/bridge-runtime.js"></script>
+    <script src="js/effects-system.js"></script>
+    <script src="js/houses/layout/house-layout-core.js"></script>
+    <script src="js/houses/layout/house-footprints.js"></script>
+    <script src="js/houses/layout/house-layout-metadata.js"></script>
+    <script src="js/houses/layout/house-placement.js"></script>
+    <script src="js/houses/render/house-palettes.js"></script>
+    <script src="js/houses/render/house-svg-utils.js"></script>
+    <script src="js/houses/render/house-body-builder.js"></script>
+    <script src="js/houses/render/house-interior-builder.js"></script>
+    <script src="js/houses/render/house-roof-builder.js"></script>
+    <script src="js/houses/render/house-svg-builder.js"></script>
+    <script src="js/houses/render/house-variant-cache.js"></script>
+    <script src="js/houses/render/house-drawer.js?v=20260402i"></script>
+    <script src="js/houses/house-runtime.js"></script>
+    <script src="js/interaction-system.js"></script>
+    <script src="js/interactions/world-spawn-runtime.js?v=20260402aa"></script>
+    <script src="js/interactions/interaction-router.js?v=20260402e"></script>
+    <script src="js/map-generator.js"></script>
+    <script src="js/map/topology-painter.js"></script>
+    <script src="js/map/chunk-generator.js?v=20260402i"></script>
+    <script src="js/map/map-runtime.js?v=20260402aa"></script>
+    <script src="js/render/camera-system.js"></script>
+    <script src="js/render/chunk-renderer.js?v=20260402h"></script>
+    <script src="js/render/interaction-renderer.js?v=20260402aa"></script>
+    <script src="js/render/effect-renderer.js"></script>
+    <script src="js/render/player-renderer.js"></script>
+    <script src="js/render/debug-renderer.js?v=20260402b"></script>
+    <script src="js/render/entity-renderer.js?v=20260329i"></script>
+    <script src="js/render/scene-renderer.js?v=20260402c"></script>
+    <script src="js/pathfinding.js"></script>
+    <script src="js/movement.js?v=20260402b"></script>
+    <script src="js/input.js?v=20260402c"></script>
+    <script src="js/ui/ui-system.js?v=20260402l"></script>
+    <script src="js/ui/status-ui.js?v=20260402g"></script>
+    <script src="js/ui/inventory-ui.js?v=20260402n"></script>
+    <script src="js/inventory/inventory-runtime.js"></script>
+    <script src="js/inventory/item-effects.js?v=20260402m"></script>
+    <script src="js/npc/npc-registry.js?v=20260402aa"></script>
+    <script src="js/npc/npc-runtime.js?v=20260402aa"></script>
+    <script src="js/dialogue/dialogue-registry.js?v=20260402aa"></script>
+    <script src="js/dialogue/dialogue-runtime.js"></script>
+    <script src="js/ui/action-ui.js?v=20260402r"></script>
+    <script src="js/ui/merchant-ui.js?v=20260402m"></script>
+    <script src="js/ui/dialogue-ui.js"></script>
+    <script src="js/ui/quest-ui.js?v=20260402aa"></script>
+    <script src="js/ui/map-ui.js?v=20260402e"></script>
+    <script src="js/init.js"></script>
+</body>
+</html>
