@@ -24,7 +24,7 @@ function initGame() {
         if (mapRuntime && typeof mapRuntime.persistExploration === 'function') {
             mapRuntime.persistExploration();
         }
-        window.Game.debug.element = document.getElementById('debugPanel');
+        // window.Game.debug.element = document.getElementById('debugPanel');
         window.Game.systems.playerRenderer.resetFacing();
         if (window.Game.systems.effects) {
             window.Game.systems.effects.clearAllEffects();

@@ -317,21 +317,27 @@
     }
 
     function getTerrainInspectMessage(target) {
+        return getTerrainInspectMessageSafe(target);
+    }
+
+    function getTerrainInspectMessageSafe(target) {
         if (!target) {
             return '';
         }
 
         const tileInfo = target.tileInfo;
         const positionLabel = tileInfo
-            ? `РєРѕРѕСЂРґРёРЅР°С‚С‹ ${tileInfo.x}, ${tileInfo.y}`
-            : 'СЌС‚Р° РєР»РµС‚РєР°';
+            ? `\u043a\u043e\u043e\u0440\u0434\u0438\u043d\u0430\u0442\u044b ${tileInfo.x}, ${tileInfo.y}`
+            : '\u044d\u0442\u0430 \u043a\u043b\u0435\u0442\u043a\u0430';
 
         if (target.isHarvested) {
-            return `РћСЃРјРѕС‚СЂ: ${target.profile.sourceLabel}, ${positionLabel}. Р—РґРµСЃСЊ СѓР¶Рµ РЅРёС‡РµРіРѕ РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ, РјР°С‚РµСЂРёР°Р» СЃРѕР±СЂР°РЅ.`;
+            return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u0443\u0436\u0435 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c, \u043c\u0430\u0442\u0435\u0440\u0438\u0430\u043b \u0441\u043e\u0431\u0440\u0430\u043d.`;
         }
 
-        return `РћСЃРјРѕС‚СЂ: ${target.profile.sourceLabel}, ${positionLabel}. Р—РґРµСЃСЊ РјРѕР¶РЅРѕ СЃРѕР±СЂР°С‚СЊ ${target.profile.collectedLabel}. РљР°Р¶РґС‹Рµ 5 РµРґРёРЅРёС† РїСЂРµРІСЂР°С‰Р°СЋС‚СЃСЏ РІ ${target.profile.resourceLabel}.`;
+        return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0431\u0440\u0430\u0442\u044c ${target.profile.collectedLabel}. \u041a\u0430\u0436\u0434\u044b\u0435 5 \u0435\u0434\u0438\u043d\u0438\u0446 \u043f\u0440\u0435\u0432\u0440\u0430\u0449\u0430\u044e\u0442\u0441\u044f \u0432 ${target.profile.resourceLabel}.`;
     }
+
+    getTerrainInspectMessage = getTerrainInspectMessageSafe;
 
     function getDefaultActionHint(activeInteraction, tileInfo) {
         const inventoryRuntime = getInventoryRuntime();
@@ -564,7 +570,7 @@
         }
 
         if (terrainTarget) {
-            bridge.setActionMessage(getTerrainInspectMessage(terrainTarget));
+            bridge.setActionMessage(getTerrainInspectMessageSafe(terrainTarget));
             bridge.renderAfterStateChange();
             return;
         }
