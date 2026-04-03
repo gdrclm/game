@@ -38,6 +38,40 @@ function drawRoute() {
     });
 }
 
+function drawSelectedWorldTile() {
+    const game = window.Game;
+    const selectedTile = game.state.selectedWorldTile;
+
+    if (!selectedTile || !Number.isFinite(selectedTile.x) || !Number.isFinite(selectedTile.y)) {
+        return;
+    }
+
+    const { tileWidth, tileHeight } = game.config;
+    const { x: screenX, y: screenY } = game.systems.camera.isoToScreen(selectedTile.x, selectedTile.y);
+
+    game.ctx.save();
+    game.ctx.translate(screenX, screenY);
+    game.ctx.beginPath();
+    game.ctx.moveTo(0, 0);
+    game.ctx.lineTo(tileWidth / 2, tileHeight / 2);
+    game.ctx.lineTo(0, tileHeight);
+    game.ctx.lineTo(-tileWidth / 2, tileHeight / 2);
+    game.ctx.closePath();
+    game.ctx.lineWidth = 3;
+    game.ctx.strokeStyle = 'rgba(255, 255, 255, 0.96)';
+    game.ctx.stroke();
+    game.ctx.beginPath();
+    game.ctx.moveTo(0, 2);
+    game.ctx.lineTo(tileWidth / 2 - 2, tileHeight / 2);
+    game.ctx.lineTo(0, tileHeight - 2);
+    game.ctx.lineTo(-(tileWidth / 2 - 2), tileHeight / 2);
+    game.ctx.closePath();
+    game.ctx.lineWidth = 1;
+    game.ctx.strokeStyle = 'rgba(36, 58, 78, 0.85)';
+    game.ctx.stroke();
+    game.ctx.restore();
+}
+
 function formatRouteCost(value) {
     return Number.isFinite(value) ? value.toFixed(1) : '0.0';
 }
@@ -182,6 +216,7 @@ function drawSceneEntities(playerPos, focusChunkX, focusChunkY, activeHouse = nu
     });
     game.systems.houses.drawExteriorHouseNorthParts(focusChunkX, focusChunkY, activeHouseId);
     drawRoute();
+    drawSelectedWorldTile();
     drawRouteTargetChip();
 
     if (game.systems.effectRenderer) {
@@ -191,5 +226,6 @@ function drawSceneEntities(playerPos, focusChunkX, focusChunkY, activeHouse = nu
 
 window.Game.systems.entityRenderer = {
     drawRoute,
+    drawSelectedWorldTile,
     drawSceneEntities
 };

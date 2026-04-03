@@ -213,24 +213,7 @@
                 : null;
 
             if (evaluation) {
-                questState.progressRequired = evaluation.progressRequired;
-                questState.progressCurrent = evaluation.progressCurrent;
-                questState.requiredOccupiedSlots = evaluation.requiredOccupiedSlots;
-                questState.occupiedSlots = evaluation.occupiedSlots;
-                questState.requirementMatches = evaluation.requirementMatches.matches.map((entry) => ({
-                    requirementId: entry.requirement && entry.requirement.requirementId ? entry.requirement.requirementId : '',
-                    label: entry.requirement && entry.requirement.label ? entry.requirement.label : '',
-                    description: entry.requirement && entry.requirement.description ? entry.requirement.description : '',
-                    optional: Boolean(entry.optional),
-                    satisfied: Boolean(entry.satisfied),
-                    itemId: entry.item && entry.item.id ? entry.item.id : '',
-                    itemLabel: entry.item && entry.item.label ? entry.item.label : ''
-                }));
-                questState.missingRequirements = evaluation.requirementMatches.missingRequirements.map((requirement) => ({
-                    requirementId: requirement && requirement.requirementId ? requirement.requirementId : '',
-                    label: requirement && requirement.label ? requirement.label : '',
-                    description: requirement && requirement.description ? requirement.description : ''
-                }));
+                applyBagQuestDisplayState(questState, evaluation);
             }
         }
 
@@ -240,6 +223,46 @@
         }
 
         return applyQuestState(source, quest, questState);
+    }
+
+    function applyBagQuestDisplayState(questState, evaluation) {
+        const bagUpgradeRuntime = getBagUpgradeRuntime();
+        const displayState = bagUpgradeRuntime && typeof bagUpgradeRuntime.buildQuestDisplayState === 'function'
+            ? bagUpgradeRuntime.buildQuestDisplayState(evaluation.stage, evaluation)
+            : null;
+
+        questState.progressRequired = evaluation.progressRequired;
+        questState.progressCurrent = evaluation.progressCurrent;
+        questState.requiredOccupiedSlots = evaluation.requiredOccupiedSlots;
+        questState.occupiedSlots = evaluation.occupiedSlots;
+
+        if (displayState) {
+            Object.assign(questState, displayState);
+            return;
+        }
+
+        questState.requirementMatches = evaluation.requirementMatches.matches.map((entry) => ({
+            requirementId: entry.requirement && entry.requirement.requirementId ? entry.requirement.requirementId : '',
+            label: entry.requirement && entry.requirement.label ? entry.requirement.label : '',
+            description: entry.requirement && entry.requirement.description ? entry.requirement.description : '',
+            optional: Boolean(entry.optional),
+            satisfied: Boolean(entry.satisfied),
+            itemId: entry.item && entry.item.id ? entry.item.id : '',
+            itemLabel: entry.item && entry.item.label ? entry.item.label : '',
+            tags: []
+        }));
+        questState.collectedRequirements = questState.requirementMatches.filter((entry) => entry.satisfied && !entry.optional);
+        questState.missingRequirements = questState.requirementMatches.filter((entry) => !entry.satisfied && !entry.optional);
+        questState.optionalRequirements = questState.requirementMatches.filter((entry) => entry.optional);
+        questState.questCategoryLabels = [];
+        questState.slotUnlockLabel = Number.isFinite(questState.targetSlots) ? `Откроется слот ${questState.targetSlots}` : 'Откроется новый слот';
+        questState.slotProgressLabel = `Сумка ${questState.sourceSlots || '?'} → ${questState.targetSlots || '?'}`;
+        questState.occupancyStatusLabel = `Занято слотов: ${questState.occupiedSlots}/${questState.requiredOccupiedSlots}`;
+        questState.requirementStatusLabel = `Требования: ${evaluation.requirementMatches.matchedRequiredCount}/${evaluation.requirementMatches.requiredCount}`;
+        questState.occupancyMissingCount = Math.max(0, questState.requiredOccupiedSlots - questState.occupiedSlots);
+        questState.occupancyMissingLabel = questState.occupancyMissingCount > 0
+            ? `Нужно занять ещё ${questState.occupancyMissingCount} слот(а).`
+            : '';
     }
 
     function advanceQuest(source, quest, delta = 1) {
@@ -387,24 +410,7 @@
                         : null;
 
                     if (evaluation) {
-                        nextQuest.progressRequired = evaluation.progressRequired;
-                        nextQuest.progressCurrent = evaluation.progressCurrent;
-                        nextQuest.requiredOccupiedSlots = evaluation.requiredOccupiedSlots;
-                        nextQuest.occupiedSlots = evaluation.occupiedSlots;
-                        nextQuest.requirementMatches = evaluation.requirementMatches.matches.map((entry) => ({
-                            requirementId: entry.requirement && entry.requirement.requirementId ? entry.requirement.requirementId : '',
-                            label: entry.requirement && entry.requirement.label ? entry.requirement.label : '',
-                            description: entry.requirement && entry.requirement.description ? entry.requirement.description : '',
-                            optional: Boolean(entry.optional),
-                            satisfied: Boolean(entry.satisfied),
-                            itemId: entry.item && entry.item.id ? entry.item.id : '',
-                            itemLabel: entry.item && entry.item.label ? entry.item.label : ''
-                        }));
-                        nextQuest.missingRequirements = evaluation.requirementMatches.missingRequirements.map((requirement) => ({
-                            requirementId: requirement && requirement.requirementId ? requirement.requirementId : '',
-                            label: requirement && requirement.label ? requirement.label : '',
-                            description: requirement && requirement.description ? requirement.description : ''
-                        }));
+                        applyBagQuestDisplayState(nextQuest, evaluation);
                     }
                 }
 

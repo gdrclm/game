@@ -14,6 +14,12 @@ function handleClick(event) {
     );
     const targetX = Math.round(isoPosition.x);
     const targetY = Math.round(isoPosition.y);
+    const clickedInteraction = game.systems.interactions
+        ? game.systems.interactions.getInteractionAtWorld(targetX, targetY, { generateIfMissing: false })
+        : null;
+    const clickedTileInfo = game.systems.world && typeof game.systems.world.getTileInfo === 'function'
+        ? game.systems.world.getTileInfo(targetX, targetY, { generateIfMissing: false })
+        : null;
 
     if (game.state.isMoving) {
         game.systems.movement.endMovement();
@@ -31,6 +37,16 @@ function handleClick(event) {
         ? game.systems.ui.getRouteLengthLimit()
         : baseMoveCellsPerTurn;
     const pathResult = game.systems.pathfinding.findPathResult(startX, startY, resolvedTarget.x, resolvedTarget.y);
+    const existingRoute = Array.isArray(game.state.route) ? game.state.route : [];
+    const existingRouteTarget = existingRoute.length > 0 ? existingRoute[existingRoute.length - 1] : null;
+    const isRepeatClickOnCurrentRoute = Boolean(
+        existingRouteTarget
+        && existingRouteTarget.x === resolvedTarget.x
+        && existingRouteTarget.y === resolvedTarget.y
+    );
+
+    game.state.selectedWorldTile = { x: targetX, y: targetY };
+    game.state.selectedWorldInteractionId = clickedInteraction ? clickedInteraction.id : null;
 
     game.state.routePreviewLength = pathResult.path.length;
     game.state.routePreviewTotalCost = pathResult.totalCost;
@@ -50,12 +66,31 @@ function handleClick(event) {
         );
     }
 
+    if (
+        isRepeatClickOnCurrentRoute
+        && !game.state.isMoving
+        && existingRoute.length > 0
+        && game.systems.movement
+        && typeof game.systems.movement.startMovement === 'function'
+    ) {
+        game.systems.movement.startMovement();
+        return;
+    }
+
     if (game.state.route.length > 0) {
         preloadChunksAlongRoute();
     } else {
         game.state.routePreviewLength = 0;
         game.state.routePreviewTotalCost = 0;
         game.state.routeTotalCost = 0;
+    }
+
+    if (game.systems.actionUi && typeof game.systems.actionUi.describeSelectedWorldTarget === 'function') {
+        game.systems.actionUi.describeSelectedWorldTarget({
+            tileInfo: clickedTileInfo,
+            interaction: clickedInteraction
+        });
+        return;
     }
 
     if (game.systems.ui && typeof game.systems.ui.renderAfterStateChange === 'function') {

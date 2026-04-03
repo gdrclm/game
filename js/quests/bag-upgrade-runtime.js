@@ -104,6 +104,195 @@
             .filter(Boolean);
     }
 
+    function getRequirementRules(requirement) {
+        if (!requirement) {
+            return [];
+        }
+
+        if (Array.isArray(requirement.matchAny) && requirement.matchAny.length > 0) {
+            return requirement.matchAny.filter(Boolean);
+        }
+
+        return [requirement];
+    }
+
+    function getRequirementTagList(requirement) {
+        const itemRegistry = getItemRegistry();
+        const tags = [];
+        const seen = new Set();
+
+        function appendTag(label) {
+            const normalized = String(label || '').trim();
+            if (!normalized || seen.has(normalized)) {
+                return;
+            }
+
+            seen.add(normalized);
+            tags.push(normalized);
+        }
+
+        getRequirementRules(requirement).forEach((rule) => {
+            (Array.isArray(rule.questCategories) ? rule.questCategories : []).forEach((category) => {
+                appendTag(
+                    itemRegistry && typeof itemRegistry.getQuestCategoryLabel === 'function'
+                        ? itemRegistry.getQuestCategoryLabel(category)
+                        : category
+                );
+            });
+
+            if (Number.isFinite(rule.minTier)) {
+                appendTag(`T${rule.minTier}+`);
+            } else if (Number.isFinite(rule.maxTier)) {
+                appendTag(`до T${rule.maxTier}`);
+            }
+
+            if (rule.uniqueOnly) {
+                appendTag('уникальный');
+            }
+
+            if (rule.unusedOnly) {
+                appendTag('неиспользованный');
+            }
+
+            if (Number.isFinite(rule.minCarriedIslands) && rule.minCarriedIslands > 0) {
+                appendTag(`нести ${rule.minCarriedIslands}+ острова`);
+            }
+        });
+
+        return tags;
+    }
+
+    function getRequirementPreferredCategories(requirement) {
+        const categories = [];
+        const seen = new Set();
+
+        getRequirementRules(requirement).forEach((rule) => {
+            (Array.isArray(rule.questCategories) ? rule.questCategories : []).forEach((category) => {
+                if (seen.has(category)) {
+                    return;
+                }
+
+                seen.add(category);
+                categories.push(category);
+            });
+        });
+
+        return categories;
+    }
+
+    function getSlotUnlockLabel(stage) {
+        if (!stage || !Number.isFinite(stage.targetSlots)) {
+            return 'Откроется новый слот';
+        }
+
+        return `Откроется слот ${stage.targetSlots}`;
+    }
+
+    function buildDisplayRequirement(entry) {
+        const requirement = entry && entry.requirement ? entry.requirement : null;
+        const item = entry && entry.item ? entry.item : null;
+
+        return {
+            requirementId: requirement && requirement.requirementId ? requirement.requirementId : '',
+            label: requirement && requirement.label ? requirement.label : 'Требование',
+            description: requirement && requirement.description ? requirement.description : '',
+            optional: Boolean(entry && entry.optional),
+            satisfied: Boolean(entry && entry.satisfied),
+            itemId: item && item.id ? item.id : '',
+            itemLabel: item && item.label ? item.label : '',
+            tags: getRequirementTagList(requirement),
+            statusLabel: entry && entry.satisfied
+                ? 'Собрано'
+                : (entry && entry.optional ? 'Опция' : 'Нужно')
+        };
+    }
+
+    function buildQuestDisplayState(stage, evaluation) {
+        const displayRequirements = evaluation.requirementMatches.matches.map(buildDisplayRequirement);
+        const collectedRequirements = displayRequirements.filter((entry) => entry.satisfied && !entry.optional);
+        const missingRequirements = displayRequirements.filter((entry) => !entry.satisfied && !entry.optional);
+        const optionalRequirements = displayRequirements.filter((entry) => entry.optional);
+        const questCategoryLabels = [];
+        const seenLabels = new Set();
+
+        displayRequirements.forEach((entry) => {
+            entry.tags.forEach((tag) => {
+                if (seenLabels.has(tag)) {
+                    return;
+                }
+
+                seenLabels.add(tag);
+                questCategoryLabels.push(tag);
+            });
+        });
+
+        return {
+            requirementMatches: displayRequirements,
+            collectedRequirements,
+            missingRequirements,
+            optionalRequirements,
+            questCategoryLabels,
+            slotUnlockLabel: getSlotUnlockLabel(stage),
+            slotProgressLabel: `Сумка ${stage.sourceSlots} → ${stage.targetSlots}`,
+            occupancyStatusLabel: `Занято слотов: ${evaluation.occupiedSlots}/${evaluation.requiredOccupiedSlots}`,
+            requirementStatusLabel: `Требования: ${evaluation.requirementMatches.matchedRequiredCount}/${evaluation.requirementMatches.requiredCount}`,
+            occupancyMissingCount: Math.max(0, evaluation.requiredOccupiedSlots - evaluation.occupiedSlots),
+            occupancyMissingLabel: evaluation.occupiedSlots < evaluation.requiredOccupiedSlots
+                ? `Нужно занять ещё ${evaluation.requiredOccupiedSlots - evaluation.occupiedSlots} слот(а).`
+                : ''
+        };
+    }
+
+    function getActiveBagQuestGenerationBias(islandIndex = game.state.currentIslandIndex || 1) {
+        const stage = getAvailableStageForIsland(islandIndex);
+
+        if (!stage) {
+            return null;
+        }
+
+        const evaluation = getStageEvaluation(stage, { currentIslandIndex: islandIndex });
+        const missingRequirements = evaluation.requirementMatches.matches
+            .filter((entry) => entry && !entry.satisfied && !entry.optional)
+            .map((entry) => entry.requirement)
+            .filter(Boolean);
+
+        if (missingRequirements.length === 0) {
+            return null;
+        }
+
+        const preferredCategories = [];
+        const seenCategories = new Set();
+        let minTier = null;
+
+        missingRequirements.forEach((requirement) => {
+            getRequirementPreferredCategories(requirement).forEach((category) => {
+                if (seenCategories.has(category)) {
+                    return;
+                }
+
+                seenCategories.add(category);
+                preferredCategories.push(category);
+            });
+
+            getRequirementRules(requirement).forEach((rule) => {
+                if (!Number.isFinite(rule.minTier)) {
+                    return;
+                }
+
+                minTier = minTier === null ? rule.minTier : Math.min(minTier, rule.minTier);
+            });
+        });
+
+        return preferredCategories.length > 0
+            ? {
+                stageId: stage.stageId,
+                preferredCategories,
+                minTier,
+                missingRequirementCount: missingRequirements.length
+            }
+            : null;
+    }
+
     function getRequiredMatchCount(stage) {
         return (stage && Array.isArray(stage.requirements) ? stage.requirements : [])
             .filter((requirement) => !requirement.optional)
@@ -408,6 +597,8 @@
         getCurrentStageForSlots,
         getRequiredOccupiedSlots,
         getStageEvaluation,
+        buildQuestDisplayState,
+        getActiveBagQuestGenerationBias,
         buildBagUpgradeQuest,
         createArtisanEncounterProfile,
         prepareArtisanEncounter,

@@ -127,13 +127,16 @@
                 openMerchantHouseId: null,
                 isMapOpen: false,
                 isInventoryPanelCollapsed: false,
-                isQuestPanelCollapsed: false
+                isQuestPanelCollapsed: false,
+                collapsedQuestEntryIds: {}
             },
             runtime: {
                 route: [],
                 routeTotalCost: 0,
                 routePreviewLength: 0,
                 routePreviewTotalCost: 0,
+                selectedWorldTile: null,
+                selectedWorldInteractionId: null,
                 activeItemEffects: [],
                 isMoving: false,
                 stepProgress: 0,
@@ -259,7 +262,11 @@
                     : defaults.ui.isInventoryPanelCollapsed,
                 isQuestPanelCollapsed: typeof state.isQuestPanelCollapsed === 'boolean'
                     ? state.isQuestPanelCollapsed
-                    : defaults.ui.isQuestPanelCollapsed
+                    : defaults.ui.isQuestPanelCollapsed,
+                collapsedQuestEntryIds: mergeWithDefaults(
+                    defaults.ui.collapsedQuestEntryIds,
+                    state.collapsedQuestEntryIds
+                )
             },
             runtime: {
                 route: mergeWithDefaults(defaults.runtime.route, state.route),
@@ -272,6 +279,10 @@
                 routePreviewTotalCost: typeof state.routePreviewTotalCost === 'number'
                     ? state.routePreviewTotalCost
                     : defaults.runtime.routePreviewTotalCost,
+                selectedWorldTile: state.selectedWorldTile ? cloneValue(state.selectedWorldTile) : defaults.runtime.selectedWorldTile,
+                selectedWorldInteractionId: typeof state.selectedWorldInteractionId === 'string'
+                    ? state.selectedWorldInteractionId
+                    : defaults.runtime.selectedWorldInteractionId,
                 isMoving: typeof state.isMoving === 'boolean' ? state.isMoving : defaults.runtime.isMoving,
                 stepProgress: typeof state.stepProgress === 'number' ? state.stepProgress : defaults.runtime.stepProgress,
                 currentTargetIndex: typeof state.currentTargetIndex === 'number'
@@ -358,6 +369,8 @@
             routeTotalCost: normalized.runtime.routeTotalCost,
             routePreviewLength: normalized.runtime.routePreviewLength,
             routePreviewTotalCost: normalized.runtime.routePreviewTotalCost,
+            selectedWorldTile: normalized.runtime.selectedWorldTile,
+            selectedWorldInteractionId: normalized.runtime.selectedWorldInteractionId,
             isMoving: normalized.runtime.isMoving,
             stepProgress: normalized.runtime.stepProgress,
             currentTargetIndex: normalized.runtime.currentTargetIndex,

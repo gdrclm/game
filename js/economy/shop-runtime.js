@@ -26,6 +26,10 @@
         return game.systems.questRuntime || null;
     }
 
+    function getBagUpgradeRuntime() {
+        return game.systems.bagUpgradeRuntime || null;
+    }
+
     function getItemEffects() {
         return game.systems.itemEffects || null;
     }
@@ -129,14 +133,22 @@
 
     function getCatalogSelectorOptions(weightKey, islandIndex) {
         const islandTier = Math.max(1, getTierByIsland(islandIndex));
-        return weightKey === 'merchantQuestWeight'
-            ? {
-                includeTierZero: true,
-                preferredCategories: getMerchantQuestBias(islandTier)
-            }
-            : {
-                preferredCategories: getMerchantCategoryBias(islandTier)
-            };
+        const bagUpgradeRuntime = getBagUpgradeRuntime();
+        const activeQuestBias = bagUpgradeRuntime && typeof bagUpgradeRuntime.getActiveBagQuestGenerationBias === 'function'
+            ? bagUpgradeRuntime.getActiveBagQuestGenerationBias(islandIndex)
+            : null;
+        const preferredCategories = [
+            ...(weightKey === 'merchantQuestWeight' ? getMerchantQuestBias(islandTier) : getMerchantCategoryBias(islandTier)),
+            ...(activeQuestBias ? activeQuestBias.preferredCategories : [])
+        ].filter((category, index, list) => category && list.indexOf(category) === index);
+
+        return {
+            includeTierZero: weightKey === 'merchantQuestWeight',
+            preferredCategories,
+            minTier: activeQuestBias && Number.isFinite(activeQuestBias.minTier)
+                ? Math.min(activeQuestBias.minTier, islandTier)
+                : undefined
+        };
     }
 
     function buildLegacyPool(weightKey) {

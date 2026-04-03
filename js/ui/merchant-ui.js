@@ -252,6 +252,71 @@
         return rows.join('');
     }
 
+    function buildArtisanQuestVisual(quest) {
+        const categoryLabels = Array.isArray(quest.questCategoryLabels) ? quest.questCategoryLabels : [];
+        const collectedRequirements = Array.isArray(quest.collectedRequirements) ? quest.collectedRequirements : [];
+        const missingRequirements = Array.isArray(quest.missingRequirements) ? quest.missingRequirements : [];
+        const optionalRequirements = Array.isArray(quest.optionalRequirements) ? quest.optionalRequirements : [];
+        const collectedHtml = collectedRequirements.length > 0
+            ? collectedRequirements.map((entry) => `
+                <div class="artisan-check artisan-check--done">
+                    <div class="artisan-check__title">${escapeHtml(entry.label || 'Требование')}</div>
+                    <div class="artisan-check__value">${escapeHtml(entry.itemLabel || 'Подходящий предмет уже в сумке')}</div>
+                </div>
+            `).join('')
+            : '<div class="artisan-check artisan-check--empty">Пока ни одно обязательное требование не закрыто.</div>';
+        const missingHtml = missingRequirements.length > 0
+            ? missingRequirements.map((entry) => `
+                <div class="artisan-check artisan-check--missing">
+                    <div class="artisan-check__title">${escapeHtml(entry.label || 'Требование')}</div>
+                    <div class="artisan-check__value">${escapeHtml(Array.isArray(entry.tags) && entry.tags.length > 0 ? entry.tags.join(', ') : (entry.description || 'Нужен подходящий предмет'))}</div>
+                </div>
+            `).join('')
+            : '<div class="artisan-check artisan-check--done">Все обязательные требования уже собраны.</div>';
+        const optionalHtml = optionalRequirements.length > 0
+            ? `
+                <div class="artisan-quest__section">
+                    <div class="artisan-quest__section-title">Дополнительно</div>
+                    <div class="artisan-check-list">
+                        ${optionalRequirements.map((entry) => `
+                            <div class="artisan-check artisan-check--optional">
+                                <div class="artisan-check__title">${escapeHtml(entry.label || 'Опция')}</div>
+                                <div class="artisan-check__value">${escapeHtml(entry.itemLabel || entry.description || 'Можно усилить комплект ещё одним предметом')}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `
+            : '';
+
+        return `
+            <div class="artisan-quest">
+                <div class="artisan-quest__hero">
+                    <div class="artisan-quest__slot">${escapeHtml(quest.slotUnlockLabel || `Откроется слот ${quest.targetSlots || '?'}`)}</div>
+                    <div class="artisan-quest__meta">${escapeHtml(quest.slotProgressLabel || `Сумка ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'}`)}</div>
+                    <div class="artisan-quest__meta">${escapeHtml([quest.occupancyStatusLabel || '', quest.requirementStatusLabel || ''].filter(Boolean).join(' · '))}</div>
+                    ${quest.occupancyMissingLabel ? `<div class="artisan-quest__warning">${escapeHtml(quest.occupancyMissingLabel)}</div>` : ''}
+                </div>
+                ${categoryLabels.length > 0 ? `
+                    <div class="artisan-pill-row">
+                        ${categoryLabels.map((label) => `<span class="artisan-pill">${escapeHtml(label)}</span>`).join('')}
+                    </div>
+                ` : ''}
+                <div class="artisan-quest__grid">
+                    <div class="artisan-quest__section">
+                        <div class="artisan-quest__section-title">Собрано</div>
+                        <div class="artisan-check-list">${collectedHtml}</div>
+                    </div>
+                    <div class="artisan-quest__section">
+                        <div class="artisan-quest__section-title">Не хватает</div>
+                        <div class="artisan-check-list">${missingHtml}</div>
+                    </div>
+                </div>
+                ${optionalHtml}
+            </div>
+        `;
+    }
+
     function buildArtisanQuestSection(quest, currentSlots, slotCap) {
         if (!quest) {
             return `
@@ -274,7 +339,7 @@
                     <div class="merchant-row__note">Занято слотов: ${quest.occupiedSlots || 0}/${quest.requiredOccupiedSlots || 0} · Прогресс: ${quest.progressCurrent || 0}/${quest.progressRequired || 0}</div>
                     <div class="merchant-row__note">Награда: +${rewardSlots} слот · текущая сумка ${currentSlots}/${slotCap}</div>
                     ${Number.isFinite(quest.deadlineIslandIndex) ? `<div class="merchant-row__note">Сдать до острова ${quest.deadlineIslandIndex}</div>` : ''}
-                    ${buildArtisanRequirementRows(quest)}
+                    ${buildArtisanQuestVisual(quest)}
                 </div>
                 <div class="merchant-row">
                     <div class="merchant-row__meta"></div>

@@ -55,6 +55,15 @@
         return Boolean(game.state.isQuestPanelCollapsed);
     }
 
+    function getCollapsedQuestEntryIds() {
+        game.state.collapsedQuestEntryIds = game.state.collapsedQuestEntryIds || {};
+        return game.state.collapsedQuestEntryIds;
+    }
+
+    function isQuestEntryCollapsed(questId) {
+        return Boolean(questId && getCollapsedQuestEntryIds()[questId]);
+    }
+
     function toggleQuestPanel(forceValue) {
         const nextValue = typeof forceValue === 'boolean'
             ? forceValue
@@ -65,15 +74,52 @@
         return nextValue;
     }
 
+    function toggleQuestEntry(questId, forceValue) {
+        if (!questId) {
+            return false;
+        }
+
+        const collapsedQuestEntryIds = getCollapsedQuestEntryIds();
+        const nextValue = typeof forceValue === 'boolean'
+            ? forceValue
+            : !Boolean(collapsedQuestEntryIds[questId]);
+
+        if (nextValue) {
+            collapsedQuestEntryIds[questId] = true;
+        } else {
+            delete collapsedQuestEntryIds[questId];
+        }
+
+        bridge.renderAfterStateChange();
+        return nextValue;
+    }
+
     function bindEvents() {
         if (eventsBound) {
             return;
         }
 
-        const { questPanelToggle } = getElements();
+        const { questPanelToggle, questTrackerList } = getElements();
         if (questPanelToggle) {
             questPanelToggle.addEventListener('click', () => {
                 toggleQuestPanel();
+            });
+        }
+
+        if (questTrackerList) {
+            questTrackerList.addEventListener('click', (event) => {
+                const toggleButton = event.target.closest('[data-quest-toggle-id]');
+
+                if (!toggleButton) {
+                    return;
+                }
+
+                const questId = toggleButton.getAttribute('data-quest-toggle-id');
+                if (!questId) {
+                    return;
+                }
+
+                toggleQuestEntry(questId);
             });
         }
 
@@ -108,34 +154,92 @@
         }
     }
 
-    function appendQuestMatchRows(entry, quest) {
-        const matches = Array.isArray(quest.requirementMatches) ? quest.requirementMatches : [];
+    function appendQuestMatchRows(container, quest) {
+        const categoryLabels = Array.isArray(quest.questCategoryLabels) ? quest.questCategoryLabels : [];
+        const collectedRequirements = Array.isArray(quest.collectedRequirements) ? quest.collectedRequirements : [];
+        const missingRequirements = Array.isArray(quest.missingRequirements) ? quest.missingRequirements : [];
 
-        matches.forEach((match) => {
-            const row = document.createElement('p');
-            row.className = 'panel-copy quest-entry__meta';
-            const prefix = match.satisfied ? '✓' : (match.optional ? '•' : '□');
-            const suffix = match.satisfied && match.itemLabel ? ` — ${match.itemLabel}` : '';
-            row.textContent = `${prefix} ${match.label || 'Требование'}${suffix}`;
-            entry.append(row);
-        });
+        if (categoryLabels.length > 0) {
+            const categoryRow = document.createElement('p');
+            categoryRow.className = 'panel-copy quest-entry__description';
+            categoryRow.textContent = `Категории: ${categoryLabels.join(', ')}`;
+            container.append(categoryRow);
+        }
 
-        if (Array.isArray(quest.missingRequirements) && quest.missingRequirements.length > 0) {
+        if (quest.slotUnlockLabel) {
+            const slotRow = document.createElement('p');
+            slotRow.className = 'panel-copy quest-entry__meta';
+            slotRow.textContent = quest.slotUnlockLabel;
+            container.append(slotRow);
+        }
+
+        if (quest.occupancyStatusLabel || quest.requirementStatusLabel) {
+            const statusRow = document.createElement('p');
+            statusRow.className = 'panel-copy quest-entry__meta';
+            statusRow.textContent = [quest.occupancyStatusLabel, quest.requirementStatusLabel].filter(Boolean).join(' · ');
+            container.append(statusRow);
+        }
+
+        if (collectedRequirements.length > 0) {
+            const collectedRow = document.createElement('p');
+            collectedRow.className = 'panel-copy quest-entry__meta';
+            collectedRow.textContent = `Собрано: ${collectedRequirements.map((entry) => entry.itemLabel ? `${entry.label} — ${entry.itemLabel}` : entry.label).join('; ')}`;
+            container.append(collectedRow);
+        }
+
+        if (missingRequirements.length > 0) {
             const missingRow = document.createElement('p');
             missingRow.className = 'panel-copy quest-entry__description';
-            missingRow.textContent = `Не хватает: ${quest.missingRequirements.map((requirement) => requirement.label).join(', ')}`;
-            entry.append(missingRow);
+            missingRow.textContent = `Не хватает: ${missingRequirements.map((entry) => entry.tags && entry.tags.length > 0 ? `${entry.label} (${entry.tags.join(', ')})` : entry.label).join('; ')}`;
+            container.append(missingRow);
+        }
+
+        if (quest.occupancyMissingLabel) {
+            const occupancyRow = document.createElement('p');
+            occupancyRow.className = 'panel-copy quest-entry__description';
+            occupancyRow.textContent = quest.occupancyMissingLabel;
+            container.append(occupancyRow);
         }
     }
 
     function createQuestEntry(quest) {
         const itemDefinition = quest.itemId ? bridge.getItemDefinition(quest.itemId) : null;
         const entry = document.createElement('article');
+        const collapsed = isQuestEntryCollapsed(quest.questId);
         entry.className = 'quest-entry';
 
-        const titleRow = document.createElement('div');
+        const headerButton = document.createElement('button');
+        headerButton.type = 'button';
+        headerButton.className = 'quest-entry__header';
+        headerButton.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        if (quest.questId) {
+            headerButton.setAttribute('data-quest-toggle-id', quest.questId);
+        }
+
+        const headerText = document.createElement('span');
+        headerText.className = 'quest-entry__header-text';
+
+        const titleRow = document.createElement('span');
         titleRow.className = 'quest-entry__title';
         titleRow.textContent = quest.label || 'Активное задание';
+        headerText.append(titleRow);
+
+        const headerMeta = document.createElement('span');
+        headerMeta.className = 'quest-entry__header-meta';
+        headerMeta.textContent = quest.objectiveType === 'bagLoadout'
+            ? `Сумка ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'}`
+            : `Прогресс ${quest.progressCurrent}/${quest.progressRequired}`;
+        headerText.append(headerMeta);
+
+        const headerIcon = document.createElement('span');
+        headerIcon.className = 'quest-entry__header-icon';
+        headerIcon.textContent = collapsed ? '+' : '−';
+
+        headerButton.append(headerText, headerIcon);
+
+        const body = document.createElement('div');
+        body.className = 'quest-entry__body';
+        body.hidden = collapsed;
 
         const giverRow = document.createElement('p');
         giverRow.className = 'panel-copy quest-entry__meta';
@@ -147,7 +251,7 @@
             ? `В сумке: ${quest.progressCurrent}/${quest.progressRequired}${itemDefinition ? ` · предмет: ${itemDefinition.label}` : ''}`
             : (
                 quest.objectiveType === 'bagLoadout'
-                    ? `Слоты: ${quest.occupiedSlots || 0}/${quest.requiredOccupiedSlots || 0} · прогресс: ${quest.progressCurrent}/${quest.progressRequired}`
+                    ? `${quest.slotProgressLabel || `Сумка ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'}`} · прогресс: ${quest.progressCurrent}/${quest.progressRequired}`
                     : `Прогресс: ${quest.progressCurrent}/${quest.progressRequired}`
             );
 
@@ -165,16 +269,17 @@
             entry.classList.add('quest-entry--ready');
         }
 
-        entry.append(titleRow, giverRow, progressRow, rewardRow, descriptionRow);
+        body.append(giverRow, progressRow, rewardRow, descriptionRow);
 
         if (quest.objectiveType === 'bagLoadout') {
             const slotGoalRow = document.createElement('p');
             slotGoalRow.className = 'panel-copy quest-entry__meta';
             slotGoalRow.textContent = `Сумка: ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'} · дедлайн: остров ${quest.deadlineIslandIndex || '?'}`;
-            entry.append(slotGoalRow);
-            appendQuestMatchRows(entry, quest);
+            body.append(slotGoalRow);
+            appendQuestMatchRows(body, quest);
         }
 
+        entry.append(headerButton, body);
         return entry;
     }
 
@@ -218,6 +323,7 @@
     Object.assign(questUi, {
         renderQuestTracker,
         syncQuestState,
-        toggleQuestPanel
+        toggleQuestPanel,
+        toggleQuestEntry
     });
 })();

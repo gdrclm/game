@@ -246,6 +246,10 @@
 
     function getChestRollOptions(chestTier, archetype, islandIndex, options = {}) {
         const modifierSnapshot = getModifierSnapshot(islandIndex);
+        const bagUpgradeRuntime = window.Game.systems.bagUpgradeRuntime || null;
+        const activeQuestBias = bagUpgradeRuntime && typeof bagUpgradeRuntime.getActiveBagQuestGenerationBias === 'function'
+            ? bagUpgradeRuntime.getActiveBagQuestGenerationBias(islandIndex)
+            : null;
         const chestLuck = Math.max(0, modifierSnapshot.chestLuck || 0);
         const preferredCategories = [];
         const allowFutureTiers = chestTier === 'elite' || chestTier === 'jackpot' || chestTier === 'final';
@@ -289,13 +293,22 @@
             riskBias *= 1.15;
         }
 
+        if (activeQuestBias && Array.isArray(activeQuestBias.preferredCategories)) {
+            activeQuestBias.preferredCategories.forEach((category) => {
+                preferredCategories.push(category);
+            });
+        }
+
         return {
-            preferredCategories,
+            preferredCategories: preferredCategories.filter((category, index, list) => category && list.indexOf(category) === index),
             allowFutureTiers,
             maxFutureDistance,
             chestLuck,
             valueBias,
-            riskBias
+            riskBias,
+            minTier: activeQuestBias && Number.isFinite(activeQuestBias.minTier)
+                ? Math.min(activeQuestBias.minTier, Math.max(1, Math.floor((Math.max(1, islandIndex) - 1) / 5) + 1))
+                : undefined
         };
     }
 
@@ -314,6 +327,7 @@
             chestLuck: rollOptions.chestLuck,
             valueBias: rollOptions.valueBias,
             riskBias: rollOptions.riskBias,
+            minTier: rollOptions.minTier,
             excludeItemIds: Array.from(usedIds || [])
         });
     }
