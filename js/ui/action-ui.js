@@ -974,6 +974,19 @@
         const selectedWorldInteraction = getSelectedWorldInteraction(selectedWorldTileInfo);
         const selectedWorldTerrain = getTerrainTargetForTile(selectedWorldTileInfo, { includeHarvested: true });
         const penaltySummary = bridge.getActivePenaltySummary(tileInfo, 3);
+        const hasRoute = Array.isArray(game.state.route) && game.state.route.length > 0 && !game.state.isMoving;
+
+        if (hasRoute) {
+            const previewSuffix = game.state.routePreviewLength > game.state.route.length
+                ? ` из ${game.state.routePreviewLength}`
+                : '';
+            const totalCost = bridge.formatRouteCost(game.state.routeTotalCost);
+            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
+                ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
+                : '';
+
+            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми "Ходить" для подтверждения.${fullCostSuffix}`;
+        }
 
         if (selectedItem) {
             if (itemEffects && itemEffects.isBridgeBuilderItem(selectedItem.id)) {
@@ -1083,6 +1096,13 @@
         const selectedWorldTerrain = getTerrainTargetForTile(selectedWorldTileInfo, { includeHarvested: true });
         const canDropItem = Boolean(selectedItem);
         const baseEnabled = !game.state.isGameOver && !game.state.isMoving;
+        const canWalkRoute = baseEnabled
+            && !game.state.isPaused
+            && !game.state.isMapOpen
+            && Array.isArray(game.state.route)
+            && game.state.route.length > 0;
+
+        setActionButtonState('walk', canWalkRoute, canWalkRoute);
 
         setActionButtonState(
             'use',
