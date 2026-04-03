@@ -73,6 +73,54 @@
                     <button id="mapButton" class="hud-button scene-toolbar__button" type="button" aria-label="Карта" title="Карта">Карта</button>
                     <button id="pauseButton" class="hud-button hud-button--pause scene-toolbar__button" type="button" aria-label="Пауза" title="Пауза">Пауза</button>
                 </div>
+                <div class="mobile-hud" aria-label="Мобильный интерфейс" hidden>
+                    <div class="mobile-status-strip">
+                        <div class="mobile-stat-chip mobile-stat-chip--hunger">
+                            <span class="mobile-stat-chip__value" id="mobileStatHungerValue">84%</span>
+                            <span class="mobile-stat-chip__meter"><span id="mobileStatHungerBar"></span></span>
+                        </div>
+                        <div class="mobile-stat-chip mobile-stat-chip--energy">
+                            <span class="mobile-stat-chip__value" id="mobileStatEnergyValue">76%</span>
+                            <span class="mobile-stat-chip__meter"><span id="mobileStatEnergyBar"></span></span>
+                        </div>
+                        <div class="mobile-stat-chip mobile-stat-chip--sleep">
+                            <span class="mobile-stat-chip__value" id="mobileStatSleepValue">68%</span>
+                            <span class="mobile-stat-chip__meter"><span id="mobileStatSleepBar"></span></span>
+                        </div>
+                        <div class="mobile-stat-chip mobile-stat-chip--cold">
+                            <span class="mobile-stat-chip__value" id="mobileStatColdValue">72%</span>
+                            <span class="mobile-stat-chip__meter"><span id="mobileStatColdBar"></span></span>
+                        </div>
+                        <div class="mobile-stat-chip mobile-stat-chip--focus">
+                            <span class="mobile-stat-chip__value" id="mobileStatFocusValue">91%</span>
+                            <span class="mobile-stat-chip__meter"><span id="mobileStatFocusBar"></span></span>
+                        </div>
+                    </div>
+                    <button id="mobileInventoryButton" class="mobile-bag-button" type="button" aria-label="Сумка">
+                        <span id="mobileInventoryBadge" class="mobile-bag-button__badge" hidden>0</span>
+                        <span class="mobile-bag-button__sr">Сумка</span>
+                    </button>
+                    <div class="mobile-controls">
+                        <button id="mobileWalkButton" class="mobile-walk-button" type="button" aria-label="Ходить">
+                            <span class="mobile-walk-button__label">Ходить</span>
+                        </button>
+                        <nav class="mobile-dock" aria-label="Мобильные панели">
+                            <button id="mobileSummaryButton" class="mobile-dock__button mobile-dock__button--summary" type="button">
+                                <span class="mobile-dock__label">Сводка</span>
+                            </button>
+                            <button id="mobileQuestButton" class="mobile-dock__button mobile-dock__button--quests" type="button">
+                                <span id="mobileQuestBadge" class="mobile-dock__badge" hidden>0</span>
+                                <span class="mobile-dock__label">Квесты</span>
+                            </button>
+                            <button id="mobileActionsButton" class="mobile-dock__button mobile-dock__button--actions" type="button">
+                                <span class="mobile-dock__label">Действия</span>
+                            </button>
+                            <button id="mobileMapLauncher" class="mobile-dock__button mobile-dock__button--map" type="button">
+                                <span class="mobile-dock__label">Карта</span>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
                 <div id="instructions" class="overlay-card">
                     Кликайте по клеткам, чтобы выбрать маршрут. Нажмите "Ходить" или кликните по той же клетке ещё раз.
                     Камни блокируют путь, а мосты помогают пересекать воду.
@@ -93,6 +141,19 @@
                             Автономный режим будет доступен после первого запуска онлайн.
                         </p>
                     </div>
+                </div>
+                <div id="mobileModal" class="mobile-modal" hidden aria-hidden="true">
+                    <button id="mobileModalBackdrop" class="mobile-modal__backdrop" type="button" aria-label="Закрыть панель"></button>
+                    <section class="mobile-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="mobileModalTitle">
+                        <div class="mobile-modal__header">
+                            <div>
+                                <p id="mobileModalKicker" class="hud-kicker">Интерфейс</p>
+                                <h2 id="mobileModalTitle" class="hud-title hud-title--compact">Панель</h2>
+                            </div>
+                            <button id="mobileModalClose" class="mobile-modal__close" type="button" aria-label="Закрыть панель">Закрыть</button>
+                        </div>
+                        <div id="mobileModalBody" class="mobile-modal__body"></div>
+                    </section>
                 </div>
                 <aside id="merchantPanel" class="merchant-panel" hidden aria-live="polite">
                     <div class="merchant-panel__header">
@@ -254,6 +315,7 @@
     <script src="js/ui/dialogue-ui.js"></script>
     <script src="js/ui/quest-ui.js"></script>
     <script src="js/ui/map-ui.js"></script>
+    <script src="js/ui/mobile-ui.js"></script>
     <script src="js/init.js"></script>
     <script src="js/pwa.js"></script>
 </body>
