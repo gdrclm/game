@@ -3,8 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Изометрическая игра про исследование островов, маршруты, инвентарь и выживание.">
+    <meta name="theme-color" content="#1696ea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Изометрическая игра">
     <title>Изометрическая игра</title>
-    <link rel="stylesheet" href="css/style.css?v=20260402aa">
+    <link rel="manifest" href="manifest.webmanifest?v=20260403m">
+    <link rel="icon" type="image/png" sizes="64x64" href="assets/pwa/favicon-64.png?v=20260403m">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/pwa/apple-touch-icon.png?v=20260403m">
+    <link rel="stylesheet" href="css/style.css?v=20260403j">
 </head>
 <body>
     <div class="game-shell">
@@ -60,6 +69,10 @@
 
         <main class="scene-column">
             <section class="scene-frame" id="sceneViewport">
+                <div class="scene-toolbar" aria-label="Игровое меню">
+                    <button id="mapButton" class="hud-button scene-toolbar__button" type="button" aria-label="Карта" title="Карта">Карта</button>
+                    <button id="pauseButton" class="hud-button hud-button--pause scene-toolbar__button" type="button" aria-label="Пауза" title="Пауза">Пауза</button>
+                </div>
                 <div id="instructions" class="overlay-card">
                     Кликайте по клеткам, чтобы строить маршрут. Нажмите пробел для запуска движения.
                     Камни блокируют путь, а мосты помогают пересекать воду.
@@ -70,10 +83,14 @@
                 </div>
                 <div id="pauseOverlay" class="pause-overlay" aria-hidden="true">
                     <div class="pause-overlay__panel">
-                        <p id="statusOverlayKicker" class="hud-kicker">Меню</p>
+                        <p id="statusOverlayKicker" class="hud-kicker">Пауза</p>
                         <h2 id="statusOverlayTitle" class="hud-title hud-title--compact">Пауза</h2>
-                        <p id="statusOverlayMessage" class="panel-copy">
-                            Игра остановлена. Нажми кнопку ещё раз или клавишу Esc, чтобы вернуться.
+                        <div class="pause-overlay__actions">
+                            <button id="pauseResumeButton" class="hud-button hud-button--pause" type="button">Продолжить</button>
+                            <button id="installButton" class="hud-button hud-button--install" type="button" hidden>Установить</button>
+                        </div>
+                        <p id="pwaStatus" class="panel-copy pwa-status" aria-live="polite">
+                            Автономный режим будет доступен после первого запуска онлайн.
                         </p>
                     </div>
                 </div>
@@ -160,11 +177,6 @@
                     <button class="hud-button" type="button" data-action="inspect">Осмотреть</button>
                 </div>
             </section>
-
-            <section class="hud-card pause-card">
-                <p class="hud-kicker">Система</p>
-                <button id="pauseButton" class="hud-button hud-button--pause" type="button">Пауза</button>
-            </section>
         </footer>
     </div>
 
@@ -242,5 +254,6 @@
     <script src="js/ui/quest-ui.js?v=20260402aa"></script>
     <script src="js/ui/map-ui.js?v=20260402e"></script>
     <script src="js/init.js"></script>
+    <script src="js/pwa.js?v=20260403a"></script>
 </body>
 </html>
