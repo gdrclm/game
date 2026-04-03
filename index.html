@@ -10,10 +10,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Изометрическая игра">
     <title>Изометрическая игра</title>
-    <link rel="manifest" href="manifest.webmanifest?v=20260403m">
-    <link rel="icon" type="image/png" sizes="64x64" href="assets/pwa/favicon-64.png?v=20260403m">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/pwa/apple-touch-icon.png?v=20260403m">
-    <link rel="stylesheet" href="css/style.css?v=20260403j">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="64x64" href="assets/pwa/favicon-64.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/pwa/apple-touch-icon.png">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="game-shell">
@@ -74,7 +74,7 @@
                     <button id="pauseButton" class="hud-button hud-button--pause scene-toolbar__button" type="button" aria-label="Пауза" title="Пауза">Пауза</button>
                 </div>
                 <div id="instructions" class="overlay-card">
-                    Кликайте по клеткам, чтобы строить маршрут. Нажмите пробел для запуска движения.
+                    Кликайте по клеткам, чтобы строить маршрут. Нажмите "Ходить" для подтверждения пути.
                     Камни блокируют путь, а мосты помогают пересекать воду.
                 </div>
                 <!-- <div id="debugPanel" class="overlay-card overlay-card--debug" aria-live="polite"></div> -->
@@ -170,6 +170,7 @@
                 <p class="hud-kicker">Окружение</p>
                 <h2 class="hud-title hud-title--compact">Взаимодействие</h2>
                 <div class="action-grid">
+                    <button class="hud-button" type="button" data-action="walk">Ходить</button>
                     <button class="hud-button" type="button" data-action="drop">Выбросить</button>
                     <button class="hud-button" type="button" data-action="use">Использовать</button>
                     <button class="hud-button" type="button" data-action="talk">Говорить</button>
@@ -181,31 +182,31 @@
     </div>
 
     <script src="js/config.js"></script>
-    <script src="js/state/game-state-schema.js?v=20260403c"></script>
+    <script src="js/state/game-state-schema.js"></script>
     <script src="js/game-state.js"></script>
     <script src="js/state/save-load.js"></script>
     <script src="js/utils.js"></script>
-    <script src="js/content-registry.js?v=20260329h"></script>
+    <script src="js/content-registry.js"></script>
     <script src="js/world/chunk-store.js"></script>
     <script src="js/world/tile-query.js"></script>
     <script src="js/world-system.js"></script>
-    <script src="js/inventory/item-catalog.js?v=20260402aa"></script>
-    <script src="js/inventory/item-registry.js?v=20260402m"></script>
+    <script src="js/inventory/item-catalog.js"></script>
+    <script src="js/inventory/item-registry.js"></script>
     <script src="js/economy/pricing.js"></script>
     <script src="js/economy/reward-scaling.js"></script>
     <script src="js/quests/quest-registry.js"></script>
-    <script src="js/quests/bag-upgrade-data.js?v=20260402aa"></script>
-    <script src="js/quests/bag-upgrade-runtime.js?v=20260403c"></script>
-    <script src="js/quests/quest-runtime.js?v=20260403c"></script>
-    <script src="js/economy/shop-runtime.js?v=20260403c"></script>
-    <script src="js/loot-system.js?v=20260403c"></script>
-    <script src="js/expedition-system.js?v=20260402a"></script>
+    <script src="js/quests/bag-upgrade-data.js"></script>
+    <script src="js/quests/bag-upgrade-runtime.js"></script>
+    <script src="js/quests/quest-runtime.js"></script>
+    <script src="js/economy/shop-runtime.js"></script>
+    <script src="js/loot-system.js"></script>
+    <script src="js/expedition-system.js"></script>
     <script src="js/expedition/expedition-shared.js"></script>
     <script src="js/expedition/shape-builders.js"></script>
-    <script src="js/expedition/house-profiles.js?v=20260402aa"></script>
-    <script src="js/expedition/island-layout.js?v=20260402i"></script>
+    <script src="js/expedition/house-profiles.js"></script>
+    <script src="js/expedition/island-layout.js"></script>
     <script src="js/expedition/progression.js"></script>
-    <script src="js/expedition/weather-runtime.js?v=20260402b"></script>
+    <script src="js/expedition/weather-runtime.js"></script>
     <script src="js/expedition/bridge-runtime.js"></script>
     <script src="js/effects-system.js"></script>
     <script src="js/houses/layout/house-layout-core.js"></script>
@@ -219,41 +220,41 @@
     <script src="js/houses/render/house-roof-builder.js"></script>
     <script src="js/houses/render/house-svg-builder.js"></script>
     <script src="js/houses/render/house-variant-cache.js"></script>
-    <script src="js/houses/render/house-drawer.js?v=20260402i"></script>
+    <script src="js/houses/render/house-drawer.js"></script>
     <script src="js/houses/house-runtime.js"></script>
     <script src="js/interaction-system.js"></script>
-    <script src="js/interactions/world-spawn-runtime.js?v=20260402aa"></script>
-    <script src="js/interactions/interaction-router.js?v=20260402e"></script>
+    <script src="js/interactions/world-spawn-runtime.js"></script>
+    <script src="js/interactions/interaction-router.js"></script>
     <script src="js/map-generator.js"></script>
     <script src="js/map/topology-painter.js"></script>
-    <script src="js/map/chunk-generator.js?v=20260402i"></script>
-    <script src="js/map/map-runtime.js?v=20260402aa"></script>
+    <script src="js/map/chunk-generator.js"></script>
+    <script src="js/map/map-runtime.js"></script>
     <script src="js/render/camera-system.js"></script>
-    <script src="js/render/chunk-renderer.js?v=20260402h"></script>
-    <script src="js/render/interaction-renderer.js?v=20260402aa"></script>
+    <script src="js/render/chunk-renderer.js"></script>
+    <script src="js/render/interaction-renderer.js"></script>
     <script src="js/render/effect-renderer.js"></script>
     <script src="js/render/player-renderer.js"></script>
-    <script src="js/render/debug-renderer.js?v=20260402b"></script>
-    <script src="js/render/entity-renderer.js?v=20260403a"></script>
-    <script src="js/render/scene-renderer.js?v=20260402c"></script>
+    <script src="js/render/debug-renderer.js"></script>
+    <script src="js/render/entity-renderer.js"></script>
+    <script src="js/render/scene-renderer.js"></script>
     <script src="js/pathfinding.js"></script>
-    <script src="js/movement.js?v=20260402b"></script>
-    <script src="js/input.js?v=20260403a"></script>
-    <script src="js/ui/ui-system.js?v=20260402l"></script>
-    <script src="js/ui/status-ui.js?v=20260402g"></script>
-    <script src="js/ui/inventory-ui.js?v=20260402n"></script>
+    <script src="js/movement.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/ui/ui-system.js"></script>
+    <script src="js/ui/status-ui.js"></script>
+    <script src="js/ui/inventory-ui.js"></script>
     <script src="js/inventory/inventory-runtime.js"></script>
-    <script src="js/inventory/item-effects.js?v=20260402m"></script>
-    <script src="js/npc/npc-registry.js?v=20260402aa"></script>
-    <script src="js/npc/npc-runtime.js?v=20260402aa"></script>
-    <script src="js/dialogue/dialogue-registry.js?v=20260402aa"></script>
+    <script src="js/inventory/item-effects.js"></script>
+    <script src="js/npc/npc-registry.js"></script>
+    <script src="js/npc/npc-runtime.js"></script>
+    <script src="js/dialogue/dialogue-registry.js"></script>
     <script src="js/dialogue/dialogue-runtime.js"></script>
-    <script src="js/ui/action-ui.js?v=20260403s"></script>
-    <script src="js/ui/merchant-ui.js?v=20260403d"></script>
+    <script src="js/ui/action-ui.js"></script>
+    <script src="js/ui/merchant-ui.js"></script>
     <script src="js/ui/dialogue-ui.js"></script>
-    <script src="js/ui/quest-ui.js?v=20260403b"></script>
-    <script src="js/ui/map-ui.js?v=20260402e"></script>
+    <script src="js/ui/quest-ui.js"></script>
+    <script src="js/ui/map-ui.js"></script>
     <script src="js/init.js"></script>
-    <script src="js/pwa.js?v=20260403a"></script>
+    <script src="js/pwa.js"></script>
 </body>
 </html>
