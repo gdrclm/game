@@ -71,6 +71,10 @@
         return game.systems.mapUi;
     }
 
+    function getMobileUiModule() {
+        return game.systems.mobileUi;
+    }
+
     function getInventoryRuntime() {
         return game.systems.inventoryRuntime;
     }
@@ -3050,6 +3054,10 @@
             elements.actionHint.textContent = ui.lastActionMessage || getDefaultActionHint(activeInteraction, tileInfo);
         }
 
+        if (getMobileUiModule() && typeof getMobileUiModule().sync === 'function') {
+            getMobileUiModule().sync();
+        }
+
         return true;
     }
 
@@ -3066,6 +3074,9 @@
         queryElements();
         bindEvents();
         resizeCanvasToViewport();
+        if (getMobileUiModule() && typeof getMobileUiModule().initialize === 'function') {
+            getMobileUiModule().initialize();
+        }
         if (elements.instructions) {
             elements.instructions.textContent = 'Кликайте по клеткам, чтобы выбрать маршрут. Кнопка "Ходить", пробел или повторный клик по той же клетке запускают выбранный путь. Тропа и мосты экономят силы, тростник и осыпь утяжеляют путь, а грязь и хрупкие мосты лучше обходить.';
         }
@@ -3075,6 +3086,10 @@
     function handleResize() {
         if (resizeCanvasToViewport()) {
             markDirty();
+        }
+
+        if (getMobileUiModule() && typeof getMobileUiModule().sync === 'function') {
+            getMobileUiModule().sync();
         }
     }
 

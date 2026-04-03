@@ -1,4 +1,4 @@
-const APP_VERSION = '20260403q';
+const APP_VERSION = '20260403v';
 const STATIC_CACHE_NAME = `iso-game-static-${APP_VERSION}`;
 const RUNTIME_CACHE_NAME = `iso-game-runtime-${APP_VERSION}`;
 const CACHE_PREFIX = 'iso-game-';
@@ -86,6 +86,7 @@ const PRECACHE_URLS = [
     'js/ui/dialogue-ui.js',
     'js/ui/quest-ui.js',
     'js/ui/map-ui.js',
+    'js/ui/mobile-ui.js',
     'js/init.js',
     'js/pwa.js'
 ];
