@@ -1293,6 +1293,7 @@
             statusOverlayTitle: document.getElementById('statusOverlayTitle'),
             statusOverlayMessage: document.getElementById('statusOverlayMessage'),
             pauseButton: document.getElementById('pauseButton'),
+            pauseResumeButton: document.getElementById('pauseResumeButton'),
             inventoryGrid: document.getElementById('inventoryGrid'),
             selectedCharacterPortrait: document.getElementById('selectedCharacterPortrait'),
             selectedCharacterName: document.getElementById('selectedCharacterName'),
@@ -1699,7 +1700,7 @@
         if (elements.statusOverlayKicker) {
             elements.statusOverlayKicker.textContent = game.state.hasWon
                 ? 'Экспедиция'
-                : (isDefeat ? '' : (game.state.isGameOver ? 'Статус' : 'Меню'));
+                : (isDefeat ? '' : (game.state.isGameOver ? 'Статус' : 'Пауза'));
         }
 
         if (elements.statusOverlayTitle) {
@@ -1717,14 +1718,23 @@
                         : (
                             game.state.isGameOver
                                 ? 'Все характеристики упали до нуля. Обнови страницу, чтобы начать заново.'
-                                : 'Игра остановлена. Нажми кнопку ещё раз или клавишу Esc, чтобы вернуться.'
+                                : ''
                         )
                 );
         }
 
         if (elements.pauseButton) {
-            elements.pauseButton.textContent = game.state.isPaused ? 'Продолжить' : 'Пауза';
+            const pauseLabel = game.state.isPaused ? 'Продолжить' : 'Пауза';
+            elements.pauseButton.textContent = pauseLabel;
+            elements.pauseButton.setAttribute('aria-label', pauseLabel);
+            elements.pauseButton.setAttribute('title', pauseLabel);
             elements.pauseButton.disabled = Boolean(game.state.isGameOver);
+        }
+
+        if (elements.pauseResumeButton) {
+            const canResume = Boolean(game.state.isPaused && !game.state.isGameOver && !game.state.hasWon && !isDefeat);
+            elements.pauseResumeButton.hidden = !canResume;
+            elements.pauseResumeButton.disabled = !canResume;
         }
 
         document.body.classList.toggle('is-paused', Boolean(game.state.isPaused));
@@ -2917,6 +2927,12 @@
 
         if (elements.pauseButton) {
             elements.pauseButton.addEventListener('click', () => {
+                togglePause();
+            });
+        }
+
+        if (elements.pauseResumeButton) {
+            elements.pauseResumeButton.addEventListener('click', () => {
                 togglePause();
             });
         }
