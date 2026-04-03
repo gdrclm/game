@@ -38,6 +38,13 @@ function handleClick(event) {
         ? game.systems.ui.getRouteLengthLimit()
         : baseMoveCellsPerTurn;
     const pathResult = game.systems.pathfinding.findPathResult(startX, startY, resolvedTarget.x, resolvedTarget.y);
+    const existingRoute = Array.isArray(game.state.route) ? game.state.route : [];
+    const existingRouteTarget = existingRoute.length > 0 ? existingRoute[existingRoute.length - 1] : null;
+    const isRepeatClickOnCurrentRoute = Boolean(
+        existingRouteTarget
+        && existingRouteTarget.x === resolvedTarget.x
+        && existingRouteTarget.y === resolvedTarget.y
+    );
 
     game.state.selectedWorldTile = { x: targetX, y: targetY };
     game.state.selectedWorldInteractionId = clickedInteraction ? clickedInteraction.id : null;
@@ -75,6 +82,18 @@ function handleClick(event) {
         && typeof game.systems.ui.setActionMessage === 'function'
     ) {
         game.systems.ui.setActionMessage('');
+    }
+
+    if (
+        isRepeatClickOnCurrentRoute
+        && existingRoute.length > 0
+        && game.state.route.length > 0
+        && !game.state.isMoving
+        && game.systems.movement
+        && typeof game.systems.movement.startMovement === 'function'
+    ) {
+        game.systems.movement.startMovement();
+        return;
     }
 
     if (game.systems.actionUi && typeof game.systems.actionUi.describeSelectedWorldTarget === 'function') {
