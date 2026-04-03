@@ -609,6 +609,19 @@
         const selectedWorldInteraction = getSelectedWorldInteraction(selectedWorldTileInfo);
         const selectedWorldTerrain = getTerrainTargetForTile(selectedWorldTileInfo, { includeHarvested: true });
         const penaltySummary = bridge.getActivePenaltySummary(tileInfo, 3);
+        const hasRoute = Array.isArray(game.state.route) && game.state.route.length > 0 && !game.state.isMoving;
+
+        if (hasRoute) {
+            const previewSuffix = game.state.routePreviewLength > game.state.route.length
+                ? ` из ${game.state.routePreviewLength}`
+                : '';
+            const totalCost = bridge.formatRouteCost(game.state.routeTotalCost);
+            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
+                ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
+                : '';
+
+            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми "Ходить" для подтверждения.${fullCostSuffix}`;
+        }
 
         if (selectedItem) {
             if (itemEffects && itemEffects.isBridgeBuilderItem(selectedItem.id)) {
@@ -707,6 +720,9 @@
         const inspectableTerrain = getInspectableTerrainTarget();
         const canDropItem = Boolean(selectedItem);
         const baseEnabled = !game.state.isGameOver && !game.state.isMoving;
+        const canWalkRoute = baseEnabled && !game.state.isPaused && !game.state.isMapOpen && Array.isArray(game.state.route) && game.state.route.length > 0;
+
+        setActionButtonState('walk', canWalkRoute, canWalkRoute);
 
         setActionButtonState(
             'use',
@@ -717,6 +733,30 @@
         setActionButtonState('sleep', baseEnabled, Boolean(shelterNearby || game.state.activeHouse));
         setActionButtonState('inspect', baseEnabled, Boolean(selectedItem || groundItem || inspectableTerrain || activeInteraction));
         setActionButtonState('drop', baseEnabled && canDropItem, canDropItem);
+    }
+
+    function handleWalkAction() {
+        if (game.state.isGameOver) {
+            return;
+        }
+
+        if (game.state.isPaused || game.state.isMapOpen) {
+            bridge.setActionMessage('Сначала закрой паузу или карту, потом подтверждай движение.');
+            bridge.renderAfterStateChange();
+            return;
+        }
+
+        if (game.state.isMoving) {
+            return;
+        }
+
+        if (!Array.isArray(game.state.route) || game.state.route.length === 0) {
+            bridge.setActionMessage('Сначала проложи маршрут по клеткам, потом нажми "Ходить".');
+            bridge.renderAfterStateChange();
+            return;
+        }
+
+        game.systems.movement.startMovement();
     }
 
     function inspectInventoryItem(item) {
@@ -891,6 +931,11 @@
 
         if (action === 'use') {
             handleUseAction();
+            return;
+        }
+
+        if (action === 'walk') {
+            handleWalkAction();
             return;
         }
 
@@ -1116,6 +1161,7 @@
         getDefaultActionHint,
         setActionButtonState,
         updateActionButtons,
+        handleWalkAction,
         handleUseAction,
         handleInspectAction,
         handleTalkAction,

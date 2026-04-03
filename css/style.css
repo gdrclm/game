@@ -1619,10 +1619,6 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     margin-bottom: 5px;
 }
 
-.action-grid .hud-button:last-child {
-    grid-column: auto;
-}
-
 .hud-button {
     appearance: none;
     display: inline-flex;
@@ -1687,6 +1683,11 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     box-shadow:
         0 10px 22px rgba(3, 17, 44, 0.22),
         inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.hud-button[data-action="walk"] {
+    font-size: 0.9rem;
+    font-weight: 900;
 }
 
 .hud-button[data-action="use"] {
@@ -1766,6 +1767,11 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M19 35c0-4 3-7 7-7h5l-1-15c0-2 1-4 3-4s4 2 4 4l1 11h3V16c0-2 2-4 4-4s4 2 4 4v10h2c4 0 7 3 7 7v4c0 10-8 18-18 18H33c-8 0-14-6-14-14z' fill='%23fff4d2'/%3E%3Cpath d='M28 28h19' stroke='%23d28b1e' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
+.hud-button[data-action="walk"]::before {
+    background-color: #2e8b57;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M24 12c4 0 7 5 7 12 0 7-4 12-9 12-4 0-7-4-7-10 0-8 4-14 9-14Z' fill='%23fff7de'/%3E%3Cpath d='M20 36c8 0 14 4 14 10s-6 10-14 10c-6 0-11-4-11-9 0-7 5-11 11-11Z' fill='%23ffe08a'/%3E%3Cpath d='M44 10c3 0 5 4 5 10 0 6-3 10-7 10-3 0-5-3-5-8 0-7 3-12 7-12Z' fill='%23fff7de'/%3E%3Cpath d='M43 31c7 0 12 4 12 9s-5 9-12 9c-5 0-9-3-9-8 0-6 4-10 9-10Z' fill='%23ffe08a'/%3E%3C/svg%3E");
+}
+
 .hud-button[data-action="talk"]::before {
     background-color: #148d9f;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 18c0-5 4-9 9-9h22c5 0 9 4 9 9v13c0 5-4 9-9 9H31L20 50v-10h1c-5 0-9-4-9-9z' fill='%23fff8f2'/%3E%3Cpath d='M22 24h20M22 32h14' stroke='%23ff8b57' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -1829,6 +1835,19 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
 
 .hud-button[data-action="use"] {
     background: linear-gradient(180deg, #ffe087 0%, #f3ba4d 68%, #dd8923 100%);
+}
+
+.hud-button[data-action="walk"] {
+    background: linear-gradient(180deg, #ddffc0 0%, #9bdb73 72%, #58ab49 100%);
+}
+
+.hud-button[data-action="walk"].hud-button--available {
+    background: linear-gradient(180deg, #efffd6 0%, #b8ea8a 70%, #68ba56 100%);
+    box-shadow:
+        0 8px 0 rgba(21, 75, 36, 0.22),
+        0 12px 22px rgba(41, 104, 47, 0.2),
+        0 0 0 2px rgba(226, 252, 182, 0.75),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .hud-button[data-action="talk"] {

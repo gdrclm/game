@@ -1,5 +1,6 @@
 function handleClick(event) {
     const game = window.Game;
+    let hasRouteWarning = false;
 
     if (game.state.isPaused || game.state.isGameOver || game.state.isMapOpen) {
         return;
@@ -37,13 +38,6 @@ function handleClick(event) {
         ? game.systems.ui.getRouteLengthLimit()
         : baseMoveCellsPerTurn;
     const pathResult = game.systems.pathfinding.findPathResult(startX, startY, resolvedTarget.x, resolvedTarget.y);
-    const existingRoute = Array.isArray(game.state.route) ? game.state.route : [];
-    const existingRouteTarget = existingRoute.length > 0 ? existingRoute[existingRoute.length - 1] : null;
-    const isRepeatClickOnCurrentRoute = Boolean(
-        existingRouteTarget
-        && existingRouteTarget.x === resolvedTarget.x
-        && existingRouteTarget.y === resolvedTarget.y
-    );
 
     game.state.selectedWorldTile = { x: targetX, y: targetY };
     game.state.selectedWorldInteractionId = clickedInteraction ? clickedInteraction.id : null;
@@ -64,17 +58,7 @@ function handleClick(event) {
                 ? `Из-за недосыпа за ход удаётся спланировать только ${maxMoveCellsPerTurn} клетки.`
                 : `За один ход можно пройти не больше ${maxMoveCellsPerTurn} клеток.`
         );
-    }
-
-    if (
-        isRepeatClickOnCurrentRoute
-        && !game.state.isMoving
-        && existingRoute.length > 0
-        && game.systems.movement
-        && typeof game.systems.movement.startMovement === 'function'
-    ) {
-        game.systems.movement.startMovement();
-        return;
+        hasRouteWarning = true;
     }
 
     if (game.state.route.length > 0) {
@@ -85,16 +69,27 @@ function handleClick(event) {
         game.state.routeTotalCost = 0;
     }
 
+    if (
+        !hasRouteWarning
+        && game.systems.ui
+        && typeof game.systems.ui.setActionMessage === 'function'
+    ) {
+        game.systems.ui.setActionMessage('');
+    }
+
     if (game.systems.actionUi && typeof game.systems.actionUi.describeSelectedWorldTarget === 'function') {
-        game.systems.actionUi.describeSelectedWorldTarget({
+        const describedSelection = game.systems.actionUi.describeSelectedWorldTarget({
             tileInfo: clickedTileInfo,
             interaction: clickedInteraction
         });
-        return;
+
+        if (describedSelection) {
+            return;
+        }
     }
 
     if (game.systems.ui && typeof game.systems.ui.renderAfterStateChange === 'function') {
-        game.systems.ui.renderAfterStateChange(['location', 'actionHint']);
+        game.systems.ui.renderAfterStateChange(['location', 'actions', 'actionHint']);
         return;
     }
 
