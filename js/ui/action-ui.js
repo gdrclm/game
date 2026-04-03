@@ -620,7 +620,7 @@
                 ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
                 : '';
 
-            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми "Ходить" для подтверждения.${fullCostSuffix}`;
+            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми "Ходить" или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
         }
 
         if (selectedItem) {
@@ -985,7 +985,7 @@
                 ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
                 : '';
 
-            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми "Ходить" для подтверждения.${fullCostSuffix}`;
+            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми "Ходить" или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
         }
 
         if (selectedItem) {

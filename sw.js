@@ -1,4 +1,4 @@
-const APP_VERSION = '20260403o';
+const APP_VERSION = '20260403q';
 const STATIC_CACHE_NAME = `iso-game-static-${APP_VERSION}`;
 const RUNTIME_CACHE_NAME = `iso-game-runtime-${APP_VERSION}`;
 const CACHE_PREFIX = 'iso-game-';
