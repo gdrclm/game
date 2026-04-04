@@ -120,17 +120,21 @@
             && (definition.rarity === 'legendary' || (definition.categories || []).includes('value'));
     }
 
-    function itemMatchesRequirement(item, requirement, context = {}) {
-        const definition = item && item.id ? getItemDefinition(item.id) : null;
+    function definitionMatchesRequirement(definition, requirement, context = {}) {
         if (!definition || !requirement) {
             return false;
         }
 
-        const questCategories = getItemQuestCategories(item.id);
-        const currentIslandIndex = Math.max(1, context.currentIslandIndex || game.state.currentIslandIndex || 1);
+        if (Array.isArray(requirement.matchAny) && requirement.matchAny.length > 0) {
+            return requirement.matchAny.some((rule) => definitionMatchesRequirement(definition, rule, context));
+        }
 
+        const catalogCategories = new Set([
+            ...(Array.isArray(definition.categories) ? definition.categories : []),
+            ...buildQuestCategories(definition)
+        ]);
         if (Array.isArray(requirement.questCategories) && requirement.questCategories.length > 0) {
-            const intersects = requirement.questCategories.some((category) => questCategories.includes(category));
+            const intersects = requirement.questCategories.some((category) => catalogCategories.has(category));
             if (!intersects) {
                 return false;
             }
@@ -147,6 +151,16 @@
         if (requirement.uniqueOnly && !isUniqueValue(definition)) {
             return false;
         }
+
+        return true;
+    }
+
+    function itemMatchesRequirement(item, requirement, context = {}) {
+        const definition = item && item.id ? getItemDefinition(item.id) : null;
+        if (!definition || !requirement || !definitionMatchesRequirement(definition, requirement, context)) {
+            return false;
+        }
+        const currentIslandIndex = Math.max(1, context.currentIslandIndex || game.state.currentIslandIndex || 1);
 
         if (requirement.unusedOnly && Math.max(0, item.useCount || 0) > 0) {
             return false;
@@ -531,6 +545,7 @@
         const includeTierZero = Boolean(options.includeTierZero);
         const requiredCategories = Array.isArray(options.requiredCategories) ? options.requiredCategories : [];
         const preferredCategories = Array.isArray(options.preferredCategories) ? options.preferredCategories : [];
+        const preferredRequirements = Array.isArray(options.preferredRequirements) ? options.preferredRequirements.filter(Boolean) : [];
         const forbiddenCategories = Array.isArray(options.forbiddenCategories) ? options.forbiddenCategories : [];
         const excludedItemIds = new Set(Array.isArray(options.excludeItemIds) ? options.excludeItemIds : []);
         const includeItemIds = Array.isArray(options.includeItemIds) && options.includeItemIds.length > 0
@@ -566,11 +581,14 @@
                 }
 
                 const categories = Array.isArray(definition.categories) ? definition.categories : [];
-                if (requiredCategories.length > 0 && !requiredCategories.some((category) => categories.includes(category))) {
+                const questCategories = buildQuestCategories(definition);
+                const catalogCategories = new Set([...categories, ...questCategories]);
+
+                if (requiredCategories.length > 0 && !requiredCategories.some((category) => catalogCategories.has(category))) {
                     return null;
                 }
 
-                if (forbiddenCategories.some((category) => categories.includes(category))) {
+                if (forbiddenCategories.some((category) => catalogCategories.has(category))) {
                     return null;
                 }
 
@@ -593,8 +611,17 @@
                 }
 
                 if (preferredCategories.length > 0) {
-                    const matchCount = preferredCategories.filter((category) => categories.includes(category)).length;
-                    weight *= matchCount > 0 ? 1 + matchCount * 0.35 : 0.75;
+                    const matchCount = preferredCategories.filter((category) => catalogCategories.has(category)).length;
+                    weight *= matchCount > 0 ? 1 + Math.min(0.9, matchCount * 0.28) : 0.8;
+                }
+
+                if (preferredRequirements.length > 0) {
+                    const matchedRequirementCount = preferredRequirements.filter((requirement) => definitionMatchesRequirement(definition, requirement, {
+                        currentIslandIndex: islandIndex
+                    })).length;
+                    weight *= matchedRequirementCount > 0
+                        ? 1 + Math.min(1.1, matchedRequirementCount * 0.42)
+                        : 0.86;
                 }
 
                 if (weightKey === 'chestWeight' && chestLuck > 0) {
@@ -673,6 +700,7 @@
         getTierByIsland,
         getQuestCategoryLabel,
         getItemQuestCategories,
+        definitionMatchesRequirement,
         itemMatchesRequirement,
         requirementMatchesItem,
         evaluateRequirementMatches,

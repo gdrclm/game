@@ -70,8 +70,8 @@
         <main class="scene-column">
             <section class="scene-frame" id="sceneViewport">
                 <div class="scene-toolbar" aria-label="Игровое меню">
-                    <button id="mapButton" class="hud-button scene-toolbar__button" type="button" aria-label="Карта" title="Карта">Карта</button>
                     <button id="pauseButton" class="hud-button hud-button--pause scene-toolbar__button" type="button" aria-label="Пауза" title="Пауза">Пауза</button>
+                    <button id="mapButton" class="hud-button scene-toolbar__button" type="button" aria-label="Карта" title="Карта">Карта</button>
                 </div>
                 <div class="mobile-hud" aria-label="Мобильный интерфейс" hidden>
                     <div class="mobile-status-strip">
@@ -96,33 +96,42 @@
                             <span class="mobile-stat-chip__meter"><span id="mobileStatFocusBar"></span></span>
                         </div>
                     </div>
-                    <button id="mobileInventoryButton" class="mobile-bag-button" type="button" aria-label="Сумка">
-                        <span id="mobileInventoryBadge" class="mobile-bag-button__badge" hidden>0</span>
-                        <span class="mobile-bag-button__sr">Сумка</span>
-                    </button>
+                    <div class="mobile-hint-panel" aria-live="polite">
+                        <p id="mobileHintText" class="panel-copy">Выдели клетку или объект, чтобы увидеть подсказку.</p>
+                    </div>
                     <div class="mobile-controls">
-                        <button id="mobileWalkButton" class="mobile-walk-button" type="button" aria-label="Ходить">
-                            <span class="mobile-walk-button__label">Ходить</span>
+                        <button id="mobileWalkButton" class="mobile-walk-button" type="button" aria-label="Двигаться дальше" title="Двигаться дальше">
+                            <span class="mobile-walk-button__label">Двигаться дальше</span>
                         </button>
-                        <nav class="mobile-dock" aria-label="Мобильные панели">
-                            <button id="mobileSummaryButton" class="mobile-dock__button mobile-dock__button--summary" type="button">
-                                <span class="mobile-dock__label">Сводка</span>
+                        <div id="mobileActionRack" class="mobile-action-rack" aria-label="Быстрые действия">
+                            <button id="mobileUseButton" class="mobile-quick-action mobile-quick-action--use" type="button" aria-label="Использовать" title="Использовать">
+                                <span class="mobile-quick-action__label">Использовать</span>
                             </button>
-                            <button id="mobileQuestButton" class="mobile-dock__button mobile-dock__button--quests" type="button">
+                            <button id="mobileSleepButton" class="mobile-quick-action mobile-quick-action--sleep" type="button" aria-label="Спать" title="Спать">
+                                <span class="mobile-quick-action__label">Спать</span>
+                            </button>
+                            <button id="mobileInspectButton" class="mobile-quick-action mobile-quick-action--inspect" type="button" aria-label="Изучить" title="Изучить">
+                                <span class="mobile-quick-action__label">Изучить</span>
+                            </button>
+                            <button id="mobileInventoryButton" class="mobile-dock__button mobile-dock__button--inventory" type="button" aria-label="Сумка" title="Сумка">
+                                <span id="mobileInventoryBadge" class="mobile-dock__badge" hidden>0</span>
+                                <span class="mobile-dock__label">Сумка</span>
+                            </button>
+                            <button id="mobileQuestButton" class="mobile-dock__button mobile-dock__button--quests" type="button" aria-label="Квесты" title="Квесты" hidden>
                                 <span id="mobileQuestBadge" class="mobile-dock__badge" hidden>0</span>
                                 <span class="mobile-dock__label">Квесты</span>
                             </button>
-                            <button id="mobileActionsButton" class="mobile-dock__button mobile-dock__button--actions" type="button">
-                                <span class="mobile-dock__label">Действия</span>
+                            <button id="mobileTalkButton" class="mobile-quick-action mobile-quick-action--talk mobile-quick-action--context" type="button" aria-label="Говорить" title="Говорить" hidden>
+                                <span class="mobile-quick-action__label">Говорить</span>
                             </button>
-                            <button id="mobileMapLauncher" class="mobile-dock__button mobile-dock__button--map" type="button">
-                                <span class="mobile-dock__label">Карта</span>
+                            <button id="mobileDropButton" class="mobile-quick-action mobile-quick-action--drop mobile-quick-action--context" type="button" aria-label="Бросить" title="Бросить" hidden>
+                                <span class="mobile-quick-action__label">Бросить</span>
                             </button>
-                        </nav>
+                        </div>
                     </div>
                 </div>
                 <div id="instructions" class="overlay-card">
-                    Кликайте по клеткам, чтобы выбрать маршрут. Нажмите "Ходить" или кликните по той же клетке ещё раз.
+                    Кликайте по клеткам, чтобы выбрать маршрут. Нажмите кнопку движения или кликните по той же клетке ещё раз.
                     Камни блокируют путь, а мосты помогают пересекать воду.
                 </div>
                 <!-- <div id="debugPanel" class="overlay-card overlay-card--debug" aria-live="polite"></div> -->
@@ -135,6 +144,7 @@
                         <h2 id="statusOverlayTitle" class="hud-title hud-title--compact">Пауза</h2>
                         <div class="pause-overlay__actions">
                             <button id="pauseResumeButton" class="hud-button hud-button--pause" type="button">Продолжить</button>
+                            <button id="newGameButton" class="hud-button hud-button--new-game" type="button">Новая игра</button>
                             <button id="installButton" class="hud-button hud-button--install" type="button" hidden>Установить</button>
                         </div>
                         <p id="pwaStatus" class="panel-copy pwa-status" aria-live="polite">
@@ -260,6 +270,7 @@
     <script src="js/quests/bag-upgrade-runtime.js"></script>
     <script src="js/quests/quest-runtime.js"></script>
     <script src="js/economy/shop-runtime.js"></script>
+    <script src="js/economy/courier-runtime.js"></script>
     <script src="js/loot-system.js"></script>
     <script src="js/expedition-system.js"></script>
     <script src="js/expedition/expedition-shared.js"></script>

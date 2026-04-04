@@ -59,6 +59,29 @@
         }
     };
 
+    const settlementDefinitions = {
+        fishing: {
+            label: 'Рыбацкое поселение',
+            summary: 'Водные кромки заняты рыбаками, запасами еды и домами у берега.'
+        },
+        trade: {
+            label: 'Торговый перевал',
+            summary: 'Больше обмена, складов и домов, где каждая остановка превращается в сделку.'
+        },
+        craft: {
+            label: 'Ремесленная слобода',
+            summary: 'Мастерские и рабочие дома формируют остров, где путь часто ведёт через полезные, но дорогие решения.'
+        },
+        rich: {
+            label: 'Богатое поселение',
+            summary: 'Глубокие кварталы заняты богатыми домами, редкостями и дорогими шансами.'
+        },
+        ruined: {
+            label: 'Полузаброшенное поселение',
+            summary: 'Остров живой лишь частично: пустые дома, странные жители и ценные остатки прошлого стоят дорого.'
+        }
+    };
+
     function getWorldLayoutPlan() {
         if (worldLayoutPlan) {
             return worldLayoutPlan;
@@ -94,6 +117,100 @@
 
     function getScenarioDefinition(scenario) {
         return scenarioDefinitions[scenario] || scenarioDefinitions.normal;
+    }
+
+    function getSettlementDefinition(settlementType) {
+        return settlementDefinitions[settlementType] || null;
+    }
+
+    function pickWeightedKey(weightMap, random, fallbackKey = 'fishing') {
+        const entries = Object.entries(weightMap)
+            .filter(([, weight]) => Number.isFinite(weight) && weight > 0);
+        const totalWeight = entries.reduce((sum, [, weight]) => sum + weight, 0);
+
+        if (entries.length === 0 || totalWeight <= 0) {
+            return fallbackKey;
+        }
+
+        let roll = random() * totalWeight;
+
+        for (const [key, weight] of entries) {
+            roll -= weight;
+            if (roll <= 0) {
+                return key;
+            }
+        }
+
+        return entries[entries.length - 1][0];
+    }
+
+    function getSettlementStage(islandIndex, isFinalIsland = false) {
+        if (isFinalIsland || islandIndex >= finalIslandIndex) {
+            return 'final';
+        }
+
+        if (islandIndex >= 21) {
+            return 'village';
+        }
+
+        if (islandIndex >= 18) {
+            return 'protoVillage';
+        }
+
+        if (islandIndex >= 13) {
+            return 'hamlet';
+        }
+
+        if (islandIndex >= 8) {
+            return 'outpost';
+        }
+
+        return 'wild';
+    }
+
+    function chooseSettlementType(islandIndex, random, archetype, scenario) {
+        if (islandIndex < 18 || islandIndex >= finalIslandIndex) {
+            return null;
+        }
+
+        const weights = {
+            fishing: 2.6,
+            trade: 2.2,
+            craft: 2.1,
+            rich: islandIndex >= 21 ? 1.9 : 1.35,
+            ruined: islandIndex >= 21 ? 1.7 : 1.2
+        };
+
+        if (scenario === 'tradeIsland') {
+            weights.trade += 3.6;
+            weights.rich += 1.4;
+        } else if (scenario === 'trapIsland') {
+            weights.ruined += 3.2;
+        } else if (scenario === 'jackpotIsland') {
+            weights.rich += 3;
+            weights.trade += 1.2;
+        } else if (scenario === 'noHouseIsland') {
+            weights.ruined += 4.5;
+        }
+
+        if (archetype === 'golden') {
+            weights.rich += 3.5;
+        } else if (archetype === 'greedy') {
+            weights.trade += 1.8;
+            weights.ruined += 1.2;
+        } else if (archetype === 'emptyGiant') {
+            weights.fishing += 0.8;
+            weights.ruined += 2.4;
+        }
+
+        if (islandIndex >= 23) {
+            weights.rich += 0.8;
+            weights.trade += 0.7;
+            weights.craft += 0.5;
+            weights.ruined += 0.7;
+        }
+
+        return pickWeightedKey(weights, random, 'fishing');
     }
 
     function chooseArchetype(islandIndex, random) {
@@ -316,12 +433,30 @@
         const archetypeDefinition = getArchetypeDefinition(archetype);
         const scenario = chooseScenario(islandIndex, random, archetype);
         const scenarioDefinition = getScenarioDefinition(scenario);
+        const isFinalIsland = islandIndex >= finalIslandIndex;
+        const settlementStage = getSettlementStage(islandIndex, isFinalIsland);
+        const settlementType = chooseSettlementType(islandIndex, random, archetype, scenario);
+        const settlementDefinition = getSettlementDefinition(settlementType);
         const routeStyle = chooseRouteStyle(islandIndex, contourKind, random);
         const distanceFactor = Math.max(0, islandIndex - 1);
         let drainMultiplier = clamp(1 + distanceFactor * 0.1, 1, 3.9);
         const recoveryMultiplier = clamp(1 - (islandIndex - 1) * 0.012, 0.55, 1);
         let baseHouses = islandIndex <= 1 ? 0 : (islandIndex <= 3 ? 1 : (islandIndex <= 10 ? 2 : 3));
         let islandHouseBudget = islandIndex <= 1 ? 0 : (islandIndex === 2 ? 1 : 3);
+
+        if (settlementStage === 'outpost') {
+            baseHouses += 1;
+            islandHouseBudget += 1;
+        } else if (settlementStage === 'hamlet') {
+            baseHouses += 1;
+            islandHouseBudget += 2 + Math.floor(chunkCount / 5);
+        } else if (settlementStage === 'protoVillage') {
+            baseHouses += 2;
+            islandHouseBudget += 4 + Math.floor(chunkCount / 4);
+        } else if (settlementStage === 'village') {
+            baseHouses += 2;
+            islandHouseBudget += 5 + Math.floor(chunkCount / 3);
+        }
 
         if (scenario === 'tradeIsland') {
             baseHouses += 1;
@@ -336,12 +471,28 @@
             islandHouseBudget = 0;
         }
 
-        const label = scenario === 'normal'
+        if (settlementType === 'trade') {
+            islandHouseBudget += 2;
+        } else if (settlementType === 'craft') {
+            islandHouseBudget += 1;
+        } else if (settlementType === 'rich') {
+            islandHouseBudget += 1;
+            drainMultiplier = clamp(drainMultiplier + 0.08, 1, 4.15);
+        } else if (settlementType === 'ruined') {
+            islandHouseBudget = Math.max(1, islandHouseBudget - 1);
+            drainMultiplier = clamp(drainMultiplier + 0.1, 1, 4.2);
+        }
+
+        const baseLabel = scenario === 'normal'
             ? archetypeDefinition.label
             : scenarioDefinition.label;
-        const summary = scenario === 'normal'
+        const baseSummary = scenario === 'normal'
             ? archetypeDefinition.summary
             : `${scenarioDefinition.summary} Базовый архетип: ${archetypeDefinition.label.toLowerCase()}.`;
+        const label = settlementDefinition ? settlementDefinition.label : baseLabel;
+        const summary = settlementDefinition
+            ? `${settlementDefinition.summary} ${baseSummary}`
+            : baseSummary;
 
         return {
             islandIndex,
@@ -352,6 +503,10 @@
             scenario,
             scenarioLabel: scenarioDefinition.label,
             scenarioSummary: scenarioDefinition.summary,
+            settlementStage,
+            settlementType,
+            settlementLabel: settlementDefinition ? settlementDefinition.label : '',
+            settlementSummary: settlementDefinition ? settlementDefinition.summary : '',
             label,
             summary,
             movementCostMultiplier: drainMultiplier,
@@ -360,10 +515,17 @@
             rockCountMin: islandIndex <= 1 ? 0 : clamp(1 + Math.floor(islandIndex / 3), 1, 9),
             rockCountMax: islandIndex <= 1 ? 0 : clamp(3 + Math.floor(islandIndex / 2), 3, 14),
             housesPerChunkMin: baseHouses === 0 ? 0 : (baseHouses - 1),
-            housesPerChunkMax: clamp(baseHouses + (islandIndex >= 12 ? 1 : 0), 0, 4),
+            housesPerChunkMax: clamp(
+                baseHouses
+                    + (islandIndex >= 12 ? 1 : 0)
+                    + (settlementStage === 'protoVillage' ? 1 : 0)
+                    + (settlementStage === 'village' ? 1 : 0),
+                0,
+                6
+            ),
             islandHouseBudget,
             grassTone: clamp(0.06 + islandIndex * 0.011, 0.06, 0.28),
-            isFinalIsland: islandIndex >= finalIslandIndex
+            isFinalIsland
         };
     }
 

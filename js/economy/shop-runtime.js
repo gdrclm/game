@@ -110,6 +110,55 @@
         }
     }
 
+    const merchantRoleProfiles = {
+        merchant: {
+            stockCategories: [],
+            questCategories: [],
+            stockCountDelta: 0
+        },
+        fisherman: {
+            stockCategories: ['food', 'survival', 'consumable', 'utility'],
+            questCategories: ['tool', 'survival', 'value'],
+            stockCountDelta: -1
+        },
+        bridgewright: {
+            stockCategories: ['movement', 'tool', 'utility'],
+            questCategories: ['movement', 'tool', 'value'],
+            stockCountDelta: 0
+        },
+        junkDealer: {
+            stockCategories: ['value', 'risk', 'tool', 'material'],
+            questCategories: ['value', 'risk', 'tool'],
+            stockCountDelta: 1
+        },
+        storyteller: {
+            stockCategories: ['utility', 'consumable', 'value'],
+            questCategories: ['utility', 'value'],
+            stockCountDelta: -1
+        },
+        exchanger: {
+            stockCategories: ['value', 'utility', 'artifact', 'consumable'],
+            questCategories: ['value', 'utility', 'movement'],
+            stockCountDelta: 0,
+            minTier: 2
+        },
+        quartermaster: {
+            stockCategories: ['survival', 'food', 'tool', 'consumable'],
+            questCategories: ['survival', 'tool', 'movement'],
+            stockCountDelta: 0
+        },
+        collector: {
+            stockCategories: ['value', 'artifact', 'legendary', 'utility'],
+            questCategories: ['value', 'artifact', 'risk'],
+            stockCountDelta: -1,
+            minTier: 3
+        }
+    };
+
+    function getMerchantRoleProfile(merchantRole = 'merchant') {
+        return merchantRoleProfiles[merchantRole] || merchantRoleProfiles.merchant;
+    }
+
     function getBaseQuantityForDefinition(definition, islandTier, random) {
         if (!definition) {
             return 1;
@@ -131,23 +180,36 @@
         return randomRange(random, 1, 2);
     }
 
-    function getCatalogSelectorOptions(weightKey, islandIndex) {
+    function getCatalogSelectorOptions(weightKey, islandIndex, options = {}) {
         const islandTier = Math.max(1, getTierByIsland(islandIndex));
         const bagUpgradeRuntime = getBagUpgradeRuntime();
+        const roleProfile = getMerchantRoleProfile(options.merchantRole);
         const activeQuestBias = bagUpgradeRuntime && typeof bagUpgradeRuntime.getActiveBagQuestGenerationBias === 'function'
             ? bagUpgradeRuntime.getActiveBagQuestGenerationBias(islandIndex)
             : null;
         const preferredCategories = [
+            ...(weightKey === 'merchantQuestWeight'
+                ? roleProfile.questCategories || []
+                : roleProfile.stockCategories || []),
             ...(weightKey === 'merchantQuestWeight' ? getMerchantQuestBias(islandTier) : getMerchantCategoryBias(islandTier)),
             ...(activeQuestBias ? activeQuestBias.preferredCategories : [])
         ].filter((category, index, list) => category && list.indexOf(category) === index);
+        const roleMinTier = Number.isFinite(roleProfile.minTier)
+            ? Math.min(roleProfile.minTier, islandTier)
+            : undefined;
+        const activeQuestMinTier = activeQuestBias && Number.isFinite(activeQuestBias.minTier)
+            ? Math.min(activeQuestBias.minTier, islandTier)
+            : undefined;
 
         return {
             includeTierZero: weightKey === 'merchantQuestWeight',
             preferredCategories,
-            minTier: activeQuestBias && Number.isFinite(activeQuestBias.minTier)
-                ? Math.min(activeQuestBias.minTier, islandTier)
-                : undefined
+            preferredRequirements: activeQuestBias && Array.isArray(activeQuestBias.preferredRequirements)
+                ? activeQuestBias.preferredRequirements
+                : [],
+            minTier: Number.isFinite(activeQuestMinTier)
+                ? Math.max(activeQuestMinTier, roleMinTier || 0)
+                : roleMinTier
         };
     }
 
@@ -217,14 +279,18 @@
         return encounter.shopId;
     }
 
-    function createMerchantStock(islandIndex, random) {
+    function createMerchantStock(islandIndex, random, options = {}) {
         const registry = getItemRegistry();
         const pricing = getPricingSystem();
         const islandTier = Math.max(1, getTierByIsland(islandIndex));
-        const options = getCatalogSelectorOptions('merchantWeight', islandIndex);
-        const stockCount = Math.max(3, Math.min(6, 3 + Math.floor((Math.max(1, islandIndex) - 1) / 6)));
+        const selectorOptions = getCatalogSelectorOptions('merchantWeight', islandIndex, options);
+        const roleProfile = getMerchantRoleProfile(options.merchantRole);
+        const stockCount = Math.max(
+            2,
+            Math.min(7, 3 + Math.floor((Math.max(1, islandIndex) - 1) / 6) + (roleProfile.stockCountDelta || 0))
+        );
         const definitions = registry && typeof registry.pickUniqueWeightedCatalogDefinitions === 'function'
-            ? registry.pickUniqueWeightedCatalogDefinitions('merchantWeight', islandIndex, random, stockCount, options)
+            ? registry.pickUniqueWeightedCatalogDefinitions('merchantWeight', islandIndex, random, stockCount, selectorOptions)
             : [];
 
         return definitions.map((definition, index) => ({
@@ -239,12 +305,12 @@
         }));
     }
 
-    function createMerchantQuest(islandIndex, random) {
+    function createMerchantQuest(islandIndex, random, options = {}) {
         const registry = getItemRegistry();
         const rewardScaling = getRewardScalingSystem();
-        const options = getCatalogSelectorOptions('merchantQuestWeight', islandIndex);
+        const selectorOptions = getCatalogSelectorOptions('merchantQuestWeight', islandIndex, options);
         const definition = registry && typeof registry.pickWeightedCatalogDefinition === 'function'
-            ? registry.pickWeightedCatalogDefinition('merchantQuestWeight', islandIndex, random, options)
+            ? registry.pickWeightedCatalogDefinition('merchantQuestWeight', islandIndex, random, selectorOptions)
             : null;
 
         if (!definition) {
@@ -270,11 +336,13 @@
         };
     }
 
-    function createMerchantEncounterProfile(islandIndex, random) {
+    function createMerchantEncounterProfile(islandIndex, random, options = {}) {
+        const merchantRole = options.merchantRole || 'merchant';
         return {
             kind: 'merchant',
-            label: 'Странствующий торговец',
-            summary: 'Торговец принимает заказы, скупает находки и продаёт полезные припасы для переходов.',
+            merchantRole,
+            label: options.label || 'Странствующий торговец',
+            summary: options.summary || 'Торговец принимает заказы, скупает находки и продаёт полезные припасы для переходов.',
             tradeCost: 10 + islandIndex * 4,
             tradeReward: {
                 hunger: 12 + islandIndex,
@@ -282,8 +350,8 @@
                 sleep: 6 + Math.floor(islandIndex * 0.5),
                 focus: 4 + Math.floor(islandIndex * 0.4)
             },
-            stock: createMerchantStock(islandIndex, random),
-            quest: createMerchantQuest(islandIndex, random)
+            stock: createMerchantStock(islandIndex, random, { merchantRole }),
+            quest: createMerchantQuest(islandIndex, random, { merchantRole })
         };
     }
 

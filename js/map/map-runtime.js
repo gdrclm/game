@@ -171,6 +171,27 @@
         return Object.keys(explored).length;
     }
 
+    function clearPersistedExploration() {
+        hasRestoredPersistedState = false;
+
+        if (persistTimerId) {
+            window.clearTimeout(persistTimerId);
+            persistTimerId = null;
+        }
+
+        if (typeof localStorage === 'undefined') {
+            return false;
+        }
+
+        try {
+            localStorage.removeItem(MAP_STORAGE_KEY);
+            return true;
+        } catch (error) {
+            console.warn('Map persistence clear failed:', error);
+            return false;
+        }
+    }
+
     function isVisibleOnScreen(worldX, worldY) {
         if (!game.systems.camera || typeof game.systems.camera.isoToScreen !== 'function') {
             return false;
@@ -203,7 +224,7 @@
         return {
             houseId: house.id,
             houseKind: expedition.kind || 'house',
-            houseLabel: expedition.label || 'Дом',
+            houseLabel: expedition.locationLabel || expedition.label || 'Дом',
             markerX,
             markerY,
             isQuestGiver: hasQuest
@@ -318,7 +339,9 @@
             houseMarkerY: houseMarker ? houseMarker.markerY : 0,
             isQuestGiver: houseMarker ? houseMarker.isQuestGiver : false,
             interactionKind: interaction ? interaction.kind || '' : '',
-            interactionLabel: interaction && interaction.expedition ? interaction.expedition.label || '' : ''
+            interactionLabel: interaction && interaction.expedition
+                ? interaction.expedition.locationLabel || interaction.expedition.label || ''
+                : ''
         };
     }
 
@@ -501,6 +524,7 @@
         revealIslandByIndex,
         revealMerchantOnIsland,
         revealBestHouseOnIsland,
+        clearPersistedExploration,
         getPersistedWorldSeed,
         persistExploration,
         restorePersistedExploration

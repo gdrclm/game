@@ -1298,6 +1298,7 @@
             statusOverlayMessage: document.getElementById('statusOverlayMessage'),
             pauseButton: document.getElementById('pauseButton'),
             pauseResumeButton: document.getElementById('pauseResumeButton'),
+            newGameButton: document.getElementById('newGameButton'),
             inventoryGrid: document.getElementById('inventoryGrid'),
             selectedCharacterPortrait: document.getElementById('selectedCharacterPortrait'),
             selectedCharacterName: document.getElementById('selectedCharacterName'),
@@ -1425,7 +1426,7 @@
                 elements.locationSummary.textContent = `Рядом: ${encounter.label}`;
             } else {
             elements.locationSummary.textContent = activeHouse
-                ? `Локация: ${activeHouse.expedition ? activeHouse.expedition.label : activeHouse.id}`
+                ? `Локация: ${activeHouse.expedition ? (activeHouse.expedition.locationLabel || activeHouse.expedition.label) : activeHouse.id}`
                 : `Локация: ${getTileLabel(tileInfo ? tileInfo.tileType : 'grass')}`;
             }
         }
@@ -1481,7 +1482,7 @@
         } else if (encounter) {
             stateLabel = `Рядом: ${encounter.label}`;
         } else if (activeHouse && activeHouse.expedition) {
-            stateLabel = `В доме: ${activeHouse.expedition.label}`;
+            stateLabel = `В доме: ${activeHouse.expedition.locationLabel || activeHouse.expedition.label}`;
         }
 
         if (elements.selectedCharacterName) {
@@ -1510,7 +1511,7 @@
                 elements.locationSummary.textContent = `Рядом: ${encounter.label}`;
             } else {
                 elements.locationSummary.textContent = activeHouse
-                    ? `Локация: ${activeHouse.expedition ? activeHouse.expedition.label : activeHouse.id}`
+                    ? `Локация: ${activeHouse.expedition ? (activeHouse.expedition.locationLabel || activeHouse.expedition.label) : activeHouse.id}`
                     : `Локация: ${getTileLabel(tileInfo ? tileInfo.tileType : 'grass')}`;
             }
         }
@@ -1597,7 +1598,7 @@
         } else if (encounter) {
             stateLabel = `Рядом: ${encounter.label}`;
         } else if (activeHouse && activeHouse.expedition) {
-            stateLabel = `В доме: ${activeHouse.expedition.label}`;
+            stateLabel = `В доме: ${activeHouse.expedition.locationLabel || activeHouse.expedition.label}`;
         }
 
         if (elements.selectedCharacterName) {
@@ -2675,9 +2676,22 @@
 
     function resolveHouseUse(source) {
         const encounter = getHouseEncounter(source);
+        const dialogueRuntime = game.systems.dialogueRuntime || null;
 
         if (!encounter) {
             setActionMessage('Внутри пусто. Здесь нет полезного события.');
+            renderAfterStateChange();
+            return;
+        }
+
+        if (
+            source
+            && encounter.kind !== 'shelter'
+            && dialogueRuntime
+            && typeof dialogueRuntime.canStartDialogue === 'function'
+            && dialogueRuntime.canStartDialogue(source)
+        ) {
+            dialogueRuntime.startDialogue(source);
             renderAfterStateChange();
             return;
         }
@@ -2803,6 +2817,12 @@
                 ? 'Квест уже выполнен.'
                 : 'Есть квест, покупки и скупка товаров.';
             setActionMessage(`${encounter.label}: ${encounter.summary} ${questStatus}`);
+            renderAfterStateChange();
+            return;
+        }
+
+        if (encounter.kind === 'islandOriginalNpc') {
+            setActionMessage(`${encounter.label}: ${encounter.advice || encounter.description || encounter.summary}`);
             renderAfterStateChange();
             return;
         }
@@ -2938,6 +2958,16 @@
         if (elements.pauseResumeButton) {
             elements.pauseResumeButton.addEventListener('click', () => {
                 togglePause();
+            });
+        }
+
+        if (elements.newGameButton) {
+            elements.newGameButton.addEventListener('click', () => {
+                const statusUi = getStatusUiModule();
+
+                if (statusUi && typeof statusUi.startNewGame === 'function') {
+                    statusUi.startNewGame();
+                }
             });
         }
 
@@ -3078,7 +3108,7 @@
             getMobileUiModule().initialize();
         }
         if (elements.instructions) {
-            elements.instructions.textContent = 'Кликайте по клеткам, чтобы выбрать маршрут. Кнопка "Ходить", пробел или повторный клик по той же клетке запускают выбранный путь. Тропа и мосты экономят силы, тростник и осыпь утяжеляют путь, а грязь и хрупкие мосты лучше обходить.';
+            elements.instructions.textContent = 'Кликайте по клеткам, чтобы выбрать маршрут. Кнопка движения, пробел или повторный клик по той же клетке запускают выбранный путь. Тропа и мосты экономят силы, тростник и осыпь утяжеляют путь, а грязь и хрупкие мосты лучше обходить.';
         }
         markDirty();
     }

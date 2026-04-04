@@ -201,6 +201,137 @@
         context.restore();
     }
 
+    function drawIslandOriginalNpc(screenX, baseY, interaction, resolved) {
+        const context = window.Game.ctx;
+        const expedition = interaction && interaction.expedition ? interaction.expedition : {};
+        const role = expedition.visualRole || 'wanderer';
+        const palette = {
+            fisher: { coat: '#3d7fb1', trim: '#9ed7ff', prop: '#8a6a3e', accent: '#ffd36f' },
+            bridgewright: { coat: '#7b5a35', trim: '#d7b37a', prop: '#b88a52', accent: '#8fd5ff' },
+            herbalist: { coat: '#557a41', trim: '#c4e59d', prop: '#86c66c', accent: '#f4da75' },
+            storyteller: { coat: '#6a476f', trim: '#e2b7ff', prop: '#d4b36e', accent: '#9fe7ff' },
+            ferryman: { coat: '#355d7b', trim: '#b7dff7', prop: '#b68855', accent: '#f7d78c' },
+            cook: { coat: '#8b5633', trim: '#ffd59c', prop: '#d8b972', accent: '#ff996c' },
+            leatherworker: { coat: '#72503c', trim: '#dfc29a', prop: '#b7865c', accent: '#9fe88a' },
+            quartermaster: { coat: '#586876', trim: '#d2e5f2', prop: '#c7a665', accent: '#ffe17c' },
+            watcher: { coat: '#49566d', trim: '#d6deef', prop: '#d6c074', accent: '#9fe7ff' },
+            junker: { coat: '#6c5f4d', trim: '#d0c2a0', prop: '#9c8667', accent: '#ffb572' },
+            beekeeper: { coat: '#826b2b', trim: '#ffe48a', prop: '#a57f3a', accent: '#fff0a8' },
+            cartographer: { coat: '#5e6b4b', trim: '#dce9ba', prop: '#d2b37c', accent: '#86d7ff' },
+            collector: { coat: '#6a4e2b', trim: '#ffd79b', prop: '#e6c76f', accent: '#8df5da' },
+            exchanger: { coat: '#7c4d41', trim: '#ffd2c8', prop: '#dfc16d', accent: '#ffe785' },
+            hermit: { coat: '#5c6250', trim: '#dce2cb', prop: '#b59c6c', accent: '#a7d5ff' },
+            wanderer: { coat: '#5c5c72', trim: '#d7d7eb', prop: '#bfa372', accent: '#ffe08a' }
+        }[role] || {
+            coat: '#5c5c72',
+            trim: '#d7d7eb',
+            prop: '#bfa372',
+            accent: '#ffe08a'
+        };
+
+        drawShadow(screenX, baseY + 3, 11, 5);
+
+        context.save();
+        context.translate(screenX, baseY);
+
+        context.fillStyle = palette.coat;
+        context.beginPath();
+        context.moveTo(-10, -5);
+        context.lineTo(-6, -19);
+        context.lineTo(6, -19);
+        context.lineTo(10, -5);
+        context.lineTo(4, 0);
+        context.lineTo(-4, 0);
+        context.closePath();
+        context.fill();
+
+        context.fillStyle = palette.trim;
+        context.fillRect(-2, -18, 4, 14);
+        context.fillRect(-8, -5, 16, 2);
+
+        context.fillStyle = '#e5cfb2';
+        context.beginPath();
+        context.arc(0, -25, 6.5, 0, Math.PI * 2);
+        context.fill();
+
+        context.fillStyle = palette.accent;
+        context.fillRect(-9, -34, 18, 5);
+        context.fillRect(-5, -39, 10, 6);
+
+        context.fillStyle = '#433322';
+        context.fillRect(-3, -2, 2.6, 8);
+        context.fillRect(0.4, -2, 2.6, 8);
+
+        context.fillStyle = palette.prop;
+
+        if (role === 'fisher' || role === 'ferryman') {
+            context.fillRect(9, -28, 2, 26);
+            context.strokeStyle = palette.accent;
+            context.lineWidth = 1.4;
+            context.beginPath();
+            context.moveTo(10, -28);
+            context.quadraticCurveTo(19, -33, 17, -18);
+            context.stroke();
+            context.fillStyle = palette.accent;
+            context.beginPath();
+            context.arc(16, -17, 2.2, 0, Math.PI * 2);
+            context.fill();
+        } else if (role === 'bridgewright') {
+            context.fillRect(9, -17, 9, 5);
+            context.fillRect(12, -23, 3, 14);
+        } else if (role === 'herbalist' || role === 'beekeeper') {
+            context.beginPath();
+            context.arc(12, -14, 4, 0, Math.PI * 2);
+            context.arc(16, -18, 3, 0, Math.PI * 2);
+            context.arc(8, -18, 3, 0, Math.PI * 2);
+            context.fill();
+        } else if (role === 'storyteller' || role === 'cartographer') {
+            context.fillRect(10, -18, 9, 12);
+            context.fillStyle = palette.trim;
+            context.fillRect(12, -16, 5, 8);
+        } else if (role === 'collector' || role === 'exchanger') {
+            context.beginPath();
+            context.arc(14, -14, 4.2, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = palette.accent;
+            context.beginPath();
+            context.arc(14, -14, 1.7, 0, Math.PI * 2);
+            context.fill();
+        } else if (role === 'quartermaster' || role === 'watcher') {
+            context.fillRect(10, -19, 7, 11);
+            context.fillStyle = palette.accent;
+            context.fillRect(12, -17, 3, 7);
+        } else if (role === 'junker' || role === 'leatherworker') {
+            context.fillRect(10, -16, 8, 8);
+            context.beginPath();
+            context.arc(9, -10, 3, 0, Math.PI * 2);
+            context.fill();
+        } else if (role === 'cook') {
+            context.beginPath();
+            context.arc(14, -13, 4.5, 0, Math.PI * 2);
+            context.fill();
+            context.strokeStyle = palette.trim;
+            context.lineWidth = 1.2;
+            context.beginPath();
+            context.moveTo(18, -18);
+            context.lineTo(21, -22);
+            context.stroke();
+        } else if (role === 'hermit') {
+            context.fillRect(10, -25, 2, 24);
+            context.fillStyle = palette.accent;
+            context.beginPath();
+            context.arc(11, -27, 3.5, 0, Math.PI * 2);
+            context.fill();
+        }
+
+        if (resolved) {
+            context.fillStyle = 'rgba(205, 205, 205, 0.38)';
+            context.fillRect(-18, -42, 38, 46);
+        }
+
+        context.restore();
+    }
+
     function drawShelter(screenX, baseY, resolved) {
         const context = window.Game.ctx;
 
@@ -379,6 +510,11 @@
 
         if (interaction.kind === 'artisan') {
             drawArtisan(screenX, baseY, resolved);
+            return;
+        }
+
+        if (interaction.kind === 'islandOriginalNpc') {
+            drawIslandOriginalNpc(screenX, baseY, interaction, resolved);
             return;
         }
 

@@ -211,10 +211,10 @@
 
         const context = portraitCanvas.getContext('2d');
         const { width, height } = portraitCanvas;
-        const sprite = game.assets.playerSprite;
-        const spriteFrames = game.config.playerSprite.frames;
-        const direction = game.state.playerFacing || 'south';
-        const frame = spriteFrames[direction] || spriteFrames.south;
+        const playerRenderer = game.systems.playerRenderer || null;
+        const frame = playerRenderer && typeof playerRenderer.getCurrentFrame === 'function'
+            ? playerRenderer.getCurrentFrame()
+            : null;
 
         context.clearRect(0, 0, width, height);
         context.fillStyle = '#efe4b9';
@@ -223,7 +223,7 @@
         context.fillRect(0, height - 18, width, 18);
         context.imageSmoothingEnabled = false;
 
-        if (!sprite || !sprite.complete || !sprite.naturalWidth || !frame) {
+        if (!frame || !frame.image) {
             drawFallbackPortrait(context, width);
             return;
         }
@@ -239,7 +239,7 @@
             context.translate(drawX + drawWidth, drawY);
             context.scale(-1, 1);
             context.drawImage(
-                sprite,
+                frame.image,
                 frame.sourceX,
                 frame.sourceY,
                 frame.sourceWidth,
@@ -251,7 +251,7 @@
             );
         } else {
             context.drawImage(
-                sprite,
+                frame.image,
                 frame.sourceX,
                 frame.sourceY,
                 frame.sourceWidth,

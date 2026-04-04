@@ -2,6 +2,16 @@
     const game = window.Game;
     const bagUpgradeRuntime = game.systems.bagUpgradeRuntime = game.systems.bagUpgradeRuntime || {};
     const BAG_SLOT_CAP = 10;
+    const slotQuestFocusLabels = {
+        food: 'еда',
+        survival: 'выживание',
+        consumable: 'расходники',
+        movement: 'движение',
+        tool: 'инструменты',
+        utility: 'утилита',
+        value: 'ценности',
+        risk: 'проклятые'
+    };
 
     function getBagUpgradeData() {
         return game.systems.bagUpgradeData || null;
@@ -104,6 +114,16 @@
             .filter(Boolean);
     }
 
+    function appendUniqueLabel(target, seen, label) {
+        const normalized = String(label || '').trim();
+        if (!normalized || seen.has(normalized)) {
+            return;
+        }
+
+        seen.add(normalized);
+        target.push(normalized);
+    }
+
     function getRequirementRules(requirement) {
         if (!requirement) {
             return [];
@@ -162,6 +182,35 @@
         return tags;
     }
 
+    function getRequirementFocusLabelList(requirement) {
+        const labels = [];
+        const seen = new Set();
+
+        getRequirementRules(requirement).forEach((rule) => {
+            (Array.isArray(rule.questCategories) ? rule.questCategories : []).forEach((category) => {
+                appendUniqueLabel(labels, seen, slotQuestFocusLabels[category] || category);
+            });
+
+            if (Number.isFinite(rule.minTier) && rule.minTier >= 4) {
+                appendUniqueLabel(labels, seen, 'топовые');
+            }
+
+            if (rule.uniqueOnly) {
+                appendUniqueLabel(labels, seen, 'уникальные');
+            }
+
+            if (rule.unusedOnly) {
+                appendUniqueLabel(labels, seen, 'неиспользованные');
+            }
+
+            if (Number.isFinite(rule.minCarriedIslands) && rule.minCarriedIslands > 0) {
+                appendUniqueLabel(labels, seen, 'пронесённые');
+            }
+        });
+
+        return labels;
+    }
+
     function getRequirementPreferredCategories(requirement) {
         const categories = [];
         const seen = new Set();
@@ -188,6 +237,25 @@
         return `Откроется слот ${stage.targetSlots}`;
     }
 
+    function buildRequirementDisplayValue(entry) {
+        if (!entry) {
+            return '';
+        }
+
+        if (entry.satisfied && entry.item && entry.item.label) {
+            return entry.item.label;
+        }
+
+        const tags = getRequirementTagList(entry.requirement);
+        if (tags.length > 0) {
+            return tags.join(', ');
+        }
+
+        return entry.requirement && entry.requirement.description
+            ? entry.requirement.description
+            : 'Нужен подходящий предмет';
+    }
+
     function buildDisplayRequirement(entry) {
         const requirement = entry && entry.requirement ? entry.requirement : null;
         const item = entry && entry.item ? entry.item : null;
@@ -201,6 +269,8 @@
             itemId: item && item.id ? item.id : '',
             itemLabel: item && item.label ? item.label : '',
             tags: getRequirementTagList(requirement),
+            focusTags: getRequirementFocusLabelList(requirement),
+            valueLabel: buildRequirementDisplayValue(entry),
             statusLabel: entry && entry.satisfied
                 ? 'Собрано'
                 : (entry && entry.optional ? 'Опция' : 'Нужно')
@@ -213,18 +283,31 @@
         const missingRequirements = displayRequirements.filter((entry) => !entry.satisfied && !entry.optional);
         const optionalRequirements = displayRequirements.filter((entry) => entry.optional);
         const questCategoryLabels = [];
+        const slotFocusLabels = [];
         const seenLabels = new Set();
+        const seenFocusLabels = new Set();
 
         displayRequirements.forEach((entry) => {
             entry.tags.forEach((tag) => {
-                if (seenLabels.has(tag)) {
-                    return;
-                }
+                appendUniqueLabel(questCategoryLabels, seenLabels, tag);
+            });
 
-                seenLabels.add(tag);
-                questCategoryLabels.push(tag);
+            entry.focusTags.forEach((tag) => {
+                appendUniqueLabel(slotFocusLabels, seenFocusLabels, tag);
             });
         });
+
+        const missingFocusLabels = [];
+        const seenMissingFocusLabels = new Set();
+        missingRequirements.forEach((entry) => {
+            entry.focusTags.forEach((tag) => {
+                appendUniqueLabel(missingFocusLabels, seenMissingFocusLabels, tag);
+            });
+        });
+
+        const requiredCount = Math.max(0, evaluation.requirementMatches.requiredCount);
+        const matchedRequiredCount = Math.max(0, evaluation.requirementMatches.matchedRequiredCount);
+        const occupancyMissingCount = Math.max(0, evaluation.requiredOccupiedSlots - evaluation.occupiedSlots);
 
         return {
             requirementMatches: displayRequirements,
@@ -232,13 +315,25 @@
             missingRequirements,
             optionalRequirements,
             questCategoryLabels,
+            slotQuestFocusLabels: slotFocusLabels,
             slotUnlockLabel: getSlotUnlockLabel(stage),
             slotProgressLabel: `Сумка ${stage.sourceSlots} → ${stage.targetSlots}`,
+            unlockPreviewLabel: `После сдачи сумка станет ${stage.targetSlots}/${BAG_SLOT_CAP}.`,
+            progressHeadline: `До слота ${stage.targetSlots}: ${matchedRequiredCount}/${requiredCount} требований и ${evaluation.occupiedSlots}/${evaluation.requiredOccupiedSlots} занятых слотов.`,
+            collectedSummaryLabel: collectedRequirements.length > 0
+                ? `Собрано: ${collectedRequirements.map((entry) => `${entry.label} — ${entry.valueLabel}`).join('; ')}`
+                : 'Собрано: пока ни одно обязательное требование не закрыто.',
+            missingSummaryLabel: missingRequirements.length > 0
+                ? `Не хватает: ${missingRequirements.map((entry) => `${entry.label}${entry.valueLabel ? ` (${entry.valueLabel})` : ''}`).join('; ')}`
+                : 'Не хватает: все обязательные требования уже закрыты.',
             occupancyStatusLabel: `Занято слотов: ${evaluation.occupiedSlots}/${evaluation.requiredOccupiedSlots}`,
-            requirementStatusLabel: `Требования: ${evaluation.requirementMatches.matchedRequiredCount}/${evaluation.requirementMatches.requiredCount}`,
-            occupancyMissingCount: Math.max(0, evaluation.requiredOccupiedSlots - evaluation.occupiedSlots),
-            occupancyMissingLabel: evaluation.occupiedSlots < evaluation.requiredOccupiedSlots
-                ? `Нужно занять ещё ${evaluation.requiredOccupiedSlots - evaluation.occupiedSlots} слот(а).`
+            requirementStatusLabel: `Требования: ${matchedRequiredCount}/${requiredCount}`,
+            occupancyMissingCount,
+            occupancyMissingLabel: occupancyMissingCount > 0
+                ? `Нужно занять ещё ${occupancyMissingCount} слот(а).`
+                : '',
+            generationHintLabel: missingFocusLabels.length > 0
+                ? `Генерация сейчас слегка подыгрывает под: ${missingFocusLabels.join(', ')}.`
                 : ''
         };
     }
@@ -283,14 +378,14 @@
             });
         });
 
-        return preferredCategories.length > 0
-            ? {
-                stageId: stage.stageId,
-                preferredCategories,
-                minTier,
-                missingRequirementCount: missingRequirements.length
-            }
-            : null;
+        return {
+            stageId: stage.stageId,
+            preferredCategories,
+            preferredRequirements: missingRequirements.map((requirement) => cloneRequirement(requirement)).filter(Boolean),
+            minTier,
+            missingRequirementCount: missingRequirements.length,
+            targetSlots: stage.targetSlots
+        };
     }
 
     function getRequiredMatchCount(stage) {

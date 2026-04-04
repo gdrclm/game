@@ -30,6 +30,61 @@
         return Math.max(min, Math.min(max, value));
     }
 
+    function isCourierQuestInTransit(questState) {
+        return Boolean(
+            questState
+            && questState.objectiveType === 'deliverItem'
+            && questState.courierStatus === 'inTransit'
+        );
+    }
+
+    function getQuestStateById(questId) {
+        const collections = ensureQuestCollections();
+        const savedQuest = questId ? collections.questStateById[questId] : null;
+        return savedQuest ? { ...savedQuest } : null;
+    }
+
+    function finalizeQuestState(nextQuest) {
+        if (!nextQuest) {
+            return null;
+        }
+
+        if (nextQuest.status === 'completed') {
+            nextQuest.completed = true;
+            nextQuest.progressCurrent = nextQuest.progressRequired;
+            return nextQuest;
+        }
+
+        nextQuest.completed = false;
+        nextQuest.progressCurrent = isCourierQuestInTransit(nextQuest)
+            ? nextQuest.progressRequired
+            : clampProgress(
+                Math.round(nextQuest.progressCurrent || 0),
+                0,
+                nextQuest.progressRequired
+            );
+        return nextQuest;
+    }
+
+    function setQuestStateById(questId, patch = {}) {
+        const collections = ensureQuestCollections();
+        const savedQuest = questId ? collections.questStateById[questId] : null;
+
+        if (!savedQuest) {
+            return null;
+        }
+
+        const nextQuest = finalizeQuestState({
+            ...savedQuest,
+            ...patch,
+            questId: savedQuest.questId
+        });
+
+        collections.questStateById[questId] = { ...nextQuest };
+        syncQuestCollections(nextQuest);
+        return { ...nextQuest };
+    }
+
     function buildQuestId(source, quest = {}) {
         if (quest.questId) {
             return quest.questId;
@@ -159,17 +214,7 @@
             npcLabel: normalizedQuest.npcLabel
         };
 
-        if (mergedQuest.status === 'completed') {
-            mergedQuest.completed = true;
-            mergedQuest.progressCurrent = mergedQuest.progressRequired;
-        } else {
-            mergedQuest.completed = false;
-            mergedQuest.progressCurrent = clampProgress(
-                Math.round(mergedQuest.progressCurrent || 0),
-                0,
-                mergedQuest.progressRequired
-            );
-        }
+        finalizeQuestState(mergedQuest);
 
         return applyQuestState(source, quest, mergedQuest);
     }
@@ -200,12 +245,16 @@
         }
 
         if (questState.objectiveType === 'deliverItem' && questState.itemId) {
-            const inventoryRuntime = getInventoryRuntime();
-            const currentAmount = inventoryRuntime && typeof inventoryRuntime.countInventoryItem === 'function'
-                ? inventoryRuntime.countInventoryItem(questState.itemId)
-                : 0;
+            if (isCourierQuestInTransit(questState)) {
+                questState.progressCurrent = questState.progressRequired;
+            } else {
+                const inventoryRuntime = getInventoryRuntime();
+                const currentAmount = inventoryRuntime && typeof inventoryRuntime.countInventoryItem === 'function'
+                    ? inventoryRuntime.countInventoryItem(questState.itemId)
+                    : 0;
 
-            questState.progressCurrent = clampProgress(currentAmount, 0, questState.progressRequired);
+                questState.progressCurrent = clampProgress(currentAmount, 0, questState.progressRequired);
+            }
         } else if (questState.objectiveType === 'bagLoadout' && questState.stageId) {
             const bagUpgradeRuntime = getBagUpgradeRuntime();
             const evaluation = bagUpgradeRuntime && typeof bagUpgradeRuntime.evaluateQuestProgress === 'function'
@@ -306,6 +355,15 @@
             };
         }
 
+        if (isCourierQuestInTransit(questState)) {
+            return {
+                success: false,
+                reason: 'courier',
+                quest: questState,
+                message: 'Предметы уже переданы курьеру. Дождись его возвращения.'
+            };
+        }
+
         const progress = getQuestProgress(source, quest);
         if (!progress || progress.progressCurrent < progress.progressRequired) {
             return {
@@ -397,12 +455,16 @@
                 };
 
                 if (nextQuest.objectiveType === 'deliverItem' && nextQuest.itemId) {
-                    const inventoryRuntime = getInventoryRuntime();
-                    const currentAmount = inventoryRuntime && typeof inventoryRuntime.countInventoryItem === 'function'
-                        ? inventoryRuntime.countInventoryItem(nextQuest.itemId)
-                        : 0;
+                    if (isCourierQuestInTransit(nextQuest)) {
+                        nextQuest.progressCurrent = nextQuest.progressRequired;
+                    } else {
+                        const inventoryRuntime = getInventoryRuntime();
+                        const currentAmount = inventoryRuntime && typeof inventoryRuntime.countInventoryItem === 'function'
+                            ? inventoryRuntime.countInventoryItem(nextQuest.itemId)
+                            : 0;
 
-                    nextQuest.progressCurrent = clampProgress(currentAmount, 0, nextQuest.progressRequired || nextQuest.quantity || 1);
+                        nextQuest.progressCurrent = clampProgress(currentAmount, 0, nextQuest.progressRequired || nextQuest.quantity || 1);
+                    }
                 } else if (nextQuest.objectiveType === 'bagLoadout' && nextQuest.stageId) {
                     const bagUpgradeRuntime = getBagUpgradeRuntime();
                     const evaluation = bagUpgradeRuntime && typeof bagUpgradeRuntime.evaluateQuestProgress === 'function'
@@ -428,6 +490,8 @@
         ensureQuestCollections,
         buildQuestId,
         syncQuestState,
+        getQuestStateById,
+        setQuestStateById,
         acceptQuest,
         getQuestProgress,
         advanceQuest,

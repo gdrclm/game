@@ -17,6 +17,22 @@
         return typeof value === 'function' ? value(context) : value;
     }
 
+    function getUiBridge() {
+        return game.systems.uiBridge || null;
+    }
+
+    function getInventoryRuntime() {
+        return game.systems.inventoryRuntime || null;
+    }
+
+    function getItemRegistry() {
+        return game.systems.itemRegistry || game.systems.loot || null;
+    }
+
+    function getItemEffects() {
+        return game.systems.itemEffects || null;
+    }
+
     function clearDialogue() {
         game.state.activeDialogueId = null;
         game.state.activeDialogueNodeId = null;
@@ -41,6 +57,127 @@
         };
     }
 
+    function buildIslandOriginalRewardPreview(reward, addedItem = null) {
+        if (!reward) {
+            return null;
+        }
+
+        if (addedItem) {
+            return {
+                id: addedItem.id,
+                label: addedItem.label,
+                icon: addedItem.icon,
+                quantity: Math.max(1, reward.quantity || addedItem.quantity || 1)
+            };
+        }
+
+        const registry = getItemRegistry();
+        const definition = registry && typeof registry.getItemDefinition === 'function'
+            ? registry.getItemDefinition(reward.itemId)
+            : null;
+
+        if (!definition) {
+            return null;
+        }
+
+        return {
+            id: definition.id,
+            label: definition.label,
+            icon: definition.icon,
+            quantity: Math.max(1, reward.quantity || 1)
+        };
+    }
+
+    function grantIslandOriginalReward(context, reward) {
+        if (!context || !reward) {
+            return '';
+        }
+
+        const npcState = context.npc && context.npc.state ? context.npc.state : null;
+        const rewardStateKey = reward.stateKey || 'giftClaimed';
+
+        if (npcState && npcState[rewardStateKey]) {
+            return reward.repeatText || '';
+        }
+
+        const inventoryRuntime = getInventoryRuntime();
+        if (!inventoryRuntime || typeof inventoryRuntime.addInventoryItem !== 'function') {
+            return reward.failText || '';
+        }
+
+        const quantity = Math.max(1, reward.quantity || 1);
+        const outcome = inventoryRuntime.addInventoryItem(reward.itemId, quantity);
+
+        if (!outcome || !outcome.added) {
+            return outcome && outcome.reason === 'full'
+                ? (reward.fullText || 'Сначала освободи слот в сумке, потом возвращайся за подарком.')
+                : (reward.failText || '');
+        }
+
+        if (npcState) {
+            npcState[rewardStateKey] = true;
+            npcState.rewardItemId = reward.itemId;
+            npcState.rewardClaimedIslandIndex = context.encounter && context.encounter.islandIndex
+                ? context.encounter.islandIndex
+                : (game.state.currentIslandIndex || 1);
+        }
+
+        const preview = buildIslandOriginalRewardPreview(reward, outcome.item);
+        const itemEffects = getItemEffects();
+        if (
+            preview
+            && itemEffects
+            && typeof itemEffects.buildItemEffectDrop === 'function'
+            && game.systems.effects
+            && typeof game.systems.effects.spawnInventoryUse === 'function'
+        ) {
+            const drop = itemEffects.buildItemEffectDrop(preview);
+            if (drop) {
+                game.systems.effects.spawnInventoryUse(game.state.playerPos, [drop]);
+            }
+        }
+
+        return reward.grantedText
+            || (preview ? `Получено: ${preview.label}${preview.quantity > 1 ? ` x${preview.quantity}` : ''}.` : '');
+    }
+
+    function applyIslandOriginalScene(effect, context) {
+        const ui = getUiBridge();
+        const npcState = context && context.npc && context.npc.state ? context.npc.state : null;
+        const encounter = context && context.encounter ? context.encounter : null;
+        const dialogueProfile = encounter && encounter.dialogueProfile ? encounter.dialogueProfile : null;
+        const scene = effect && effect.scene ? effect.scene : 'repeat';
+        const sceneText = dialogueProfile && typeof dialogueProfile[scene] === 'string'
+            ? dialogueProfile[scene]
+            : (encounter && encounter.summary ? encounter.summary : '');
+        const rewardText = effect && effect.grantReward
+            ? grantIslandOriginalReward(context, encounter ? encounter.reward : null)
+            : '';
+
+        if (npcState) {
+            npcState.metCount = Math.max(0, npcState.metCount || 0) + 1;
+            npcState.lastSeenIslandIndex = encounter && encounter.islandIndex
+                ? encounter.islandIndex
+                : (game.state.currentIslandIndex || 1);
+            npcState.lastScene = scene;
+
+            if (effect && effect.advanceTopic) {
+                npcState.topicIndex = Math.max(0, npcState.topicIndex || 0) + 1;
+            } else if (!Number.isFinite(npcState.topicIndex)) {
+                npcState.topicIndex = 0;
+            }
+        }
+
+        const messageParts = [
+            encounter && encounter.label ? `${encounter.label}: ${sceneText}` : sceneText,
+            rewardText
+        ].filter(Boolean);
+
+        if (ui && typeof ui.setActionMessage === 'function' && messageParts.length > 0) {
+            ui.setActionMessage(messageParts.join(' '));
+        }
+    }
+
     function applyEffect(effect, context) {
         if (!effect || !effect.type) {
             return;
@@ -52,6 +189,11 @@
             if (ui && typeof ui.setActionMessage === 'function' && message) {
                 ui.setActionMessage(message);
             }
+            return;
+        }
+
+        if (effect.type === 'playIslandOriginalScene') {
+            applyIslandOriginalScene(effect, context);
             return;
         }
 

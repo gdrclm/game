@@ -1,4 +1,4 @@
-const APP_VERSION = '20260403v';
+const APP_VERSION = '20260404j';
 const STATIC_CACHE_NAME = `iso-game-static-${APP_VERSION}`;
 const RUNTIME_CACHE_NAME = `iso-game-runtime-${APP_VERSION}`;
 const CACHE_PREFIX = 'iso-game-';
@@ -6,7 +6,11 @@ const PRECACHE_URLS = [
     'index.html',
     'manifest.webmanifest',
     'css/style.css',
-    'assets/character_idle.png',
+    'assets/hero/top.png',
+    'assets/hero/bottom.png',
+    'assets/hero/side.png',
+    'assets/hero/top_side.png',
+    'assets/hero/side_bottom.png',
     'assets/pwa/apple-touch-icon.png',
     'assets/pwa/favicon-64.png',
     'assets/pwa/icon-192.png',
@@ -31,6 +35,7 @@ const PRECACHE_URLS = [
     'js/quests/bag-upgrade-runtime.js',
     'js/quests/quest-runtime.js',
     'js/economy/shop-runtime.js',
+    'js/economy/courier-runtime.js',
     'js/loot-system.js',
     'js/expedition-system.js',
     'js/expedition/expedition-shared.js',
