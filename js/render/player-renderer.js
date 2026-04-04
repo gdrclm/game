@@ -1,10 +1,10 @@
 (() => {
     const game = window.Game;
     const playerRenderer = game.systems.playerRenderer = game.systems.playerRenderer || {};
-    const playerSprite = new Image();
+    const spriteAssets = new Map();
 
     game.assets = game.assets || {};
-    game.assets.playerSprite = playerSprite;
+    game.assets.playerSprites = spriteAssets;
 
     function drawFallbackPlayer(position) {
         const { x: screenX, y: screenY } = game.systems.camera.isoToScreen(position.x, position.y);
@@ -82,11 +82,57 @@
     function getCurrentFrame() {
         const spriteConfig = game.config.playerSprite;
         const direction = game.state.playerFacing || 'south';
-        return spriteConfig.frames[direction] || spriteConfig.frames.south;
+        return getFrameByDirection(direction) || getFrameByDirection('south');
     }
 
-    function getDrawMetrics(frame) {
-        const scale = game.config.playerSprite.targetHeight / frame.sourceHeight;
+    function getFrameByDirection(direction) {
+        const spriteConfig = game.config.playerSprite;
+        const frameConfig = spriteConfig.frames[direction] || spriteConfig.frames.south;
+
+        if (!frameConfig || !frameConfig.src) {
+            return null;
+        }
+
+        const asset = spriteAssets.get(frameConfig.src);
+
+        if (!asset || !asset.image.complete || !asset.image.naturalWidth) {
+            return null;
+        }
+
+        const resolvedBounds = asset.bounds || {
+            sourceX: frameConfig.sourceX,
+            sourceY: frameConfig.sourceY,
+            sourceWidth: frameConfig.sourceWidth,
+            sourceHeight: frameConfig.sourceHeight,
+            footX: frameConfig.footX,
+            footY: frameConfig.footY
+        };
+
+        if (
+            typeof resolvedBounds.sourceX !== 'number' ||
+            typeof resolvedBounds.sourceY !== 'number' ||
+            typeof resolvedBounds.sourceWidth !== 'number' ||
+            typeof resolvedBounds.sourceHeight !== 'number' ||
+            typeof resolvedBounds.footX !== 'number' ||
+            typeof resolvedBounds.footY !== 'number'
+        ) {
+            return null;
+        }
+
+        return {
+            image: asset.image,
+            sourceX: resolvedBounds.sourceX,
+            sourceY: resolvedBounds.sourceY,
+            sourceWidth: resolvedBounds.sourceWidth,
+            sourceHeight: resolvedBounds.sourceHeight,
+            footX: resolvedBounds.footX,
+            footY: resolvedBounds.footY,
+            flipX: Boolean(frameConfig.flipX)
+        };
+    }
+
+    function getDrawMetrics(frame, targetHeight = game.config.playerSprite.targetHeight) {
+        const scale = targetHeight / frame.sourceHeight;
         return {
             scale,
             drawWidth: frame.sourceWidth * scale,
@@ -96,14 +142,146 @@
         };
     }
 
-    function drawPlayer(position) {
-        if (!playerSprite.complete || !playerSprite.naturalWidth) {
-            drawFallbackPlayer(position);
+    function analyzeSpriteImage(image) {
+        const width = image.naturalWidth || image.width;
+        const height = image.naturalHeight || image.height;
+
+        if (!width || !height) {
+            return null;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+
+        if (!context) {
+            return null;
+        }
+
+        context.clearRect(0, 0, width, height);
+        context.drawImage(image, 0, 0);
+
+        const { data } = context.getImageData(0, 0, width, height);
+        const boundsThreshold = 24;
+        const footThreshold = 96;
+        let minX = width;
+        let minY = height;
+        let maxX = -1;
+        let maxY = -1;
+
+        for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+                const alpha = data[(y * width + x) * 4 + 3];
+
+                if (alpha <= boundsThreshold) {
+                    continue;
+                }
+
+                if (x < minX) {
+                    minX = x;
+                }
+
+                if (y < minY) {
+                    minY = y;
+                }
+
+                if (x > maxX) {
+                    maxX = x;
+                }
+
+                if (y > maxY) {
+                    maxY = y;
+                }
+            }
+        }
+
+        if (maxX < minX || maxY < minY) {
+            return null;
+        }
+
+        const sourceWidth = maxX - minX + 1;
+        const sourceHeight = maxY - minY + 1;
+        const footRowStart = Math.max(minY, maxY - Math.max(12, Math.floor(sourceHeight * 0.18)));
+        let weightedFootCenter = 0;
+        let weightedFootSamples = 0;
+
+        for (let y = footRowStart; y <= maxY; y += 1) {
+            let rowMinX = width;
+            let rowMaxX = -1;
+            let rowPixels = 0;
+
+            for (let x = minX; x <= maxX; x += 1) {
+                const alpha = data[(y * width + x) * 4 + 3];
+
+                if (alpha <= footThreshold) {
+                    continue;
+                }
+
+                rowMinX = Math.min(rowMinX, x);
+                rowMaxX = Math.max(rowMaxX, x);
+                rowPixels += 1;
+            }
+
+            if (rowMaxX < rowMinX) {
+                continue;
+            }
+
+            const rowCenter = (rowMinX + rowMaxX) / 2;
+            const rowWeight = rowPixels * (1 + (y - footRowStart));
+            weightedFootCenter += rowCenter * rowWeight;
+            weightedFootSamples += rowWeight;
+        }
+
+        const absoluteFootX = weightedFootSamples > 0
+            ? weightedFootCenter / weightedFootSamples
+            : (minX + maxX) / 2;
+
+        return {
+            sourceX: minX,
+            sourceY: minY,
+            sourceWidth,
+            sourceHeight,
+            footX: absoluteFootX - minX,
+            footY: sourceHeight
+        };
+    }
+
+    function markSpriteUpdate() {
+        if (game.systems.ui && typeof game.systems.ui.markDirty === 'function') {
+            game.systems.ui.markDirty(['portrait']);
+        }
+
+        if (game.systems.render) {
+            game.systems.render.render();
+        }
+    }
+
+    function loadSpriteAsset(src) {
+        if (!src || spriteAssets.has(src)) {
             return;
         }
 
+        const image = new Image();
+        const asset = {
+            image,
+            bounds: null
+        };
+
+        image.onload = () => {
+            asset.bounds = analyzeSpriteImage(image);
+            markSpriteUpdate();
+        };
+
+        spriteAssets.set(src, asset);
+        image.src = src;
+    }
+
+    function drawPlayer(position) {
         const frame = getCurrentFrame();
         if (
+            !frame ||
+            !frame.image ||
             typeof frame.sourceX !== 'number' ||
             typeof frame.sourceY !== 'number' ||
             typeof frame.sourceWidth !== 'number' ||
@@ -128,7 +306,7 @@
             game.ctx.translate(drawX + metrics.drawWidth, drawY);
             game.ctx.scale(-1, 1);
             game.ctx.drawImage(
-                playerSprite,
+                frame.image,
                 frame.sourceX,
                 frame.sourceY,
                 frame.sourceWidth,
@@ -140,7 +318,7 @@
             );
         } else {
             game.ctx.drawImage(
-                playerSprite,
+                frame.image,
                 frame.sourceX,
                 frame.sourceY,
                 frame.sourceWidth,
@@ -159,20 +337,15 @@
         game.state.playerFacing = 'south';
     }
 
-    playerSprite.onload = () => {
-        if (game.systems.ui && typeof game.systems.ui.markDirty === 'function') {
-            game.systems.ui.markDirty(['portrait']);
-        }
-
-        if (game.systems.render) {
-            game.systems.render.render();
-        }
-    };
-
-    playerSprite.src = game.config.playerSprite.src;
+    Object.values(game.config.playerSprite.frames).forEach((frameConfig) => {
+        loadSpriteAsset(frameConfig.src);
+    });
 
     Object.assign(playerRenderer, {
         drawPlayer,
+        getCurrentFrame,
+        getDrawMetrics,
+        getFrameByDirection,
         resetFacing,
         setFacing,
         setFacingFromDelta

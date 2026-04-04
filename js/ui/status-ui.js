@@ -85,7 +85,7 @@
                 elements.locationSummary.textContent = `Рядом: ${encounter.label}`;
             } else {
                 elements.locationSummary.textContent = activeHouse
-                    ? `Локация: ${activeHouse.expedition ? activeHouse.expedition.label : activeHouse.id}`
+                    ? `Локация: ${activeHouse.expedition ? (activeHouse.expedition.locationLabel || activeHouse.expedition.label) : activeHouse.id}`
                     : `Локация: ${bridge.getTileLabel(tileInfo ? tileInfo.tileType : 'grass')}`;
             }
         }
@@ -192,7 +192,7 @@
         } else if (encounter) {
             stateLabel = `Рядом: ${encounter.label}`;
         } else if (activeHouse && activeHouse.expedition) {
-            stateLabel = `В доме: ${activeHouse.expedition.label}`;
+            stateLabel = `В доме: ${activeHouse.expedition.locationLabel || activeHouse.expedition.label}`;
         }
 
         if (elements.selectedCharacterName) {
@@ -218,7 +218,7 @@
     function syncStatusOverlay() {
         const game = bridge.getGame();
         const elements = bridge.getElements();
-        const showOverlay = Boolean(game.state.isPaused || game.state.hasWon);
+        const showOverlay = Boolean(game.state.isPaused || game.state.hasWon || game.state.isGameOver);
         const isDefeat = Boolean(!game.state.hasWon && bridge.isAllStatsDepleted());
 
         if (elements.pauseOverlay) {
@@ -246,7 +246,7 @@
                         ? ''
                         : (
                             game.state.isGameOver
-                                ? 'Все характеристики упали до нуля. Обнови страницу, чтобы начать заново.'
+                                ? 'Все характеристики упали до нуля. Нажми "Новая игра", чтобы начать заново.'
                                 : ''
                         )
                 );
@@ -320,6 +320,17 @@
         return nextValue;
     }
 
+    function startNewGame() {
+        const lifecycle = window.Game.systems.gameLifecycle || null;
+
+        if (!lifecycle || typeof lifecycle.startNewGame !== 'function') {
+            return false;
+        }
+
+        lifecycle.startNewGame();
+        return true;
+    }
+
     function applyMovementStepCosts() {
         const game = bridge.getGame();
         const tileInfo = game.state.activeTileInfo;
@@ -374,6 +385,7 @@
         syncStatusOverlay,
         syncConditionOverlay,
         playSleepTransition,
+        startNewGame,
         togglePause,
         applyMovementStepCosts,
         applyPathCompletionCosts

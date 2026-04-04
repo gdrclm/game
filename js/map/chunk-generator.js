@@ -156,6 +156,72 @@
         }
     }
 
+    function pointKey(x, y) {
+        return `${x},${y}`;
+    }
+
+    function getPointDistance(from, to) {
+        return Math.abs((from ? from.x : 0) - (to ? to.x : 0)) + Math.abs((from ? from.y : 0) - (to ? to.y : 0));
+    }
+
+    function getNearestHouseDistance(x, y, houses = []) {
+        if (!Array.isArray(houses) || houses.length === 0) {
+            return Infinity;
+        }
+
+        return houses.reduce((bestDistance, house) => {
+            const houseDistance = house.localCells.reduce((cellBest, cell) => {
+                const distance = Math.abs(cell.x - x) + Math.abs(cell.y - y);
+                return Math.min(cellBest, distance);
+            }, Infinity);
+
+            return Math.min(bestDistance, houseDistance);
+        }, Infinity);
+    }
+
+    function countTrailNeighbors(chunkData, x, y) {
+        return countNeighborsByType(
+            chunkData,
+            x,
+            y,
+            (candidate) => candidate === 'trail' || candidate === 'bridge'
+        );
+    }
+
+    function buildTrailTileSet(chunkData) {
+        const trailTiles = new Set();
+        const chunkSize = game.config.chunkSize;
+
+        for (let y = 0; y < chunkSize; y++) {
+            for (let x = 0; x < chunkSize; x++) {
+                if (chunkData[y][x] === 'trail') {
+                    trailTiles.add(pointKey(x, y));
+                }
+            }
+        }
+
+        return trailTiles;
+    }
+
+    function getCardinalDirections() {
+        return [
+            { dx: 1, dy: 0 },
+            { dx: -1, dy: 0 },
+            { dx: 0, dy: 1 },
+            { dx: 0, dy: -1 }
+        ];
+    }
+
+    function getHouseTrailAnchors(houses = []) {
+        return houses
+            .filter((house) => house && house.door && house.door.localOutside)
+            .map((house) => ({
+                x: house.door.localOutside.x,
+                y: house.door.localOutside.y,
+                houseId: house.id
+            }));
+    }
+
     function getTravelConnectionTargets(chunkRecord, progression) {
         const painter = getPainter();
         const chunkSize = game.config.chunkSize;
@@ -166,33 +232,260 @@
             const laneOffset = painter.getConnectionLaneOffset(chunkRecord, progression, direction);
             const laneX = painter.clampValue(center + laneOffset, 2, chunkSize - 3);
             const laneY = painter.clampValue(center + laneOffset, 2, chunkSize - 3);
+            const isBridge = chunkRecord.bridgeDirections.has(direction);
 
             if (direction === 'north') {
-                targets.push({ x: laneX, y: 2 });
+                targets.push({ x: laneX, y: 2, direction, isBridge });
                 return;
             }
 
             if (direction === 'south') {
-                targets.push({ x: laneX, y: chunkSize - 3 });
+                targets.push({ x: laneX, y: chunkSize - 3, direction, isBridge });
                 return;
             }
 
             if (direction === 'west') {
-                targets.push({ x: 2, y: laneY });
+                targets.push({ x: 2, y: laneY, direction, isBridge });
                 return;
             }
 
             if (direction === 'east') {
-                targets.push({ x: chunkSize - 3, y: laneY });
+                targets.push({ x: chunkSize - 3, y: laneY, direction, isBridge });
             }
         });
 
         return targets;
     }
 
-    function paintTravelTrailNetwork(chunkData, houses, chunkRecord, progression, houseTileSet) {
+    function getDeadEndBranchCount(chunkRecord, progression) {
+        if (!progression || progression.islandIndex < 4) {
+            return 0;
+        }
+
+        let count = progression.islandIndex >= 8 ? 1 : 0;
+
+        if (chunkRecord.tags.has('remote') || chunkRecord.tags.has('tip')) {
+            count += 1;
+        }
+
+        if (chunkRecord.tags.has('vault') || progression.routeStyle === 'branching' || progression.scenario === 'trapIsland') {
+            count += 1;
+        }
+
+        return Math.min(3, count);
+    }
+
+    function canPaintDeadEndBranchTile(chunkData, x, y, houseTileSet, houses, reservedKeys) {
+        if (!canPaintTravelTile(chunkData, x, y, houseTileSet)) {
+            return false;
+        }
+
+        if (chunkData[y][x] === 'trail' || chunkData[y][x] === 'bridge') {
+            return false;
+        }
+
+        if (reservedKeys.has(pointKey(x, y))) {
+            return false;
+        }
+
+        if (getNearestHouseDistance(x, y, houses) < 2) {
+            return false;
+        }
+
+        if (countTrailNeighbors(chunkData, x, y) > 1) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function chooseDeadEndCacheSpot(chunkData, endPoint, centerPoint, houseTileSet, houses, reservedKeys, random) {
+        const offsets = [
+            { dx: 1, dy: 0 },
+            { dx: -1, dy: 0 },
+            { dx: 0, dy: 1 },
+            { dx: 0, dy: -1 },
+            { dx: 1, dy: 1 },
+            { dx: 1, dy: -1 },
+            { dx: -1, dy: 1 },
+            { dx: -1, dy: -1 }
+        ];
+        const candidates = [];
+        const chunkSize = game.config.chunkSize;
+
+        offsets.forEach((offset) => {
+            const x = endPoint.x + offset.dx;
+            const y = endPoint.y + offset.dy;
+
+            if (x < 0 || x >= chunkSize || y < 0 || y >= chunkSize) {
+                return;
+            }
+
+            if (!canPaintTravelTile(chunkData, x, y, houseTileSet)) {
+                return;
+            }
+
+            if (chunkData[y][x] === 'trail' || chunkData[y][x] === 'bridge') {
+                return;
+            }
+
+            if (reservedKeys.has(pointKey(x, y)) || getNearestHouseDistance(x, y, houses) < 3) {
+                return;
+            }
+
+            const trailNeighbors = countTrailNeighbors(chunkData, x, y);
+            if (trailNeighbors > 2) {
+                return;
+            }
+
+            const centerDistance = getPointDistance({ x, y }, centerPoint);
+            const endDistance = getPointDistance({ x, y }, endPoint);
+            candidates.push({
+                x,
+                y,
+                score: centerDistance * 1.2 + endDistance * 0.8 - trailNeighbors * 0.5 + random() * 0.25
+            });
+        });
+
+        candidates.sort((left, right) => right.score - left.score);
+        return candidates[0] || null;
+    }
+
+    function paintDeadEndTrailBranches(chunkData, houses, chunkRecord, progression, houseTileSet, random, centerPoint) {
+        const branchCount = getDeadEndBranchCount(chunkRecord, progression);
+        const reservedKeys = new Set();
+        const trailCandidates = [];
+        const chunkSize = game.config.chunkSize;
+
+        if (branchCount <= 0) {
+            return [];
+        }
+
+        for (let y = 0; y < chunkSize; y++) {
+            for (let x = 0; x < chunkSize; x++) {
+                if (chunkData[y][x] !== 'trail') {
+                    continue;
+                }
+
+                const trailNeighbors = countTrailNeighbors(chunkData, x, y);
+                const centerDistance = getPointDistance({ x, y }, centerPoint);
+
+                if (trailNeighbors < 2 || centerDistance < 4 || getNearestHouseDistance(x, y, houses) < 2) {
+                    continue;
+                }
+
+                trailCandidates.push({
+                    x,
+                    y,
+                    score: centerDistance
+                        + (chunkRecord.tags.has('remote') || chunkRecord.tags.has('tip') ? 3 : 0)
+                        + (chunkRecord.tags.has('vault') ? 2 : 0)
+                        + random() * 0.2
+                });
+            }
+        }
+
+        trailCandidates.sort((left, right) => right.score - left.score);
+
+        const branches = [];
+        for (const start of trailCandidates) {
+            if (branches.length >= branchCount || reservedKeys.has(pointKey(start.x, start.y))) {
+                continue;
+            }
+
+            const minLength = progression.islandIndex >= 10 ? 3 : 2;
+            const maxLength = Math.min(6, 2 + Math.floor(progression.islandIndex / 6) + (chunkRecord.tags.has('vault') ? 1 : 0));
+            const branchTiles = [];
+            let previous = null;
+            let current = { x: start.x, y: start.y };
+
+            for (let step = 0; step < maxLength; step++) {
+                const candidates = getCardinalDirections()
+                    .map((direction) => {
+                        const x = current.x + direction.dx;
+                        const y = current.y + direction.dy;
+
+                        if (previous && x === previous.x && y === previous.y) {
+                            return null;
+                        }
+
+                        if (!canPaintDeadEndBranchTile(chunkData, x, y, houseTileSet, houses, reservedKeys)) {
+                            return null;
+                        }
+
+                        const edgeDistance = Math.min(x, y, chunkSize - 1 - x, chunkSize - 1 - y);
+                        const currentDistance = getPointDistance(current, centerPoint);
+                        const nextDistance = getPointDistance({ x, y }, centerPoint);
+                        const outwardGain = nextDistance - currentDistance;
+
+                        return {
+                            x,
+                            y,
+                            score: outwardGain * 1.6 + Math.min(edgeDistance, 4) * 0.22 + random() * 0.3
+                        };
+                    })
+                    .filter(Boolean)
+                    .sort((left, right) => right.score - left.score);
+
+                if (candidates.length === 0) {
+                    break;
+                }
+
+                const next = candidates[0];
+                const originalType = chunkData[next.y][next.x];
+
+                paintTravelTile(chunkData, next.x, next.y, 'trail', houseTileSet);
+                reservedKeys.add(pointKey(next.x, next.y));
+                branchTiles.push({
+                    x: next.x,
+                    y: next.y,
+                    originalType
+                });
+                previous = current;
+                current = { x: next.x, y: next.y };
+            }
+
+            if (branchTiles.length < minLength) {
+                branchTiles.forEach((tile) => {
+                    chunkData[tile.y][tile.x] = tile.originalType;
+                    reservedKeys.delete(pointKey(tile.x, tile.y));
+                });
+                continue;
+            }
+
+            const endPoint = branchTiles[branchTiles.length - 1];
+            const cachePoint = chooseDeadEndCacheSpot(
+                chunkData,
+                endPoint,
+                centerPoint,
+                houseTileSet,
+                houses,
+                reservedKeys,
+                random
+            ) || { x: endPoint.x, y: endPoint.y };
+
+            reservedKeys.add(pointKey(cachePoint.x, cachePoint.y));
+            branches.push({
+                start: { x: start.x, y: start.y },
+                end: { x: endPoint.x, y: endPoint.y },
+                cachePoint
+            });
+        }
+
+        return branches;
+    }
+
+    function paintTravelTrailNetwork(chunkData, houses, chunkRecord, progression, houseTileSet, random) {
         const chunkSize = game.config.chunkSize;
         const center = Math.floor(chunkSize / 2);
+        const centerPoint = { x: center, y: center };
+        const connectionTargets = getTravelConnectionTargets(chunkRecord, progression);
+        const networkAnchors = [{
+            x: center,
+            y: center,
+            anchorType: 'center',
+            isBridge: false
+        }];
 
         for (let offsetY = -1; offsetY <= 1; offsetY++) {
             for (let offsetX = -1; offsetX <= 1; offsetX++) {
@@ -204,24 +497,69 @@
             }
         }
 
-        getTravelConnectionTargets(chunkRecord, progression).forEach((target) => {
+        connectionTargets.forEach((target) => {
             paintTravelTrailLine(chunkData, center, center, target.x, target.y, houseTileSet);
+            networkAnchors.push({
+                x: target.x,
+                y: target.y,
+                anchorType: 'exit',
+                isBridge: Boolean(target.isBridge)
+            });
         });
 
-        houses.forEach((house) => {
-            if (!house || !house.door || !house.door.localOutside) {
-                return;
-            }
+        getHouseTrailAnchors(houses)
+            .sort((left, right) => getPointDistance(right, centerPoint) - getPointDistance(left, centerPoint))
+            .forEach((anchor) => {
+                let bestTarget = centerPoint;
+                let bestScore = Infinity;
 
-            paintTravelTrailLine(
-                chunkData,
-                house.door.localOutside.x,
-                house.door.localOutside.y,
-                center,
-                center,
-                houseTileSet
-            );
-        });
+                networkAnchors.forEach((target) => {
+                    const distance = getPointDistance(anchor, target);
+                    const bridgeBonus = target.isBridge ? 0.9 : 0;
+                    const chainedDoorBonus = target.anchorType === 'door' ? 0.35 : 0;
+                    const centerPenalty = target.anchorType === 'center' && networkAnchors.length > 2 ? 0.25 : 0;
+                    const score = distance - bridgeBonus - chainedDoorBonus + centerPenalty;
+
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestTarget = target;
+                    }
+                });
+
+                paintTravelTrailLine(
+                    chunkData,
+                    anchor.x,
+                    anchor.y,
+                    bestTarget.x,
+                    bestTarget.y,
+                    houseTileSet
+                );
+
+                networkAnchors.push({
+                    x: anchor.x,
+                    y: anchor.y,
+                    anchorType: 'door',
+                    isBridge: false,
+                    houseId: anchor.houseId
+                });
+            });
+
+        const deadEndBranches = paintDeadEndTrailBranches(
+            chunkData,
+            houses,
+            chunkRecord,
+            progression,
+            houseTileSet,
+            random,
+            centerPoint
+        );
+
+        return {
+            center: centerPoint,
+            connectionTargets: connectionTargets.map((target) => ({ ...target })),
+            houseAnchors: getHouseTrailAnchors(houses),
+            deadEndBranches
+        };
     }
 
     function applyTravelTerrainLayer(chunkData, houses, chunkRecord, progression, random) {
@@ -283,7 +621,7 @@
             }
         }
 
-        paintTravelTrailNetwork(chunkData, houses, chunkRecord, progression, houseTileSet);
+        return paintTravelTrailNetwork(chunkData, houses, chunkRecord, progression, houseTileSet, random);
     }
 
     function applyTravelZoneLayer(chunkData, travelZones, houses, chunkRecord, progression, random) {
@@ -501,6 +839,7 @@
             houseTileMap: new Map(),
             interactions: [],
             interactionTileMap: new Map(),
+            trailMeta: null,
             progression: null,
             renderCache: null
         });
@@ -541,7 +880,7 @@
         painter.addRandomRocks(chunkData, houses, progression, random);
         painter.addChunkConnections(chunkData, chunkRecord, progression);
         painter.addShoreline(chunkData);
-        applyTravelTerrainLayer(chunkData, houses, chunkRecord, progression, random);
+        const trailMeta = applyTravelTerrainLayer(chunkData, houses, chunkRecord, progression, random);
         painter.ensureSpawnArea(chunkData, chunkX, chunkY);
         const travelZones = painter.buildTravelZoneGrid();
         applyTravelZoneLayer(chunkData, travelZones, houses, chunkRecord, progression, random);
@@ -550,7 +889,12 @@
             chunkY,
             chunkData,
             houses,
-            random
+            random,
+            {
+                progression,
+                chunkRecord,
+                trailMeta
+            }
         );
         expedition.applyCollapsedBridges(chunkData, travelZones, chunkX, chunkY);
         expedition.applyPlacedBridges(chunkData, chunkX, chunkY);
@@ -565,6 +909,7 @@
             houseTileMap: buildHouseTileMap(houses),
             interactions,
             interactionTileMap: buildInteractionTileMap(interactions),
+            trailMeta,
             progression,
             renderCache: null
         };

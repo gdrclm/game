@@ -154,56 +154,153 @@
         }
     }
 
+    function createCopyRow(className, text) {
+        if (!text) {
+            return null;
+        }
+
+        const row = document.createElement('p');
+        row.className = className;
+        row.textContent = text;
+        return row;
+    }
+
+    function createPillRow(labels = []) {
+        const uniqueLabels = labels.filter((label, index, list) => label && list.indexOf(label) === index);
+        if (uniqueLabels.length === 0) {
+            return null;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'artisan-pill-row';
+
+        uniqueLabels.forEach((label) => {
+            const pill = document.createElement('span');
+            pill.className = 'artisan-pill';
+            pill.textContent = label;
+            row.append(pill);
+        });
+
+        return row;
+    }
+
+    function getCourierEtaLabel(quest) {
+        if (!quest || quest.courierStatus !== 'inTransit' || !Number.isFinite(quest.courierReturnAdvanceCount)) {
+            return '';
+        }
+
+        const courierRuntime = game.systems.courierRuntime || null;
+        const currentAdvanceCount = courierRuntime && typeof courierRuntime.getCurrentTimeAdvanceCount === 'function'
+            ? courierRuntime.getCurrentTimeAdvanceCount()
+            : 0;
+        const remainingAdvances = Math.max(0, Math.round(quest.courierReturnAdvanceCount - currentAdvanceCount));
+
+        return courierRuntime && typeof courierRuntime.formatCourierEtaFromRemainingAdvances === 'function'
+            ? courierRuntime.formatCourierEtaFromRemainingAdvances(remainingAdvances)
+            : '';
+    }
+
+    function createRequirementCard(entry, modifierClass, emptyText) {
+        const card = document.createElement('div');
+        card.className = `artisan-check ${modifierClass}`;
+
+        if (!entry) {
+            card.classList.add('artisan-check--empty');
+            card.textContent = emptyText;
+            return card;
+        }
+
+        const title = document.createElement('div');
+        title.className = 'artisan-check__title';
+        title.textContent = entry.label || 'Требование';
+
+        const value = document.createElement('div');
+        value.className = 'artisan-check__value';
+        value.textContent = entry.valueLabel || entry.description || 'Нужен подходящий предмет';
+
+        card.append(title, value);
+        return card;
+    }
+
+    function createRequirementSection(title, entries, modifierClass, emptyText) {
+        const section = document.createElement('div');
+        section.className = 'artisan-quest__section';
+
+        const heading = document.createElement('div');
+        heading.className = 'artisan-quest__section-title';
+        heading.textContent = title;
+
+        const list = document.createElement('div');
+        list.className = 'artisan-check-list';
+
+        if (entries.length === 0) {
+            list.append(createRequirementCard(null, modifierClass, emptyText));
+        } else {
+            entries.forEach((entry) => {
+                list.append(createRequirementCard(entry, modifierClass, emptyText));
+            });
+        }
+
+        section.append(heading, list);
+        return section;
+    }
+
     function appendQuestMatchRows(container, quest) {
-        const categoryLabels = Array.isArray(quest.questCategoryLabels) ? quest.questCategoryLabels : [];
+        const categoryLabels = Array.isArray(quest.slotQuestFocusLabels) && quest.slotQuestFocusLabels.length > 0
+            ? quest.slotQuestFocusLabels
+            : (Array.isArray(quest.questCategoryLabels) ? quest.questCategoryLabels : []);
         const collectedRequirements = Array.isArray(quest.collectedRequirements) ? quest.collectedRequirements : [];
         const missingRequirements = Array.isArray(quest.missingRequirements) ? quest.missingRequirements : [];
+        const optionalRequirements = Array.isArray(quest.optionalRequirements) ? quest.optionalRequirements : [];
 
-        if (categoryLabels.length > 0) {
-            const categoryRow = document.createElement('p');
-            categoryRow.className = 'panel-copy quest-entry__description';
-            categoryRow.textContent = `Категории: ${categoryLabels.join(', ')}`;
-            container.append(categoryRow);
+        const hero = document.createElement('div');
+        hero.className = 'artisan-quest__hero';
+
+        const heroRows = [
+            createCopyRow('artisan-quest__slot', quest.slotUnlockLabel),
+            createCopyRow('artisan-quest__meta', quest.progressHeadline || quest.slotProgressLabel),
+            createCopyRow('artisan-quest__meta', [quest.occupancyStatusLabel, quest.requirementStatusLabel].filter(Boolean).join(' · ')),
+            createCopyRow('artisan-quest__meta', quest.unlockPreviewLabel),
+            createCopyRow('artisan-quest__warning', quest.occupancyMissingLabel)
+        ].filter(Boolean);
+
+        if (heroRows.length > 0) {
+            hero.append(...heroRows);
+            container.append(hero);
         }
 
-        if (quest.slotUnlockLabel) {
-            const slotRow = document.createElement('p');
-            slotRow.className = 'panel-copy quest-entry__meta';
-            slotRow.textContent = quest.slotUnlockLabel;
-            container.append(slotRow);
+        const pillRow = createPillRow(categoryLabels);
+        if (pillRow) {
+            container.append(pillRow);
         }
 
-        if (quest.occupancyStatusLabel || quest.requirementStatusLabel) {
-            const statusRow = document.createElement('p');
-            statusRow.className = 'panel-copy quest-entry__meta';
-            statusRow.textContent = [quest.occupancyStatusLabel, quest.requirementStatusLabel].filter(Boolean).join(' · ');
-            container.append(statusRow);
+        const requirementGrid = document.createElement('div');
+        requirementGrid.className = 'artisan-quest__grid';
+        requirementGrid.append(
+            createRequirementSection('Собрано', collectedRequirements, 'artisan-check--done', 'Пока ни одно обязательное требование не закрыто.'),
+            createRequirementSection('Не хватает', missingRequirements, 'artisan-check--missing', 'Все обязательные требования уже собраны.')
+        );
+        container.append(requirementGrid);
+
+        if (optionalRequirements.length > 0) {
+            container.append(
+                createRequirementSection('Дополнительно', optionalRequirements, 'artisan-check--optional', 'Дополнительных усилений нет.')
+            );
         }
 
-        if (collectedRequirements.length > 0) {
-            const collectedRow = document.createElement('p');
-            collectedRow.className = 'panel-copy quest-entry__meta';
-            collectedRow.textContent = `Собрано: ${collectedRequirements.map((entry) => entry.itemLabel ? `${entry.label} — ${entry.itemLabel}` : entry.label).join('; ')}`;
-            container.append(collectedRow);
-        }
-
-        if (missingRequirements.length > 0) {
-            const missingRow = document.createElement('p');
-            missingRow.className = 'panel-copy quest-entry__description';
-            missingRow.textContent = `Не хватает: ${missingRequirements.map((entry) => entry.tags && entry.tags.length > 0 ? `${entry.label} (${entry.tags.join(', ')})` : entry.label).join('; ')}`;
-            container.append(missingRow);
-        }
-
-        if (quest.occupancyMissingLabel) {
-            const occupancyRow = document.createElement('p');
-            occupancyRow.className = 'panel-copy quest-entry__description';
-            occupancyRow.textContent = quest.occupancyMissingLabel;
-            container.append(occupancyRow);
-        }
+        [
+            createCopyRow('panel-copy quest-entry__meta', quest.collectedSummaryLabel),
+            createCopyRow('panel-copy quest-entry__description', quest.missingSummaryLabel),
+            createCopyRow('panel-copy quest-entry__description', quest.generationHintLabel)
+        ].filter(Boolean).forEach((row) => {
+            container.append(row);
+        });
     }
 
     function createQuestEntry(quest) {
         const itemDefinition = quest.itemId ? bridge.getItemDefinition(quest.itemId) : null;
+        const isCourierInTransit = quest.objectiveType === 'deliverItem' && quest.courierStatus === 'inTransit';
+        const courierEtaLabel = getCourierEtaLabel(quest);
         const entry = document.createElement('article');
         const collapsed = isQuestEntryCollapsed(quest.questId);
         entry.className = 'quest-entry';
@@ -226,9 +323,11 @@
 
         const headerMeta = document.createElement('span');
         headerMeta.className = 'quest-entry__header-meta';
-        headerMeta.textContent = quest.objectiveType === 'bagLoadout'
+        headerMeta.textContent = isCourierInTransit
+            ? `Курьер в пути${courierEtaLabel ? ` · ${courierEtaLabel}` : ''}`
+            : (quest.objectiveType === 'bagLoadout'
             ? `Сумка ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'}`
-            : `Прогресс ${quest.progressCurrent}/${quest.progressRequired}`;
+            : `Прогресс ${quest.progressCurrent}/${quest.progressRequired}`);
         headerText.append(headerMeta);
 
         const headerIcon = document.createElement('span');
@@ -247,25 +346,31 @@
 
         const progressRow = document.createElement('p');
         progressRow.className = 'panel-copy quest-entry__meta';
-        progressRow.textContent = quest.objectiveType === 'deliverItem'
+        progressRow.textContent = isCourierInTransit
+            ? `Груз передан курьеру "${quest.courierTierLabel || 'курьер'}"${courierEtaLabel ? ` · ${courierEtaLabel}` : ''}`
+            : (quest.objectiveType === 'deliverItem'
             ? `В сумке: ${quest.progressCurrent}/${quest.progressRequired}${itemDefinition ? ` · предмет: ${itemDefinition.label}` : ''}`
             : (
                 quest.objectiveType === 'bagLoadout'
-                    ? `${quest.slotProgressLabel || `Сумка ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'}`} · прогресс: ${quest.progressCurrent}/${quest.progressRequired}`
+                    ? (quest.progressHeadline || `${quest.slotProgressLabel || `Сумка ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'}`} · прогресс: ${quest.progressCurrent}/${quest.progressRequired}`)
                     : `Прогресс: ${quest.progressCurrent}/${quest.progressRequired}`
-            );
+            ));
 
         const rewardRow = document.createElement('p');
         rewardRow.className = 'panel-copy quest-entry__meta';
-        rewardRow.textContent = quest.objectiveType === 'bagLoadout'
-            ? `Награда: +${quest.rewardSlots || Math.max(1, (quest.targetSlots || 0) - (quest.sourceSlots || 0))} слот · сумка до ${quest.targetSlots || '?'}`
-            : `Награда: ${quest.rewardGold || 0} золота`;
+        rewardRow.textContent = isCourierInTransit
+            ? `Награда: до ${quest.rewardGold || 0} золота · комиссия: ${quest.courierFee || 0} · остров найма: ${quest.courierHireIslandIndex || '?'}`
+            : (quest.objectiveType === 'bagLoadout'
+            ? `Награда: +${quest.rewardSlots || Math.max(1, (quest.targetSlots || 0) - (quest.sourceSlots || 0))} слот · ${quest.slotUnlockLabel || `сумка до ${quest.targetSlots || '?'}`}`
+            : `Награда: ${quest.rewardGold || 0} золота`);
 
         const descriptionRow = document.createElement('p');
         descriptionRow.className = 'panel-copy quest-entry__description';
-        descriptionRow.textContent = quest.description || 'Следи за прогрессом и возвращайся к NPC, когда задание будет готово к сдаче.';
+        descriptionRow.textContent = isCourierInTransit
+            ? (quest.courierResultLabel || `Курьер несёт груз к ${quest.sourceLabel || 'квестодателю'} и вернётся с наградой.`)
+            : (quest.description || 'Следи за прогрессом и возвращайся к NPC, когда задание будет готово к сдаче.');
 
-        if (quest.progressCurrent >= quest.progressRequired) {
+        if (!isCourierInTransit && quest.progressCurrent >= quest.progressRequired) {
             entry.classList.add('quest-entry--ready');
         }
 
@@ -274,7 +379,10 @@
         if (quest.objectiveType === 'bagLoadout') {
             const slotGoalRow = document.createElement('p');
             slotGoalRow.className = 'panel-copy quest-entry__meta';
-            slotGoalRow.textContent = `Сумка: ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'} · дедлайн: остров ${quest.deadlineIslandIndex || '?'}`;
+            slotGoalRow.textContent = [
+                quest.occupancyGoal || '',
+                Number.isFinite(quest.deadlineIslandIndex) ? `дедлайн: остров ${quest.deadlineIslandIndex}` : ''
+            ].filter(Boolean).join(' · ');
             body.append(slotGoalRow);
             appendQuestMatchRows(body, quest);
         }

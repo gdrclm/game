@@ -16,6 +16,10 @@
             return null;
         }
 
+        if (typeof encounter.npcId === 'string' && encounter.npcId) {
+            return encounter.npcId;
+        }
+
         if (source && source.houseId && encounter.kind) {
             return `${encounter.kind}:${source.houseId}`;
         }

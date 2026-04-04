@@ -4,15 +4,6 @@
     const bridge = game.systems.uiBridge;
     const MOBILE_BREAKPOINT = 760;
     const MOBILE_PANEL_CONFIGS = {
-        summary: {
-            kicker: 'Сводка',
-            title: 'Персонаж',
-            getNodes: () => [
-                document.querySelector('.hud-card--status'),
-                document.querySelector('.character-card'),
-                document.querySelector('.message-card')
-            ]
-        },
         quests: {
             kicker: 'Журнал',
             title: 'Квесты',
@@ -20,11 +11,6 @@
                 ensureQuestCard();
                 return [document.getElementById('questCard')];
             }
-        },
-        actions: {
-            kicker: 'Команды',
-            title: 'Действия',
-            getNodes: () => [document.querySelector('.action-card')]
         },
         inventory: {
             kicker: 'Сумка',
@@ -48,14 +34,18 @@
         elements = {
             mobileHud: document.querySelector('.mobile-hud'),
             mobileStatusStrip: document.querySelector('.mobile-status-strip'),
+            mobileHintText: document.getElementById('mobileHintText'),
+            mobileActionRack: document.getElementById('mobileActionRack'),
             mobileWalkButton: document.getElementById('mobileWalkButton'),
+            mobileUseButton: document.getElementById('mobileUseButton'),
+            mobileSleepButton: document.getElementById('mobileSleepButton'),
+            mobileInspectButton: document.getElementById('mobileInspectButton'),
+            mobileTalkButton: document.getElementById('mobileTalkButton'),
+            mobileDropButton: document.getElementById('mobileDropButton'),
             mobileInventoryButton: document.getElementById('mobileInventoryButton'),
             mobileInventoryBadge: document.getElementById('mobileInventoryBadge'),
-            mobileSummaryButton: document.getElementById('mobileSummaryButton'),
             mobileQuestButton: document.getElementById('mobileQuestButton'),
             mobileQuestBadge: document.getElementById('mobileQuestBadge'),
-            mobileActionsButton: document.getElementById('mobileActionsButton'),
-            mobileMapLauncher: document.getElementById('mobileMapLauncher'),
             mobileStatHungerValue: document.getElementById('mobileStatHungerValue'),
             mobileStatHungerBar: document.getElementById('mobileStatHungerBar'),
             mobileStatEnergyValue: document.getElementById('mobileStatEnergyValue'),
@@ -231,18 +221,6 @@
         return true;
     }
 
-    function openMapPanel() {
-        const mapUi = game.systems.mapUi || null;
-
-        closePanel({ silent: true });
-
-        if (mapUi && typeof mapUi.toggleMapPanel === 'function') {
-            mapUi.toggleMapPanel(true);
-        }
-
-        sync();
-    }
-
     function triggerWalk() {
         const actionUi = game.systems.actionUi || null;
 
@@ -254,6 +232,40 @@
         if (Array.isArray(game.state.route) && game.state.route.length > 0 && game.systems.movement) {
             game.systems.movement.startMovement();
         }
+    }
+
+    function getDesktopActionButton(action) {
+        const bridgeElements = typeof bridge.getElements === 'function'
+            ? bridge.getElements()
+            : null;
+        const actionButtons = bridgeElements && Array.isArray(bridgeElements.actionButtons)
+            ? bridgeElements.actionButtons
+            : [];
+
+        return actionButtons.find((button) => button.dataset.action === action)
+            || document.querySelector(`.hud-button[data-action="${action}"]`);
+    }
+
+    function triggerAction(action) {
+        const sourceButton = getDesktopActionButton(action);
+
+        if (sourceButton && !sourceButton.disabled) {
+            sourceButton.click();
+            return true;
+        }
+
+        const actionUi = game.systems.actionUi || null;
+
+        if (actionUi && typeof actionUi.handleActionClick === 'function') {
+            actionUi.handleActionClick({
+                currentTarget: {
+                    dataset: { action }
+                }
+            });
+            return true;
+        }
+
+        return false;
     }
 
     function countUsedInventorySlots() {
@@ -286,7 +298,7 @@
         const canWalk = hasRoute && !game.state.isMoving && !game.state.isPaused && !game.state.isMapOpen && !game.state.isGameOver;
         const usedSlots = countUsedInventorySlots();
         const activeQuestCount = getActiveQuestCount();
-        const isMapOpen = Boolean(game.state.isMapOpen);
+        const shouldShowQuestButton = activeQuestCount > 0 || activePanelKey === 'quests';
 
         if (refs.mobileWalkButton) {
             refs.mobileWalkButton.disabled = !canWalk;
@@ -294,34 +306,71 @@
         }
 
         if (refs.mobileInventoryBadge) {
-            refs.mobileInventoryBadge.hidden = usedSlots <= 0;
+            refs.mobileInventoryBadge.hidden = true;
             refs.mobileInventoryBadge.textContent = String(usedSlots);
         }
 
         if (refs.mobileQuestBadge) {
-            refs.mobileQuestBadge.hidden = activeQuestCount <= 0;
+            refs.mobileQuestBadge.hidden = true;
             refs.mobileQuestBadge.textContent = String(activeQuestCount);
         }
 
-        if (refs.mobileSummaryButton) {
-            refs.mobileSummaryButton.classList.toggle('is-active', activePanelKey === 'summary');
-        }
-
         if (refs.mobileQuestButton) {
+            refs.mobileQuestButton.hidden = !shouldShowQuestButton;
             refs.mobileQuestButton.classList.toggle('is-active', activePanelKey === 'quests');
         }
 
-        if (refs.mobileActionsButton) {
-            refs.mobileActionsButton.classList.toggle('is-active', activePanelKey === 'actions');
-        }
+        syncMobileActionButton(refs.mobileUseButton, 'use');
+        syncMobileActionButton(refs.mobileSleepButton, 'sleep');
+        syncMobileActionButton(refs.mobileInspectButton, 'inspect');
+
+        const canTalk = syncMobileActionButton(refs.mobileTalkButton, 'talk', { hideWhenUnavailable: true });
+        const canDrop = syncMobileActionButton(refs.mobileDropButton, 'drop', { hideWhenUnavailable: true });
 
         if (refs.mobileInventoryButton) {
             refs.mobileInventoryButton.classList.toggle('is-active', activePanelKey === 'inventory');
         }
 
-        if (refs.mobileMapLauncher) {
-            refs.mobileMapLauncher.classList.toggle('is-active', isMapOpen);
+        if (refs.mobileActionRack) {
+            const iconCount = 4 + (shouldShowQuestButton ? 1 : 0) + (canTalk ? 1 : 0) + (canDrop ? 1 : 0);
+            refs.mobileActionRack.dataset.iconCount = String(iconCount);
         }
+    }
+
+    function syncMobileActionButton(button, action, options = {}) {
+        if (!button) {
+            return false;
+        }
+
+        const sourceButton = getDesktopActionButton(action);
+        const isAvailable = Boolean(sourceButton && !sourceButton.disabled);
+        const isHighlighted = Boolean(isAvailable && sourceButton.classList.contains('hud-button--available'));
+
+        button.disabled = !isAvailable;
+        button.classList.toggle('is-ready', isHighlighted);
+
+        if (options.hideWhenUnavailable) {
+            button.hidden = !isAvailable;
+        }
+
+        return isAvailable;
+    }
+
+    function syncHintText() {
+        const refs = getElements();
+
+        if (!refs.mobileHintText) {
+            return;
+        }
+
+        const bridgeElements = typeof bridge.getElements === 'function'
+            ? bridge.getElements()
+            : null;
+        const actionHintText = bridgeElements && bridgeElements.actionHint && typeof bridgeElements.actionHint.textContent === 'string'
+            ? bridgeElements.actionHint.textContent.trim()
+            : '';
+
+        refs.mobileHintText.textContent = actionHintText || 'Выдели клетку или объект, чтобы увидеть подсказку.';
     }
 
     function syncToolbarOffset() {
@@ -358,6 +407,7 @@
         const hasBlockingSceneOverlay = Boolean(
             game.state.isPaused
             || game.state.hasWon
+            || game.state.isGameOver
             || game.state.isMapOpen
             || (refs.merchantPanel && !refs.merchantPanel.hidden)
         );
@@ -376,6 +426,10 @@
     }
 
     function sync() {
+        if (getActivePanelKey() === 'actions') {
+            closePanel({ silent: true });
+        }
+
         syncVisibility();
 
         if (!isMobileViewport()) {
@@ -384,6 +438,7 @@
 
         syncStats();
         syncButtons();
+        syncHintText();
         syncToolbarOffset();
     }
 
@@ -400,33 +455,45 @@
             });
         }
 
+        if (refs.mobileUseButton) {
+            refs.mobileUseButton.addEventListener('click', () => {
+                triggerAction('use');
+            });
+        }
+
+        if (refs.mobileSleepButton) {
+            refs.mobileSleepButton.addEventListener('click', () => {
+                triggerAction('sleep');
+            });
+        }
+
+        if (refs.mobileInspectButton) {
+            refs.mobileInspectButton.addEventListener('click', () => {
+                triggerAction('inspect');
+            });
+        }
+
+        if (refs.mobileTalkButton) {
+            refs.mobileTalkButton.addEventListener('click', () => {
+                triggerAction('talk');
+            });
+        }
+
+        if (refs.mobileDropButton) {
+            refs.mobileDropButton.addEventListener('click', () => {
+                triggerAction('drop');
+            });
+        }
+
         if (refs.mobileInventoryButton) {
             refs.mobileInventoryButton.addEventListener('click', () => {
                 openPanel('inventory');
             });
         }
 
-        if (refs.mobileSummaryButton) {
-            refs.mobileSummaryButton.addEventListener('click', () => {
-                openPanel('summary');
-            });
-        }
-
         if (refs.mobileQuestButton) {
             refs.mobileQuestButton.addEventListener('click', () => {
                 openPanel('quests');
-            });
-        }
-
-        if (refs.mobileActionsButton) {
-            refs.mobileActionsButton.addEventListener('click', () => {
-                openPanel('actions');
-            });
-        }
-
-        if (refs.mobileMapLauncher) {
-            refs.mobileMapLauncher.addEventListener('click', () => {
-                openMapPanel();
             });
         }
 

@@ -92,7 +92,8 @@
                 gold: 0,
                 inventory: createStarterInventory(),
                 unlockedInventorySlots: 4,
-                selectedInventorySlot: null
+                selectedInventorySlot: null,
+                stepsSinceAutoRest: 30
             },
             world: {
                 currentIslandIndex: 1,
@@ -101,6 +102,8 @@
                 resolvedHouseIds: {},
                 tradedHouseIds: {},
                 merchantStateByHouseId: {},
+                courierJobsById: {},
+                courierResultLog: [],
                 placedBridgeKeys: {},
                 collapsedBridgeKeys: {},
                 weakenedBridgeKeys: {},
@@ -108,7 +111,9 @@
                 islandPressureStepsByIndex: {},
                 exploredMapTilesByKey: {},
                 groundItemsByKey: {},
-                currentTimeOfDayIndex: 0
+                currentTimeOfDayIndex: 0,
+                stepsSinceTimeOfDayChange: 0,
+                timeOfDayAdvancesElapsed: 0
             },
             narrative: {
                 activeDialogueId: null,
@@ -196,7 +201,10 @@
                     : defaults.player.unlockedInventorySlots,
                 selectedInventorySlot: typeof state.selectedInventorySlot === 'number'
                     ? state.selectedInventorySlot
-                    : defaults.player.selectedInventorySlot
+                    : defaults.player.selectedInventorySlot,
+                stepsSinceAutoRest: typeof state.stepsSinceAutoRest === 'number'
+                    ? state.stepsSinceAutoRest
+                    : defaults.player.stepsSinceAutoRest
             },
             world: {
                 currentIslandIndex: typeof state.currentIslandIndex === 'number'
@@ -209,6 +217,8 @@
                 resolvedHouseIds: mergeWithDefaults(defaults.world.resolvedHouseIds, state.resolvedHouseIds),
                 tradedHouseIds: mergeWithDefaults(defaults.world.tradedHouseIds, state.tradedHouseIds),
                 merchantStateByHouseId: mergeWithDefaults(defaults.world.merchantStateByHouseId, state.merchantStateByHouseId),
+                courierJobsById: mergeWithDefaults(defaults.world.courierJobsById, state.courierJobsById),
+                courierResultLog: mergeWithDefaults(defaults.world.courierResultLog, state.courierResultLog),
                 placedBridgeKeys: mergeWithDefaults(
                     defaults.world.placedBridgeKeys,
                     state.placedBridgeKeys || state.placedBridgeTiles
@@ -227,7 +237,13 @@
                 ),
                 currentTimeOfDayIndex: typeof state.currentTimeOfDayIndex === 'number'
                     ? state.currentTimeOfDayIndex
-                    : defaults.world.currentTimeOfDayIndex
+                    : defaults.world.currentTimeOfDayIndex,
+                stepsSinceTimeOfDayChange: typeof state.stepsSinceTimeOfDayChange === 'number'
+                    ? state.stepsSinceTimeOfDayChange
+                    : defaults.world.stepsSinceTimeOfDayChange,
+                timeOfDayAdvancesElapsed: typeof state.timeOfDayAdvancesElapsed === 'number'
+                    ? state.timeOfDayAdvancesElapsed
+                    : defaults.world.timeOfDayAdvancesElapsed
             },
             narrative: {
                 activeDialogueId: typeof state.activeDialogueId === 'string'
@@ -336,12 +352,15 @@
             inventory: normalized.player.inventory,
             unlockedInventorySlots: normalized.player.unlockedInventorySlots,
             selectedInventorySlot: normalized.player.selectedInventorySlot,
+            stepsSinceAutoRest: normalized.player.stepsSinceAutoRest,
             currentIslandIndex: normalized.world.currentIslandIndex,
             visitedIslandIds: normalized.world.visitedIslandIds,
             highestIslandIndex: normalized.world.highestIslandIndex,
             resolvedHouseIds: normalized.world.resolvedHouseIds,
             tradedHouseIds: normalized.world.tradedHouseIds,
             merchantStateByHouseId: normalized.world.merchantStateByHouseId,
+            courierJobsById: normalized.world.courierJobsById,
+            courierResultLog: normalized.world.courierResultLog,
             placedBridgeKeys: normalized.world.placedBridgeKeys,
             collapsedBridgeKeys: normalized.world.collapsedBridgeKeys,
             weakenedBridgeKeys: normalized.world.weakenedBridgeKeys,
@@ -350,6 +369,8 @@
             exploredMapTilesByKey: normalized.world.exploredMapTilesByKey,
             groundItemsByKey: normalized.world.groundItemsByKey,
             currentTimeOfDayIndex: normalized.world.currentTimeOfDayIndex,
+            stepsSinceTimeOfDayChange: normalized.world.stepsSinceTimeOfDayChange,
+            timeOfDayAdvancesElapsed: normalized.world.timeOfDayAdvancesElapsed,
             activeDialogueId: normalized.narrative.activeDialogueId,
             activeDialogueNodeId: normalized.narrative.activeDialogueNodeId,
             activeQuestIds: normalized.narrative.activeQuestIds,

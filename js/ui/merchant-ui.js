@@ -23,6 +23,10 @@
         return game.systems.questRuntime || null;
     }
 
+    function getCourierRuntime() {
+        return game.systems.courierRuntime || null;
+    }
+
     function getBagUpgradeRuntime() {
         return game.systems.bagUpgradeRuntime || null;
     }
@@ -205,6 +209,18 @@
         `;
     }
 
+    function buildCourierEtaLabel(returnAdvanceCount) {
+        const courierRuntime = getCourierRuntime();
+        const currentAdvanceCount = courierRuntime && typeof courierRuntime.getCurrentTimeAdvanceCount === 'function'
+            ? courierRuntime.getCurrentTimeAdvanceCount()
+            : 0;
+        const remainingAdvances = Math.max(0, Math.round((returnAdvanceCount || 0) - currentAdvanceCount));
+
+        return courierRuntime && typeof courierRuntime.formatCourierEtaFromRemainingAdvances === 'function'
+            ? courierRuntime.formatCourierEtaFromRemainingAdvances(remainingAdvances)
+            : '';
+    }
+
     function buildMerchantQuestSection(quest, selectedItemId, inventoryRuntime) {
         if (!quest) {
             return `
@@ -216,6 +232,23 @@
         }
 
         const ownedQuestItems = inventoryRuntime ? inventoryRuntime.countInventoryItem(quest.itemId) : 0;
+        const isCourierInTransit = quest.courierStatus === 'inTransit';
+        const courierEtaLabel = isCourierInTransit ? buildCourierEtaLabel(quest.courierReturnAdvanceCount) : '';
+        const courierStatusRows = [];
+        const progressLine = isCourierInTransit
+            ? `Груз у курьера · Награда: ${quest.rewardGold || 0} золота`
+            : (quest.courierStatus === 'resolved'
+                ? `Сдано курьером · фактически получено: ${quest.deliveredRewardGold || 0} золота`
+                : `В сумке: ${ownedQuestItems}/${quest.quantity} · Награда: ${quest.rewardGold || 0} золота`);
+
+        if (isCourierInTransit) {
+            courierStatusRows.push(
+                `<div class="merchant-row__note merchant-row__note--accent">Груз уже передан курьеру "${escapeHtml(quest.courierTierLabel || 'курьер')}" ${courierEtaLabel ? `· ${escapeHtml(courierEtaLabel)}` : ''}</div>`
+            );
+        } else if (quest.courierStatus === 'resolved' && quest.courierResultLabel) {
+            courierStatusRows.push(`<div class="merchant-row__note merchant-row__note--accent">${escapeHtml(quest.courierResultLabel)}</div>`);
+        }
+
         return `
             <div class="merchant-section">
                 <h3 class="merchant-section__title">Квест</h3>
@@ -225,12 +258,114 @@
                             ${escapeHtml(quest.label)} ${quest.quantity > 1 ? `x${quest.quantity}` : ''}
                         </button>
                         <div class="merchant-row__note">${escapeHtml(quest.description || '')}</div>
-                        <div class="merchant-row__note">В сумке: ${ownedQuestItems}/${quest.quantity} · Награда: ${quest.rewardGold || 0} золота</div>
+                        <div class="merchant-row__note">${progressLine}</div>
+                        ${courierStatusRows.join('')}
                     </div>
                     <div class="merchant-row__actions">
-                        <button class="hud-button" type="button" data-merchant-action="quest" ${quest.completed || ownedQuestItems < quest.quantity ? 'disabled' : ''}>${quest.completed ? 'Сдано' : 'Сдать'}</button>
+                        <button class="hud-button" type="button" data-merchant-action="quest" ${quest.completed || isCourierInTransit || ownedQuestItems < quest.quantity ? 'disabled' : ''}>${quest.completed ? 'Сдано' : (isCourierInTransit ? 'Курьер в пути' : 'Сдать')}</button>
                     </div>
                 </div>
+            </div>
+        `;
+    }
+
+    function buildCourierQuestRow(quest) {
+        const tierButtons = Array.isArray(quest.courierTiers)
+            ? quest.courierTiers.map((tier) => `
+                <button
+                    class="hud-button merchant-courier-tier"
+                    type="button"
+                    data-merchant-action="courier"
+                    data-quest-id="${escapeHtml(quest.questId)}"
+                    data-courier-tier="${escapeHtml(tier.id)}"
+                    ${tier.disabled ? `disabled title="${escapeHtml(tier.disabledReason)}"` : ''}
+                >
+                    ${escapeHtml(tier.label)} · ${tier.fee}з
+                </button>
+            `).join('')
+            : '';
+
+        return `
+            <div class="merchant-courier-card">
+                <div class="merchant-row__title">${escapeHtml(quest.sourceLabel || 'Квестодатель')} · остров ${quest.sourceIslandIndex || '?'}</div>
+                <div class="merchant-row__note">Отправка: ${escapeHtml(quest.label || 'Груз')} x${quest.progressRequired || quest.quantity || 1} · в сумке ${quest.ownedAmount}/${quest.progressRequired || quest.quantity || 1}</div>
+                <div class="merchant-row__note">Полная награда: ${quest.rewardGold || 0} золота · дистанция доставки: ${quest.deliveryDistance} остров.</div>
+                <div class="merchant-courier-tier-list">${tierButtons}</div>
+                <div class="merchant-courier-risk-list">
+                    ${(quest.courierTiers || []).map((tier) => `
+                        <div class="merchant-row__note">${escapeHtml(tier.label)}: при отходе на 1-2 острова шанс урезания до 50% = ${tier.partialRewardChancePercent}%</div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function buildCourierJobRow(job) {
+        return `
+            <div class="merchant-row">
+                <div class="merchant-row__meta">
+                    <div class="merchant-row__title">${escapeHtml(job.questLabel || 'Поручение')}</div>
+                    <div class="merchant-row__note">Курьер: ${escapeHtml(job.tierLabel || 'Курьер')} · к ${escapeHtml(job.targetSourceLabel || 'квестодателю')}</div>
+                    <div class="merchant-row__note">Остров найма: ${job.hireIslandIndex || '?'} · доставка: ${job.deliveryDistance} остров. · ${escapeHtml(job.etaLabel || '')}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function buildCourierResultRow(result) {
+        const resultLabel = result.resultCode === 'lost'
+            ? 'Награды нет'
+            : (result.resultCode === 'partial'
+                ? `Получено ${result.deliveredRewardGold || 0} золота (50%)`
+                : `Получено ${result.deliveredRewardGold || 0} золота`);
+
+        return `
+            <div class="merchant-row">
+                <div class="merchant-row__meta">
+                    <div class="merchant-row__title">${escapeHtml(result.questLabel || 'Поручение')}</div>
+                    <div class="merchant-row__note">${escapeHtml(result.targetSourceLabel || 'Квестодатель')} · ${escapeHtml(result.tierLabel || 'Курьер')}</div>
+                    <div class="merchant-row__note merchant-row__note--accent">${escapeHtml(resultLabel)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function buildCourierSection(source) {
+        const courierRuntime = getCourierRuntime();
+
+        if (!courierRuntime || typeof courierRuntime.getMerchantCourierDashboard !== 'function') {
+            return '';
+        }
+
+        const dashboard = courierRuntime.getMerchantCourierDashboard(source);
+        const eligibleQuests = Array.isArray(dashboard.eligibleQuests) ? dashboard.eligibleQuests : [];
+        const activeJobs = Array.isArray(dashboard.activeJobs) ? dashboard.activeJobs : [];
+        const recentResults = Array.isArray(dashboard.recentResults) ? dashboard.recentResults : [];
+
+        return `
+            <div class="merchant-section">
+                <h3 class="merchant-section__title">Курьер</h3>
+                <p class="panel-copy">Отправь груз к уже взятому торговому квесту. Курьер вернётся через 2 суток и привезёт награду по текущим условиям маршрута.</p>
+                ${activeJobs.length > 0 ? `
+                    <div class="merchant-subsection">
+                        <div class="merchant-subsection__title">В пути</div>
+                        ${activeJobs.map((job) => buildCourierJobRow(job)).join('')}
+                    </div>
+                ` : ''}
+                ${eligibleQuests.length > 0 ? `
+                    <div class="merchant-subsection">
+                        <div class="merchant-subsection__title">Отправить сейчас</div>
+                        <div class="merchant-courier-list">
+                            ${eligibleQuests.map((quest) => buildCourierQuestRow(quest)).join('')}
+                        </div>
+                    </div>
+                ` : '<p class="panel-copy">Нет активных торговых поручений, которые стоит отправлять курьером.</p>'}
+                ${recentResults.length > 0 ? `
+                    <div class="merchant-subsection">
+                        <div class="merchant-subsection__title">Последние возвраты</div>
+                        ${recentResults.map((result) => buildCourierResultRow(result)).join('')}
+                    </div>
+                ` : ''}
             </div>
         `;
     }
@@ -253,7 +388,9 @@
     }
 
     function buildArtisanQuestVisual(quest) {
-        const categoryLabels = Array.isArray(quest.questCategoryLabels) ? quest.questCategoryLabels : [];
+        const categoryLabels = Array.isArray(quest.slotQuestFocusLabels) && quest.slotQuestFocusLabels.length > 0
+            ? quest.slotQuestFocusLabels
+            : (Array.isArray(quest.questCategoryLabels) ? quest.questCategoryLabels : []);
         const collectedRequirements = Array.isArray(quest.collectedRequirements) ? quest.collectedRequirements : [];
         const missingRequirements = Array.isArray(quest.missingRequirements) ? quest.missingRequirements : [];
         const optionalRequirements = Array.isArray(quest.optionalRequirements) ? quest.optionalRequirements : [];
@@ -261,7 +398,7 @@
             ? collectedRequirements.map((entry) => `
                 <div class="artisan-check artisan-check--done">
                     <div class="artisan-check__title">${escapeHtml(entry.label || 'Требование')}</div>
-                    <div class="artisan-check__value">${escapeHtml(entry.itemLabel || 'Подходящий предмет уже в сумке')}</div>
+                    <div class="artisan-check__value">${escapeHtml(entry.valueLabel || entry.itemLabel || 'Подходящий предмет уже в сумке')}</div>
                 </div>
             `).join('')
             : '<div class="artisan-check artisan-check--empty">Пока ни одно обязательное требование не закрыто.</div>';
@@ -269,7 +406,7 @@
             ? missingRequirements.map((entry) => `
                 <div class="artisan-check artisan-check--missing">
                     <div class="artisan-check__title">${escapeHtml(entry.label || 'Требование')}</div>
-                    <div class="artisan-check__value">${escapeHtml(Array.isArray(entry.tags) && entry.tags.length > 0 ? entry.tags.join(', ') : (entry.description || 'Нужен подходящий предмет'))}</div>
+                    <div class="artisan-check__value">${escapeHtml(entry.valueLabel || (entry.description || 'Нужен подходящий предмет'))}</div>
                 </div>
             `).join('')
             : '<div class="artisan-check artisan-check--done">Все обязательные требования уже собраны.</div>';
@@ -281,7 +418,7 @@
                         ${optionalRequirements.map((entry) => `
                             <div class="artisan-check artisan-check--optional">
                                 <div class="artisan-check__title">${escapeHtml(entry.label || 'Опция')}</div>
-                                <div class="artisan-check__value">${escapeHtml(entry.itemLabel || entry.description || 'Можно усилить комплект ещё одним предметом')}</div>
+                                <div class="artisan-check__value">${escapeHtml(entry.valueLabel || entry.itemLabel || entry.description || 'Можно усилить комплект ещё одним предметом')}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -293,8 +430,9 @@
             <div class="artisan-quest">
                 <div class="artisan-quest__hero">
                     <div class="artisan-quest__slot">${escapeHtml(quest.slotUnlockLabel || `Откроется слот ${quest.targetSlots || '?'}`)}</div>
-                    <div class="artisan-quest__meta">${escapeHtml(quest.slotProgressLabel || `Сумка ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'}`)}</div>
+                    <div class="artisan-quest__meta">${escapeHtml(quest.progressHeadline || quest.slotProgressLabel || `Сумка ${quest.sourceSlots || '?'} → ${quest.targetSlots || '?'}`)}</div>
                     <div class="artisan-quest__meta">${escapeHtml([quest.occupancyStatusLabel || '', quest.requirementStatusLabel || ''].filter(Boolean).join(' · '))}</div>
+                    ${quest.unlockPreviewLabel ? `<div class="artisan-quest__meta">${escapeHtml(quest.unlockPreviewLabel)}</div>` : ''}
                     ${quest.occupancyMissingLabel ? `<div class="artisan-quest__warning">${escapeHtml(quest.occupancyMissingLabel)}</div>` : ''}
                 </div>
                 ${categoryLabels.length > 0 ? `
@@ -313,6 +451,7 @@
                     </div>
                 </div>
                 ${optionalHtml}
+                ${quest.generationHintLabel ? `<div class="merchant-row__note">${escapeHtml(quest.generationHintLabel)}</div>` : ''}
             </div>
         `;
     }
@@ -335,9 +474,10 @@
                 <div class="merchant-panel__description">
                     <div class="merchant-row__title">${escapeHtml(quest.label || 'Расширение сумки')}</div>
                     <p class="panel-copy">${escapeHtml(quest.description || '')}</p>
-                    <div class="merchant-row__note">Сумка: ${quest.sourceSlots || currentSlots} → ${quest.targetSlots || currentSlots}</div>
-                    <div class="merchant-row__note">Занято слотов: ${quest.occupiedSlots || 0}/${quest.requiredOccupiedSlots || 0} · Прогресс: ${quest.progressCurrent || 0}/${quest.progressRequired || 0}</div>
+                    <div class="merchant-row__note">${escapeHtml(quest.progressHeadline || `Сумка: ${quest.sourceSlots || currentSlots} → ${quest.targetSlots || currentSlots}`)}</div>
+                    <div class="merchant-row__note">${escapeHtml([quest.occupancyStatusLabel || '', quest.requirementStatusLabel || ''].filter(Boolean).join(' · ') || `Занято слотов: ${quest.occupiedSlots || 0}/${quest.requiredOccupiedSlots || 0} · Прогресс: ${quest.progressCurrent || 0}/${quest.progressRequired || 0}`)}</div>
                     <div class="merchant-row__note">Награда: +${rewardSlots} слот · текущая сумка ${currentSlots}/${slotCap}</div>
+                    ${quest.unlockPreviewLabel ? `<div class="merchant-row__note">${escapeHtml(quest.unlockPreviewLabel)}</div>` : ''}
                     ${Number.isFinite(quest.deadlineIslandIndex) ? `<div class="merchant-row__note">Сдать до острова ${quest.deadlineIslandIndex}</div>` : ''}
                     ${buildArtisanQuestVisual(quest)}
                 </div>
@@ -500,6 +640,7 @@
         elements.merchantPanelContent.innerHTML = `
             ${buildDescriptionSection(selectedDescription)}
             ${buildMerchantQuestSection(quest, selectedItemId, inventoryRuntime)}
+            ${buildCourierSection(source)}
             ${buildStockSection(liveEncounter, selectedItemId)}
             ${buildSellSection(liveEncounter, selectedItemId, inventoryRuntime, pricing)}
         `;
@@ -609,6 +750,20 @@
         applyPanelOutcome(null, 'Продать этот предмет сейчас нельзя.');
     }
 
+    function hireCourierForQuest(source, questId, tierId) {
+        const courierRuntime = getCourierRuntime();
+
+        if (courierRuntime && typeof courierRuntime.hireCourier === 'function') {
+            applyPanelOutcome(
+                courierRuntime.hireCourier(source, questId, tierId),
+                'Нанять курьера сейчас нельзя.'
+            );
+            return;
+        }
+
+        applyPanelOutcome(null, 'Нанять курьера сейчас нельзя.');
+    }
+
     function handleMerchantPanelClick(event) {
         const button = event.target.closest('[data-merchant-action]');
 
@@ -650,6 +805,15 @@
 
         if (action === 'sell') {
             sellInventoryItemToMerchant(source, Number(button.getAttribute('data-inventory-index')));
+            return;
+        }
+
+        if (action === 'courier') {
+            hireCourierForQuest(
+                source,
+                button.getAttribute('data-quest-id'),
+                button.getAttribute('data-courier-tier')
+            );
         }
     }
 

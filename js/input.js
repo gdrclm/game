@@ -39,11 +39,11 @@ function handleClick(event) {
         : baseMoveCellsPerTurn;
     const pathResult = game.systems.pathfinding.findPathResult(startX, startY, resolvedTarget.x, resolvedTarget.y);
     const existingRoute = Array.isArray(game.state.route) ? game.state.route : [];
-    const existingRouteTarget = existingRoute.length > 0 ? existingRoute[existingRoute.length - 1] : null;
-    const isRepeatClickOnCurrentRoute = Boolean(
-        existingRouteTarget
-        && existingRouteTarget.x === resolvedTarget.x
-        && existingRouteTarget.y === resolvedTarget.y
+    const selectedWorldTile = game.state.selectedWorldTile;
+    const isRepeatClickOnSelectedTile = Boolean(
+        selectedWorldTile
+        && selectedWorldTile.x === targetX
+        && selectedWorldTile.y === targetY
     );
 
     game.state.selectedWorldTile = { x: targetX, y: targetY };
@@ -85,7 +85,7 @@ function handleClick(event) {
     }
 
     if (
-        isRepeatClickOnCurrentRoute
+        isRepeatClickOnSelectedTile
         && existingRoute.length > 0
         && game.state.route.length > 0
         && !game.state.isMoving

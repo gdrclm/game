@@ -149,10 +149,20 @@
         return parseState(serializedState);
     }
 
+    function clearStorage(storageKey = STORAGE_KEY) {
+        if (typeof localStorage === 'undefined') {
+            return false;
+        }
+
+        localStorage.removeItem(storageKey);
+        return true;
+    }
+
     Object.assign(saveLoad, {
         STORAGE_KEY,
         applySnapshotToState,
         buildSaveSnapshot,
+        clearStorage,
         hydrateStateFromSnapshot,
         loadFromStorage,
         migrateLegacyStateToVersion1,

@@ -228,6 +228,16 @@
             description: 'Облегчает проход через тяжёлые зоны и узкие места.',
             activeEffect: { kind: 'travelBuff', ignoreTravelZones: true, durationSteps: 4 }
         }),
+        makeItem('fishingRod', 'Удочка путника', 'UP', 2, 'tool survival utility food', {
+            chestWeight: 0,
+            merchantWeight: 1,
+            baseValue: 18,
+            description: 'Дар рыбака. Делает еду и короткий отдых заметно полезнее на длинных островах.',
+            passive: {
+                foodRecoveryMultiplier: 1.18,
+                recoveryMultiplier: 1.05
+            }
+        }),
         makeItem('smallPickaxe', 'Кирка разведчика', 'KR', 2, 'tool utility', {
             chestWeight: 3,
             merchantWeight: 4,

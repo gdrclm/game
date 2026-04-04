@@ -28,12 +28,21 @@
         well: '#7ec8ea'
     };
     const MAP_ZOOM_MIN = 0.75;
-    const MAP_ZOOM_MAX = 6;
+    const MAP_ZOOM_BASE_MAX = 4;
+    const MAP_ZOOM_PER_ISLAND = 0.45;
+    const MAP_ZOOM_HARD_MAX = 10;
     const MAP_ZOOM_STEP = 1.25;
 
     let elements = null;
     let eventsBound = false;
     let mapZoom = 1;
+    let hasManualMapPan = false;
+    let mapPanOffsetX = 0;
+    let mapPanOffsetY = 0;
+    let lastRenderedLayout = null;
+    let activeDragPointerId = null;
+    let lastDragClientX = 0;
+    let lastDragClientY = 0;
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
@@ -104,6 +113,14 @@
             });
         }
 
+        if (refs.mapCanvas) {
+            refs.mapCanvas.addEventListener('pointerdown', handleMapPointerDown);
+            refs.mapCanvas.addEventListener('pointermove', handleMapPointerMove);
+            refs.mapCanvas.addEventListener('pointerup', handleMapPointerUp);
+            refs.mapCanvas.addEventListener('pointercancel', handleMapPointerUp);
+            refs.mapCanvas.addEventListener('lostpointercapture', handleMapPointerUp);
+        }
+
         eventsBound = true;
     }
 
@@ -133,15 +150,38 @@
         };
     }
 
-    function updateZoomControls() {
+    function getVisitedIslandCount() {
+        const visitedIslandIds = game.state.visitedIslandIds || {};
+        const discoveredCount = Object.values(visitedIslandIds).reduce((count, isVisited) => (
+            isVisited ? count + 1 : count
+        ), 0);
+
+        return Math.max(1, discoveredCount || 1);
+    }
+
+    function getMapZoomMax(stats = null) {
+        const discoveredIslands = Math.max(
+            getVisitedIslandCount(),
+            stats && Number.isFinite(stats.islandCount) ? stats.islandCount : 1
+        );
+
+        return clamp(
+            MAP_ZOOM_BASE_MAX + (discoveredIslands - 1) * MAP_ZOOM_PER_ISLAND,
+            MAP_ZOOM_MIN,
+            MAP_ZOOM_HARD_MAX
+        );
+    }
+
+    function updateZoomControls(stats = null) {
         const refs = elements || queryElements();
+        const zoomMax = getMapZoomMax(stats);
 
         if (refs.mapZoomValue) {
             refs.mapZoomValue.textContent = `${Math.round(mapZoom * 100)}%`;
         }
 
         if (refs.mapZoomIn) {
-            refs.mapZoomIn.disabled = mapZoom >= MAP_ZOOM_MAX - 0.001;
+            refs.mapZoomIn.disabled = mapZoom >= zoomMax - 0.001;
         }
 
         if (refs.mapZoomOut) {
@@ -150,7 +190,7 @@
     }
 
     function setMapZoom(nextZoom, options = {}) {
-        const clampedZoom = clamp(nextZoom, MAP_ZOOM_MIN, MAP_ZOOM_MAX);
+        const clampedZoom = clamp(nextZoom, MAP_ZOOM_MIN, getMapZoomMax());
         mapZoom = clampedZoom;
         updateZoomControls();
 
@@ -183,16 +223,36 @@
         game.state.isMapOpen = nextValue;
 
         if (nextValue) {
+            resetMapPan();
+            setMapZoom(mapZoom, { silent: true });
             const runtime = getMapRuntime();
             if (runtime && typeof runtime.captureVisibleWorld === 'function') {
                 const focusChunkX = Math.floor(game.state.playerPos.x / game.config.chunkSize);
                 const focusChunkY = Math.floor(game.state.playerPos.y / game.config.chunkSize);
                 runtime.captureVisibleWorld(focusChunkX, focusChunkY);
             }
+        } else {
+            stopMapDrag();
         }
 
         bridge.renderAfterStateChange();
         return nextValue;
+    }
+
+    function resetMapPan() {
+        hasManualMapPan = false;
+        mapPanOffsetX = 0;
+        mapPanOffsetY = 0;
+        stopMapDrag();
+    }
+
+    function stopMapDrag() {
+        const refs = elements || queryElements();
+        activeDragPointerId = null;
+
+        if (refs.mapCanvas) {
+            refs.mapCanvas.classList.remove('is-dragging');
+        }
     }
 
     function getTileColor(entry) {
@@ -332,22 +392,24 @@
         const cellSize = Math.max(1, fitCellSize * mapZoom);
         const mapWidth = worldWidth * cellSize;
         const mapHeight = worldHeight * cellSize;
-        const minOffsetX = contextState.width - padding - mapWidth;
-        const maxOffsetX = padding;
-        const minOffsetY = contextState.height - padding - mapHeight;
-        const maxOffsetY = padding;
-        let offsetX = Math.floor((contextState.width - mapWidth) / 2);
-        let offsetY = Math.floor((contextState.height - mapHeight) / 2);
-
-        if (mapWidth > availableWidth) {
-            const desiredOffsetX = contextState.width / 2 - ((game.state.playerPos.x - bounds.minX) + 0.5) * cellSize;
-            offsetX = Math.round(clamp(desiredOffsetX, minOffsetX, maxOffsetX));
-        }
-
-        if (mapHeight > availableHeight) {
-            const desiredOffsetY = contextState.height / 2 - ((game.state.playerPos.y - bounds.minY) + 0.5) * cellSize;
-            offsetY = Math.round(clamp(desiredOffsetY, minOffsetY, maxOffsetY));
-        }
+        const canPanX = mapWidth > availableWidth;
+        const canPanY = mapHeight > availableHeight;
+        const centeredOffsetX = Math.floor((contextState.width - mapWidth) / 2);
+        const centeredOffsetY = Math.floor((contextState.height - mapHeight) / 2);
+        const minOffsetX = canPanX ? contextState.width - padding - mapWidth : centeredOffsetX;
+        const maxOffsetX = canPanX ? padding : centeredOffsetX;
+        const minOffsetY = canPanY ? contextState.height - padding - mapHeight : centeredOffsetY;
+        const maxOffsetY = canPanY ? padding : centeredOffsetY;
+        const desiredOffsetX = canPanX
+            ? contextState.width / 2 - ((game.state.playerPos.x - bounds.minX) + 0.5) * cellSize
+            : centeredOffsetX;
+        const desiredOffsetY = canPanY
+            ? contextState.height / 2 - ((game.state.playerPos.y - bounds.minY) + 0.5) * cellSize
+            : centeredOffsetY;
+        const preferredOffsetX = hasManualMapPan && canPanX ? mapPanOffsetX : desiredOffsetX;
+        const preferredOffsetY = hasManualMapPan && canPanY ? mapPanOffsetY : desiredOffsetY;
+        const offsetX = Math.round(clamp(preferredOffsetX, minOffsetX, maxOffsetX));
+        const offsetY = Math.round(clamp(preferredOffsetY, minOffsetY, maxOffsetY));
 
         return {
             padding,
@@ -357,7 +419,13 @@
             mapWidth,
             mapHeight,
             offsetX,
-            offsetY
+            offsetY,
+            canPanX,
+            canPanY,
+            minOffsetX,
+            maxOffsetX,
+            minOffsetY,
+            maxOffsetY
         };
     }
 
@@ -391,6 +459,10 @@
         refs.mapPanelTitle.textContent = title;
 
         if (!Array.isArray(exploredTiles) || exploredTiles.length === 0) {
+            lastRenderedLayout = null;
+            if (refs.mapCanvas) {
+                refs.mapCanvas.classList.remove('is-pannable', 'is-dragging');
+            }
             refs.mapPanelSummary.textContent = 'Разведанных мест пока нет.';
             drawEmptyState(contextState.ctx, contextState.width, contextState.height);
             return;
@@ -403,8 +475,22 @@
         const playerX = getCanvasX(game.state.playerPos.x, bounds, layout) + layout.cellSize / 2;
         const playerY = getCanvasY(game.state.playerPos.y, bounds, layout) + layout.cellSize / 2;
         const ctx = contextState.ctx;
+        const isPannable = layout.canPanX || layout.canPanY;
 
-        refs.mapPanelSummary.textContent = `Разведано клеток: ${exploredTiles.length} · островов: ${stats.islandCount} · домов: ${stats.houseCount} · квестодателей: ${stats.questCount} · ресурсов: ${stats.resourceCount}`;
+        lastRenderedLayout = layout;
+
+        if (hasManualMapPan) {
+            mapPanOffsetX = layout.offsetX;
+            mapPanOffsetY = layout.offsetY;
+        }
+
+        if (refs.mapCanvas) {
+            refs.mapCanvas.classList.toggle('is-pannable', isPannable);
+            refs.mapCanvas.classList.toggle('is-dragging', isPannable && activeDragPointerId !== null);
+        }
+
+        refs.mapPanelSummary.textContent = `Разведано клеток: ${exploredTiles.length} · домов: ${stats.houseCount} · квестодателей: ${stats.questCount} · ресурсов: ${stats.resourceCount}`;
+        updateZoomControls(stats);
 
         drawBackground(ctx, contextState.width, contextState.height);
 
@@ -465,9 +551,75 @@
         ctx.stroke();
     }
 
+    function handleMapPointerDown(event) {
+        if (!isMapOpen() || !lastRenderedLayout) {
+            return;
+        }
+
+        if (event.pointerType === 'mouse' && event.button !== 0) {
+            return;
+        }
+
+        if (!lastRenderedLayout.canPanX && !lastRenderedLayout.canPanY) {
+            return;
+        }
+
+        const refs = elements || queryElements();
+        hasManualMapPan = true;
+        mapPanOffsetX = lastRenderedLayout.offsetX;
+        mapPanOffsetY = lastRenderedLayout.offsetY;
+        activeDragPointerId = event.pointerId;
+        lastDragClientX = event.clientX;
+        lastDragClientY = event.clientY;
+
+        if (refs.mapCanvas && typeof refs.mapCanvas.setPointerCapture === 'function') {
+            refs.mapCanvas.setPointerCapture(event.pointerId);
+            refs.mapCanvas.classList.add('is-dragging');
+        }
+
+        event.preventDefault();
+    }
+
+    function handleMapPointerMove(event) {
+        if (activeDragPointerId === null || event.pointerId !== activeDragPointerId || !lastRenderedLayout) {
+            return;
+        }
+
+        const deltaX = event.clientX - lastDragClientX;
+        const deltaY = event.clientY - lastDragClientY;
+        lastDragClientX = event.clientX;
+        lastDragClientY = event.clientY;
+
+        if (lastRenderedLayout.canPanX) {
+            mapPanOffsetX += deltaX;
+        }
+
+        if (lastRenderedLayout.canPanY) {
+            mapPanOffsetY += deltaY;
+        }
+
+        renderMapPanel();
+        event.preventDefault();
+    }
+
+    function handleMapPointerUp(event) {
+        const refs = elements || queryElements();
+
+        if (activeDragPointerId !== null && event.pointerId === activeDragPointerId && refs.mapCanvas && typeof refs.mapCanvas.releasePointerCapture === 'function') {
+            try {
+                refs.mapCanvas.releasePointerCapture(event.pointerId);
+            } catch (error) {
+                // Pointer capture may already be released by the browser.
+            }
+        }
+
+        stopMapDrag();
+    }
+
     function syncMapState() {
         const refs = elements || queryElements();
         bindEvents();
+        setMapZoom(mapZoom, { silent: true });
         updateZoomControls();
 
         if (!refs.mapPanel) {

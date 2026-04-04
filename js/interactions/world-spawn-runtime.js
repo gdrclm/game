@@ -11,6 +11,10 @@
         return game.systems.content.isGroundTile(tileType);
     }
 
+    function getLootSystem() {
+        return game.systems.loot || null;
+    }
+
     function isInteriorInteractionKind(kind) {
         return kind === 'merchant'
             || kind === 'artisan'
@@ -40,6 +44,23 @@
                 quantity: Math.max(1, item.quantity || 1)
             }
             : null;
+    }
+
+    function cloneRewardMap(rewardMap) {
+        return rewardMap ? { ...rewardMap } : undefined;
+    }
+
+    function cloneLootPlan(plan) {
+        if (!plan) {
+            return undefined;
+        }
+
+        return {
+            ...plan,
+            drops: Array.isArray(plan.drops) ? plan.drops.map((drop) => ({ ...drop })) : [],
+            statDelta: cloneRewardMap(plan.statDelta),
+            rewardDelta: cloneRewardMap(plan.rewardDelta)
+        };
     }
 
     function getDoorVectors(doorType) {
@@ -246,16 +267,17 @@
                 }
 
                 const nearestHouseDistance = getNearestHouseDistance(x, y, houses);
+                const safeNearestHouseDistance = Number.isFinite(nearestHouseDistance) ? nearestHouseDistance : 6;
                 const edgeDistance = Math.min(x, y, chunkSize - 1 - x, chunkSize - 1 - y);
 
-                if (nearestHouseDistance < 3 || edgeDistance < 1) {
+                if (safeNearestHouseDistance < 3 || edgeDistance < 1) {
                     continue;
                 }
 
                 candidates.push({
                     x,
                     y,
-                    score: nearestHouseDistance * 0.9 + Math.min(edgeDistance, 4) * 0.2 + random() * 0.2
+                    score: safeNearestHouseDistance * 0.9 + Math.min(edgeDistance, 4) * 0.2 + random() * 0.2
                 });
             }
         }
@@ -284,6 +306,116 @@
         return candidates;
     }
 
+    function countNeighborTiles(chunkData, x, y, predicate, includeDiagonals = false) {
+        const directions = includeDiagonals
+            ? [
+                { dx: 1, dy: 0 },
+                { dx: -1, dy: 0 },
+                { dx: 0, dy: 1 },
+                { dx: 0, dy: -1 },
+                { dx: 1, dy: 1 },
+                { dx: 1, dy: -1 },
+                { dx: -1, dy: 1 },
+                { dx: -1, dy: -1 }
+            ]
+            : [
+                { dx: 1, dy: 0 },
+                { dx: -1, dy: 0 },
+                { dx: 0, dy: 1 },
+                { dx: 0, dy: -1 }
+            ];
+        const chunkSize = game.config.chunkSize;
+
+        return directions.reduce((count, direction) => {
+            const nextX = x + direction.dx;
+            const nextY = y + direction.dy;
+
+            if (nextX < 0 || nextX >= chunkSize || nextY < 0 || nextY >= chunkSize) {
+                return count;
+            }
+
+            return predicate(chunkData[nextY][nextX], nextX, nextY) ? count + 1 : count;
+        }, 0);
+    }
+
+    function collectSpecialInteractionCandidates(chunkData, houseCellSet, occupiedKeys, houses, random, plan = {}) {
+        const candidates = [];
+        const chunkSize = game.config.chunkSize;
+        const spawnHint = plan.spawnHint || 'trail';
+
+        for (let y = 0; y < chunkSize; y++) {
+            for (let x = 0; x < chunkSize; x++) {
+                if (!isValidInteractionTile(chunkData, x, y, houseCellSet, occupiedKeys)) {
+                    continue;
+                }
+
+                const tileType = chunkData[y][x];
+                const nearestHouseDistance = getNearestHouseDistance(x, y, houses);
+                const safeNearestHouseDistance = Number.isFinite(nearestHouseDistance) ? nearestHouseDistance : 6;
+                const edgeDistance = Math.min(x, y, chunkSize - 1 - x, chunkSize - 1 - y);
+                const trailNeighbors = countNeighborTiles(
+                    chunkData,
+                    x,
+                    y,
+                    (candidate) => candidate === 'trail' || candidate === 'bridge'
+                );
+                const bridgeNeighbors = countNeighborTiles(chunkData, x, y, (candidate) => candidate === 'bridge');
+                const waterNeighbors = countNeighborTiles(chunkData, x, y, (candidate) => candidate === 'water');
+                const shoreBias = tileType === 'shore' || tileType === 'reeds' ? 1.75 : 0;
+                let score = random() * 0.15 + Math.min(edgeDistance, 4) * 0.12;
+
+                switch (spawnHint) {
+                case 'water':
+                    score += waterNeighbors * 3.6 + shoreBias * 2.2 + trailNeighbors * 0.45;
+                    score += safeNearestHouseDistance > 0 ? 0.35 * safeNearestHouseDistance : -1.5;
+                    if (tileType === 'bridge') {
+                        score -= 2.5;
+                    }
+                    break;
+                case 'bridge':
+                    score += bridgeNeighbors * 4.2 + trailNeighbors * 1.7 + (tileType === 'trail' ? 1.15 : 0);
+                    score += waterNeighbors > 0 ? 0.65 : 0;
+                    score += safeNearestHouseDistance > 0 ? 0.25 * Math.min(safeNearestHouseDistance, 4) : -1;
+                    break;
+                case 'meadow':
+                    score += tileType === 'grass' ? 2.8 : 0;
+                    score += tileType === 'reeds' ? 2.2 : 0;
+                    score += Math.max(0, safeNearestHouseDistance - 1) * 0.8;
+                    score += waterNeighbors * 0.35 + trailNeighbors * 0.25;
+                    break;
+                case 'settlement':
+                    score += trailNeighbors * 2.4 + (tileType === 'trail' ? 1.3 : 0);
+                    score += Math.max(0, 3.5 - Math.abs(safeNearestHouseDistance - 2.5)) * 0.9;
+                    if (edgeDistance < 1) {
+                        score -= 1.6;
+                    }
+                    break;
+                case 'remote':
+                    score += safeNearestHouseDistance * 1.15 + edgeDistance * 0.7;
+                    score += waterNeighbors * 0.5;
+                    score -= trailNeighbors * 0.25;
+                    if (tileType === 'trail') {
+                        score -= 0.7;
+                    }
+                    break;
+                case 'trail':
+                default:
+                    score += trailNeighbors * 2.9 + (tileType === 'trail' ? 2.35 : 0);
+                    score += Math.max(0, 3 - Math.abs(safeNearestHouseDistance - 2)) * 0.75;
+                    break;
+                }
+
+                if (score <= 0.2) {
+                    continue;
+                }
+
+                candidates.push({ x, y, score });
+            }
+        }
+
+        return candidates;
+    }
+
     function createInteractionRecord(house, chunkX, chunkY, localX, localY, placement = 'exterior') {
         const chunkSize = game.config.chunkSize;
         const expedition = house.expedition || {};
@@ -303,6 +435,30 @@
             renderDepth: worldX + worldY + 0.35,
             placement,
             kind: expedition.kind || 'shelter',
+            expedition
+        };
+    }
+
+    function createStandaloneInteractionRecord(chunkX, chunkY, localX, localY, expedition = {}, options = {}) {
+        const chunkSize = game.config.chunkSize;
+        const worldX = chunkX * chunkSize + localX;
+        const worldY = chunkY * chunkSize + localY;
+        const interactionId = options.id || `interaction:${chunkX}:${chunkY}:${localX}:${localY}`;
+
+        return {
+            id: interactionId,
+            houseId: options.houseId || interactionId,
+            house: null,
+            chunkX,
+            chunkY,
+            localX,
+            localY,
+            worldX,
+            worldY,
+            renderDepth: worldX + worldY + (Number.isFinite(options.renderDepthOffset) ? options.renderDepthOffset : 0.35),
+            placement: options.placement || 'exterior',
+            kind: expedition.kind || options.kind || 'chest',
+            label: expedition.label || options.label || 'Тайник',
             expedition
         };
     }
@@ -406,7 +562,140 @@
         });
     }
 
-    function createChunkInteractions(chunkX, chunkY, chunkData, houses, random) {
+    function buildTrailCacheExpedition(cacheId, progression, chunkRecord, random) {
+        if (!progression) {
+            return null;
+        }
+
+        const lootSystem = getLootSystem();
+        const chestTier = chunkRecord && chunkRecord.tags && chunkRecord.tags.has('vault') && random() < 0.24
+            ? 'rich'
+            : 'hidden';
+        const lootPlan = lootSystem && typeof lootSystem.createChestLootPlan === 'function'
+            ? lootSystem.createChestLootPlan(
+                progression.islandIndex,
+                chestTier,
+                progression.archetype,
+                random,
+                {
+                    scenario: progression.scenario,
+                    remote: Boolean(chunkRecord && chunkRecord.tags && (chunkRecord.tags.has('remote') || chunkRecord.tags.has('tip'))),
+                    vault: Boolean(chunkRecord && chunkRecord.tags && chunkRecord.tags.has('vault'))
+                }
+            )
+            : null;
+
+        return {
+            id: cacheId,
+            islandIndex: progression.islandIndex,
+            archetype: progression.archetype,
+            scenario: progression.scenario,
+            kind: 'chest',
+            chestTier,
+            label: chestTier === 'rich' ? 'Схрон у тропы' : 'Спрятанный тайник',
+            summary: 'Небольшой схрон за ложной тропой. Такие тайники лежат чуть в стороне от удобного маршрута.',
+            lootPlan: cloneLootPlan(lootPlan)
+        };
+    }
+
+    function appendTrailCacheInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options = {}) {
+        const trailMeta = options.trailMeta && Array.isArray(options.trailMeta.deadEndBranches)
+            ? options.trailMeta
+            : null;
+        const progression = options.progression || null;
+        const chunkRecord = options.chunkRecord || null;
+        const resolvedMap = game.state.resolvedHouseIds || {};
+        const houseCellSet = getHouseCellSet(houses);
+
+        if (!trailMeta || !progression) {
+            return;
+        }
+
+        trailMeta.deadEndBranches.forEach((branch) => {
+            const cachePoint = branch && branch.cachePoint ? branch.cachePoint : null;
+
+            if (!cachePoint) {
+                return;
+            }
+
+            const cacheId = `trail-cache:${chunkX}:${chunkY}:${cachePoint.x}:${cachePoint.y}`;
+            if (resolvedMap[cacheId]) {
+                return;
+            }
+
+            if (!isValidInteractionTile(chunkData, cachePoint.x, cachePoint.y, houseCellSet, occupiedKeys)) {
+                return;
+            }
+
+            const expedition = buildTrailCacheExpedition(cacheId, progression, chunkRecord, random);
+            if (!expedition) {
+                return;
+            }
+
+            occupiedKeys.add(tileKey(cachePoint.x, cachePoint.y));
+            result.push(createStandaloneInteractionRecord(
+                chunkX,
+                chunkY,
+                cachePoint.x,
+                cachePoint.y,
+                expedition,
+                {
+                    id: cacheId,
+                    houseId: cacheId,
+                    placement: 'exterior',
+                    renderDepthOffset: 0.32
+                }
+            ));
+        });
+    }
+
+    function appendSpecialInteractionPlans(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options = {}) {
+        const chunkRecord = options.chunkRecord || null;
+        const plans = chunkRecord && Array.isArray(chunkRecord.specialInteractionPlans)
+            ? chunkRecord.specialInteractionPlans
+            : [];
+        const houseCellSet = getHouseCellSet(houses);
+
+        if (plans.length === 0) {
+            return;
+        }
+
+        plans.forEach((plan, index) => {
+            const candidates = collectSpecialInteractionCandidates(
+                chunkData,
+                houseCellSet,
+                occupiedKeys,
+                houses,
+                random,
+                plan
+            )
+                .concat(collectWildernessCandidates(chunkData, houseCellSet, occupiedKeys, houses, random))
+                .sort((left, right) => right.score - left.score);
+            const picked = candidates[0];
+
+            if (!picked) {
+                return;
+            }
+
+            const interactionId = `island-npc:${plan.npcId || plan.id || index}:${chunkX}:${chunkY}:${picked.x}:${picked.y}`;
+            occupiedKeys.add(tileKey(picked.x, picked.y));
+            result.push(createStandaloneInteractionRecord(
+                chunkX,
+                chunkY,
+                picked.x,
+                picked.y,
+                plan,
+                {
+                    id: interactionId,
+                    houseId: interactionId,
+                    placement: 'exterior',
+                    renderDepthOffset: 0.41
+                }
+            ));
+        });
+    }
+
+    function createChunkInteractions(chunkX, chunkY, chunkData, houses, random, options = {}) {
         const result = [];
         const occupiedKeys = new Set();
         const houseCellSet = getHouseCellSet(houses);
@@ -461,6 +750,8 @@
                 result.push(interaction);
             });
 
+        appendSpecialInteractionPlans(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
+        appendTrailCacheInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
         appendPersistentGroundItems(result, chunkX, chunkY, houses);
         return result;
     }

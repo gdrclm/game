@@ -301,6 +301,9 @@
 
         return {
             preferredCategories: preferredCategories.filter((category, index, list) => category && list.indexOf(category) === index),
+            preferredRequirements: activeQuestBias && Array.isArray(activeQuestBias.preferredRequirements)
+                ? activeQuestBias.preferredRequirements
+                : [],
             allowFutureTiers,
             maxFutureDistance,
             chestLuck,
@@ -322,6 +325,7 @@
         const rollOptions = getChestRollOptions(chestTier, archetype, islandIndex, options);
         return itemRegistry.pickWeightedCatalogDefinition('chestWeight', islandIndex, random, {
             preferredCategories: rollOptions.preferredCategories,
+            preferredRequirements: rollOptions.preferredRequirements,
             allowFutureTiers: rollOptions.allowFutureTiers,
             maxFutureDistance: rollOptions.maxFutureDistance,
             chestLuck: rollOptions.chestLuck,
@@ -567,21 +571,21 @@
         return parts.join(' ');
     }
 
-    function createMerchantStock(islandIndex, random) {
+    function createMerchantStock(islandIndex, random, options = {}) {
         const shopRuntime = getShopRuntime();
 
         if (shopRuntime && typeof shopRuntime.createMerchantStock === 'function') {
-            return shopRuntime.createMerchantStock(islandIndex, random);
+            return shopRuntime.createMerchantStock(islandIndex, random, options);
         }
 
         return [];
     }
 
-    function createMerchantQuest(islandIndex, random) {
+    function createMerchantQuest(islandIndex, random, options = {}) {
         const shopRuntime = getShopRuntime();
 
         if (shopRuntime && typeof shopRuntime.createMerchantQuest === 'function') {
-            return shopRuntime.createMerchantQuest(islandIndex, random);
+            return shopRuntime.createMerchantQuest(islandIndex, random, options);
         }
 
         return null;

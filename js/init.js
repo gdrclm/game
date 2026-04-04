@@ -1,14 +1,37 @@
-function initGame() {
+function stopActiveGameLoops() {
+    const game = window.Game;
+
+    if (!game || !game.state) {
+        return;
+    }
+
+    if ((game.state.isMoving || game.state.animationRequestId) && game.systems.movement && typeof game.systems.movement.endMovement === 'function') {
+        game.systems.movement.endMovement();
+    } else if (game.state.animationRequestId) {
+        cancelAnimationFrame(game.state.animationRequestId);
+        game.state.animationRequestId = null;
+    }
+
+    if (game.systems.render && typeof game.systems.render.stopCameraAnimation === 'function') {
+        game.systems.render.stopCameraAnimation();
+    }
+}
+
+function initGame(options = {}) {
     try {
         if (!window.Game || !window.Game.canvas || !window.Game.state) {
             throw new Error('Missing dependencies');
         }
 
+        const {
+            usePersistedWorld = false
+        } = options;
         const mapRuntime = window.Game.systems.mapRuntime || null;
-        const persistedWorldSeed = mapRuntime && typeof mapRuntime.getPersistedWorldSeed === 'function'
+        const persistedWorldSeed = usePersistedWorld && mapRuntime && typeof mapRuntime.getPersistedWorldSeed === 'function'
             ? mapRuntime.getPersistedWorldSeed()
             : null;
 
+        stopActiveGameLoops();
         window.Game.config.worldSeed = Number.isFinite(persistedWorldSeed)
             ? persistedWorldSeed
             : window.Game.systems.utils.generateWorldSeed();
@@ -18,7 +41,7 @@ function initGame() {
         if (window.Game.systems.saveLoad) {
             window.Game.systems.saveLoad.resetRuntimeState(window.Game.state);
         }
-        if (mapRuntime && typeof mapRuntime.restorePersistedExploration === 'function') {
+        if (usePersistedWorld && mapRuntime && typeof mapRuntime.restorePersistedExploration === 'function') {
             mapRuntime.restorePersistedExploration();
         }
         if (mapRuntime && typeof mapRuntime.persistExploration === 'function') {
@@ -49,6 +72,26 @@ function initGame() {
         console.error('Init error:', error);
         showErrorToUser(error.message);
     }
+}
+
+function clearPersistentWorldState() {
+    const game = window.Game;
+    const saveLoad = game && game.systems ? game.systems.saveLoad || null : null;
+    const mapRuntime = game && game.systems ? game.systems.mapRuntime || null : null;
+
+    if (saveLoad && typeof saveLoad.clearStorage === 'function') {
+        saveLoad.clearStorage();
+    }
+
+    if (mapRuntime && typeof mapRuntime.clearPersistedExploration === 'function') {
+        mapRuntime.clearPersistedExploration();
+    }
+}
+
+function startNewGame() {
+    clearPersistentWorldState();
+
+    initGame({ usePersistedWorld: false });
 }
 
 function generateVisibleChunksAroundPlayer() {
@@ -94,11 +137,21 @@ function showErrorToUser(message) {
 }
 
 function initializeGame() {
+    clearPersistentWorldState();
+
     if (document.readyState === 'complete') {
-        initGame();
+        initGame({ usePersistedWorld: false });
     } else {
-        window.addEventListener('load', initGame);
+        window.addEventListener('load', () => {
+            initGame({ usePersistedWorld: false });
+        }, { once: true });
     }
 }
+
+window.Game.systems.gameLifecycle = Object.assign(window.Game.systems.gameLifecycle || {}, {
+    initGame,
+    startNewGame,
+    initializeGame
+});
 
 initializeGame();
