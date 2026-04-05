@@ -51,31 +51,268 @@
         context.restore();
     }
 
+    function fillPolygon(context, points, fillStyle) {
+        if (!Array.isArray(points) || points.length === 0) {
+            return;
+        }
+
+        context.beginPath();
+        context.moveTo(points[0].x, points[0].y);
+
+        for (let index = 1; index < points.length; index++) {
+            context.lineTo(points[index].x, points[index].y);
+        }
+
+        context.closePath();
+        context.fillStyle = fillStyle;
+        context.fill();
+    }
+
+    function traceChestBody(context, halfWidth, bodyTop, bodyBottom, shoulderInset) {
+        context.beginPath();
+        context.moveTo(-(halfWidth - shoulderInset), bodyTop);
+        context.lineTo(halfWidth - shoulderInset, bodyTop);
+        context.lineTo(halfWidth, bodyBottom);
+        context.lineTo(-halfWidth, bodyBottom);
+        context.closePath();
+    }
+
+    function traceChestLid(context, halfWidth, bodyTop, lidBaseY, lidPeakY, lidOverhang, innerLift) {
+        context.beginPath();
+        context.moveTo(-(halfWidth + lidOverhang), lidBaseY);
+        context.quadraticCurveTo(0, lidPeakY, halfWidth + lidOverhang, lidBaseY);
+        context.lineTo(halfWidth - 2, bodyTop + 2);
+        context.quadraticCurveTo(0, lidPeakY + innerLift, -(halfWidth - 2), bodyTop + 2);
+        context.closePath();
+    }
+
+    function drawGem(context, x, y, size, fillStyle, highlightStyle) {
+        fillPolygon(context, [
+            { x, y: y - size },
+            { x: x + size * 0.9, y },
+            { x, y: y + size },
+            { x: x - size * 0.9, y }
+        ], fillStyle);
+
+        fillPolygon(context, [
+            { x, y: y - size * 0.7 },
+            { x: x + size * 0.38, y: y - size * 0.08 },
+            { x, y: y + size * 0.22 },
+            { x: x - size * 0.38, y: y - size * 0.08 }
+        ], highlightStyle);
+    }
+
+    function getChestTierStyle(chestTier) {
+        const tierStyles = {
+            ordinary: {
+                material: 'wood',
+                body: '#7d4b22',
+                bodyShadow: '#562e12',
+                lid: '#a66635',
+                lidShadow: '#6f421e',
+                trim: '#cda76a',
+                trimShadow: '#8c6b37',
+                panel: '#91572a',
+                accent: '#eed9a6',
+                gem: '#3ec88b',
+                glow: 'rgba(0,0,0,0)',
+                width: 28,
+                height: 16,
+                lidHeight: 8,
+                lidOverhang: 2,
+                shoulderInset: 2,
+                braces: [-0.5],
+                bands: 1,
+                rivets: 0,
+                gems: 0,
+                feet: 2,
+                handles: false,
+                vines: false,
+                runes: false,
+                crest: false
+            },
+            rich: {
+                material: 'wood',
+                body: '#8b5224',
+                bodyShadow: '#603515',
+                lid: '#b56f37',
+                lidShadow: '#7f4a21',
+                trim: '#e2bc73',
+                trimShadow: '#9d7935',
+                panel: '#9e612d',
+                accent: '#fff0c2',
+                gem: '#53d49b',
+                glow: 'rgba(255, 210, 111, 0.12)',
+                width: 31,
+                height: 17,
+                lidHeight: 10,
+                lidOverhang: 3,
+                shoulderInset: 2,
+                braces: [-7, 7],
+                bands: 2,
+                rivets: 2,
+                gems: 2,
+                feet: 2,
+                handles: true,
+                vines: false,
+                runes: false,
+                crest: false
+            },
+            hidden: {
+                material: 'wood',
+                body: '#56412a',
+                bodyShadow: '#362718',
+                lid: '#6b5337',
+                lidShadow: '#453523',
+                trim: '#96825e',
+                trimShadow: '#665537',
+                panel: '#65503a',
+                accent: '#d0c8a2',
+                gem: '#6ec08b',
+                glow: 'rgba(0,0,0,0)',
+                width: 27,
+                height: 16,
+                lidHeight: 8,
+                lidOverhang: 2,
+                shoulderInset: 3,
+                braces: [-0.5],
+                bands: 1,
+                rivets: 0,
+                gems: 0,
+                feet: 2,
+                handles: false,
+                vines: true,
+                runes: false,
+                crest: false
+            },
+            cursed: {
+                material: 'metal',
+                body: '#4c314d',
+                bodyShadow: '#2d1d30',
+                lid: '#68436b',
+                lidShadow: '#412945',
+                trim: '#82e89d',
+                trimShadow: '#38734d',
+                panel: '#5a3960',
+                accent: '#d4ffe0',
+                gem: '#7bf7ac',
+                glow: 'rgba(122, 227, 141, 0.22)',
+                width: 31,
+                height: 17,
+                lidHeight: 9,
+                lidOverhang: 3,
+                shoulderInset: 1,
+                braces: [-8, 8],
+                bands: 2,
+                rivets: 6,
+                gems: 2,
+                feet: 2,
+                handles: true,
+                vines: false,
+                runes: true,
+                crest: false
+            },
+            elite: {
+                material: 'metal',
+                body: '#5f6873',
+                bodyShadow: '#3b434e',
+                lid: '#7b8592',
+                lidShadow: '#4f5864',
+                trim: '#dbc382',
+                trimShadow: '#8e7540',
+                panel: '#707985',
+                accent: '#edf4ff',
+                gem: '#74d7ff',
+                glow: 'rgba(190, 220, 255, 0.18)',
+                width: 34,
+                height: 18,
+                lidHeight: 11,
+                lidOverhang: 4,
+                shoulderInset: 1,
+                braces: [-10, 0, 10],
+                bands: 2,
+                rivets: 8,
+                gems: 4,
+                feet: 2,
+                handles: true,
+                vines: false,
+                runes: false,
+                crest: true
+            },
+            jackpot: {
+                material: 'gold',
+                body: '#b77a17',
+                bodyShadow: '#88570d',
+                lid: '#dda12a',
+                lidShadow: '#a56f13',
+                trim: '#fff1bb',
+                trimShadow: '#b8923d',
+                panel: '#c8891f',
+                accent: '#fff7d5',
+                gem: '#ff6d5f',
+                glow: 'rgba(255, 224, 111, 0.24)',
+                width: 36,
+                height: 19,
+                lidHeight: 12,
+                lidOverhang: 4,
+                shoulderInset: 1,
+                braces: [-10, 0, 10],
+                bands: 3,
+                rivets: 8,
+                gems: 6,
+                feet: 2,
+                handles: true,
+                vines: false,
+                runes: false,
+                crest: true
+            },
+            final: {
+                material: 'gold',
+                body: '#cf9417',
+                bodyShadow: '#97660f',
+                lid: '#f0b933',
+                lidShadow: '#b17b18',
+                trim: '#fff6ce',
+                trimShadow: '#c09d46',
+                panel: '#dea126',
+                accent: '#fffbe2',
+                gem: '#5cd0ff',
+                glow: 'rgba(255, 239, 164, 0.28)',
+                width: 39,
+                height: 20,
+                lidHeight: 13,
+                lidOverhang: 5,
+                shoulderInset: 1,
+                braces: [-12, -4, 4, 12],
+                bands: 3,
+                rivets: 10,
+                gems: 8,
+                feet: 2,
+                handles: true,
+                vines: false,
+                runes: false,
+                crest: true
+            }
+        };
+
+        return tierStyles[chestTier] || tierStyles.ordinary;
+    }
+
     function drawChest(screenX, baseY, interaction, resolved) {
         const context = window.Game.ctx;
         const expedition = interaction.expedition || {};
         const chestTier = interaction.kind === 'finalChest'
             ? 'final'
             : (expedition.chestTier || (interaction.kind === 'jackpotChest' ? 'jackpot' : 'ordinary'));
-        const tierStyle = {
-            ordinary: { body: '#8a4f18', lid: '#a86322', trim: '#d7bb64', glow: 'rgba(0,0,0,0)', width: 28, height: 16, gems: 0, bands: 1 },
-            rich: { body: '#925220', lid: '#b0682b', trim: '#ebc96d', glow: 'rgba(255, 212, 108, 0.12)', width: 30, height: 17, gems: 2, bands: 2 },
-            hidden: { body: '#5b4428', lid: '#6d5535', trim: '#9e8d5a', glow: 'rgba(0,0,0,0)', width: 26, height: 15, gems: 0, bands: 1 },
-            cursed: { body: '#4a284e', lid: '#5b3560', trim: '#7be08d', glow: 'rgba(122, 227, 141, 0.22)', width: 30, height: 16, gems: 2, bands: 1 },
-            elite: { body: '#7d4618', lid: '#b97829', trim: '#f2d88a', glow: 'rgba(255, 220, 124, 0.18)', width: 34, height: 18, gems: 4, bands: 2 },
-            jackpot: { body: '#9f5812', lid: '#d28722', trim: '#ffe28d', glow: 'rgba(255, 224, 111, 0.24)', width: 36, height: 19, gems: 6, bands: 3 },
-            final: { body: '#c69110', lid: '#d9a41c', trim: '#fff0a8', glow: 'rgba(255, 239, 164, 0.28)', width: 38, height: 20, gems: 8, bands: 3 }
-        }[chestTier] || {
-            body: '#8a4f18',
-            lid: '#a86322',
-            trim: '#d7bb64',
-            glow: 'rgba(0,0,0,0)',
-            width: 28,
-            height: 16,
-            gems: 0,
-            bands: 1
-        };
+        const tierStyle = getChestTierStyle(chestTier);
         const halfWidth = Math.round(tierStyle.width / 2);
+        const bodyBottom = -2;
+        const bodyTop = bodyBottom - tierStyle.height;
+        const lidBaseY = bodyTop + 1;
+        const lidPeakY = bodyTop - tierStyle.lidHeight;
+        const panelInset = tierStyle.material === 'wood' ? 5 : 4;
+        const panelTop = bodyTop + 4;
+        const panelBottom = bodyBottom - 3;
 
         drawShadow(screenX, baseY + 2, Math.max(12, halfWidth), 6);
 
@@ -89,48 +326,221 @@
             context.fill();
         }
 
+        for (let footIndex = 0; footIndex < tierStyle.feet; footIndex++) {
+            const direction = footIndex === 0 ? -1 : 1;
+            fillPolygon(context, [
+                { x: direction * (halfWidth - 8), y: bodyBottom - 1 },
+                { x: direction * (halfWidth - 4), y: bodyBottom - 1 },
+                { x: direction * (halfWidth - 6), y: bodyBottom + 3 }
+            ], tierStyle.trimShadow);
+        }
+
+        traceChestBody(context, halfWidth, bodyTop, bodyBottom, tierStyle.shoulderInset);
         context.fillStyle = tierStyle.body;
-        context.fillRect(-halfWidth, -18, tierStyle.width, tierStyle.height);
+        context.fill();
+
+        fillPolygon(context, [
+            { x: -halfWidth, y: bodyBottom },
+            { x: -(halfWidth - 1), y: bodyTop + 1 },
+            { x: -(halfWidth - 6), y: bodyTop + 2 },
+            { x: -(halfWidth - 4), y: bodyBottom - 1 }
+        ], tierStyle.bodyShadow);
+        fillPolygon(context, [
+            { x: halfWidth, y: bodyBottom },
+            { x: halfWidth - 1, y: bodyTop + 1 },
+            { x: halfWidth - 6, y: bodyTop + 2 },
+            { x: halfWidth - 4, y: bodyBottom - 1 }
+        ], tierStyle.bodyShadow);
+
+        fillPolygon(context, [
+            { x: -(halfWidth - panelInset), y: panelTop },
+            { x: halfWidth - panelInset, y: panelTop },
+            { x: halfWidth - (panelInset - 1), y: panelBottom },
+            { x: -(halfWidth - (panelInset - 1)), y: panelBottom }
+        ], tierStyle.panel);
+
+        traceChestLid(
+            context,
+            halfWidth,
+            bodyTop,
+            lidBaseY,
+            lidPeakY,
+            tierStyle.lidOverhang,
+            tierStyle.material === 'gold' ? 5 : 4
+        );
         context.fillStyle = tierStyle.lid;
-        context.fillRect(-(halfWidth + 2), -27, tierStyle.width + 4, 10);
+        context.fill();
+
+        traceChestLid(
+            context,
+            halfWidth - 1,
+            bodyTop + 2,
+            lidBaseY + 2,
+            lidPeakY + 4,
+            Math.max(1, tierStyle.lidOverhang - 1),
+            tierStyle.material === 'gold' ? 5 : 4
+        );
+        context.fillStyle = tierStyle.lidShadow;
+        context.fill();
+
         context.fillStyle = tierStyle.trim;
-        context.fillRect(-2, -27, 4, 25);
+        context.fillRect(-(halfWidth - 3), bodyTop + 1, tierStyle.width - 6, 2.5);
 
         for (let bandIndex = 0; bandIndex < tierStyle.bands; bandIndex++) {
-            const yOffset = -11 - bandIndex * 4;
-            context.fillRect(-(halfWidth - 3), yOffset, tierStyle.width - 6, 2.5);
+            const yOffset = panelTop + 2 + bandIndex * 4;
+            context.fillStyle = bandIndex % 2 === 0 ? tierStyle.trim : tierStyle.trimShadow;
+            context.fillRect(-(halfWidth - 4), yOffset, tierStyle.width - 8, 2);
         }
 
-        if (chestTier === 'hidden') {
-            context.fillStyle = 'rgba(74, 113, 46, 0.9)';
-            context.fillRect(-(halfWidth + 4), -15, 6, 10);
-            context.fillRect(halfWidth - 2, -12, 6, 9);
+        tierStyle.braces.forEach((braceX) => {
+            context.fillStyle = tierStyle.trimShadow;
+            context.fillRect(braceX - 1.6, lidBaseY + 0.5, 3.2, bodyBottom - lidBaseY - 0.5);
+            context.fillStyle = tierStyle.trim;
+            context.fillRect(braceX - 1, lidBaseY, 2, bodyBottom - lidBaseY - 1.2);
+        });
+
+        if (tierStyle.material === 'metal') {
+            context.fillStyle = tierStyle.trimShadow;
+            context.fillRect(-halfWidth + 2, panelTop - 1, 3, panelBottom - panelTop + 4);
+            context.fillRect(halfWidth - 5, panelTop - 1, 3, panelBottom - panelTop + 4);
         }
 
-        if (chestTier === 'cursed') {
-            context.fillStyle = '#7be08d';
+        if (tierStyle.material === 'gold') {
+            context.strokeStyle = tierStyle.accent;
+            context.lineWidth = 1.6;
+            context.lineCap = 'round';
             context.beginPath();
-            context.arc(0, -31, 3.5, 0, Math.PI * 2);
-            context.fill();
-            context.fillRect(-11, -32, 5, 2);
-            context.fillRect(6, -32, 5, 2);
+            context.moveTo(-(halfWidth - 6), lidBaseY - 1);
+            context.quadraticCurveTo(0, lidPeakY + 3, halfWidth - 6, lidBaseY - 1);
+            context.stroke();
         }
 
-        if (tierStyle.gems > 0) {
-            context.fillStyle = chestTier === 'cursed' ? '#7be08d' : '#39c77f';
-            for (let gemIndex = 0; gemIndex < tierStyle.gems; gemIndex++) {
-                const progress = tierStyle.gems === 1 ? 0.5 : gemIndex / (tierStyle.gems - 1);
-                const x = -halfWidth + 4 + progress * Math.max(0, tierStyle.width - 8);
-                const y = gemIndex % 2 === 0 ? -23 : -30;
+        if (tierStyle.handles) {
+            context.strokeStyle = tierStyle.trimShadow;
+            context.lineWidth = 1.8;
+            context.beginPath();
+            context.arc(-halfWidth - 1, bodyTop + 9, 3, Math.PI * 0.2, Math.PI * 1.2, true);
+            context.stroke();
+            context.beginPath();
+            context.arc(halfWidth + 1, bodyTop + 9, 3, Math.PI * 1.8, Math.PI * 0.8, true);
+            context.stroke();
+        }
+
+        if (tierStyle.rivets > 0) {
+            context.fillStyle = tierStyle.accent;
+            for (let rivetIndex = 0; rivetIndex < tierStyle.rivets; rivetIndex++) {
+                const progress = tierStyle.rivets === 1 ? 0.5 : rivetIndex / (tierStyle.rivets - 1);
+                const x = -(halfWidth - 5) + progress * (tierStyle.width - 10);
+                const y = rivetIndex % 2 === 0 ? panelTop + 1.5 : panelTop + 5;
                 context.beginPath();
-                context.arc(x, y, chestTier === 'final' ? 2.6 : 2.1, 0, Math.PI * 2);
+                context.arc(x, y, 0.95, 0, Math.PI * 2);
                 context.fill();
             }
         }
 
+        if (tierStyle.material === 'gold') {
+            fillPolygon(context, [
+                { x: 0, y: lidPeakY + 1 },
+                { x: 5, y: lidPeakY + 6 },
+                { x: 0, y: lidPeakY + 10 },
+                { x: -5, y: lidPeakY + 6 }
+            ], tierStyle.trimShadow);
+        }
+
+        if (tierStyle.crest) {
+            fillPolygon(context, [
+                { x: 0, y: lidPeakY - 2 },
+                { x: 4, y: lidPeakY + 2 },
+                { x: 0, y: lidPeakY + 5 },
+                { x: -4, y: lidPeakY + 2 }
+            ], tierStyle.trim);
+        }
+
+        if (tierStyle.material === 'gold') {
+            fillPolygon(context, [
+                { x: -4, y: panelTop + 2 },
+                { x: 4, y: panelTop + 2 },
+                { x: 5, y: panelTop + 11 },
+                { x: 0, y: panelTop + 15 },
+                { x: -5, y: panelTop + 11 }
+            ], tierStyle.trim);
+            drawGem(context, 0, panelTop + 8, chestTier === 'final' ? 2.5 : 2.1, tierStyle.gem, tierStyle.accent);
+        } else if (tierStyle.material === 'metal') {
+            fillPolygon(context, [
+                { x: 0, y: panelTop + 2 },
+                { x: 4, y: panelTop + 5 },
+                { x: 4, y: panelTop + 10 },
+                { x: 0, y: panelTop + 13 },
+                { x: -4, y: panelTop + 10 },
+                { x: -4, y: panelTop + 5 }
+            ], tierStyle.trim);
+            context.fillStyle = tierStyle.trimShadow;
+            context.fillRect(-1, panelTop + 6, 2, 5);
+        } else {
+            context.fillStyle = tierStyle.trim;
+            context.fillRect(-3, panelTop + 2, 6, 10);
+            context.fillStyle = tierStyle.trimShadow;
+            context.beginPath();
+            context.arc(0, panelTop + 5, 2.1, Math.PI, 0, false);
+            context.fill();
+            context.fillRect(-1, panelTop + 5, 2, 5);
+        }
+
+        if (tierStyle.vines) {
+            context.fillStyle = 'rgba(86, 121, 67, 0.92)';
+            fillPolygon(context, [
+                { x: -(halfWidth + 3), y: panelTop + 2 },
+                { x: -(halfWidth - 1), y: panelTop - 1 },
+                { x: -(halfWidth - 2), y: panelTop + 5 }
+            ], context.fillStyle);
+            fillPolygon(context, [
+                { x: halfWidth + 3, y: panelTop + 4 },
+                { x: halfWidth - 1, y: panelTop + 1 },
+                { x: halfWidth, y: panelTop + 8 }
+            ], context.fillStyle);
+            context.fillRect(-(halfWidth + 2), panelTop + 5, 2, 6);
+            context.fillRect(halfWidth, panelTop + 6, 2, 5);
+        }
+
+        if (tierStyle.runes) {
+            drawGem(context, 0, lidPeakY + 5, 2.8, tierStyle.gem, tierStyle.accent);
+            context.fillStyle = tierStyle.gem;
+            context.fillRect(-12, bodyTop + 7, 3, 1.7);
+            context.fillRect(-10.5, bodyTop + 5.5, 1.2, 5);
+            context.fillRect(9, bodyTop + 7, 3, 1.7);
+            context.fillRect(10.2, bodyTop + 5.5, 1.2, 5);
+        }
+
+        if (tierStyle.gems > 0) {
+            for (let gemIndex = 0; gemIndex < tierStyle.gems; gemIndex++) {
+                const progress = tierStyle.gems === 1 ? 0.5 : gemIndex / (tierStyle.gems - 1);
+                const x = -(halfWidth - 5) + progress * Math.max(0, tierStyle.width - 10);
+                const y = gemIndex % 2 === 0 ? lidBaseY - 2 : lidPeakY + 3;
+                drawGem(
+                    context,
+                    x,
+                    y,
+                    chestTier === 'final' ? 2.4 : 2,
+                    tierStyle.gem,
+                    tierStyle.accent
+                );
+            }
+        }
+
         if (resolved) {
-            context.fillStyle = 'rgba(210, 210, 210, 0.38)';
-            context.fillRect(-(halfWidth + 2), -30, tierStyle.width + 4, 30);
+            context.fillStyle = 'rgba(214, 214, 214, 0.34)';
+            traceChestBody(context, halfWidth, bodyTop, bodyBottom, tierStyle.shoulderInset);
+            context.fill();
+            traceChestLid(
+                context,
+                halfWidth,
+                bodyTop,
+                lidBaseY,
+                lidPeakY,
+                tierStyle.lidOverhang,
+                tierStyle.material === 'gold' ? 5 : 4
+            );
+            context.fill();
         }
 
         context.restore();

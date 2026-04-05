@@ -99,183 +99,157 @@ function getTilePalette(game, tileType, progression) {
     };
 }
 
-function drawGrassTile(context, game, x, y, palette) {
-    const pattern = [
-        { x: -10, y: 5, w: 2, h: 6 },
-        { x: 5, y: -5, w: 2, h: 8 },
-        { x: 8, y: 10, w: 2, h: 5 },
-        { x: -5, y: 15, w: 2, h: 7 }
-    ];
+const tileDetailAssetUrls = Object.freeze({
+    grass: 'assets/tiles/grass-detail.svg',
+    trail: 'assets/tiles/trail-detail.svg',
+    water: 'assets/tiles/water-detail.svg',
+    shore: 'assets/tiles/shore-detail.svg',
+    rock: 'assets/tiles/rock-detail.svg',
+    bridge: 'assets/tiles/bridge-detail.svg',
+    reeds: 'assets/tiles/reeds-detail.svg',
+    rubble: 'assets/tiles/rubble-detail.svg',
+    mud: 'assets/tiles/mud-detail.svg'
+});
+
+const tileDetailAssets = new Map();
+const tileDetailTintCache = new Map();
+let tileDetailRenderQueued = false;
+
+function queueSceneRender() {
+    if (tileDetailRenderQueued) {
+        return;
+    }
+
+    tileDetailRenderQueued = true;
+
+    window.requestAnimationFrame(() => {
+        tileDetailRenderQueued = false;
+        const game = window.Game;
+
+        if (game && game.systems && game.systems.render && typeof game.systems.render.render === 'function') {
+            game.systems.render.render();
+        }
+    });
+}
+
+function ensureTileDetailAsset(assetKey) {
+    if (!tileDetailAssetUrls[assetKey]) {
+        return null;
+    }
+
+    let assetState = tileDetailAssets.get(assetKey);
+
+    if (!assetState) {
+        const image = new Image();
+        assetState = {
+            image,
+            loaded: false,
+            failed: false
+        };
+
+        image.decoding = 'async';
+        image.addEventListener('load', () => {
+            assetState.loaded = true;
+            queueSceneRender();
+        });
+        image.addEventListener('error', () => {
+            assetState.failed = true;
+        });
+        image.src = tileDetailAssetUrls[assetKey];
+        tileDetailAssets.set(assetKey, assetState);
+    }
+
+    if (assetState.failed || !assetState.loaded) {
+        return null;
+    }
+
+    return assetState.image;
+}
+
+function getTintedTileDetail(assetKey, detailColor, tileWidth, tileHeight) {
+    const sourceImage = ensureTileDetailAsset(assetKey);
+
+    if (!sourceImage) {
+        return null;
+    }
+
+    const cacheKey = `${assetKey}|${detailColor}|${tileWidth}x${tileHeight}`;
+    const cached = tileDetailTintCache.get(cacheKey);
+
+    if (cached) {
+        return cached;
+    }
+
+    const tintedCanvas = document.createElement('canvas');
+    tintedCanvas.width = tileWidth;
+    tintedCanvas.height = tileHeight;
+    const tintedContext = tintedCanvas.getContext('2d');
+
+    tintedContext.clearRect(0, 0, tileWidth, tileHeight);
+    tintedContext.drawImage(sourceImage, 0, 0, tileWidth, tileHeight);
+    tintedContext.globalCompositeOperation = 'source-in';
+    tintedContext.fillStyle = detailColor;
+    tintedContext.fillRect(0, 0, tileWidth, tileHeight);
+    tintedContext.globalCompositeOperation = 'source-over';
+
+    tileDetailTintCache.set(cacheKey, tintedCanvas);
+    return tintedCanvas;
+}
+
+function drawPatternTile(context, game, palette, assetKey) {
+    const { tileWidth, tileHeight } = game.config;
 
     context.fillStyle = palette.base;
     context.fill();
-    context.fillStyle = palette.detail;
 
-    const offsetX = x % 3;
-    const offsetY = y % 3;
+    const detailPattern = getTintedTileDetail(assetKey, palette.detail, tileWidth, tileHeight);
 
-    pattern.forEach((blade) => {
-        context.fillRect(blade.x + offsetX * 3, blade.y + offsetY * 2, blade.w, blade.h);
-    });
+    if (!detailPattern) {
+        return;
+    }
+
+    context.drawImage(detailPattern, -tileWidth / 2, 0, tileWidth, tileHeight);
+}
+
+function drawGrassTile(context, game, x, y, palette) {
+    drawPatternTile(context, game, palette, 'grass');
 }
 
 function drawTrailTile(context, game, x, y, palette) {
-    const trackPattern = [
-        { x: -12, y: 2, w: 24, h: 3 },
-        { x: -10, y: 8, w: 20, h: 2 },
-        { x: -6, y: 13, w: 12, h: 2 }
-    ];
-
-    context.fillStyle = palette.base;
-    context.fill();
-    context.fillStyle = palette.detail;
-
-    trackPattern.forEach((track, index) => {
-        context.fillRect(
-            track.x + ((x + y + index) % 2),
-            track.y,
-            track.w,
-            track.h
-        );
-    });
+    drawPatternTile(context, game, palette, 'trail');
 }
 
 function drawWaterTile(context, game, x, y, palette) {
-    const { tileWidth, tileHeight } = game.config;
-
-    context.fillStyle = palette.base;
-    context.fill();
-    context.fillStyle = palette.detail;
-
-    for (let index = 0; index < 2; index++) {
-        context.beginPath();
-        context.moveTo(-tileWidth / 3, tileHeight / 2 + index * 3);
-        context.lineTo(0, tileHeight / 2 + tileHeight / 6 + index * 2);
-        context.lineTo(tileWidth / 3, tileHeight / 2 + index * 3);
-        context.lineTo(0, tileHeight / 2 - tileHeight / 6 + index * 2);
-        context.closePath();
-        context.fill();
-    }
+    drawPatternTile(context, game, palette, 'water');
 }
 
 function drawShoreTile(context, game, x, y, palette) {
-    const grain = [
-        { x: -12, y: 3, w: 4, h: 2 },
-        { x: -1, y: -4, w: 5, h: 2 },
-        { x: 9, y: 8, w: 3, h: 2 }
-    ];
-
-    context.fillStyle = palette.base;
-    context.fill();
-    context.fillStyle = palette.detail;
-
-    const offset = (x + y) % 3;
-    grain.forEach((line) => {
-        context.fillRect(line.x + offset, line.y, line.w, line.h);
-    });
+    drawPatternTile(context, game, palette, 'shore');
 }
 
 function drawRockTile(context, game, x, y, palette) {
-    const rockPattern = [
-        { x: -5, y: -5, r: 6 },
-        { x: 8, y: 3, r: 5 },
-        { x: 0, y: 10, r: 7 }
-    ];
-
-    context.fillStyle = palette.base;
-    context.fill();
-    context.fillStyle = palette.detail;
-
-    rockPattern.forEach((dot) => {
-        context.beginPath();
-        context.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
-        context.fill();
-    });
+    drawPatternTile(context, game, palette, 'rock');
 }
 
 function drawBridgeTile(context, game, x, y, palette) {
-    const { tileWidth, tileHeight } = game.config;
-
-    context.fillStyle = palette.base;
-    context.fill();
-    context.fillStyle = palette.detail;
-
-    for (let index = 0; index < 3; index++) {
-        context.fillRect(
-            -tileWidth / 4 + index * (tileWidth / 6),
-            -tileHeight / 4,
-            tileWidth / 12,
-            tileHeight / 2
-        );
-    }
+    drawPatternTile(context, game, palette, 'bridge');
 }
 
 function drawReedsTile(context, game, x, y, palette) {
-    const blades = [
-        { x: -12, y: 8, h: 10 },
-        { x: -6, y: 2, h: 14 },
-        { x: 0, y: 9, h: 11 },
-        { x: 6, y: 1, h: 15 },
-        { x: 11, y: 7, h: 9 }
-    ];
-
-    context.fillStyle = palette.base;
-    context.fill();
-    context.fillStyle = palette.detail;
-
-    blades.forEach((blade, index) => {
-        const sway = ((x * 3 + y * 5 + index) % 3) - 1;
-        context.fillRect(blade.x, blade.y, 2, blade.h);
-        context.fillRect(blade.x + sway, blade.y - 2, 2, blade.h - 2);
-    });
+    drawPatternTile(context, game, palette, 'reeds');
 }
 
 function drawRubbleTile(context, game, x, y, palette) {
-    const stones = [
-        { x: -10, y: 6, r: 4 },
-        { x: -2, y: 1, r: 5 },
-        { x: 9, y: 8, r: 4 },
-        { x: 1, y: 14, r: 3 }
-    ];
-
-    context.fillStyle = palette.base;
-    context.fill();
-    context.fillStyle = palette.detail;
-
-    stones.forEach((stone, index) => {
-        const offset = ((x + y + index) % 3) - 1;
-        context.beginPath();
-        context.arc(stone.x + offset, stone.y, stone.r, 0, Math.PI * 2);
-        context.fill();
-    });
+    drawPatternTile(context, game, palette, 'rubble');
 }
 
 function drawMudTile(context, game, x, y, palette) {
-    const puddles = [
-        { x: -11, y: 8, w: 12, h: 4 },
-        { x: -3, y: 2, w: 10, h: 5 },
-        { x: 3, y: 12, w: 11, h: 4 }
-    ];
-
-    context.fillStyle = palette.base;
-    context.fill();
-    context.fillStyle = palette.detail;
-
-    puddles.forEach((puddle, index) => {
-        const shift = ((x * 7 + y * 11 + index) % 3) - 1;
-        context.beginPath();
-        context.ellipse(
-            puddle.x + shift + puddle.w / 2,
-            puddle.y + puddle.h / 2,
-            puddle.w / 2,
-            puddle.h / 2,
-            0,
-            0,
-            Math.PI * 2
-        );
-        context.fill();
-    });
+    drawPatternTile(context, game, palette, 'mud');
 }
+
+Object.keys(tileDetailAssetUrls).forEach((assetKey) => {
+    ensureTileDetailAsset(assetKey);
+});
 
 const tileRegistry = {
     trail: {

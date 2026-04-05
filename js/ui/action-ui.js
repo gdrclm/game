@@ -84,7 +84,8 @@
                 sourceLabel: 'камни',
                 collectedLabel: 'камень',
                 resourceLabel: 'каменный ресурс',
-                allowAdjacent: true
+                allowAdjacent: true,
+                clickToCollect: true
             };
         }
 
@@ -210,6 +211,12 @@
     }
 
     function getGatherableTerrainTarget() {
+        const selectedTarget = getTerrainTargetForTile(getSelectedWorldTileInfo());
+
+        if (selectedTarget && isTerrainTargetWithinGatherReach(selectedTarget)) {
+            return selectedTarget;
+        }
+
         return getTerrainTarget();
     }
 
@@ -271,6 +278,22 @@
         return { tileInfo, profile, isHarvested };
     }
 
+    function isTerrainTargetWithinGatherReach(target) {
+        if (!target || !target.tileInfo || !target.profile) {
+            return false;
+        }
+
+        const playerX = Math.round(game.state.playerPos.x);
+        const playerY = Math.round(game.state.playerPos.y);
+        const distance = Math.abs(target.tileInfo.x - playerX) + Math.abs(target.tileInfo.y - playerY);
+
+        if (distance === 0) {
+            return true;
+        }
+
+        return Boolean(target.profile.allowAdjacent && distance === 1);
+    }
+
     function refreshPlayerContext() {
         const world = game.systems.world;
 
@@ -279,11 +302,10 @@
         }
     }
 
-    function collectTerrainResource() {
+    function collectTerrainResourceAtTarget(target) {
         const inventoryRuntime = getInventoryRuntime();
         const itemEffects = getItemEffects();
         const registry = game.systems.itemRegistry || game.systems.loot || null;
-        const target = getGatherableTerrainTarget();
 
         if (!inventoryRuntime || !target) {
             return false;
@@ -349,6 +371,28 @@
         return true;
     }
 
+    function collectTerrainResource() {
+        return collectTerrainResourceAtTarget(getGatherableTerrainTarget());
+    }
+
+    function tryCollectClickedRock(tileInfo) {
+        if (getSelectedInventoryItem()) {
+            return false;
+        }
+
+        if (!tileInfo || (tileInfo.baseTileType || tileInfo.tileType) !== 'rock') {
+            return false;
+        }
+
+        const target = getTerrainTargetForTile(tileInfo);
+
+        if (!target || !target.profile.clickToCollect || !isTerrainTargetWithinGatherReach(target)) {
+            return false;
+        }
+
+        return collectTerrainResourceAtTarget(target);
+    }
+
     function setActionButtonState(action, enabled, highlighted = false) {
         const elements = bridge.getElements();
         const button = elements.actionButtons.find((item) => item.dataset.action === action);
@@ -370,6 +414,10 @@
             return `Здесь уже ничего не осталось: ${target.profile.sourceLabel} на этой клетке собраны.`;
         }
 
+        if (target.profile.clickToCollect) {
+            return `Рядом есть ${target.profile.sourceLabel}. Кликни по соседнему камню или нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}. Каждые 5 единиц превращаются в ${target.profile.resourceLabel}.`;
+        }
+
         return `Рядом есть ${target.profile.sourceLabel}. Нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}. Каждые 5 единиц превращаются в ${target.profile.resourceLabel}.`;
     }
 
@@ -389,6 +437,10 @@
 
         if (target.isHarvested) {
             return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u0443\u0436\u0435 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c, \u043c\u0430\u0442\u0435\u0440\u0438\u0430\u043b \u0441\u043e\u0431\u0440\u0430\u043d.`;
+        }
+
+        if (target.profile.clickToCollect) {
+            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. Здесь можно собрать ${target.profile.collectedLabel}. Кликни по соседнему камню или нажми "Использовать". Каждые 5 единиц превращаются в ${target.profile.resourceLabel}.`;
         }
 
         return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0431\u0440\u0430\u0442\u044c ${target.profile.collectedLabel}. \u041a\u0430\u0436\u0434\u044b\u0435 5 \u0435\u0434\u0438\u043d\u0438\u0446 \u043f\u0440\u0435\u0432\u0440\u0430\u0449\u0430\u044e\u0442\u0441\u044f \u0432 ${target.profile.resourceLabel}.`;
@@ -1243,6 +1295,7 @@
         handleUseAction,
         handleInspectAction,
         handleTalkAction,
-        handleActionClick
+        handleActionClick,
+        tryCollectClickedRock
     });
 })();

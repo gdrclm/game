@@ -71,6 +71,8 @@
             <section class="scene-frame" id="sceneViewport">
                 <div class="scene-toolbar" aria-label="Игровое меню">
                     <button id="pauseButton" class="hud-button hud-button--pause scene-toolbar__button" type="button" aria-label="Пауза" title="Пауза">Пауза</button>
+                    <button id="zoomOutButton" class="hud-button scene-toolbar__button scene-toolbar__zoom-button" type="button" aria-label="Отдалить камеру" title="Отдалить камеру">-</button>
+                    <button id="zoomInButton" class="hud-button scene-toolbar__button scene-toolbar__zoom-button" type="button" aria-label="Приблизить камеру" title="Приблизить камеру">+</button>
                     <button id="mapButton" class="hud-button scene-toolbar__button" type="button" aria-label="Карта" title="Карта">Карта</button>
                 </div>
                 <div class="mobile-hud" aria-label="Мобильный интерфейс" hidden>
@@ -130,9 +132,12 @@
                         </div>
                     </div>
                 </div>
-                <div id="instructions" class="overlay-card">
-                    Кликайте по клеткам, чтобы выбрать маршрут. Нажмите кнопку движения или кликните по той же клетке ещё раз.
-                    Камни блокируют путь, а мосты помогают пересекать воду.
+                <div id="instructions" class="overlay-card overlay-card--dismissible">
+                    <button id="instructionsClose" class="overlay-card__close" type="button" aria-label="Закрыть обучение">Закрыть</button>
+                    <p id="instructionsText" class="overlay-card__text">
+                        Кликайте по клеткам, чтобы выбрать маршрут. Нажмите кнопку движения или кликните по той же клетке ещё раз.
+                        Камни блокируют путь, а мосты помогают пересекать воду.
+                    </p>
                 </div>
                 <!-- <div id="debugPanel" class="overlay-card overlay-card--debug" aria-live="polite"></div> -->
                 <div id="conditionOverlay" class="condition-overlay" aria-hidden="true">

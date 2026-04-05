@@ -131,6 +131,7 @@
                 lastActionMessage: '',
                 openMerchantHouseId: null,
                 isMapOpen: false,
+                isInstructionsDismissed: false,
                 isInventoryPanelCollapsed: false,
                 isQuestPanelCollapsed: false,
                 collapsedQuestEntryIds: {}
@@ -273,6 +274,9 @@
                 isMapOpen: typeof state.isMapOpen === 'boolean'
                     ? state.isMapOpen
                     : defaults.ui.isMapOpen,
+                isInstructionsDismissed: typeof state.isInstructionsDismissed === 'boolean'
+                    ? state.isInstructionsDismissed
+                    : defaults.ui.isInstructionsDismissed,
                 isInventoryPanelCollapsed: typeof state.isInventoryPanelCollapsed === 'boolean'
                     ? state.isInventoryPanelCollapsed
                     : defaults.ui.isInventoryPanelCollapsed,
@@ -384,6 +388,7 @@
             lastActionMessage: normalized.ui.lastActionMessage,
             openMerchantHouseId: normalized.ui.openMerchantHouseId,
             isMapOpen: normalized.ui.isMapOpen,
+            isInstructionsDismissed: normalized.ui.isInstructionsDismissed,
             isInventoryPanelCollapsed: normalized.ui.isInventoryPanelCollapsed,
             isQuestPanelCollapsed: normalized.ui.isQuestPanelCollapsed,
             route: normalized.runtime.route,

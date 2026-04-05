@@ -1297,6 +1297,8 @@
             statusOverlayTitle: document.getElementById('statusOverlayTitle'),
             statusOverlayMessage: document.getElementById('statusOverlayMessage'),
             pauseButton: document.getElementById('pauseButton'),
+            zoomOutButton: document.getElementById('zoomOutButton'),
+            zoomInButton: document.getElementById('zoomInButton'),
             pauseResumeButton: document.getElementById('pauseResumeButton'),
             newGameButton: document.getElementById('newGameButton'),
             inventoryGrid: document.getElementById('inventoryGrid'),
@@ -1310,6 +1312,8 @@
             progressSummary: document.getElementById('progressSummary'),
             economySummary: document.getElementById('economySummary'),
             instructions: document.getElementById('instructions'),
+            instructionsText: document.getElementById('instructionsText'),
+            instructionsClose: document.getElementById('instructionsClose'),
             actionHint: document.getElementById('actionHint'),
             statHungerValue: document.getElementById('statHungerValue'),
             statHungerBar: document.getElementById('statHungerBar'),
@@ -1836,6 +1840,96 @@
         }
 
         return true;
+    }
+
+    function isMobileViewport() {
+        return window.matchMedia('(max-width: 760px)').matches;
+    }
+
+    function clampSceneZoom(value) {
+        return clamp(
+            Number.isFinite(value) ? value : 1,
+            game.config.cameraZoomMin || 0.7,
+            game.config.cameraZoomMax || 1.4
+        );
+    }
+
+    function getSceneZoom() {
+        if (game.systems.camera && typeof game.systems.camera.getZoom === 'function') {
+            return game.systems.camera.getZoom();
+        }
+
+        return clampSceneZoom(game.camera.zoom);
+    }
+
+    function getDefaultSceneZoom() {
+        return clampSceneZoom(
+            isMobileViewport()
+                ? game.config.cameraZoomMobileDefault
+                : game.config.cameraZoomDefault
+        );
+    }
+
+    function syncSceneZoomControls() {
+        const zoom = getSceneZoom();
+        const zoomMin = clampSceneZoom(game.config.cameraZoomMin || 0.7);
+        const zoomMax = clampSceneZoom(game.config.cameraZoomMax || 1.4);
+        const zoomPercent = `${Math.round(zoom * 100)}%`;
+
+        if (elements.zoomOutButton) {
+            elements.zoomOutButton.disabled = zoom <= zoomMin + 0.001;
+            elements.zoomOutButton.setAttribute('title', `Отдалить камеру (${zoomPercent})`);
+            elements.zoomOutButton.setAttribute('aria-label', `Отдалить камеру. Текущий масштаб ${zoomPercent}`);
+        }
+
+        if (elements.zoomInButton) {
+            elements.zoomInButton.disabled = zoom >= zoomMax - 0.001;
+            elements.zoomInButton.setAttribute('title', `Приблизить камеру (${zoomPercent})`);
+            elements.zoomInButton.setAttribute('aria-label', `Приблизить камеру. Текущий масштаб ${zoomPercent}`);
+        }
+    }
+
+    function setSceneZoom(value, options = {}) {
+        const nextZoom = clampSceneZoom(value);
+        const currentZoom = getSceneZoom();
+        const changed = Math.abs(nextZoom - currentZoom) > 0.001;
+
+        if (game.systems.camera && typeof game.systems.camera.setZoom === 'function') {
+            game.systems.camera.setZoom(nextZoom);
+        } else {
+            game.camera.zoom = nextZoom;
+        }
+
+        if (options.isManual) {
+            game.camera.hasManualZoom = true;
+        }
+
+        syncSceneZoomControls();
+
+        if (changed && !options.skipRender) {
+            renderAfterStateChange();
+        }
+
+        return changed;
+    }
+
+    function syncSceneZoomForViewport(options = {}) {
+        if (!game.camera.hasManualZoom || options.force) {
+            return setSceneZoom(getDefaultSceneZoom(), {
+                isManual: false,
+                skipRender: options.skipRender
+            });
+        }
+
+        syncSceneZoomControls();
+        return false;
+    }
+
+    function adjustSceneZoom(stepDelta) {
+        const step = Number.isFinite(game.config.cameraZoomStep) ? game.config.cameraZoomStep : 0.1;
+        return setSceneZoom(getSceneZoom() + (step * stepDelta), {
+            isManual: true
+        });
     }
 
     function renderAfterStateChange(sections) {
@@ -2955,6 +3049,18 @@
             });
         }
 
+        if (elements.zoomOutButton) {
+            elements.zoomOutButton.addEventListener('click', () => {
+                adjustSceneZoom(-1);
+            });
+        }
+
+        if (elements.zoomInButton) {
+            elements.zoomInButton.addEventListener('click', () => {
+                adjustSceneZoom(1);
+            });
+        }
+
         if (elements.pauseResumeButton) {
             elements.pauseResumeButton.addEventListener('click', () => {
                 togglePause();
@@ -2983,6 +3089,12 @@
             elements.merchantPanelClose.addEventListener('click', () => {
                 closeMerchantPanel();
                 renderAfterStateChange();
+            });
+        }
+
+        if (elements.instructionsClose) {
+            elements.instructionsClose.addEventListener('click', () => {
+                dismissInstructions();
             });
         }
 
@@ -3100,22 +3212,49 @@
         return refreshDirty(displayPosition, activeHouse, activeInteraction);
     }
 
+    function syncInstructionsOverlay() {
+        if (!elements.instructions) {
+            return;
+        }
+
+        elements.instructions.hidden = Boolean(game.state.isInstructionsDismissed);
+    }
+
+    function dismissInstructions() {
+        game.state.isInstructionsDismissed = true;
+        syncInstructionsOverlay();
+        renderAfterStateChange();
+    }
+
     function initializeLayout() {
         queryElements();
         bindEvents();
         resizeCanvasToViewport();
+        syncSceneZoomForViewport({
+            force: true,
+            skipRender: true
+        });
         if (getMobileUiModule() && typeof getMobileUiModule().initialize === 'function') {
             getMobileUiModule().initialize();
         }
-        if (elements.instructions) {
-            elements.instructions.textContent = 'Кликайте по клеткам, чтобы выбрать маршрут. Кнопка движения, пробел или повторный клик по той же клетке запускают выбранный путь. Тропа и мосты экономят силы, тростник и осыпь утяжеляют путь, а грязь и хрупкие мосты лучше обходить.';
+        if (elements.instructionsText) {
+            elements.instructionsText.textContent = 'Кликайте по клеткам, чтобы выбрать маршрут. Кнопка движения, пробел или повторный клик по той же клетке запускают выбранный путь. Тропа и мосты экономят силы, тростник и осыпь утяжеляют путь, а грязь и хрупкие мосты лучше обходить.';
         }
+        syncInstructionsOverlay();
         markDirty();
     }
 
     function handleResize() {
-        if (resizeCanvasToViewport()) {
+        const resized = resizeCanvasToViewport();
+        const zoomChanged = syncSceneZoomForViewport({
+            skipRender: true
+        });
+
+        if (resized || zoomChanged) {
             markDirty();
+            if (game.systems.render) {
+                game.systems.render.render();
+            }
         }
 
         if (getMobileUiModule() && typeof getMobileUiModule().sync === 'function') {
@@ -3321,6 +3460,7 @@
         getStepEnergyDrainMultiplier,
         getTileLabel,
         getTimeOfDayLabel,
+        getSceneZoom,
         getTravelBandLabel,
         getUnlockedInventorySlots,
         isAllStatsDepleted,
@@ -3350,6 +3490,9 @@
         refreshDirty,
         initializeLayout,
         handleResize,
+        getSceneZoom,
+        setSceneZoom,
+        adjustSceneZoom,
         togglePause,
         applyMovementStepCosts,
         applyPathCompletionCosts,

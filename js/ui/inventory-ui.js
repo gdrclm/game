@@ -174,12 +174,7 @@
             return;
         }
 
-        const totalSlots = Math.max(
-            8,
-            game.systems.bagUpgradeRuntime && typeof game.systems.bagUpgradeRuntime.getBagSlotCap === 'function'
-                ? game.systems.bagUpgradeRuntime.getBagSlotCap()
-                : 10
-        );
+        const totalSlots = Math.max(0, bridge.getUnlockedInventorySlots());
         const inventory = [...bridge.getInventory()];
         while (inventory.length < totalSlots) {
             inventory.push(null);
