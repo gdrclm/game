@@ -1,3 +1,7 @@
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
 function projectIso(x, y) {
     const { tileWidth, tileHeight } = window.Game.config;
 
@@ -55,11 +59,32 @@ function stopCameraAnimation() {
     }
 }
 
+function getZoom() {
+    const game = window.Game;
+    const rawZoom = Number.isFinite(game.camera.zoom) ? game.camera.zoom : 1;
+
+    return clamp(rawZoom, game.config.cameraZoomMin || 0.7, game.config.cameraZoomMax || 1.4);
+}
+
+function setZoom(zoom) {
+    const game = window.Game;
+    const safeZoom = clamp(
+        Number.isFinite(zoom) ? zoom : 1,
+        game.config.cameraZoomMin || 0.7,
+        game.config.cameraZoomMax || 1.4
+    );
+
+    game.camera.zoom = safeZoom;
+    return safeZoom;
+}
+
 window.Game.systems.camera = {
     projectIso,
     isoToScreen,
     centerCameraOn,
     updateCamera,
     isCameraSettled,
-    stopCameraAnimation
+    stopCameraAnimation,
+    getZoom,
+    setZoom
 };

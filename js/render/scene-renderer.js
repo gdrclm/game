@@ -163,6 +163,43 @@ function drawWeatherOverlay(progression) {
     weatherRuntime.drawCurrentWeatherOverlay(progression);
 }
 
+function drawWorld(playerPos, focusChunkX, focusChunkY, activeHouse) {
+    const game = window.Game;
+
+    for (let cy = focusChunkY - game.config.viewDistance; cy <= focusChunkY + game.config.viewDistance; cy++) {
+        for (let cx = focusChunkX - game.config.viewDistance; cx <= focusChunkX + game.config.viewDistance; cx++) {
+            const chunk = game.state.loadedChunks[`${cx},${cy}`];
+            if (chunk) {
+                game.systems.chunkRenderer.drawChunk(chunk);
+            }
+        }
+    }
+
+    game.systems.entityRenderer.drawSceneEntities(playerPos, focusChunkX, focusChunkY, activeHouse);
+}
+
+function drawZoomedWorld(playerPos, focusChunkX, focusChunkY, activeHouse) {
+    const game = window.Game;
+    const zoom = game.systems.camera && typeof game.systems.camera.getZoom === 'function'
+        ? game.systems.camera.getZoom()
+        : 1;
+
+    if (Math.abs(zoom - 1) <= 0.001) {
+        drawWorld(playerPos, focusChunkX, focusChunkY, activeHouse);
+        return;
+    }
+
+    const centerX = game.canvas.width / 2;
+    const centerY = game.canvas.height / 2;
+
+    game.ctx.save();
+    game.ctx.translate(centerX, centerY);
+    game.ctx.scale(zoom, zoom);
+    game.ctx.translate(-centerX, -centerY);
+    drawWorld(playerPos, focusChunkX, focusChunkY, activeHouse);
+    game.ctx.restore();
+}
+
 let renderRequestId = null;
 let pendingRenderOptions = null;
 let lastRenderOptions = null;
@@ -188,16 +225,7 @@ function renderScene(playerPos, options = {}) {
         game.systems.camera.updateCamera(cameraFocusPos);
     }
 
-    for (let cy = focusChunkY - game.config.viewDistance; cy <= focusChunkY + game.config.viewDistance; cy++) {
-        for (let cx = focusChunkX - game.config.viewDistance; cx <= focusChunkX + game.config.viewDistance; cx++) {
-            const chunk = game.state.loadedChunks[`${cx},${cy}`];
-            if (chunk) {
-                game.systems.chunkRenderer.drawChunk(chunk);
-            }
-        }
-    }
-
-    game.systems.entityRenderer.drawSceneEntities(playerPos, focusChunkX, focusChunkY, activeHouse);
+    drawZoomedWorld(playerPos, focusChunkX, focusChunkY, activeHouse);
     drawTimeOfDayOverlay();
     drawWeatherOverlay(activeProgression);
     game.systems.debugRenderer.updateDebugPanel(playerPos, activeHouse, activeInteraction);

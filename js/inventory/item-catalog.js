@@ -843,6 +843,7 @@
             description: 'Связанный травяной ресурс.'
         }),
         makeItem('rope', 'Верёвка', 'VR', 1, 'tool utility', {
+            stackable: true,
             chestWeight: 6,
             merchantWeight: 8,
             merchantQuestWeight: 5,

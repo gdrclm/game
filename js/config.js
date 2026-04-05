@@ -10,6 +10,11 @@ const gameConfig = {
     moveDurationMs: 100,
     maxMovementStepsPerFrame: 6,
     cameraLerpFactor: 0.12,
+    cameraZoomDefault: 1,
+    cameraZoomMobileDefault: 0.8,
+    cameraZoomMin: 0.7,
+    cameraZoomMax: 1.4,
+    cameraZoomStep: 0.1,
     playerSprite: {
         targetHeight: 64,
         frames: {
@@ -131,7 +136,9 @@ window.Game = {
     camera: {
         offset: { x: 0, y: 0 },
         target: { x: 0, y: 0 },
-        lerpFactor: gameConfig.cameraLerpFactor
+        lerpFactor: gameConfig.cameraLerpFactor,
+        zoom: gameConfig.cameraZoomDefault,
+        hasManualZoom: false
     },
     state: null,
     debug: {

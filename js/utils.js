@@ -3,9 +3,21 @@ function normalizeModulo(value, base) {
 }
 
 function screenToIso(screenX, screenY, offsetX = 0, offsetY = 0) {
-    const adjustedX = screenX - offsetX;
-    const adjustedY = screenY - offsetY;
-    const { tileWidth, tileHeight } = window.Game.config;
+    const game = window.Game;
+    const zoom = game.systems.camera && typeof game.systems.camera.getZoom === 'function'
+        ? game.systems.camera.getZoom()
+        : 1;
+    const centerX = game.canvas.width / 2;
+    const centerY = game.canvas.height / 2;
+    const normalizedX = Math.abs(zoom - 1) > 0.001
+        ? centerX + (screenX - centerX) / zoom
+        : screenX;
+    const normalizedY = Math.abs(zoom - 1) > 0.001
+        ? centerY + (screenY - centerY) / zoom
+        : screenY;
+    const adjustedX = normalizedX - offsetX;
+    const adjustedY = normalizedY - offsetY;
+    const { tileWidth, tileHeight } = game.config;
 
     return {
         x: (adjustedX / (tileWidth / 2) + adjustedY / (tileHeight / 2)) / 2,

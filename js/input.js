@@ -28,6 +28,14 @@ function handleClick(event) {
 
     preloadChunkAndNeighbors(targetX, targetY);
 
+    if (
+        game.systems.actionUi
+        && typeof game.systems.actionUi.tryCollectClickedRock === 'function'
+        && game.systems.actionUi.tryCollectClickedRock(clickedTileInfo)
+    ) {
+        return;
+    }
+
     const startX = Math.round(game.state.playerPos.x);
     const startY = Math.round(game.state.playerPos.y);
     const resolvedTarget = game.systems.interactions
