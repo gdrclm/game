@@ -1,5 +1,7 @@
 (() => {
     const itemCatalog = window.Game.systems.itemCatalog = window.Game.systems.itemCatalog || {};
+    const resourceRegistry = window.Game.systems.resourceRegistry || null;
+    const componentRegistry = window.Game.systems.componentRegistry || null;
 
     const tierWindows = {
         1: { minIsland: 2, maxIsland: 5, label: 'T1' },
@@ -37,6 +39,18 @@
             baseValue: 0,
             ...extra
         };
+    }
+
+    function getBaseResourceCatalogEntries() {
+        return resourceRegistry && typeof resourceRegistry.buildCatalogEntries === 'function'
+            ? resourceRegistry.buildCatalogEntries(makeItem)
+            : [];
+    }
+
+    function getCraftingComponentCatalogEntries() {
+        return componentRegistry && typeof componentRegistry.buildCatalogEntries === 'function'
+            ? componentRegistry.buildCatalogEntries(makeItem)
+            : [];
     }
 
     const items = [
@@ -786,69 +800,18 @@
             description: 'Лёгкий перекус на ходу.',
             consumable: { hunger: 100, energy: 8 }
         }),
-        makeItem('waterFlask', 'Фляга воды', 'FW', 1, 'consumable survival', {
-            stackable: true,
-            chestWeight: 10,
-            merchantWeight: 10,
-            baseValue: 7,
-            description: 'Чистая вода. Восстанавливает фокус, энергию и немного сбивает голод.',
-            consumable: {
-                ignoreRecoveryScaling: true,
-                allowPartialHunger: true,
-                hunger: 25,
-                focus: 40,
-                energy: 50
-            }
-        }),
-        makeItem('rubbleChunk', 'Обломки осыпи', 'OS', 0, 'resource material', {
-            stackable: true,
-            baseValue: 2,
-            description: 'Пять штук превращаются в каменный ресурс.',
-            conversion: { quantity: 5, targetItemId: 'stoneResource' }
-        }),
-        makeItem('stoneResource', 'Каменный ресурс', 'KR', 0, 'resource material value', {
-            stackable: true,
-            baseValue: 8,
-            merchantQuestWeight: 2,
-            description: 'Связка пригодного камня.'
-        }),
+        ...getBaseResourceCatalogEntries(),
+        ...getCraftingComponentCatalogEntries(),
         makeItem('soilClod', 'Комья земли', 'KZ', 0, 'resource material', {
             stackable: true,
             baseValue: 2,
-            description: 'Пять комьев превращаются в земляной ресурс.',
-            conversion: { quantity: 5, targetItemId: 'soilResource' }
+            description: 'Сырьё из плохих секторов. Пять комьев можно сжать руками в земляной ресурс.'
         }),
         makeItem('soilResource', 'Земляной ресурс', 'ZR', 0, 'resource material value', {
             stackable: true,
             baseValue: 7,
             merchantQuestWeight: 2,
             description: 'Плотный земляной ресурс.'
-        }),
-        makeItem('lowlandGrass', 'Низинная трава', 'NT', 0, 'resource material', {
-            stackable: true,
-            baseValue: 2,
-            description: 'Пять пучков превращаются в травяной ресурс.',
-            conversion: { quantity: 5, targetItemId: 'grassResource' }
-        }),
-        makeItem('fieldGrass', 'Полевая трава', 'PT', 0, 'resource material', {
-            stackable: true,
-            baseValue: 2,
-            description: 'Пять пучков превращаются в травяной ресурс.',
-            conversion: { quantity: 5, targetItemId: 'grassResource' }
-        }),
-        makeItem('grassResource', 'Травяной ресурс', 'TR', 0, 'resource material value', {
-            stackable: true,
-            baseValue: 6,
-            merchantQuestWeight: 2,
-            description: 'Связанный травяной ресурс.'
-        }),
-        makeItem('rope', 'Верёвка', 'VR', 1, 'tool utility', {
-            stackable: true,
-            chestWeight: 6,
-            merchantWeight: 8,
-            merchantQuestWeight: 5,
-            baseValue: 11,
-            description: 'Простой ранний инструмент.'
         }),
         makeItem('ferryBoard', 'Доска переправы', 'DP', 2, 'tool utility movement', {
             chestWeight: 3,

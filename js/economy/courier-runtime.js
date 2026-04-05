@@ -47,6 +47,10 @@
         return game.systems.uiBridge || null;
     }
 
+    function getShopRuntime() {
+        return game.systems.shopRuntime || null;
+    }
+
     function ensureCourierState() {
         game.state.courierJobsById = game.state.courierJobsById || {};
         game.state.courierResultLog = Array.isArray(game.state.courierResultLog) ? game.state.courierResultLog : [];
@@ -109,6 +113,26 @@
         return source && source.expedition && source.expedition.label
             ? source.expedition.label
             : 'Торговец';
+    }
+
+    function formatRewardItemSummary(itemLabel, quantity = 1) {
+        const shopRuntime = getShopRuntime();
+        if (shopRuntime && typeof shopRuntime.formatRewardItemSummary === 'function') {
+            return shopRuntime.formatRewardItemSummary(itemLabel, quantity);
+        }
+
+        if (!itemLabel) {
+            return '';
+        }
+
+        return quantity > 1 ? `${itemLabel} x${quantity}` : itemLabel;
+    }
+
+    function grantCourierRewardItem(itemId, quantity = 1, options = {}) {
+        const shopRuntime = getShopRuntime();
+        return shopRuntime && typeof shopRuntime.grantQuestRewardItem === 'function'
+            ? shopRuntime.grantQuestRewardItem(itemId, quantity, options)
+            : null;
     }
 
     function getQuestDeliveryDistance(quest, hireIslandIndex) {
@@ -387,6 +411,10 @@
             itemId: questState.itemId,
             quantity: requiredQuantity,
             rewardGold: Math.max(0, Math.round(questState.rewardGold || 0)),
+            rewardItemId: questState.rewardItemId || '',
+            rewardItemLabel: questState.rewardItemLabel || '',
+            rewardItemIcon: questState.rewardItemIcon || '',
+            rewardItemQuantity: Math.max(0, Math.round(questState.rewardItemQuantity || 0)),
             tierId: tier.id,
             tierLabel: tier.label,
             fee,
@@ -447,20 +475,35 @@
             changeGold(deliveredRewardGold);
         }
 
+        const rewardItemGrant = resultCode !== 'lost' && job.rewardItemId
+            ? grantCourierRewardItem(job.rewardItemId, job.rewardItemQuantity || 1, {
+                label: job.rewardItemLabel,
+                icon: job.rewardItemIcon
+            })
+            : null;
+        const rewardItemSummary = formatRewardItemSummary(job.rewardItemLabel, job.rewardItemQuantity || 1);
+        const rewardItemMessage = rewardItemGrant && rewardItemGrant.granted
+            ? (rewardItemGrant.droppedQuantity > 0
+                ? ` Бонус "${rewardItemSummary}" не поместился в сумку и лежит под ногами.`
+                : ` Бонус: ${rewardItemSummary}.`)
+            : (resultCode === 'lost' && rewardItemSummary ? ` Редкий бонус "${rewardItemSummary}" тоже потерян.` : '');
+
         let message = '';
         if (resultCode === 'full') {
             message = `Курьер "${job.tierLabel}" вернулся от ${job.targetSourceLabel}: награда за "${job.questLabel}" получена полностью, +${deliveredRewardGold} золота.`;
         } else if (resultCode === 'partial') {
-            message = `Курьер "${job.tierLabel}" вернулся от ${job.targetSourceLabel}, но из-за дальнего отхода удалось сохранить только половину награды: +${deliveredRewardGold} золота.`;
+            message = `Курьер "${job.tierLabel}" вернулся от ${job.targetSourceLabel}, но из-за дальнего отхода удалось сохранить только половину золотой части награды: +${deliveredRewardGold} золота.`;
         } else {
             message = `Курьер "${job.tierLabel}" не довёз награду за "${job.questLabel}": ты ушёл слишком далеко от острова найма.`;
         }
+        message += rewardItemMessage;
 
         return {
             ...job,
             currentIslandIndex,
             distanceFromHireIsland,
             deliveredRewardGold,
+            rewardItemGrant,
             rewardRatio,
             resultCode,
             message
@@ -490,7 +533,13 @@
             courierResultCode: resolution.resultCode,
             courierResultRatio: resolution.rewardRatio,
             courierResultLabel: resolution.message,
-            deliveredRewardGold: resolution.deliveredRewardGold
+            deliveredRewardGold: resolution.deliveredRewardGold,
+            deliveredRewardItemId: resolution.rewardItemGrant && resolution.rewardItemGrant.granted ? job.rewardItemId : '',
+            deliveredRewardItemLabel: resolution.rewardItemGrant && resolution.rewardItemGrant.granted ? job.rewardItemLabel : '',
+            deliveredRewardItemQuantity: resolution.rewardItemGrant && resolution.rewardItemGrant.granted
+                ? ((resolution.rewardItemGrant.item && resolution.rewardItemGrant.item.quantity) || (job.rewardItemQuantity || 1))
+                : 0,
+            deliveredRewardItemDropped: Boolean(resolution.rewardItemGrant && resolution.rewardItemGrant.droppedQuantity > 0)
         });
 
         pushCourierResult({
@@ -503,6 +552,11 @@
             deliveryDistance: job.deliveryDistance,
             distanceFromHireIsland: resolution.distanceFromHireIsland,
             deliveredRewardGold: resolution.deliveredRewardGold,
+            deliveredRewardItemLabel: resolution.rewardItemGrant && resolution.rewardItemGrant.granted ? job.rewardItemLabel : '',
+            deliveredRewardItemQuantity: resolution.rewardItemGrant && resolution.rewardItemGrant.granted
+                ? ((resolution.rewardItemGrant.item && resolution.rewardItemGrant.item.quantity) || (job.rewardItemQuantity || 1))
+                : 0,
+            deliveredRewardItemDropped: Boolean(resolution.rewardItemGrant && resolution.rewardItemGrant.droppedQuantity > 0),
             rewardRatio: resolution.rewardRatio,
             resultCode: resolution.resultCode,
             message: resolution.message

@@ -396,9 +396,26 @@ function endMovementWithOptions(options = {}) {
     state.routeTotalCost = 0;
     state.routePreviewLength = 0;
     state.routePreviewTotalCost = 0;
+    let preparedContinuationRoute = false;
+
+    if (completed && !state.isGameOver) {
+        const inputSystem = window.Game.systems.input || null;
+        if (inputSystem && typeof inputSystem.planRouteToSelectedTile === 'function') {
+            const continuationPlan = inputSystem.planRouteToSelectedTile({
+                showRouteWarning: false,
+                clearActionMessage: false
+            });
+            preparedContinuationRoute = Boolean(continuationPlan && continuationPlan.hasRoute);
+        }
+    }
+
     window.Game.systems.world.updatePlayerContext();
     markMovementUiDirty(MOVEMENT_UI_SECTIONS);
     window.Game.systems.render.settleCameraOnPlayer();
+
+    if (preparedContinuationRoute && window.Game.systems.ui && typeof window.Game.systems.ui.renderAfterStateChange === 'function') {
+        window.Game.systems.ui.renderAfterStateChange(MOVEMENT_UI_SECTIONS);
+    }
 }
 
 function moveToNextPoint() {

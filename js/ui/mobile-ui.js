@@ -246,6 +246,18 @@
             || document.querySelector(`.hud-button[data-action="${action}"]`);
     }
 
+    function getDesktopActionState(action) {
+        const sourceButton = getDesktopActionButton(action);
+        const isEnabled = Boolean(sourceButton && !sourceButton.disabled);
+        const isHighlighted = Boolean(isEnabled && sourceButton.classList.contains('hud-button--available'));
+
+        return {
+            sourceButton,
+            isEnabled,
+            isHighlighted
+        };
+    }
+
     function triggerAction(action) {
         const sourceButton = getDesktopActionButton(action);
 
@@ -294,15 +306,15 @@
     function syncButtons() {
         const refs = getElements();
         const activePanelKey = getActivePanelKey();
-        const hasRoute = Array.isArray(game.state.route) && game.state.route.length > 0;
-        const canWalk = hasRoute && !game.state.isMoving && !game.state.isPaused && !game.state.isMapOpen && !game.state.isGameOver;
+        const walkState = getDesktopActionState('walk');
         const usedSlots = countUsedInventorySlots();
         const activeQuestCount = getActiveQuestCount();
         const shouldShowQuestButton = activeQuestCount > 0 || activePanelKey === 'quests';
 
         if (refs.mobileWalkButton) {
-            refs.mobileWalkButton.disabled = !canWalk;
-            refs.mobileWalkButton.classList.toggle('is-ready', canWalk);
+            refs.mobileWalkButton.disabled = !walkState.isEnabled;
+            refs.mobileWalkButton.hidden = !walkState.isHighlighted;
+            refs.mobileWalkButton.classList.toggle('is-ready', walkState.isHighlighted);
         }
 
         if (refs.mobileInventoryBadge) {
@@ -320,10 +332,9 @@
             refs.mobileQuestButton.classList.toggle('is-active', activePanelKey === 'quests');
         }
 
-        syncMobileActionButton(refs.mobileUseButton, 'use');
-        syncMobileActionButton(refs.mobileSleepButton, 'sleep');
-        syncMobileActionButton(refs.mobileInspectButton, 'inspect');
-
+        const canUse = syncMobileActionButton(refs.mobileUseButton, 'use', { hideWhenUnavailable: true });
+        const canSleep = syncMobileActionButton(refs.mobileSleepButton, 'sleep', { hideWhenUnavailable: true });
+        const canInspect = syncMobileActionButton(refs.mobileInspectButton, 'inspect', { hideWhenUnavailable: true });
         const canTalk = syncMobileActionButton(refs.mobileTalkButton, 'talk', { hideWhenUnavailable: true });
         const canDrop = syncMobileActionButton(refs.mobileDropButton, 'drop', { hideWhenUnavailable: true });
 
@@ -332,7 +343,8 @@
         }
 
         if (refs.mobileActionRack) {
-            const iconCount = 4 + (shouldShowQuestButton ? 1 : 0) + (canTalk ? 1 : 0) + (canDrop ? 1 : 0);
+            const visibleActionCount = [canUse, canSleep, canInspect, canTalk, canDrop].filter(Boolean).length;
+            const iconCount = 1 + visibleActionCount + (shouldShowQuestButton ? 1 : 0);
             refs.mobileActionRack.dataset.iconCount = String(iconCount);
         }
     }
@@ -342,18 +354,17 @@
             return false;
         }
 
-        const sourceButton = getDesktopActionButton(action);
-        const isAvailable = Boolean(sourceButton && !sourceButton.disabled);
-        const isHighlighted = Boolean(isAvailable && sourceButton.classList.contains('hud-button--available'));
+        const actionState = getDesktopActionState(action);
+        const isVisible = actionState.isHighlighted;
 
-        button.disabled = !isAvailable;
-        button.classList.toggle('is-ready', isHighlighted);
+        button.disabled = !actionState.isEnabled;
+        button.classList.toggle('is-ready', actionState.isHighlighted);
 
         if (options.hideWhenUnavailable) {
-            button.hidden = !isAvailable;
+            button.hidden = !isVisible;
         }
 
-        return isAvailable;
+        return isVisible;
     }
 
     function syncHintText() {
@@ -438,6 +449,9 @@
 
         syncStats();
         syncButtons();
+        if (game.systems.inventoryUi && typeof game.systems.inventoryUi.syncSelectionPanel === 'function') {
+            game.systems.inventoryUi.syncSelectionPanel();
+        }
         syncHintText();
         syncToolbarOffset();
     }

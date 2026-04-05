@@ -64,6 +64,52 @@
         };
     }
 
+    function mergeStackMetadata(stack, options = {}) {
+        if (!stack || !options || typeof options !== 'object') {
+            return;
+        }
+
+        const resourceFamilyId = typeof options.resourceFamilyId === 'string' && options.resourceFamilyId.trim()
+            ? options.resourceFamilyId.trim()
+            : '';
+        const resourceSubtypeId = typeof options.resourceSubtypeId === 'string' && options.resourceSubtypeId.trim()
+            ? options.resourceSubtypeId.trim()
+            : '';
+        const resourceSubtypeLabel = typeof options.resourceSubtypeLabel === 'string' && options.resourceSubtypeLabel.trim()
+            ? options.resourceSubtypeLabel.trim()
+            : '';
+
+        if (resourceFamilyId) {
+            stack.resourceFamilyId = resourceFamilyId;
+        }
+
+        if (!resourceSubtypeId) {
+            if (stack.resourceSubtypeId) {
+                delete stack.resourceSubtypeId;
+                delete stack.resourceSubtypeLabel;
+            }
+            return;
+        }
+
+        if (!stack.resourceSubtypeId) {
+            stack.resourceSubtypeId = resourceSubtypeId;
+            if (resourceSubtypeLabel) {
+                stack.resourceSubtypeLabel = resourceSubtypeLabel;
+            }
+            return;
+        }
+
+        if (stack.resourceSubtypeId !== resourceSubtypeId) {
+            delete stack.resourceSubtypeId;
+            delete stack.resourceSubtypeLabel;
+            return;
+        }
+
+        if (!stack.resourceSubtypeLabel && resourceSubtypeLabel) {
+            stack.resourceSubtypeLabel = resourceSubtypeLabel;
+        }
+    }
+
     function addInventoryItem(itemId, quantity = 1, options = {}) {
         const registry = getItemRegistry();
         const definition = getItemDefinition(itemId);
@@ -92,11 +138,12 @@
                     Math.max(1, options.obtainedIslandIndex || game.state.currentIslandIndex || 1)
                 );
                 stack.useCount = Math.max(0, stack.useCount || 0);
+                mergeStackMetadata(stack, options);
                 return {
                     added: true,
                     reason: 'stacked',
                     item: stack,
-                    conversions: options.skipConversion ? [] : applyAutoConversions(itemId)
+                    conversions: []
                 };
             }
         }
@@ -120,7 +167,7 @@
             added: true,
             reason: 'new',
             item: inventory[emptyIndex],
-            conversions: options.skipConversion ? [] : applyAutoConversions(itemId)
+            conversions: []
         };
     }
 
@@ -187,40 +234,7 @@
     }
 
     function applyAutoConversions(itemId) {
-        const recipe = getItemConversionRecipe(itemId);
-
-        if (!recipe || !recipe.targetItemId || !Number.isFinite(recipe.quantity) || recipe.quantity <= 1) {
-            return [];
-        }
-
-        const conversions = [];
-
-        while (countInventoryItem(itemId) >= recipe.quantity) {
-            if (!canAddInventoryItem(recipe.targetItemId)) {
-                break;
-            }
-
-            const consumed = consumeInventoryItemById(itemId, recipe.quantity);
-
-            if (!consumed.success) {
-                break;
-            }
-
-            const targetOutcome = addInventoryItem(recipe.targetItemId, 1, { skipConversion: true });
-
-            conversions.push({
-                sourceItemId: itemId,
-                targetItemId: recipe.targetItemId,
-                added: targetOutcome.added,
-                item: targetOutcome.item ? normalizeInventoryItem(targetOutcome.item) : null
-            });
-
-            if (!targetOutcome.added) {
-                break;
-            }
-        }
-
-        return conversions;
+        return [];
     }
 
     function consumeInventoryItemById(itemId, quantity = 1) {

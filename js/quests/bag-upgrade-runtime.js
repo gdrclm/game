@@ -319,7 +319,7 @@
             slotUnlockLabel: getSlotUnlockLabel(stage),
             slotProgressLabel: `Сумка ${stage.sourceSlots} → ${stage.targetSlots}`,
             unlockPreviewLabel: `После сдачи сумка станет ${stage.targetSlots}/${BAG_SLOT_CAP}.`,
-            progressHeadline: `До слота ${stage.targetSlots}: ${matchedRequiredCount}/${requiredCount} требований и ${evaluation.occupiedSlots}/${evaluation.requiredOccupiedSlots} занятых слотов.`,
+            progressHeadline: `Комплект для слота ${stage.targetSlots}: ${matchedRequiredCount}/${requiredCount} требований.`,
             collectedSummaryLabel: collectedRequirements.length > 0
                 ? `Собрано: ${collectedRequirements.map((entry) => `${entry.label} — ${entry.valueLabel}`).join('; ')}`
                 : 'Собрано: пока ни одно обязательное требование не закрыто.',
@@ -472,10 +472,9 @@
             return 'Подготовь комплект снаряжения для следующего расширения сумки.';
         }
 
-        return [
-            stage.occupancyGoal || '',
-            'Снаряжение будет передано ремесленнику в обмен на дополнительный слот.'
-        ].filter(Boolean).join(' ');
+        return Number.isFinite(stage.targetSlots)
+            ? `Подбери подходящий комплект снаряжения для ремесленника, чтобы расширить сумку до ${stage.targetSlots} слотов.`
+            : 'Подбери подходящий комплект снаряжения для ремесленника и получи дополнительный слот.';
     }
 
     function buildBagUpgradeQuest(stage, encounter = null) {

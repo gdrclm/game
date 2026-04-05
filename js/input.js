@@ -1,6 +1,5 @@
 function handleClick(event) {
     const game = window.Game;
-    let hasRouteWarning = false;
 
     if (game.state.isPaused || game.state.isGameOver || game.state.isMapOpen) {
         return;
@@ -36,16 +35,6 @@ function handleClick(event) {
         return;
     }
 
-    const startX = Math.round(game.state.playerPos.x);
-    const startY = Math.round(game.state.playerPos.y);
-    const resolvedTarget = game.systems.interactions
-        ? game.systems.interactions.resolveClickTarget(startX, startY, targetX, targetY)
-        : { x: targetX, y: targetY };
-    const baseMoveCellsPerTurn = Math.max(1, game.config.maxMoveCellsPerTurn || 5);
-    const maxMoveCellsPerTurn = game.systems.ui && typeof game.systems.ui.getRouteLengthLimit === 'function'
-        ? game.systems.ui.getRouteLengthLimit()
-        : baseMoveCellsPerTurn;
-    const pathResult = game.systems.pathfinding.findPathResult(startX, startY, resolvedTarget.x, resolvedTarget.y);
     const existingRoute = Array.isArray(game.state.route) ? game.state.route : [];
     const selectedWorldTile = game.state.selectedWorldTile;
     const isRepeatClickOnSelectedTile = Boolean(
@@ -56,41 +45,10 @@ function handleClick(event) {
 
     game.state.selectedWorldTile = { x: targetX, y: targetY };
     game.state.selectedWorldInteractionId = clickedInteraction ? clickedInteraction.id : null;
-
-    game.state.routePreviewLength = pathResult.path.length;
-    game.state.routePreviewTotalCost = pathResult.totalCost;
-    game.state.route = pathResult.path.slice(0, maxMoveCellsPerTurn);
-    game.state.routeTotalCost = game.systems.pathfinding.calculatePathCost(game.state.route);
-
-    if (
-        game.state.route.length === maxMoveCellsPerTurn
-        && (resolvedTarget.x !== game.state.route[game.state.route.length - 1].x
-            || resolvedTarget.y !== game.state.route[game.state.route.length - 1].y)
-        && game.systems.ui
-    ) {
-        game.systems.ui.setActionMessage(
-            maxMoveCellsPerTurn < baseMoveCellsPerTurn
-                ? `Из-за недосыпа за ход удаётся спланировать только ${maxMoveCellsPerTurn} клетки.`
-                : `За один ход можно пройти не больше ${maxMoveCellsPerTurn} клеток.`
-        );
-        hasRouteWarning = true;
-    }
-
-    if (game.state.route.length > 0) {
-        preloadChunksAlongRoute();
-    } else {
-        game.state.routePreviewLength = 0;
-        game.state.routePreviewTotalCost = 0;
-        game.state.routeTotalCost = 0;
-    }
-
-    if (
-        !hasRouteWarning
-        && game.systems.ui
-        && typeof game.systems.ui.setActionMessage === 'function'
-    ) {
-        game.systems.ui.setActionMessage('');
-    }
+    planRouteToTarget(targetX, targetY, {
+        showRouteWarning: true,
+        clearActionMessage: true
+    });
 
     if (
         isRepeatClickOnSelectedTile
@@ -134,6 +92,110 @@ function preloadChunkAndNeighbors(x, y) {
     }
 }
 
+function getBaseMoveCellsPerTurn() {
+    const game = window.Game;
+    return Math.max(1, game.config.maxMoveCellsPerTurn || 5);
+}
+
+function getRouteLengthLimit() {
+    const game = window.Game;
+    return game.systems.ui && typeof game.systems.ui.getRouteLengthLimit === 'function'
+        ? game.systems.ui.getRouteLengthLimit()
+        : getBaseMoveCellsPerTurn();
+}
+
+function clearPlannedRoute() {
+    const game = window.Game;
+    game.state.route = [];
+    game.state.routeTotalCost = 0;
+    game.state.routePreviewLength = 0;
+    game.state.routePreviewTotalCost = 0;
+}
+
+function planRouteToTarget(targetX, targetY, options = {}) {
+    const game = window.Game;
+    const showRouteWarning = options.showRouteWarning !== false;
+    const clearActionMessage = options.clearActionMessage !== false;
+
+    if (options.preloadTarget) {
+        preloadChunkAndNeighbors(targetX, targetY);
+    }
+
+    const startX = Math.round(game.state.playerPos.x);
+    const startY = Math.round(game.state.playerPos.y);
+    const resolvedTarget = game.systems.interactions
+        ? game.systems.interactions.resolveClickTarget(startX, startY, targetX, targetY)
+        : { x: targetX, y: targetY };
+    const baseMoveCellsPerTurn = getBaseMoveCellsPerTurn();
+    const maxMoveCellsPerTurn = getRouteLengthLimit();
+    const pathResult = game.systems.pathfinding.findPathResult(startX, startY, resolvedTarget.x, resolvedTarget.y);
+
+    game.state.routePreviewLength = pathResult.path.length;
+    game.state.routePreviewTotalCost = pathResult.totalCost;
+    game.state.route = pathResult.path.slice(0, maxMoveCellsPerTurn);
+    game.state.routeTotalCost = game.systems.pathfinding.calculatePathCost(game.state.route);
+
+    const isTruncated = Boolean(
+        game.state.route.length === maxMoveCellsPerTurn
+        && game.state.route.length > 0
+        && (resolvedTarget.x !== game.state.route[game.state.route.length - 1].x
+            || resolvedTarget.y !== game.state.route[game.state.route.length - 1].y)
+    );
+    let hasRouteWarning = false;
+
+    if (isTruncated && showRouteWarning && game.systems.ui) {
+        game.systems.ui.setActionMessage(
+            maxMoveCellsPerTurn < baseMoveCellsPerTurn
+                ? `Из-за недосыпа за ход удаётся спланировать только ${maxMoveCellsPerTurn} клетки.`
+                : `За один ход можно пройти не больше ${maxMoveCellsPerTurn} клеток.`
+        );
+        hasRouteWarning = true;
+    }
+
+    if (game.state.route.length > 0) {
+        preloadChunksAlongRoute();
+    } else {
+        clearPlannedRoute();
+    }
+
+    if (
+        !hasRouteWarning
+        && clearActionMessage
+        && game.systems.ui
+        && typeof game.systems.ui.setActionMessage === 'function'
+    ) {
+        game.systems.ui.setActionMessage('');
+    }
+
+    return {
+        hasRoute: game.state.route.length > 0,
+        hasRouteWarning,
+        isTruncated,
+        pathResult,
+        resolvedTarget
+    };
+}
+
+function planRouteToSelectedTile(options = {}) {
+    const game = window.Game;
+    const selectedWorldTile = game.state.selectedWorldTile;
+
+    if (!selectedWorldTile || !Number.isFinite(selectedWorldTile.x) || !Number.isFinite(selectedWorldTile.y)) {
+        return {
+            hasRoute: false,
+            hasRouteWarning: false,
+            isTruncated: false,
+            pathResult: null,
+            resolvedTarget: null
+        };
+    }
+
+    return planRouteToTarget(selectedWorldTile.x, selectedWorldTile.y, {
+        preloadTarget: true,
+        ...options
+    });
+}
+
 function handleKeyDown(event) {
     const game = window.Game;
     const mapUi = game.systems.mapUi || null;
@@ -164,9 +226,19 @@ function handleKeyDown(event) {
         return;
     }
 
-    if (event.code === 'Space' && game.state.route.length > 0 && !game.state.isMoving) {
-        event.preventDefault();
-        game.systems.movement.startMovement();
+    if (event.code === 'Space' && !game.state.isMoving) {
+        const routeReady = (
+            Array.isArray(game.state.route)
+            && game.state.route.length > 0
+        ) || planRouteToSelectedTile({
+            showRouteWarning: false,
+            clearActionMessage: false
+        }).hasRoute;
+
+        if (routeReady) {
+            event.preventDefault();
+            game.systems.movement.startMovement();
+        }
     }
 }
 
@@ -188,6 +260,8 @@ function preloadChunksAlongRoute() {
 window.Game.systems.input = {
     handleClick,
     handleKeyDown,
+    planRouteToTarget,
+    planRouteToSelectedTile,
     preloadChunkAndNeighbors,
     preloadChunksAlongRoute
 };

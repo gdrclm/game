@@ -1,6 +1,6 @@
 (() => {
     const stateSchema = window.Game.systems.stateSchema = window.Game.systems.stateSchema || {};
-    const SAVE_VERSION = 1;
+    const SAVE_VERSION = 3;
 
     function isPlainObject(value) {
         return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -70,6 +70,26 @@
         ];
     }
 
+    function createDefaultCraftingState() {
+        return {
+            resources: {},
+            containers: {},
+            knownRecipes: {},
+            stationUnlocks: {},
+            resourceNodesState: {}
+        };
+    }
+
+    function extractLegacyCraftingState(state = {}) {
+        return {
+            resources: state.resources,
+            containers: state.containers,
+            knownRecipes: state.knownRecipes,
+            stationUnlocks: state.stationUnlocks,
+            resourceNodesState: state.resourceNodesState
+        };
+    }
+
     function createDomainState() {
         return {
             meta: {
@@ -95,6 +115,7 @@
                 selectedInventorySlot: null,
                 stepsSinceAutoRest: 30
             },
+            craftingState: createDefaultCraftingState(),
             world: {
                 currentIslandIndex: 1,
                 visitedIslandIds: { 1: true },
@@ -110,6 +131,7 @@
                 harvestedTerrainKeys: {},
                 islandPressureStepsByIndex: {},
                 exploredMapTilesByKey: {},
+                mapBookmarksByKey: {},
                 groundItemsByKey: {},
                 currentTimeOfDayIndex: 0,
                 stepsSinceTimeOfDayChange: 0,
@@ -172,6 +194,7 @@
         return {
             meta: mergeWithDefaults(defaults.meta, domains.meta || {}),
             player: mergeWithDefaults(defaults.player, domains.player || {}),
+            craftingState: mergeWithDefaults(defaults.craftingState, domains.craftingState || {}),
             world: mergeWithDefaults(defaults.world, domains.world || {}),
             narrative: mergeWithDefaults(defaults.narrative, domains.narrative || {}),
             ui: mergeWithDefaults(defaults.ui, domains.ui || {}),
@@ -207,6 +230,12 @@
                     ? state.stepsSinceAutoRest
                     : defaults.player.stepsSinceAutoRest
             },
+            craftingState: mergeWithDefaults(
+                defaults.craftingState,
+                isPlainObject(state.craftingState)
+                    ? state.craftingState
+                    : extractLegacyCraftingState(state)
+            ),
             world: {
                 currentIslandIndex: typeof state.currentIslandIndex === 'number'
                     ? state.currentIslandIndex
@@ -232,6 +261,7 @@
                 harvestedTerrainKeys: mergeWithDefaults(defaults.world.harvestedTerrainKeys, state.harvestedTerrainKeys),
                 islandPressureStepsByIndex: mergeWithDefaults(defaults.world.islandPressureStepsByIndex, state.islandPressureStepsByIndex),
                 exploredMapTilesByKey: mergeWithDefaults(defaults.world.exploredMapTilesByKey, state.exploredMapTilesByKey),
+                mapBookmarksByKey: mergeWithDefaults(defaults.world.mapBookmarksByKey, state.mapBookmarksByKey),
                 groundItemsByKey: mergeWithDefaults(
                     defaults.world.groundItemsByKey,
                     state.groundItemsByKey || state.groundItemsByWorldKey
@@ -357,6 +387,7 @@
             unlockedInventorySlots: normalized.player.unlockedInventorySlots,
             selectedInventorySlot: normalized.player.selectedInventorySlot,
             stepsSinceAutoRest: normalized.player.stepsSinceAutoRest,
+            craftingState: normalized.craftingState,
             currentIslandIndex: normalized.world.currentIslandIndex,
             visitedIslandIds: normalized.world.visitedIslandIds,
             highestIslandIndex: normalized.world.highestIslandIndex,
@@ -371,6 +402,7 @@
             harvestedTerrainKeys: normalized.world.harvestedTerrainKeys,
             islandPressureStepsByIndex: normalized.world.islandPressureStepsByIndex,
             exploredMapTilesByKey: normalized.world.exploredMapTilesByKey,
+            mapBookmarksByKey: normalized.world.mapBookmarksByKey,
             groundItemsByKey: normalized.world.groundItemsByKey,
             currentTimeOfDayIndex: normalized.world.currentTimeOfDayIndex,
             stepsSinceTimeOfDayChange: normalized.world.stepsSinceTimeOfDayChange,

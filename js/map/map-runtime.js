@@ -43,11 +43,21 @@
         return `${x},${y}`;
     }
 
-    function isTerrainHarvested(x, y, legacyItemId = '') {
+    function getLegacyHarvestItemIds(tileType) {
+        const resourceRegistry = game.systems.resourceRegistry || null;
+        return resourceRegistry && typeof resourceRegistry.getTerrainGatherLegacyItemIds === 'function'
+            ? resourceRegistry.getTerrainGatherLegacyItemIds(tileType)
+            : [];
+    }
+
+    function isTerrainHarvested(x, y, legacyItemIds = []) {
         const harvested = getHarvestedTerrainState();
+        const ids = Array.isArray(legacyItemIds)
+            ? legacyItemIds
+            : (legacyItemIds ? [legacyItemIds] : []);
         return Boolean(
             harvested[getHarvestedTerrainKey(x, y)]
-            || (legacyItemId && harvested[`${legacyItemId}:${x},${y}`])
+            || ids.some((legacyItemId) => legacyItemId && harvested[`${legacyItemId}:${x},${y}`])
         );
     }
 
@@ -290,7 +300,7 @@
             return interactionResourceKind;
         }
 
-        if ((baseTileType === 'rubble' || baseTileType === 'rock') && !isTerrainHarvested(worldX, worldY, 'rubbleChunk')) {
+        if ((baseTileType === 'rubble' || baseTileType === 'rock') && !isTerrainHarvested(worldX, worldY, getLegacyHarvestItemIds(baseTileType))) {
             return 'stone';
         }
 
@@ -298,7 +308,7 @@
             return 'soil';
         }
 
-        if (baseTileType === 'reeds' && !isTerrainHarvested(worldX, worldY, 'lowlandGrass')) {
+        if (baseTileType === 'reeds' && !isTerrainHarvested(worldX, worldY, getLegacyHarvestItemIds('reeds'))) {
             return 'grass';
         }
 

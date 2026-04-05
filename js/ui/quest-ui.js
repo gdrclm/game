@@ -200,6 +200,17 @@
             : '';
     }
 
+    function getQuestRewardItemLabel(quest) {
+        const itemLabel = quest && quest.rewardItemLabel ? quest.rewardItemLabel : '';
+        const itemQuantity = Math.max(0, Math.round(quest && quest.rewardItemQuantity ? quest.rewardItemQuantity : 0));
+
+        if (!itemLabel || itemQuantity <= 0) {
+            return '';
+        }
+
+        return itemQuantity > 1 ? `${itemLabel} x${itemQuantity}` : itemLabel;
+    }
+
     function createRequirementCard(entry, modifierClass, emptyText) {
         const card = document.createElement('div');
         card.className = `artisan-check ${modifierClass}`;
@@ -259,9 +270,7 @@
         const heroRows = [
             createCopyRow('artisan-quest__slot', quest.slotUnlockLabel),
             createCopyRow('artisan-quest__meta', quest.progressHeadline || quest.slotProgressLabel),
-            createCopyRow('artisan-quest__meta', [quest.occupancyStatusLabel, quest.requirementStatusLabel].filter(Boolean).join(' · ')),
-            createCopyRow('artisan-quest__meta', quest.unlockPreviewLabel),
-            createCopyRow('artisan-quest__warning', quest.occupancyMissingLabel)
+            createCopyRow('artisan-quest__meta', quest.unlockPreviewLabel)
         ].filter(Boolean);
 
         if (heroRows.length > 0) {
@@ -358,11 +367,12 @@
 
         const rewardRow = document.createElement('p');
         rewardRow.className = 'panel-copy quest-entry__meta';
+        const rewardItemLabel = getQuestRewardItemLabel(quest);
         rewardRow.textContent = isCourierInTransit
-            ? `Награда: до ${quest.rewardGold || 0} золота · комиссия: ${quest.courierFee || 0} · остров найма: ${quest.courierHireIslandIndex || '?'}`
+            ? `Награда: до ${quest.rewardGold || 0} золота${rewardItemLabel ? ` + ${rewardItemLabel}` : ''} · комиссия: ${quest.courierFee || 0} · остров найма: ${quest.courierHireIslandIndex || '?'}`
             : (quest.objectiveType === 'bagLoadout'
             ? `Награда: +${quest.rewardSlots || Math.max(1, (quest.targetSlots || 0) - (quest.sourceSlots || 0))} слот · ${quest.slotUnlockLabel || `сумка до ${quest.targetSlots || '?'}`}`
-            : `Награда: ${quest.rewardGold || 0} золота`);
+            : `Награда: ${quest.rewardGold || 0} золота${rewardItemLabel ? ` + ${rewardItemLabel}` : ''}`);
 
         const descriptionRow = document.createElement('p');
         descriptionRow.className = 'panel-copy quest-entry__description';
@@ -377,13 +387,6 @@
         body.append(giverRow, progressRow, rewardRow, descriptionRow);
 
         if (quest.objectiveType === 'bagLoadout') {
-            const slotGoalRow = document.createElement('p');
-            slotGoalRow.className = 'panel-copy quest-entry__meta';
-            slotGoalRow.textContent = [
-                quest.occupancyGoal || '',
-                Number.isFinite(quest.deadlineIslandIndex) ? `дедлайн: остров ${quest.deadlineIslandIndex}` : ''
-            ].filter(Boolean).join(' · ');
-            body.append(slotGoalRow);
             appendQuestMatchRows(body, quest);
         }
 

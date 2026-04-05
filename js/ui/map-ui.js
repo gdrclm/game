@@ -32,6 +32,9 @@
     const MAP_ZOOM_PER_ISLAND = 0.45;
     const MAP_ZOOM_HARD_MAX = 10;
     const MAP_ZOOM_STEP = 1.25;
+    const MAP_HOVER_DELAY_MS = 2000;
+    const MOBILE_BREAKPOINT = 760;
+    const MAP_POINTER_MOVE_THRESHOLD = 6;
 
     let elements = null;
     let eventsBound = false;
@@ -40,12 +43,26 @@
     let mapPanOffsetX = 0;
     let mapPanOffsetY = 0;
     let lastRenderedLayout = null;
+    let lastRenderedBounds = null;
+    let lastRenderedTileIndex = new Map();
     let activeDragPointerId = null;
     let lastDragClientX = 0;
     let lastDragClientY = 0;
+    let dragStartClientX = 0;
+    let dragStartClientY = 0;
+    let didMapPointerMove = false;
+    let mapPointerCanPan = false;
+    let mapHoverTimerId = null;
+    let mapHoverTileKey = '';
+    let mapHoverCanvasX = 0;
+    let mapHoverCanvasY = 0;
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    function isDesktopViewport() {
+        return !window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
     }
 
     function getMapRuntime() {
@@ -77,9 +94,34 @@
             mapCanvas: document.getElementById('mapCanvas'),
             mapZoomIn: document.getElementById('mapZoomIn'),
             mapZoomOut: document.getElementById('mapZoomOut'),
-            mapZoomValue: document.getElementById('mapZoomValue')
+            mapZoomValue: document.getElementById('mapZoomValue'),
+            mapHoverCard: document.getElementById('mapHoverCard'),
+            mapHoverCardTile: document.getElementById('mapHoverCardTile'),
+            mapHoverCardIsland: document.getElementById('mapHoverCardIsland')
         };
         return elements;
+    }
+
+    function clearMapHoverTimer() {
+        if (mapHoverTimerId !== null) {
+            window.clearTimeout(mapHoverTimerId);
+            mapHoverTimerId = null;
+        }
+    }
+
+    function hideMapHoverCard() {
+        const refs = elements || queryElements();
+
+        if (refs.mapHoverCard) {
+            refs.mapHoverCard.hidden = true;
+            refs.mapHoverCard.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    function resetMapHoverState() {
+        clearMapHoverTimer();
+        mapHoverTileKey = '';
+        hideMapHoverCard();
     }
 
     function bindEvents() {
@@ -119,6 +161,7 @@
             refs.mapCanvas.addEventListener('pointerup', handleMapPointerUp);
             refs.mapCanvas.addEventListener('pointercancel', handleMapPointerUp);
             refs.mapCanvas.addEventListener('lostpointercapture', handleMapPointerUp);
+            refs.mapCanvas.addEventListener('pointerleave', handleMapPointerLeave);
         }
 
         eventsBound = true;
@@ -224,6 +267,7 @@
 
         if (nextValue) {
             resetMapPan();
+            resetMapHoverState();
             setMapZoom(mapZoom, { silent: true });
             const runtime = getMapRuntime();
             if (runtime && typeof runtime.captureVisibleWorld === 'function') {
@@ -233,6 +277,7 @@
             }
         } else {
             stopMapDrag();
+            resetMapHoverState();
         }
 
         bridge.renderAfterStateChange();
@@ -249,10 +294,192 @@
     function stopMapDrag() {
         const refs = elements || queryElements();
         activeDragPointerId = null;
+        didMapPointerMove = false;
+        mapPointerCanPan = false;
 
         if (refs.mapCanvas) {
             refs.mapCanvas.classList.remove('is-dragging');
         }
+    }
+
+    function getMapBookmarksByKey() {
+        if (!game.state.mapBookmarksByKey || typeof game.state.mapBookmarksByKey !== 'object' || Array.isArray(game.state.mapBookmarksByKey)) {
+            game.state.mapBookmarksByKey = {};
+        }
+
+        return game.state.mapBookmarksByKey;
+    }
+
+    function getMapBookmarks() {
+        return Object.values(getMapBookmarksByKey())
+            .filter((bookmark) => bookmark && Number.isFinite(bookmark.x) && Number.isFinite(bookmark.y));
+    }
+
+    function toggleMapBookmark(entry) {
+        if (!entry || !Number.isFinite(entry.x) || !Number.isFinite(entry.y)) {
+            return false;
+        }
+
+        const bookmarksByKey = getMapBookmarksByKey();
+        const key = `${entry.x},${entry.y}`;
+
+        if (bookmarksByKey[key]) {
+            delete bookmarksByKey[key];
+            return false;
+        }
+
+        bookmarksByKey[key] = {
+            x: entry.x,
+            y: entry.y,
+            islandIndex: Number.isFinite(entry.islandIndex) ? entry.islandIndex : null,
+            tileType: entry.tileType === 'house'
+                ? 'house'
+                : (entry.baseTileType || entry.tileType || 'unloaded')
+        };
+        return true;
+    }
+
+    function buildTileIndex(exploredTiles) {
+        return exploredTiles.reduce((index, entry) => {
+            index.set(`${entry.x},${entry.y}`, entry);
+            return index;
+        }, new Map());
+    }
+
+    function getMapPointerPosition(event) {
+        const refs = elements || queryElements();
+
+        if (!refs.mapCanvas) {
+            return null;
+        }
+
+        const rect = refs.mapCanvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+    }
+
+    function resolveHoveredMapTile(canvasX, canvasY) {
+        if (!lastRenderedLayout || !lastRenderedBounds || !lastRenderedTileIndex || lastRenderedTileIndex.size === 0) {
+            return null;
+        }
+
+        const localX = (canvasX - lastRenderedLayout.offsetX) / lastRenderedLayout.cellSize;
+        const localY = (canvasY - lastRenderedLayout.offsetY) / lastRenderedLayout.cellSize;
+
+        if (localX < 0 || localY < 0 || localX >= lastRenderedLayout.worldWidth || localY >= lastRenderedLayout.worldHeight) {
+            return null;
+        }
+
+        const worldX = lastRenderedBounds.minX + Math.floor(localX);
+        const worldY = lastRenderedBounds.minY + Math.floor(localY);
+        const key = `${worldX},${worldY}`;
+        const entry = lastRenderedTileIndex.get(key) || null;
+
+        if (!entry) {
+            return null;
+        }
+
+        return { key, entry };
+    }
+
+    function positionMapHoverCard(canvasX, canvasY) {
+        const refs = elements || queryElements();
+
+        if (!refs.mapHoverCard || !refs.mapCanvas || !refs.mapCanvas.parentElement) {
+            return;
+        }
+
+        const wrap = refs.mapCanvas.parentElement;
+        const wrapWidth = wrap.clientWidth;
+        const wrapHeight = wrap.clientHeight;
+        const offsetX = refs.mapCanvas.offsetLeft + canvasX;
+        const offsetY = refs.mapCanvas.offsetTop + canvasY;
+        const cardWidth = refs.mapHoverCard.offsetWidth || 180;
+        const cardHeight = refs.mapHoverCard.offsetHeight || 64;
+        const nextLeft = clamp(offsetX + 18, 8, Math.max(8, wrapWidth - cardWidth - 8));
+        const nextTop = clamp(offsetY + 18, 8, Math.max(8, wrapHeight - cardHeight - 8));
+
+        refs.mapHoverCard.style.left = `${Math.round(nextLeft)}px`;
+        refs.mapHoverCard.style.top = `${Math.round(nextTop)}px`;
+    }
+
+    function showMapHoverCard(entry, canvasX, canvasY) {
+        const refs = elements || queryElements();
+
+        if (!refs.mapHoverCard || !refs.mapHoverCardTile || !refs.mapHoverCardIsland) {
+            return;
+        }
+
+        const tileType = entry.tileType === 'house'
+            ? 'house'
+            : (entry.baseTileType || entry.tileType || 'unloaded');
+        const tileLabel = bridge.getTileLabel(tileType);
+
+        refs.mapHoverCardTile.textContent = `Клетка: ${tileLabel}`;
+        refs.mapHoverCardIsland.textContent = Number.isFinite(entry.islandIndex)
+            ? `Остров ${entry.islandIndex}`
+            : 'Остров не определён';
+        refs.mapHoverCard.hidden = false;
+        refs.mapHoverCard.setAttribute('aria-hidden', 'false');
+        positionMapHoverCard(canvasX, canvasY);
+    }
+
+    function scheduleMapHoverCard(tileKey, canvasX, canvasY) {
+        clearMapHoverTimer();
+        mapHoverTileKey = tileKey;
+        mapHoverCanvasX = canvasX;
+        mapHoverCanvasY = canvasY;
+
+        mapHoverTimerId = window.setTimeout(() => {
+            mapHoverTimerId = null;
+
+            if (!isMapOpen() || activeDragPointerId !== null) {
+                return;
+            }
+
+            const hovered = resolveHoveredMapTile(mapHoverCanvasX, mapHoverCanvasY);
+            if (!hovered || hovered.key !== mapHoverTileKey) {
+                return;
+            }
+
+            showMapHoverCard(hovered.entry, mapHoverCanvasX, mapHoverCanvasY);
+        }, MAP_HOVER_DELAY_MS);
+    }
+
+    function handleDesktopMapHover(event) {
+        if (!isMapOpen() || activeDragPointerId !== null || event.pointerType !== 'mouse' || !isDesktopViewport()) {
+            resetMapHoverState();
+            return;
+        }
+
+        const pointerPosition = getMapPointerPosition(event);
+        if (!pointerPosition) {
+            resetMapHoverState();
+            return;
+        }
+
+        const hovered = resolveHoveredMapTile(pointerPosition.x, pointerPosition.y);
+        if (!hovered) {
+            resetMapHoverState();
+            return;
+        }
+
+        if (hovered.key === mapHoverTileKey) {
+            mapHoverCanvasX = pointerPosition.x;
+            mapHoverCanvasY = pointerPosition.y;
+
+            const refs = elements || queryElements();
+            if (refs.mapHoverCard && !refs.mapHoverCard.hidden) {
+                positionMapHoverCard(pointerPosition.x, pointerPosition.y);
+            }
+
+            return;
+        }
+
+        hideMapHoverCard();
+        scheduleMapHoverCard(hovered.key, pointerPosition.x, pointerPosition.y);
     }
 
     function getTileColor(entry) {
@@ -273,6 +500,36 @@
         gradient.addColorStop(1, '#08100c');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
+    }
+
+    function drawBookmarkMarker(ctx, centerX, centerY, cellSize) {
+        const flagWidth = Math.max(8, cellSize * 0.68);
+        const flagHeight = Math.max(10, cellSize * 0.92);
+        const halfWidth = flagWidth / 2;
+        const topY = centerY - flagHeight * 0.58;
+        const bottomY = topY + flagHeight;
+        const notchY = bottomY - Math.max(3, flagHeight * 0.24);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(centerX - halfWidth, topY);
+        ctx.lineTo(centerX + halfWidth, topY);
+        ctx.lineTo(centerX + halfWidth, bottomY);
+        ctx.lineTo(centerX, notchY);
+        ctx.lineTo(centerX - halfWidth, bottomY);
+        ctx.closePath();
+        ctx.fillStyle = '#ff7d8d';
+        ctx.fill();
+        ctx.strokeStyle = '#7a2330';
+        ctx.lineWidth = Math.max(1.5, cellSize * 0.12);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - flagHeight * 0.14, Math.max(2, cellSize * 0.14), 0, Math.PI * 2);
+        ctx.fillStyle = '#fff4cf';
+        ctx.fill();
+
+        ctx.restore();
     }
 
     function drawEmptyState(ctx, width, height) {
@@ -460,6 +717,9 @@
 
         if (!Array.isArray(exploredTiles) || exploredTiles.length === 0) {
             lastRenderedLayout = null;
+            lastRenderedBounds = null;
+            lastRenderedTileIndex = new Map();
+            resetMapHoverState();
             if (refs.mapCanvas) {
                 refs.mapCanvas.classList.remove('is-pannable', 'is-dragging');
             }
@@ -472,12 +732,16 @@
         const layout = buildMapLayout(bounds, contextState);
         const markers = buildMarkerSets(exploredTiles);
         const stats = buildMapStats(exploredTiles);
+        const bookmarks = getMapBookmarks();
         const playerX = getCanvasX(game.state.playerPos.x, bounds, layout) + layout.cellSize / 2;
         const playerY = getCanvasY(game.state.playerPos.y, bounds, layout) + layout.cellSize / 2;
         const ctx = contextState.ctx;
         const isPannable = layout.canPanX || layout.canPanY;
 
         lastRenderedLayout = layout;
+        lastRenderedBounds = bounds;
+        lastRenderedTileIndex = buildTileIndex(exploredTiles);
+        resetMapHoverState();
 
         if (hasManualMapPan) {
             mapPanOffsetX = layout.offsetX;
@@ -542,6 +806,21 @@
             ctx.stroke();
         });
 
+        bookmarks.forEach((bookmark) => {
+            if (
+                bookmark.x < bounds.minX
+                || bookmark.x > bounds.maxX
+                || bookmark.y < bounds.minY
+                || bookmark.y > bounds.maxY
+            ) {
+                return;
+            }
+
+            const drawX = getCanvasX(bookmark.x, bounds, layout) + layout.cellSize / 2;
+            const drawY = getCanvasY(bookmark.y, bounds, layout) + layout.cellSize / 2;
+            drawBookmarkMarker(ctx, drawX, drawY, layout.cellSize);
+        });
+
         ctx.fillStyle = '#f8f3d0';
         ctx.beginPath();
         ctx.arc(playerX, playerY, Math.max(3, layout.cellSize * 0.42), 0, Math.PI * 2);
@@ -556,32 +835,63 @@
             return;
         }
 
+        resetMapHoverState();
+
         if (event.pointerType === 'mouse' && event.button !== 0) {
             return;
         }
 
-        if (!lastRenderedLayout.canPanX && !lastRenderedLayout.canPanY) {
-            return;
-        }
-
         const refs = elements || queryElements();
-        hasManualMapPan = true;
         mapPanOffsetX = lastRenderedLayout.offsetX;
         mapPanOffsetY = lastRenderedLayout.offsetY;
         activeDragPointerId = event.pointerId;
         lastDragClientX = event.clientX;
         lastDragClientY = event.clientY;
+        dragStartClientX = event.clientX;
+        dragStartClientY = event.clientY;
+        didMapPointerMove = false;
+        mapPointerCanPan = Boolean(lastRenderedLayout.canPanX || lastRenderedLayout.canPanY);
 
         if (refs.mapCanvas && typeof refs.mapCanvas.setPointerCapture === 'function') {
             refs.mapCanvas.setPointerCapture(event.pointerId);
-            refs.mapCanvas.classList.add('is-dragging');
         }
 
         event.preventDefault();
     }
 
     function handleMapPointerMove(event) {
+        handleDesktopMapHover(event);
+
         if (activeDragPointerId === null || event.pointerId !== activeDragPointerId || !lastRenderedLayout) {
+            return;
+        }
+
+        if (!didMapPointerMove) {
+            const totalDeltaX = event.clientX - dragStartClientX;
+            const totalDeltaY = event.clientY - dragStartClientY;
+
+            if (Math.hypot(totalDeltaX, totalDeltaY) < MAP_POINTER_MOVE_THRESHOLD) {
+                return;
+            }
+
+            didMapPointerMove = true;
+            lastDragClientX = event.clientX;
+            lastDragClientY = event.clientY;
+
+            if (mapPointerCanPan) {
+                const refs = elements || queryElements();
+                hasManualMapPan = true;
+                if (refs.mapCanvas) {
+                    refs.mapCanvas.classList.add('is-dragging');
+                }
+            }
+
+            if (!mapPointerCanPan) {
+                return;
+            }
+        }
+
+        if (!mapPointerCanPan) {
             return;
         }
 
@@ -604,8 +914,13 @@
 
     function handleMapPointerUp(event) {
         const refs = elements || queryElements();
+        const isActivePointer = activeDragPointerId !== null && event.pointerId === activeDragPointerId;
+        const shouldToggleBookmark = isActivePointer && !didMapPointerMove && event.type === 'pointerup' && isDesktopViewport();
+        const pointerPosition = shouldToggleBookmark
+            ? getMapPointerPosition(event)
+            : null;
 
-        if (activeDragPointerId !== null && event.pointerId === activeDragPointerId && refs.mapCanvas && typeof refs.mapCanvas.releasePointerCapture === 'function') {
+        if (isActivePointer && refs.mapCanvas && typeof refs.mapCanvas.releasePointerCapture === 'function') {
             try {
                 refs.mapCanvas.releasePointerCapture(event.pointerId);
             } catch (error) {
@@ -614,6 +929,22 @@
         }
 
         stopMapDrag();
+
+        if (!shouldToggleBookmark || !pointerPosition) {
+            return;
+        }
+
+        const hovered = resolveHoveredMapTile(pointerPosition.x, pointerPosition.y);
+        if (!hovered) {
+            return;
+        }
+
+        toggleMapBookmark(hovered.entry);
+        renderMapPanel();
+    }
+
+    function handleMapPointerLeave() {
+        resetMapHoverState();
     }
 
     function syncMapState() {
@@ -635,6 +966,8 @@
 
         if (shouldShow) {
             renderMapPanel();
+        } else {
+            resetMapHoverState();
         }
     }
 

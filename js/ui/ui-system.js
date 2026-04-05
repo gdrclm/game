@@ -2136,6 +2136,12 @@
             })
             .filter(Boolean)
             .join('');
+        const questRewardItemLabel = quest && quest.rewardItemLabel && Math.max(0, Math.round(quest.rewardItemQuantity || 0)) > 0
+            ? `${quest.rewardItemLabel}${Math.round(quest.rewardItemQuantity || 0) > 1 ? ` x${Math.round(quest.rewardItemQuantity || 0)}` : ''}`
+            : '';
+        const questRewardSummary = quest
+            ? `${quest.rewardGold} золота${questRewardItemLabel ? ` + ${questRewardItemLabel}` : ''}`
+            : '';
         const questMarkup = quest
             ? `
                 <div class="merchant-section">
@@ -2146,7 +2152,7 @@
                                 ${escapeHtml(quest.label)} ${quest.quantity > 1 ? `x${quest.quantity}` : ''}
                             </button>
                             <div class="merchant-row__note">${escapeHtml(quest.description || '')}</div>
-                            <div class="merchant-row__note">Есть у тебя: ${ownedQuestItems}/${quest.quantity} · Награда: ${quest.rewardGold} золота</div>
+                            <div class="merchant-row__note">Есть у тебя: ${ownedQuestItems}/${quest.quantity} · Награда: ${escapeHtml(questRewardSummary)}</div>
                         </div>
                         <div class="merchant-row__actions">
                             <button class="hud-button" type="button" data-merchant-action="quest" ${quest.completed || ownedQuestItems < quest.quantity ? 'disabled' : ''}>${quest.completed ? 'Сдано' : 'Сдать'}</button>

@@ -304,7 +304,16 @@
         }
 
         const currentIslandIndex = Math.max(1, game.state.currentIslandIndex || 1);
+        const passthroughMetadata = Object.fromEntries(Object.entries(metadata || {}).filter(([key]) => ![
+            'id',
+            'icon',
+            'label',
+            'quantity',
+            'obtainedIslandIndex',
+            'useCount'
+        ].includes(key)));
         return {
+            ...passthroughMetadata,
             id: definition.id,
             icon: definition.icon,
             label: definition.label,

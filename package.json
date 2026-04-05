@@ -1,0 +1,16 @@
+{
+  "name": "game",
+  "private": true,
+  "scripts": {
+    "test": "yarn test:crafting",
+    "test:crafting": "playwright test",
+    "test:crafting:headed": "playwright test --headed",
+    "test:crafting:ui": "playwright test --ui",
+    "test:install": "playwright install chromium",
+    "test:serve": "http-server . -p 4173 -c-1 --silent"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "http-server": "^14.1.1"
+  }
+}

@@ -38,6 +38,11 @@
         return game.systems.uiBridge || null;
     }
 
+    function getItemLabel(itemId, fallback = '') {
+        const definition = getItemDefinition(itemId);
+        return definition && definition.label ? definition.label : (fallback || itemId);
+    }
+
     function getTierByIsland(islandIndex = game.state.currentIslandIndex || 1) {
         const registry = getItemRegistry();
         return registry && typeof registry.getTierByIsland === 'function'
@@ -157,6 +162,292 @@
 
     function getMerchantRoleProfile(merchantRole = 'merchant') {
         return merchantRoleProfiles[merchantRole] || merchantRoleProfiles.merchant;
+    }
+
+    function getMerchantAdviceTemplate(merchantRole = 'merchant') {
+        const portableBridgeLabel = getItemLabel('portableBridge', 'Переносной мост');
+        const reinforcedBridgeLabel = getItemLabel('reinforcedBridge', 'Усиленный мост');
+        const ferryBoardLabel = getItemLabel('ferryBoard', 'Доска переправы');
+        const roughBridgeLabel = getItemLabel('roughBridge', 'Грубый мостик');
+        const signalWhistleLabel = getItemLabel('signalWhistle', 'Сигнальный свисток');
+        const pathMarkerLabel = getItemLabel('pathMarker', 'Маркер пути');
+        const fishingRodLabel = getItemLabel('fishingRod', 'Удочка путника');
+        const rawGrassLabel = getItemLabel('raw_grass', 'Трава');
+        const rawStoneLabel = getItemLabel('raw_stone', 'Камень');
+        const rawRubbleLabel = getItemLabel('raw_rubble', 'Щебень');
+        const rawWoodLabel = getItemLabel('raw_wood', 'Дерево');
+        const rawFishLabel = getItemLabel('raw_fish', 'Рыба');
+        const soilClodLabel = getItemLabel('soilClod', 'Комья земли');
+        const soilResourceLabel = getItemLabel('soilResource', 'Земляной ресурс');
+
+        const adviceByRole = {
+            merchant: {
+                id: 'merchant:auto-conversion',
+                title: 'Сырьё и сжатие',
+                hook: 'Как теперь работают базовые raw-ресурсы и почему их не стоит копить просто так.',
+                basePrice: 6,
+                text: `Базовое сырьё теперь хранится явно: "${rawGrassLabel}", "${rawStoneLabel}", "${rawRubbleLabel}", "${rawWoodLabel}" и "${rawFishLabel}" не склеиваются сами в товар. Их смысл — быстро пройти слой 5 к 1: собрать, сжать в компонент и сразу пустить в крафт. "${soilClodLabel}" тоже проходит через тот же слой сжатия и даёт "${soilResourceLabel}".`
+            },
+            fisherman: {
+                id: 'fisherman:survival-route',
+                title: 'Запас на длинный остров',
+                hook: 'Что покупать перед тяжёлым переходом через несколько зон.',
+                basePrice: 6,
+                text: `У рыбака лучше добирать еду, выживание и простые инструменты. Если увидишь "${fishingRodLabel}", бери её перед длинным островом: еда и короткий отдых становятся заметно выгоднее, чем ещё одна случайная ценность.`
+            },
+            bridgewright: {
+                id: 'bridgewright:bridges',
+                title: 'Где брать мосты',
+                hook: 'Про переправы, старые версии мостов и честный ответ про крафт.',
+                basePrice: 8,
+                text: `Прямого крафта для "${portableBridgeLabel}" в текущей системе нет. Ищи "${portableBridgeLabel}", "${reinforcedBridgeLabel}", "${ferryBoardLabel}" и "${roughBridgeLabel}" у мостовиков, у торговцев с товарами движения и у некоторых местных NPC; помни, что обычный мост стареет после первого прохода и рушится после второго.`
+            },
+            junkDealer: {
+                id: 'junkDealer:risky-loot',
+                title: 'Что нести старьёвщику',
+                hook: 'Когда сомнительная находка ценнее аккуратного расходника.',
+                basePrice: 7,
+                text: 'Старьёвщик чаще работает с рискованным хламом, материалами и странными ценностями. К нему выгоднее приходить не с аккуратным пайком, а с тем, что жалко держать в билде, но полезно обменять или сдать по торговому квесту.'
+            },
+            storyteller: {
+                id: 'storyteller:info-tools',
+                title: 'Наводки на острове',
+                hook: 'Какие мелкие вещи экономят больше шагов, чем кажется.',
+                basePrice: 8,
+                text: `"${signalWhistleLabel}" точно показывает торговца текущего острова, а "${pathMarkerLabel}" помогает проложить самый дешёвый путь к цели. У рассказчика такие информационные вещи появляются чаще, чем у обычной лавки.`
+            },
+            exchanger: {
+                id: 'exchanger:greed-trap',
+                title: 'Когда окупается обменщик',
+                hook: 'Почему к нему лучше идти с планом, а не с пустой сумкой.',
+                basePrice: 9,
+                text: 'К обменщику выгодно заходить, когда у тебя уже есть понятная цель сборки и запас золота. Он сильнее обычного торговца на поздних вещах и утилите, но без плана легко превратить жадность в дорогую ошибку.'
+            },
+            quartermaster: {
+                id: 'quartermaster:working-build',
+                title: 'Рабочий комплект',
+                hook: 'Как собирать сумку под длинный маршрут, а не под красивую витрину.',
+                basePrice: 8,
+                text: 'У интенданта чаще всего лежат вещи на выживание, инструменты и движение. Перед длинным маршрутом лучше покупать то, что держит темп острова и цену шага, а не просто дорогие ценности, которые не помогают идти.'
+            },
+            collector: {
+                id: 'collector:late-value',
+                title: 'Что любит коллекционер',
+                hook: 'Когда редкость и странность важнее простой выгоды.',
+                basePrice: 10,
+                text: 'Коллекционер полезен тем, кто уже носит поздние ценности, артефакты и редкие находки. Обычный расходник у него почти никогда не лучший обмен; сюда стоит идти с вещами, которые жалко продавать обычной лавке.'
+            }
+        };
+
+        return adviceByRole[merchantRole] || adviceByRole.merchant;
+    }
+
+    function getMerchantAdvicePrice(template, islandIndex = game.state.currentIslandIndex || 1) {
+        const basePrice = Math.max(4, template && Number.isFinite(template.basePrice) ? template.basePrice : 6);
+        return basePrice + Math.floor((Math.max(1, islandIndex) - 1) / 6);
+    }
+
+    function buildMerchantAdvice(encounter, savedAdvice = null) {
+        const template = getMerchantAdviceTemplate(encounter && encounter.merchantRole ? encounter.merchantRole : 'merchant');
+        const islandIndex = Math.max(1, encounter && encounter.islandIndex ? encounter.islandIndex : (game.state.currentIslandIndex || 1));
+
+        return {
+            adviceId: template.id,
+            title: template.title,
+            hook: template.hook || '',
+            text: template.text || '',
+            price: savedAdvice && Number.isFinite(savedAdvice.price)
+                ? savedAdvice.price
+                : getMerchantAdvicePrice(template, islandIndex),
+            purchased: Boolean(savedAdvice && savedAdvice.purchased),
+            purchasedAtIslandIndex: savedAdvice && Number.isFinite(savedAdvice.purchasedAtIslandIndex)
+                ? savedAdvice.purchasedAtIslandIndex
+                : null
+        };
+    }
+
+    function ensureMerchantAdvice(encounter) {
+        if (!encounter || encounter.kind !== 'merchant') {
+            return null;
+        }
+
+        encounter.advice = buildMerchantAdvice(encounter, encounter.advice || null);
+        return encounter.advice;
+    }
+
+    function getDefinitionCategories(definition) {
+        return Array.isArray(definition && definition.categories) ? definition.categories : [];
+    }
+
+    function isBasicResourceQuestDefinition(definition) {
+        const categories = getDefinitionCategories(definition);
+        const lootTier = Number.isFinite(definition && definition.lootTier) ? definition.lootTier : 0;
+
+        return Boolean(
+            definition
+            && Boolean(definition.stackable)
+            && lootTier <= 2
+            && (categories.includes('resource') || categories.includes('material'))
+            && !categories.includes('artifact')
+            && !categories.includes('legendary')
+        );
+    }
+
+    function getMerchantQuestBonusRewardPool(islandIndex = game.state.currentIslandIndex || 1) {
+        const islandTier = Math.max(1, getTierByIsland(islandIndex));
+        const itemIds = [
+            'portableBridge',
+            'hookRope',
+            'roadChalk',
+            'pathMarker',
+            'signalWhistle'
+        ];
+
+        if (islandTier >= 3) {
+            itemIds.push(
+                'reinforcedBridge',
+                'fogLantern',
+                'merchantBeacon',
+                'returnMarker',
+                'lightBoat'
+            );
+        }
+
+        if (islandTier >= 4) {
+            itemIds.push(
+                'fieldBridge',
+                'crossingCable',
+                'climberHook',
+                'bypassCompass',
+                'foldingBoat',
+                'emergencyTeleport'
+            );
+        }
+
+        return itemIds;
+    }
+
+    function pickMerchantQuestBonusReward(definition, islandIndex, random = Math.random) {
+        if (!isBasicResourceQuestDefinition(definition)) {
+            return null;
+        }
+
+        const registry = getItemRegistry();
+        const rewardPool = getMerchantQuestBonusRewardPool(islandIndex);
+        const pickedReward = registry && typeof registry.pickWeightedCatalogDefinition === 'function'
+            ? registry.pickWeightedCatalogDefinition('merchantWeight', islandIndex, random, {
+                includeItemIds: rewardPool,
+                nonStackableOnly: true,
+                preferredCategories: ['movement', 'utility'],
+                allowFutureTiers: true,
+                maxFutureDistance: 1
+            })
+            : null;
+
+        return pickedReward || getItemDefinition('portableBridge');
+    }
+
+    function ensureMerchantQuestBonusReward(quest, islandIndex = game.state.currentIslandIndex || 1, random = Math.random) {
+        if (!quest || (quest.questType && quest.questType !== 'merchantDelivery')) {
+            return false;
+        }
+
+        const hasRewardItem = Boolean(quest.rewardItemId) && Math.max(0, Math.round(quest.rewardItemQuantity || 0)) > 0;
+        if (hasRewardItem) {
+            return false;
+        }
+
+        const definition = getItemDefinition(quest.itemId);
+        const bonusRewardDefinition = pickMerchantQuestBonusReward(definition, islandIndex, random);
+        if (!bonusRewardDefinition) {
+            return false;
+        }
+
+        quest.rewardItemId = bonusRewardDefinition.id;
+        quest.rewardItemLabel = bonusRewardDefinition.label;
+        quest.rewardItemIcon = bonusRewardDefinition.icon;
+        quest.rewardItemQuantity = 1;
+        return true;
+    }
+
+    function buildRewardItemPreview(itemId, quantity = 1, overrides = {}) {
+        const definition = getItemDefinition(itemId);
+        return {
+            id: itemId,
+            icon: overrides.icon || (definition ? definition.icon : '?'),
+            label: overrides.label || (definition ? definition.label : itemId),
+            quantity: Math.max(1, Math.round(quantity || 1))
+        };
+    }
+
+    function formatRewardItemSummary(itemLabel, quantity = 1) {
+        if (!itemLabel) {
+            return '';
+        }
+
+        return quantity > 1 ? `${itemLabel} x${quantity}` : itemLabel;
+    }
+
+    function grantQuestRewardItem(itemId, quantity = 1, overrides = {}) {
+        const inventoryRuntime = getInventoryRuntime();
+        const itemEffects = getItemEffects();
+        const preview = buildRewardItemPreview(itemId, quantity, overrides);
+
+        if (!itemId || !inventoryRuntime || typeof inventoryRuntime.addInventoryItem !== 'function') {
+            return {
+                granted: false,
+                inventoryQuantity: 0,
+                droppedQuantity: 0,
+                item: preview,
+                effectDrops: []
+            };
+        }
+
+        let inventoryQuantity = 0;
+        const targetQuantity = Math.max(1, preview.quantity);
+
+        for (let index = 0; index < targetQuantity; index++) {
+            const outcome = inventoryRuntime.addInventoryItem(itemId, 1);
+
+            if (!outcome || !outcome.added) {
+                break;
+            }
+
+            inventoryQuantity += 1;
+        }
+
+        const droppedQuantity = Math.max(0, targetQuantity - inventoryQuantity);
+        if (droppedQuantity > 0 && game.systems.interactions && game.state.playerPos) {
+            game.systems.interactions.addGroundItemDrop(
+                game.state.playerPos.x,
+                game.state.playerPos.y,
+                {
+                    ...preview,
+                    quantity: droppedQuantity
+                }
+            );
+
+            if (game.systems.world && typeof game.systems.world.updatePlayerContext === 'function') {
+                game.systems.world.updatePlayerContext(game.state.playerPos);
+            }
+        }
+
+        const deliveredQuantity = inventoryQuantity + droppedQuantity;
+        return {
+            granted: deliveredQuantity > 0,
+            inventoryQuantity,
+            droppedQuantity,
+            item: {
+                ...preview,
+                quantity: deliveredQuantity
+            },
+            effectDrops: deliveredQuantity > 0 && itemEffects && typeof itemEffects.buildItemEffectDrop === 'function'
+                ? [itemEffects.buildItemEffectDrop({
+                    ...preview,
+                    quantity: deliveredQuantity
+                })].filter(Boolean)
+                : []
+        };
     }
 
     function getBaseQuantityForDefinition(definition, islandTier, random) {
@@ -321,6 +612,7 @@
         const rewardGold = rewardScaling && typeof rewardScaling.getMerchantQuestReward === 'function'
             ? rewardScaling.getMerchantQuestReward(definition.id, quantity, islandIndex)
             : Math.max(8, Math.round((definition.baseValue || 6) * quantity * 1.8 + islandIndex * 2));
+        const bonusRewardDefinition = pickMerchantQuestBonusReward(definition, islandIndex, random);
 
         return {
             questType: 'merchantDelivery',
@@ -330,6 +622,10 @@
             quantity,
             progressRequired: quantity,
             rewardGold,
+            rewardItemId: bonusRewardDefinition ? bonusRewardDefinition.id : '',
+            rewardItemLabel: bonusRewardDefinition ? bonusRewardDefinition.label : '',
+            rewardItemIcon: bonusRewardDefinition ? bonusRewardDefinition.icon : '',
+            rewardItemQuantity: bonusRewardDefinition ? 1 : 0,
             completed: false,
             repeatable: false,
             description: `Нужен предмет "${definition.label}" x${quantity}.`
@@ -338,8 +634,9 @@
 
     function createMerchantEncounterProfile(islandIndex, random, options = {}) {
         const merchantRole = options.merchantRole || 'merchant';
-        return {
+        const profile = {
             kind: 'merchant',
+            islandIndex,
             merchantRole,
             label: options.label || 'Странствующий торговец',
             summary: options.summary || 'Торговец принимает заказы, скупает находки и продаёт полезные припасы для переходов.',
@@ -353,6 +650,9 @@
             stock: createMerchantStock(islandIndex, random, { merchantRole }),
             quest: createMerchantQuest(islandIndex, random, { merchantRole })
         };
+
+        profile.advice = buildMerchantAdvice(profile);
+        return profile;
     }
 
     function applySavedMerchantState(house, profile) {
@@ -376,9 +676,18 @@
                 ...(profile.quest || {}),
                 ...savedState.quest
             };
+            ensureMerchantQuestBonusReward(profile.quest, profile.islandIndex);
+        }
+
+        if (savedState.advice) {
+            profile.advice = {
+                ...(profile.advice || {}),
+                ...savedState.advice
+            };
         }
 
         profile.shopId = savedState.shopId || profile.shopId;
+        ensureMerchantAdvice(profile);
         return profile;
     }
 
@@ -398,7 +707,8 @@
         getMerchantStateStore()[source.houseId] = {
             shopId: encounter.shopId,
             stock: encounter.stock.map((stockItem) => ({ ...stockItem })),
-            quest: persistedQuest ? { ...persistedQuest } : null
+            quest: persistedQuest ? { ...persistedQuest } : null,
+            advice: encounter.advice ? { ...encounter.advice } : null
         };
 
         return getMerchantStateStore()[source.houseId];
@@ -412,11 +722,19 @@
         }
 
         ensureMerchantIdentity(source, encounter);
+        ensureMerchantAdvice(encounter);
+        const backfilledQuestReward = encounter.quest
+            ? ensureMerchantQuestBonusReward(encounter.quest, encounter.islandIndex)
+            : false;
         const questRuntime = getQuestRuntime();
 
         if (encounter.quest && questRuntime) {
             questRuntime.acceptQuest(source, encounter.quest);
             questRuntime.getQuestProgress(source, encounter.quest);
+        }
+
+        if (backfilledQuestReward) {
+            persistMerchantState(source);
         }
 
         return encounter;
@@ -449,16 +767,41 @@
             game.state.gold = Math.max(0, (game.state.gold || 0) + (result.quest.rewardGold || 0));
         }
 
+        const rewardItemGrant = result.quest && result.quest.rewardItemId
+            ? grantQuestRewardItem(
+                result.quest.rewardItemId,
+                result.quest.rewardItemQuantity || 1,
+                {
+                    label: result.quest.rewardItemLabel,
+                    icon: result.quest.rewardItemIcon
+                }
+            )
+            : null;
+
         persistMerchantState(source);
+
+        const rewardSummary = [`+${result.quest.rewardGold || 0} золота`];
+        if (rewardItemGrant && rewardItemGrant.granted) {
+            rewardSummary.push(formatRewardItemSummary(
+                rewardItemGrant.item && rewardItemGrant.item.label ? rewardItemGrant.item.label : result.quest.rewardItemLabel,
+                rewardItemGrant.item && rewardItemGrant.item.quantity ? rewardItemGrant.item.quantity : (result.quest.rewardItemQuantity || 1)
+            ));
+        }
+
+        const rewardItemSuffix = rewardItemGrant && rewardItemGrant.droppedQuantity > 0
+            ? ` Предмет "${rewardItemGrant.item.label}" не поместился в сумку и лежит под ногами.`
+            : '';
 
         return {
             success: true,
             gold: result.quest.rewardGold || 0,
             quest: result.quest,
-            effectDrops: itemEffects
-                ? [itemEffects.buildGoldEffectDrop(result.quest.rewardGold || 0)].filter(Boolean)
-                : [],
-            message: `Квест торговца выполнен. Получено золото: +${result.quest.rewardGold || 0}.`
+            rewardItemGrant,
+            effectDrops: [
+                ...(itemEffects ? [itemEffects.buildGoldEffectDrop(result.quest.rewardGold || 0)].filter(Boolean) : []),
+                ...((rewardItemGrant && Array.isArray(rewardItemGrant.effectDrops)) ? rewardItemGrant.effectDrops : [])
+            ],
+            message: `Квест торговца выполнен. Получено: ${rewardSummary.join(' и ')}.${rewardItemSuffix}`
         };
     }
 
@@ -511,6 +854,53 @@
                 ? [itemEffects.buildItemEffectDrop({ id: entry.itemId, icon: entry.icon, label: entry.label, quantity: 1 })].filter(Boolean)
                 : [],
             message: `Куплен предмет "${entry.label}" за ${entry.price} золота.`
+        };
+    }
+
+    function buyMerchantAdvice(source) {
+        const encounter = prepareMerchantEncounter(source);
+        const uiBridge = getUiBridge();
+
+        if (!encounter || !encounter.advice) {
+            return {
+                success: false,
+                message: 'У этого торговца сейчас нет совета.'
+            };
+        }
+
+        if (encounter.advice.purchased) {
+            return {
+                success: false,
+                message: 'Этот совет уже куплен.'
+            };
+        }
+
+        const currentGold = uiBridge && typeof uiBridge.getGold === 'function'
+            ? uiBridge.getGold()
+            : (typeof game.state.gold === 'number' ? game.state.gold : 0);
+        const price = Math.max(0, Math.round(encounter.advice.price || 0));
+
+        if (currentGold < price) {
+            return {
+                success: false,
+                message: `Не хватает золота на совет. Нужно ${price}, сейчас есть ${currentGold}.`
+            };
+        }
+
+        if (uiBridge && typeof uiBridge.changeGold === 'function') {
+            uiBridge.changeGold(-price);
+        } else {
+            game.state.gold = Math.max(0, currentGold - price);
+        }
+
+        encounter.advice.purchased = true;
+        encounter.advice.purchasedAtIslandIndex = Math.max(1, game.state.currentIslandIndex || 1);
+        persistMerchantState(source);
+
+        return {
+            success: true,
+            advice: { ...encounter.advice },
+            message: `${encounter.label || 'Торговец'} делится советом: ${encounter.advice.text}`
         };
     }
 
@@ -575,6 +965,9 @@
         prepareMerchantEncounter,
         completeMerchantQuest,
         buyMerchantStock,
-        sellInventoryItemToMerchant
+        sellInventoryItemToMerchant,
+        buyMerchantAdvice,
+        grantQuestRewardItem,
+        formatRewardItemSummary
     });
 })();

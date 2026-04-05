@@ -102,6 +102,10 @@ function drawTravelZoneOverlay(context, tileWidth, tileHeight, zoneDefinition) {
 function isTerrainHarvested(worldX, worldY) {
     const state = window.Game.state;
     const harvested = state && state.harvestedTerrainKeys ? state.harvestedTerrainKeys : null;
+    const resourceRegistry = window.Game.systems.resourceRegistry || null;
+    const legacyTerrainGatherItemIds = resourceRegistry && typeof resourceRegistry.getLegacyTerrainGatherItemIds === 'function'
+        ? resourceRegistry.getLegacyTerrainGatherItemIds()
+        : ['rubbleChunk', 'lowlandGrass', 'fieldGrass'];
 
     if (!harvested) {
         return false;
@@ -109,10 +113,8 @@ function isTerrainHarvested(worldX, worldY) {
 
     return Boolean(
         harvested[`${worldX},${worldY}`]
-        || harvested[`rubbleChunk:${worldX},${worldY}`]
         || harvested[`soilClod:${worldX},${worldY}`]
-        || harvested[`lowlandGrass:${worldX},${worldY}`]
-        || harvested[`fieldGrass:${worldX},${worldY}`]
+        || legacyTerrainGatherItemIds.some((itemId) => harvested[`${itemId}:${worldX},${worldY}`])
     );
 }
 

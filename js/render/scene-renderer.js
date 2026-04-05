@@ -64,6 +64,116 @@ const TIME_OF_DAY_CYCLE = [
         darknessTint: 'rgba(2, 8, 22, 0.28)'
     }
 ];
+const TIME_OF_DAY_TRANSITION_MS = 900;
+let timeOfDayTransition = null;
+
+function getNow() {
+    return typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+}
+
+function parseColorStringToChannels(color) {
+    if (!color || typeof color !== 'string') {
+        return [0, 0, 0, 0];
+    }
+
+    const normalizedColor = color.replace(/\s+/g, '');
+    const match = normalizedColor.match(/^rgba?\((\d+),(\d+),(\d+)(?:,([0-9.]+))?\)$/i);
+    if (!match) {
+        return [0, 0, 0, 0];
+    }
+
+    return [
+        clamp(Number(match[1]), 0, 255),
+        clamp(Number(match[2]), 0, 255),
+        clamp(Number(match[3]), 0, 255),
+        clamp(match[4] === undefined ? 1 : Number(match[4]), 0, 1)
+    ];
+}
+
+function formatColorChannels(channels) {
+    return `rgba(${Math.round(channels[0])}, ${Math.round(channels[1])}, ${Math.round(channels[2])}, ${channels[3].toFixed(3)})`;
+}
+
+function hasVisibleColor(channels) {
+    return Array.isArray(channels) && Number.isFinite(channels[3]) && channels[3] > 0.001;
+}
+
+function mixColorChannels(from, to, amount) {
+    return [
+        mixChannel(from[0], to[0], amount),
+        mixChannel(from[1], to[1], amount),
+        mixChannel(from[2], to[2], amount),
+        from[3] + (to[3] - from[3]) * amount
+    ];
+}
+
+function cloneTimeOfDayPalette(definition) {
+    const source = definition || TIME_OF_DAY_CYCLE[0];
+    return {
+        skyTop: Array.isArray(source.skyTop) ? source.skyTop.slice(0, 3) : [0, 0, 0],
+        skyMid: Array.isArray(source.skyMid) ? source.skyMid.slice(0, 3) : [0, 0, 0],
+        skyBottom: Array.isArray(source.skyBottom) ? source.skyBottom.slice(0, 3) : [0, 0, 0],
+        worldTint: parseColorStringToChannels(source.worldTint),
+        fogTopTint: parseColorStringToChannels(source.fogTopTint),
+        fogBottomTint: parseColorStringToChannels(source.fogBottomTint),
+        darknessTint: parseColorStringToChannels(source.darknessTint)
+    };
+}
+
+function mixTimeOfDayPalette(from, to, amount) {
+    return {
+        skyTop: [
+            mixChannel(from.skyTop[0], to.skyTop[0], amount),
+            mixChannel(from.skyTop[1], to.skyTop[1], amount),
+            mixChannel(from.skyTop[2], to.skyTop[2], amount)
+        ],
+        skyMid: [
+            mixChannel(from.skyMid[0], to.skyMid[0], amount),
+            mixChannel(from.skyMid[1], to.skyMid[1], amount),
+            mixChannel(from.skyMid[2], to.skyMid[2], amount)
+        ],
+        skyBottom: [
+            mixChannel(from.skyBottom[0], to.skyBottom[0], amount),
+            mixChannel(from.skyBottom[1], to.skyBottom[1], amount),
+            mixChannel(from.skyBottom[2], to.skyBottom[2], amount)
+        ],
+        worldTint: mixColorChannels(from.worldTint, to.worldTint, amount),
+        fogTopTint: mixColorChannels(from.fogTopTint, to.fogTopTint, amount),
+        fogBottomTint: mixColorChannels(from.fogBottomTint, to.fogBottomTint, amount),
+        darknessTint: mixColorChannels(from.darknessTint, to.darknessTint, amount)
+    };
+}
+
+function getRenderedTimeOfDayPalette(timestamp = getNow()) {
+    if (!timeOfDayTransition) {
+        return cloneTimeOfDayPalette(getTimeOfDayDefinition());
+    }
+
+    const elapsed = timestamp - timeOfDayTransition.startedAt;
+    const progress = clamp(elapsed / timeOfDayTransition.durationMs, 0, 1);
+
+    if (progress >= 1) {
+        timeOfDayTransition = null;
+        return cloneTimeOfDayPalette(getTimeOfDayDefinition());
+    }
+
+    return mixTimeOfDayPalette(timeOfDayTransition.from, timeOfDayTransition.to, progress);
+}
+
+function isTimeOfDayTransitionActive(timestamp = getNow()) {
+    if (!timeOfDayTransition) {
+        return false;
+    }
+
+    if ((timestamp - timeOfDayTransition.startedAt) >= timeOfDayTransition.durationMs) {
+        timeOfDayTransition = null;
+        return false;
+    }
+
+    return true;
+}
 
 function getIslandMoodFactor(progression) {
     if (!progression || typeof progression !== 'object') {
@@ -91,9 +201,27 @@ function getTimeOfDayDefinition(index = getTimeOfDayIndex()) {
 
 function advanceTimeOfDay(step = 1) {
     const cycleLength = TIME_OF_DAY_CYCLE.length;
-    const nextIndex = (getTimeOfDayIndex() + step + cycleLength) % cycleLength;
+    const currentIndex = getTimeOfDayIndex();
+    const nextIndex = (currentIndex + step + cycleLength) % cycleLength;
+
+    if (nextIndex === currentIndex) {
+        return getTimeOfDayDefinition(nextIndex);
+    }
+
+    const transitionStart = getNow();
+    const fromPalette = getRenderedTimeOfDayPalette(transitionStart);
 
     window.Game.state.currentTimeOfDayIndex = nextIndex;
+    timeOfDayTransition = {
+        from: fromPalette,
+        to: cloneTimeOfDayPalette(getTimeOfDayDefinition(nextIndex)),
+        startedAt: transitionStart,
+        durationMs: TIME_OF_DAY_TRANSITION_MS
+    };
+    requestRender({
+        playerPos: window.Game.state.playerPos
+    });
+
     return getTimeOfDayDefinition(nextIndex);
 }
 
@@ -101,10 +229,10 @@ function mixTimeColor(channelValues, targets, moodFactor) {
     return `rgb(${mixChannel(channelValues[0], targets[0], moodFactor)}, ${mixChannel(channelValues[1], targets[1], moodFactor)}, ${mixChannel(channelValues[2], targets[2], moodFactor)})`;
 }
 
-function drawIslandBackdrop(progression) {
+function drawIslandBackdrop(progression, timestamp = getNow()) {
     const game = window.Game;
     const moodFactor = getIslandMoodFactor(progression);
-    const timeOfDay = getTimeOfDayDefinition();
+    const timeOfDay = getRenderedTimeOfDayPalette(timestamp);
     const gradient = game.ctx.createLinearGradient(0, 0, 0, game.canvas.height);
 
     gradient.addColorStop(
@@ -124,27 +252,30 @@ function drawIslandBackdrop(progression) {
     game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
 }
 
-function drawTimeOfDayOverlay() {
+function drawTimeOfDayOverlay(timestamp = getNow()) {
     const game = window.Game;
-    const timeOfDay = getTimeOfDayDefinition();
+    const timeOfDay = getRenderedTimeOfDayPalette(timestamp);
 
-    if (timeOfDay.worldTint) {
-        game.ctx.fillStyle = timeOfDay.worldTint;
+    if (hasVisibleColor(timeOfDay.worldTint)) {
+        game.ctx.fillStyle = formatColorChannels(timeOfDay.worldTint);
         game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
     }
 
-    if (timeOfDay.fogTopTint || timeOfDay.fogBottomTint) {
+    if (hasVisibleColor(timeOfDay.fogTopTint) || hasVisibleColor(timeOfDay.fogBottomTint)) {
         const fogGradient = game.ctx.createLinearGradient(0, 0, 0, game.canvas.height);
 
-        fogGradient.addColorStop(0, timeOfDay.fogTopTint || 'rgba(255, 255, 255, 0)');
-        fogGradient.addColorStop(0.45, timeOfDay.fogTopTint || timeOfDay.fogBottomTint || 'rgba(255, 255, 255, 0)');
-        fogGradient.addColorStop(1, timeOfDay.fogBottomTint || 'rgba(255, 255, 255, 0)');
+        fogGradient.addColorStop(0, formatColorChannels(timeOfDay.fogTopTint));
+        fogGradient.addColorStop(
+            0.45,
+            formatColorChannels(hasVisibleColor(timeOfDay.fogTopTint) ? timeOfDay.fogTopTint : timeOfDay.fogBottomTint)
+        );
+        fogGradient.addColorStop(1, formatColorChannels(timeOfDay.fogBottomTint));
         game.ctx.fillStyle = fogGradient;
         game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
     }
 
-    if (timeOfDay.darknessTint) {
-        game.ctx.fillStyle = timeOfDay.darknessTint;
+    if (hasVisibleColor(timeOfDay.darknessTint)) {
+        game.ctx.fillStyle = formatColorChannels(timeOfDay.darknessTint);
         game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
     }
 }
@@ -209,7 +340,8 @@ function renderScene(playerPos, options = {}) {
     const game = window.Game;
     const {
         cameraFocusPos = playerPos,
-        shouldUpdateCamera = false
+        shouldUpdateCamera = false,
+        timestamp = getNow()
     } = options;
     const activeHouse = game.state.activeHouse;
     const activeInteraction = game.state.activeInteraction;
@@ -220,13 +352,13 @@ function renderScene(playerPos, options = {}) {
     const focusChunkY = Math.floor(cameraFocusPos.y / game.config.chunkSize);
 
     game.ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
-    drawIslandBackdrop(activeProgression);
+    drawIslandBackdrop(activeProgression, timestamp);
     if (shouldUpdateCamera) {
         game.systems.camera.updateCamera(cameraFocusPos);
     }
 
     drawZoomedWorld(playerPos, focusChunkX, focusChunkY, activeHouse);
-    drawTimeOfDayOverlay();
+    drawTimeOfDayOverlay(timestamp);
     drawWeatherOverlay(activeProgression);
     game.systems.debugRenderer.updateDebugPanel(playerPos, activeHouse, activeInteraction);
 }
@@ -268,7 +400,10 @@ function flushRender(timestamp) {
     pendingRenderOptions = null;
     lastRenderOptions = resolvedOptions;
 
-    renderScene(resolvedOptions.playerPos, resolvedOptions);
+    renderScene(resolvedOptions.playerPos, {
+        ...resolvedOptions,
+        timestamp
+    });
 
     if (ui && typeof ui.refreshDirty === 'function') {
         ui.refreshDirty(resolvedOptions.playerPos, activeHouse, activeInteraction);
@@ -293,7 +428,7 @@ function flushRender(timestamp) {
         return;
     }
 
-    if (activeEffects.length > 0) {
+    if (activeEffects.length > 0 || isTimeOfDayTransitionActive(timestamp)) {
         requestRender({
             playerPos: resolvedOptions.playerPos,
             cameraFocusPos: resolvedOptions.cameraFocusPos,

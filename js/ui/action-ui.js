@@ -19,6 +19,14 @@
         return game.systems.dialogueRuntime || null;
     }
 
+    function getResourceRegistry() {
+        return game.systems.resourceRegistry || null;
+    }
+
+    function getGameEvents() {
+        return game.systems.gameEvents || null;
+    }
+
     function isDialogueEncounter(encounter, activeInteraction = game.state.activeInteraction) {
         const dialogueRuntime = getDialogueRuntime();
         return Boolean(
@@ -67,26 +75,13 @@
         }
 
         const baseTileType = tileInfo.baseTileType || tileInfo.tileType;
+        const resourceRegistry = getResourceRegistry();
+        const registryProfile = resourceRegistry && typeof resourceRegistry.getTerrainGatherProfile === 'function'
+            ? resourceRegistry.getTerrainGatherProfile(baseTileType)
+            : null;
 
-        if (baseTileType === 'rubble') {
-            return {
-                itemId: 'rubbleChunk',
-                sourceLabel: 'осыпь',
-                collectedLabel: 'обломки осыпи',
-                resourceLabel: 'каменный ресурс',
-                allowAdjacent: false
-            };
-        }
-
-        if (baseTileType === 'rock') {
-            return {
-                itemId: 'rubbleChunk',
-                sourceLabel: 'камни',
-                collectedLabel: 'камень',
-                resourceLabel: 'каменный ресурс',
-                allowAdjacent: true,
-                clickToCollect: true
-            };
+        if ((baseTileType === 'rubble' || baseTileType === 'rock') && registryProfile) {
+            return registryProfile;
         }
 
         if (tileInfo.travelZoneKey === 'badSector') {
@@ -94,29 +89,14 @@
                 itemId: 'soilClod',
                 sourceLabel: 'плохой сектор',
                 collectedLabel: 'комья земли',
-                resourceLabel: 'земляной ресурс',
+                adviceKey: 'soil',
+                conversionHint: 'Пять единиц этого сырья можно сжать руками в земляной ресурс.',
                 allowAdjacent: false
             };
         }
 
-        if (baseTileType === 'reeds') {
-            return {
-                itemId: 'lowlandGrass',
-                sourceLabel: 'тростник',
-                collectedLabel: 'низинную траву',
-                resourceLabel: 'травяной ресурс',
-                allowAdjacent: false
-            };
-        }
-
-        if (baseTileType === 'grass') {
-            return {
-                itemId: 'fieldGrass',
-                sourceLabel: 'трава',
-                collectedLabel: 'пучок полевой травы',
-                resourceLabel: 'травяной ресурс',
-                allowAdjacent: false
-            };
+        if (registryProfile) {
+            return registryProfile;
         }
 
         return null;
@@ -126,15 +106,27 @@
         return tileInfo ? `${tileInfo.x},${tileInfo.y}` : '';
     }
 
+    function getTerrainHarvestKeyIds(profile) {
+        if (!profile || typeof profile !== 'object') {
+            return [];
+        }
+
+        return [...new Set([
+            typeof profile.itemId === 'string' ? profile.itemId : '',
+            ...(Array.isArray(profile.legacyHarvestItemIds) ? profile.legacyHarvestItemIds : [])
+        ].filter((itemId) => typeof itemId === 'string' && itemId.trim()))];
+    }
+
     function isTerrainAlreadyHarvested(tileInfo, profile) {
         if (!tileInfo || !profile) {
             return false;
         }
 
         const harvested = getHarvestedTerrainState();
+        const harvestKeyIds = getTerrainHarvestKeyIds(profile);
         return Boolean(
             harvested[getTerrainGatherKey(tileInfo)]
-            || harvested[`${profile.itemId}:${tileInfo.x},${tileInfo.y}`]
+            || harvestKeyIds.some((itemId) => harvested[`${itemId}:${tileInfo.x},${tileInfo.y}`])
         );
     }
 
@@ -145,7 +137,9 @@
 
         const harvested = getHarvestedTerrainState();
         harvested[getTerrainGatherKey(tileInfo)] = true;
-        harvested[`${profile.itemId}:${tileInfo.x},${tileInfo.y}`] = true;
+        getTerrainHarvestKeyIds(profile).forEach((itemId) => {
+            harvested[`${itemId}:${tileInfo.x},${tileInfo.y}`] = true;
+        });
     }
 
     function invalidateTerrainTileRenderCache(worldX, worldY) {
@@ -311,7 +305,11 @@
             return false;
         }
 
-        const outcome = inventoryRuntime.addInventoryItem(target.profile.itemId, 1);
+        const outcome = inventoryRuntime.addInventoryItem(target.profile.itemId, 1, {
+            resourceFamilyId: target.profile.resourceFamilyId || target.profile.resourceId || '',
+            resourceSubtypeId: target.profile.resourceSubtypeId || '',
+            resourceSubtypeLabel: target.profile.resourceSubtypeLabel || ''
+        });
 
         if (!outcome.added) {
             bridge.setActionMessage('Рюкзак полон. Сначала освободи слот, чтобы собрать материал.');
@@ -365,6 +363,35 @@
         const conversionSummary = addedConversion
             ? ` Пять единиц автоматически объединены в "${addedConversion.item.label}".`
             : '';
+        const gameEvents = getGameEvents();
+
+        if (gameEvents && typeof gameEvents.emitResourceGathered === 'function') {
+            gameEvents.emitResourceGathered({
+                resourceId: target.profile.resourceId || '',
+                resourceFamilyId: target.profile.resourceFamilyId || target.profile.resourceId || '',
+                resourceSubtypeId: target.profile.resourceSubtypeId || '',
+                resourceSubtypeLabel: target.profile.resourceSubtypeLabel || '',
+                itemId: target.profile.itemId || '',
+                quantity: 1,
+                tile: target.tileInfo
+                    ? { x: target.tileInfo.x, y: target.tileInfo.y, tileType: target.tileInfo.tileType || target.tileInfo.baseTileType || '' }
+                    : null,
+                sourceLabel: target.profile.sourceLabel || '',
+                collectedLabel: target.profile.collectedLabel || '',
+                conversions: (outcome.conversions || []).map((conversion) => ({
+                    sourceItemId: conversion.sourceItemId || '',
+                    targetItemId: conversion.targetItemId || '',
+                    added: Boolean(conversion.added),
+                    item: conversion.item
+                        ? {
+                            id: conversion.item.id,
+                            label: conversion.item.label,
+                            quantity: conversion.item.quantity
+                        }
+                        : null
+                }))
+            });
+        }
 
         bridge.setActionMessage(`Собрано: ${target.profile.collectedLabel} с участка "${target.profile.sourceLabel}".${conversionSummary}`);
         bridge.renderAfterStateChange();
@@ -410,15 +437,19 @@
             return '';
         }
 
+        const conversionHint = target.profile && target.profile.conversionHint
+            ? ` ${target.profile.conversionHint}`
+            : '';
+
         if (target.isHarvested) {
             return `Здесь уже ничего не осталось: ${target.profile.sourceLabel} на этой клетке собраны.`;
         }
 
         if (target.profile.clickToCollect) {
-            return `Рядом есть ${target.profile.sourceLabel}. Кликни по соседнему камню или нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}. Каждые 5 единиц превращаются в ${target.profile.resourceLabel}.`;
+            return `Рядом есть ${target.profile.sourceLabel}. Кликни по соседнему камню или нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}.${conversionHint}`;
         }
 
-        return `Рядом есть ${target.profile.sourceLabel}. Нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}. Каждые 5 единиц превращаются в ${target.profile.resourceLabel}.`;
+        return `Рядом есть ${target.profile.sourceLabel}. Нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}.${conversionHint}`;
     }
 
     function getTerrainInspectMessage(target) {
@@ -434,16 +465,19 @@
         const positionLabel = tileInfo
             ? `\u043a\u043e\u043e\u0440\u0434\u0438\u043d\u0430\u0442\u044b ${tileInfo.x}, ${tileInfo.y}`
             : '\u044d\u0442\u0430 \u043a\u043b\u0435\u0442\u043a\u0430';
+        const conversionHint = target.profile && target.profile.conversionHint
+            ? ` ${target.profile.conversionHint}`
+            : '';
 
         if (target.isHarvested) {
             return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u0443\u0436\u0435 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c, \u043c\u0430\u0442\u0435\u0440\u0438\u0430\u043b \u0441\u043e\u0431\u0440\u0430\u043d.`;
         }
 
         if (target.profile.clickToCollect) {
-            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. Здесь можно собрать ${target.profile.collectedLabel}. Кликни по соседнему камню или нажми "Использовать". Каждые 5 единиц превращаются в ${target.profile.resourceLabel}.`;
+            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. Здесь можно собрать ${target.profile.collectedLabel}. Кликни по соседнему камню или нажми "Использовать".${conversionHint}`;
         }
 
-        return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0431\u0440\u0430\u0442\u044c ${target.profile.collectedLabel}. \u041a\u0430\u0436\u0434\u044b\u0435 5 \u0435\u0434\u0438\u043d\u0438\u0446 \u043f\u0440\u0435\u0432\u0440\u0430\u0449\u0430\u044e\u0442\u0441\u044f \u0432 ${target.profile.resourceLabel}.`;
+        return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0431\u0440\u0430\u0442\u044c ${target.profile.collectedLabel}.${conversionHint}`;
     }
 
     getTerrainInspectMessage = getTerrainInspectMessageSafe;
@@ -558,13 +592,15 @@
             return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: здесь уже пусто, лучше искать следующий такой ресурс по пути, а не возвращаться.`;
         }
 
-        switch (target.profile.itemId) {
-            case 'fieldGrass':
+        switch (target.profile.adviceKey || target.profile.itemId) {
+            case 'grass':
                 return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: полевую траву удобно собирать на старте острова, когда маршрут ещё короткий и вокруг много безопасных клеток.`;
-            case 'lowlandGrass':
+            case 'reeds':
                 return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: тростник собирай только если он стоит рядом с маршрутом, потому что сам по себе он утяжеляет путь.`;
-            case 'rubbleChunk':
+            case 'stone':
+            case 'rubble':
                 return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: камень и осыпь лучше брать по дороге, а не делать ради них отдельный дорогой заход.`;
+            case 'soil':
             case 'soilClod':
                 return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: плохой сектор полезен для земли, но заходить туда стоит только с запасом энергии и понятным выходом назад.`;
             default:
@@ -732,7 +768,7 @@
                 ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
                 : '';
 
-            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
+            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
         }
 
         if (selectedItem) {
@@ -855,6 +891,13 @@
 
         if (game.state.isMoving) {
             return;
+        }
+
+        if ((!Array.isArray(game.state.route) || game.state.route.length === 0) && game.systems.input && typeof game.systems.input.planRouteToSelectedTile === 'function') {
+            game.systems.input.planRouteToSelectedTile({
+                showRouteWarning: false,
+                clearActionMessage: false
+            });
         }
 
         if (!Array.isArray(game.state.route) || game.state.route.length === 0) {
@@ -1100,7 +1143,7 @@
                 ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
                 : '';
 
-            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
+            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
         }
 
         if (selectedItem) {
