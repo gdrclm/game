@@ -1500,38 +1500,49 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
 
 .inventory-selection-panel__facts {
     display: grid;
-    gap: 8px;
-}
-
-.inventory-selection-panel__fact {
-    display: grid;
-    gap: 4px;
-    padding: 8px 10px;
-    border-radius: 14px;
+    gap: 0;
+    padding: 10px 12px;
+    border-radius: 16px;
     background: rgba(255, 255, 255, 0.78);
     border: 1px solid rgba(20, 79, 126, 0.1);
 }
 
+.inventory-selection-panel__fact {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 8px 0;
+    border-top: 1px solid rgba(20, 79, 126, 0.1);
+}
+
+.inventory-selection-panel__fact:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.inventory-selection-panel__fact:last-child {
+    padding-bottom: 0;
+}
+
 .inventory-selection-panel__fact-label {
     color: rgba(15, 71, 118, 0.7);
-    font-size: 0.62rem;
+    font-size: 0.66rem;
     font-weight: 900;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+    line-height: 1.35;
 }
 
 .inventory-selection-panel__fact-value {
     color: rgba(11, 56, 97, 0.94);
-    font-size: 0.74rem;
+    font-size: 0.76rem;
     font-weight: 700;
     line-height: 1.38;
 }
 
 .inventory-selection-panel__description {
-    color: rgba(15, 62, 103, 0.92);
-    font-size: 0.78rem;
-    font-weight: 700;
-    line-height: 1.42;
+    display: none;
 }
 
 .inventory-selection-panel__icon-shell {
@@ -1592,6 +1603,10 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+}
+
+.inventory-selection-panel__actions--single {
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .inventory-selection-panel__action {
@@ -2042,6 +2057,13 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
         inset 0 1px 0 rgba(255, 255, 255, 0.42);
     transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
     gap: 10px;
+}
+
+.hud-button[hidden],
+.mobile-walk-button[hidden],
+.mobile-quick-action[hidden],
+.mobile-dock__button[hidden] {
+    display: none !important;
 }
 
 #mapButton,
@@ -2832,7 +2854,7 @@ body.is-defeat #statusOverlayTitle {
         pointer-events: auto;
         display: grid;
         grid-column: 1;
-        grid-row: 1;
+        grid-row: 2;
         grid-auto-flow: column;
         grid-auto-columns: minmax(0, 1fr);
         align-items: end;
@@ -2995,7 +3017,7 @@ body.is-defeat #statusOverlayTitle {
         pointer-events: auto;
         position: relative;
         grid-column: 1;
-        grid-row: 2;
+        grid-row: 1;
         justify-self: center;
         align-self: end;
         display: flex;
@@ -3184,6 +3206,8 @@ body.is-defeat #statusOverlayTitle {
         right: 10px;
         bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
         display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        align-content: start;
         gap: 12px;
         max-height: min(78vh, 760px);
         padding: 16px;
@@ -3192,6 +3216,7 @@ body.is-defeat #statusOverlayTitle {
             linear-gradient(180deg, rgba(74, 168, 224, 0.94), rgba(20, 75, 120, 0.96)),
             linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
         border: 3px solid rgba(255, 255, 255, 0.16);
+        overflow: hidden;
         box-shadow:
             0 24px 42px rgba(0, 0, 0, 0.28),
             inset 0 1px 0 rgba(255, 255, 255, 0.18);
@@ -3234,9 +3259,12 @@ body.is-defeat #statusOverlayTitle {
 
     .mobile-modal__body {
         display: grid;
+        align-content: start;
         gap: 12px;
         min-height: 0;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
         padding-right: 4px;
     }
 
@@ -3314,39 +3342,50 @@ body.is-defeat #statusOverlayTitle {
 
     .mobile-modal__body .inventory-selection-panel__facts {
         display: grid;
-        gap: 8px;
-    }
-
-    .mobile-modal__body .inventory-selection-panel__fact {
-        display: grid;
-        gap: 4px;
-        padding: 9px 10px;
-        border-radius: 16px;
+        gap: 0;
+        padding: 12px;
+        border-radius: 18px;
         background: rgba(255, 255, 255, 0.76);
         border: 1px solid rgba(20, 79, 126, 0.12);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38);
     }
 
+    .mobile-modal__body .inventory-selection-panel__fact {
+        display: grid;
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 0;
+        border-top: 1px solid rgba(20, 79, 126, 0.12);
+    }
+
+    .mobile-modal__body .inventory-selection-panel__fact:first-child {
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    .mobile-modal__body .inventory-selection-panel__fact:last-child {
+        padding-bottom: 0;
+    }
+
     .mobile-modal__body .inventory-selection-panel__fact-label {
         color: rgba(15, 71, 118, 0.68);
-        font-size: 0.62rem;
+        font-size: 0.64rem;
         font-weight: 900;
         letter-spacing: 0.12em;
         text-transform: uppercase;
+        line-height: 1.35;
     }
 
     .mobile-modal__body .inventory-selection-panel__fact-value {
         color: rgba(11, 56, 97, 0.94);
-        font-size: 0.76rem;
+        font-size: 0.78rem;
         font-weight: 700;
         line-height: 1.38;
     }
 
     .mobile-modal__body .inventory-selection-panel__description {
-        color: rgba(15, 62, 103, 0.92);
-        font-size: 0.78rem;
-        font-weight: 700;
-        line-height: 1.42;
+        display: none;
     }
 
     .mobile-modal__body .inventory-selection-panel__icon-shell {
@@ -3429,6 +3468,8 @@ body.is-defeat #statusOverlayTitle {
     .mobile-modal__body .sidebar-card__body {
         display: grid;
         gap: 12px;
+        min-height: 0;
+        align-content: start;
     }
 
     .mobile-modal__body .stats-list,

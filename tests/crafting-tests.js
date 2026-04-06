@@ -1095,6 +1095,29 @@
         });
     });
 
+    addTest('13. визуальные типы resource nodes', 'Дерево визуально занимает две клетки по высоте', () => {
+        resetHarness();
+        const interaction = buildResourceNodeInteraction('woodTree', {
+            id: 'render:tall-tree',
+            x: 4,
+            y: 4,
+            islandIndex: 10
+        });
+        const context = createRecordingContext();
+
+        game.ctx = context;
+        installInteractionRenderChunk([interaction]);
+        interactionRenderer.drawInteractions(0, 0);
+
+        assert(
+            context.ops.some((operation) => (
+                (operation[0] === 'arc' || operation[0] === 'ellipse')
+                && operation[2] <= -(game.config.tileHeight + 8)
+            )),
+            'Дерево должно иметь верхнюю декоративную крону на одну клетку выше базовой.'
+        );
+    });
+
     addTest('13. визуальные типы resource nodes', 'Узел после истощения меняет визуальное состояние', () => {
         resetHarness();
         const freshInteraction = buildResourceNodeInteraction('stonePile', {
@@ -1287,6 +1310,41 @@
         assert(!interactions.some((interaction) => interaction.resourceNodeKind === 'grassBush'), 'Grass bush не должен появляться на rock-only чанке.');
     });
 
+    addTest('16. биом и топология resource nodes', 'Кусты травы спавнятся кучкой из нескольких соседних клеток', () => {
+        resetHarness();
+        const interactions = createChunkInteractionsForTest({
+            islandIndex: 4,
+            chunkSource: buildResourceBiomeChunk(),
+            random: () => 0.4
+        });
+        const grassBushes = interactions.filter((interaction) => interaction.resourceNodeKind === 'grassBush');
+
+        assert(grassBushes.length >= 2, 'Grass bush должен появляться группой минимум из двух клеток.');
+        assert(
+            grassBushes.every((interaction) => grassBushes.some((candidate) => (
+                candidate !== interaction
+                && Math.max(
+                    Math.abs(candidate.localX - interaction.localX),
+                    Math.abs(candidate.localY - interaction.localY)
+                ) <= 1
+            ))),
+            'Grass bush не должен оставаться одиночной точкой без соседнего куста.'
+        );
+    });
+
+    addTest('16. биом и топология resource nodes', 'Дерево не спавнится там, где рядом нет кустов растений', () => {
+        resetHarness();
+        const shorelineChunk = buildDryChunk('shore');
+        const interactions = createChunkInteractionsForTest({
+            islandIndex: 6,
+            chunkSource: shorelineChunk,
+            random: () => 0.4
+        });
+
+        assert(!interactions.some((interaction) => interaction.resourceNodeKind === 'grassBush'), 'На shore-only чанке не должно быть grassBush.');
+        assert(!interactions.some((interaction) => interaction.resourceNodeKind === 'woodTree'), 'Wood tree не должен появляться без nearby grass bush.');
+    });
+
     addTest('16. биом и топология resource nodes', 'Дерево и щебень obey biome rules при генерации 100+ чанков', () => {
         resetHarness();
         let woodCount = 0;
@@ -1318,6 +1376,16 @@
                         woodCount += 1;
                         assert(['grass', 'shore', 'reeds'].includes(tileType), `Wood tree появился на неподходящем тайле ${tileType}.`);
                         assert(['normal', 'rough'].includes(travelBand), `Wood tree появился в неподходящем band ${travelBand}.`);
+                        assert(
+                            countNeighbors(
+                                source.chunkData,
+                                interaction.localX,
+                                interaction.localY,
+                                (candidate) => candidate === 'grass' || candidate === 'reeds',
+                                true
+                            ) >= 2,
+                            'Wood tree должен иметь рядом кустистую растительность.'
+                        );
                     }
 
                     if (interaction.resourceNodeKind === 'rubbleScree') {

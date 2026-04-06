@@ -791,6 +791,104 @@
             : null;
     }
 
+    function getResourceNodeClusterProfile(definition) {
+        const placementProfile = getResourceNodePlacementProfile(definition);
+        const clusterProfile = placementProfile && placementProfile.clusterProfile && typeof placementProfile.clusterProfile === 'object'
+            ? placementProfile.clusterProfile
+            : null;
+
+        if (!clusterProfile) {
+            return null;
+        }
+
+        const minCount = Number.isFinite(clusterProfile.minCount)
+            ? Math.max(2, Math.floor(clusterProfile.minCount))
+            : 2;
+        const maxCount = Number.isFinite(clusterProfile.maxCount)
+            ? Math.max(minCount, Math.floor(clusterProfile.maxCount))
+            : minCount;
+        const radius = Number.isFinite(clusterProfile.radius)
+            ? Math.max(1, Math.floor(clusterProfile.radius))
+            : 1;
+
+        return {
+            minCount,
+            maxCount,
+            radius,
+            includeDiagonals: clusterProfile.includeDiagonals !== false
+        };
+    }
+
+    function getGridDistance(fromX, fromY, toX, toY, includeDiagonals = false) {
+        const deltaX = Math.abs(fromX - toX);
+        const deltaY = Math.abs(fromY - toY);
+
+        return includeDiagonals
+            ? Math.max(deltaX, deltaY)
+            : (deltaX + deltaY);
+    }
+
+    function countNearbyPlacedResourceNodes(placedResourceNodes, x, y, requirement = {}) {
+        const resourceNodes = Array.isArray(placedResourceNodes) ? placedResourceNodes : [];
+        const matchKinds = Array.isArray(requirement.matchResourceNodeKinds)
+            ? requirement.matchResourceNodeKinds
+            : [];
+        const matchFamilies = Array.isArray(requirement.matchFamilies)
+            ? requirement.matchFamilies
+            : [];
+        const matchResourceIds = Array.isArray(requirement.matchResourceIds)
+            ? requirement.matchResourceIds
+            : [];
+        const includeDiagonals = requirement.includeDiagonals !== false;
+        const maxDistance = Number.isFinite(requirement.maxDistance)
+            ? Math.max(1, Math.floor(requirement.maxDistance))
+            : 1;
+
+        return resourceNodes.reduce((count, resourceNode) => {
+            if (!resourceNode) {
+                return count;
+            }
+
+            if (matchKinds.length > 0 && !matchKinds.includes(resourceNode.resourceNodeKind)) {
+                return count;
+            }
+
+            if (matchFamilies.length > 0 && !matchFamilies.includes(resourceNode.family)) {
+                return count;
+            }
+
+            if (matchResourceIds.length > 0 && !matchResourceIds.includes(resourceNode.resourceId)) {
+                return count;
+            }
+
+            const distance = getGridDistance(x, y, resourceNode.x, resourceNode.y, includeDiagonals);
+            return distance <= maxDistance ? count + 1 : count;
+        }, 0);
+    }
+
+    function isResourceNodeCandidateSupportedByPlacedNodes(definition, x, y, placedResourceNodes) {
+        const placementProfile = getResourceNodePlacementProfile(definition);
+        const nearbyNodeRequirements = placementProfile && Array.isArray(placementProfile.nearbyNodeRequirements)
+            ? placementProfile.nearbyNodeRequirements
+            : [];
+
+        for (const requirement of nearbyNodeRequirements) {
+            const minCount = Number.isFinite(requirement && requirement.minCount)
+                ? Math.max(0, Math.floor(requirement.minCount))
+                : 0;
+
+            if (minCount <= 0) {
+                continue;
+            }
+
+            if (countNearbyPlacedResourceNodes(placedResourceNodes, x, y, requirement) < minCount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     function getTravelZoneKeyAt(travelZones, x, y) {
         return Array.isArray(travelZones) && Array.isArray(travelZones[y])
             ? travelZones[y][x] || 'none'
@@ -956,7 +1054,7 @@
         }
     }
 
-    function scoreResourceNodeCandidate(definition, chunkData, travelZones, x, y, houses, random) {
+    function scoreResourceNodeCandidate(definition, chunkData, travelZones, x, y, houses, random, placedResourceNodes = []) {
         const tileType = chunkData[y][x];
         const travelZoneKey = getTravelZoneKeyAt(travelZones, x, y);
         const travelBand = getTravelBandForSpawnTile(tileType, travelZoneKey);
@@ -995,6 +1093,17 @@
                 score += Math.max(0, safeNearestHouseDistance - 1) * 0.18;
                 break;
             case 'woodTree':
+                score += countNearbyPlacedResourceNodes(
+                    placedResourceNodes,
+                    x,
+                    y,
+                    {
+                        matchResourceNodeKinds: ['grassBush'],
+                        minCount: 0,
+                        maxDistance: 2,
+                        includeDiagonals: true
+                    }
+                ) * 1.1;
                 score += tileType === 'grass' ? 2.1 : (tileType === 'shore' ? 1.8 : 1.5);
                 score += travelBand === 'normal' ? 1.2 : (travelBand === 'rough' ? 0.7 : -2.8);
                 score += waterNeighbors * 0.45;
@@ -1019,7 +1128,7 @@
         return score;
     }
 
-    function collectResourceNodeCandidates(chunkData, travelZones, houseCellSet, occupiedKeys, houses, random, definition, chunkRecord = null) {
+    function collectResourceNodeCandidates(chunkData, travelZones, houseCellSet, occupiedKeys, houses, random, definition, chunkRecord = null, placedResourceNodes = []) {
         const candidates = [];
         const chunkSize = game.config.chunkSize;
 
@@ -1034,20 +1143,94 @@
                     houseCellSet.has(key)
                     || occupiedKeys.has(key)
                     || !isResourceNodeTileAllowed(definition, tileType, travelZoneKey, travelBand, chunkData, travelZones, x, y, chunkRecord)
+                    || !isResourceNodeCandidateSupportedByPlacedNodes(definition, x, y, placedResourceNodes)
                 ) {
                     continue;
                 }
 
-                const score = scoreResourceNodeCandidate(definition, chunkData, travelZones, x, y, houses, random);
+                const score = scoreResourceNodeCandidate(definition, chunkData, travelZones, x, y, houses, random, placedResourceNodes);
                 if (score <= 0.4) {
                     continue;
                 }
 
-                candidates.push({ x, y, score });
+                candidates.push({ x, y, score, key });
             }
         }
 
         return candidates.sort((left, right) => right.score - left.score);
+    }
+
+    function pickClusteredResourceNodeCandidates(candidates, spawnLimit, clusterProfile) {
+        if (!Array.isArray(candidates) || candidates.length === 0 || !clusterProfile) {
+            return [];
+        }
+
+        const maxCount = Math.min(
+            Math.max(0, Math.floor(spawnLimit) || 0),
+            clusterProfile.maxCount
+        );
+        if (maxCount < clusterProfile.minCount) {
+            return [];
+        }
+
+        for (const seed of candidates) {
+            const picked = [seed];
+            const usedKeys = new Set([seed.key]);
+
+            while (picked.length < maxCount) {
+                const nextCandidate = candidates.find((candidate) => {
+                    if (!candidate || usedKeys.has(candidate.key)) {
+                        return false;
+                    }
+
+                    return picked.some((entry) => getGridDistance(
+                        entry.x,
+                        entry.y,
+                        candidate.x,
+                        candidate.y,
+                        clusterProfile.includeDiagonals
+                    ) <= clusterProfile.radius);
+                });
+
+                if (!nextCandidate) {
+                    break;
+                }
+
+                picked.push(nextCandidate);
+                usedKeys.add(nextCandidate.key);
+            }
+
+            if (picked.length >= clusterProfile.minCount) {
+                return picked;
+            }
+        }
+
+        return [];
+    }
+
+    function pickResourceNodeCandidates(definition, candidates, spawnLimit) {
+        const clusterProfile = getResourceNodeClusterProfile(definition);
+
+        if (clusterProfile) {
+            return pickClusteredResourceNodeCandidates(candidates, spawnLimit, clusterProfile);
+        }
+
+        const picked = [];
+
+        candidates.forEach((candidate) => {
+            if (picked.length >= spawnLimit) {
+                return;
+            }
+
+            const isTooClose = picked.some((entry) => Math.abs(entry.x - candidate.x) + Math.abs(entry.y - candidate.y) < 2);
+            if (isTooClose) {
+                return;
+            }
+
+            picked.push(candidate);
+        });
+
+        return picked;
     }
 
     function createResourceNodeInteractionRecord(chunkX, chunkY, localX, localY, definition, progression = null) {
@@ -1100,30 +1283,25 @@
         const chunkRecord = options.chunkRecord || null;
         const travelZones = Array.isArray(options.travelZones) ? options.travelZones : null;
         const houseCellSet = getHouseCellSet(houses);
+        const placedResourceNodes = [];
 
         getResourceNodeDefinitions().forEach((definition) => {
             const spawnLimit = getResourceNodeSpawnLimit(definition, progression, chunkData);
             const candidates = spawnLimit > 0
-                ? collectResourceNodeCandidates(chunkData, travelZones, houseCellSet, occupiedKeys, houses, random, definition, chunkRecord)
+                ? collectResourceNodeCandidates(chunkData, travelZones, houseCellSet, occupiedKeys, houses, random, definition, chunkRecord, placedResourceNodes)
                 : [];
-            const picked = [];
-
-            candidates.forEach((candidate) => {
-                if (picked.length >= spawnLimit) {
-                    return;
-                }
-
-                const isTooClose = picked.some((entry) => Math.abs(entry.x - candidate.x) + Math.abs(entry.y - candidate.y) < 2);
-                if (isTooClose) {
-                    return;
-                }
-
-                picked.push(candidate);
-            });
+            const picked = pickResourceNodeCandidates(definition, candidates, spawnLimit);
 
             picked.forEach((candidate) => {
                 occupiedKeys.add(tileKey(candidate.x, candidate.y));
                 result.push(createResourceNodeInteractionRecord(chunkX, chunkY, candidate.x, candidate.y, definition, progression));
+                placedResourceNodes.push({
+                    x: candidate.x,
+                    y: candidate.y,
+                    resourceNodeKind: definition.id,
+                    family: definition.family || 'resourceNode',
+                    resourceId: definition.resourceId
+                });
             });
         });
     }

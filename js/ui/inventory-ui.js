@@ -2,7 +2,9 @@
     const game = window.Game;
     const inventoryUi = game.systems.inventoryUi = game.systems.inventoryUi || {};
     const bridge = game.systems.uiBridge;
+    const MOBILE_BREAKPOINT = 760;
     let panelEventsBound = false;
+    let lastMobileSelectionSignature = null;
 
     const ITEM_CATEGORY_LABELS = {
         consumable: 'расходник',
@@ -68,7 +70,7 @@
                     <span id="inventorySelectionQuantity" class="inventory-selection-panel__quantity" hidden>x1</span>
                 </div>
             </div>
-            <div class="inventory-selection-panel__actions">
+            <div id="inventorySelectionActions" class="inventory-selection-panel__actions" hidden>
                 <button id="inventorySelectionUseButton" class="hud-button inventory-selection-panel__action inventory-selection-panel__action--use" type="button">
                     Использовать
                 </button>
@@ -164,6 +166,7 @@
             inventorySelectionDescription: document.getElementById('inventorySelectionDescription'),
             inventorySelectionIcon: document.getElementById('inventorySelectionIcon'),
             inventorySelectionQuantity: document.getElementById('inventorySelectionQuantity'),
+            inventorySelectionActions: document.getElementById('inventorySelectionActions'),
             inventorySelectionUseButton: document.getElementById('inventorySelectionUseButton'),
             inventorySelectionDropButton: document.getElementById('inventorySelectionDropButton'),
             inventorySelectionCraftPanel: document.getElementById('inventorySelectionCraftPanel'),
@@ -225,6 +228,34 @@
         }
 
         panelEventsBound = true;
+    }
+
+    function isMobileInventoryModalActive() {
+        return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches
+            && document.body.dataset.mobilePanel === 'inventory';
+    }
+
+    function ensureMobileSelectionPanelVisible(selectionPanel) {
+        if (!selectionPanel || !isMobileInventoryModalActive()) {
+            return;
+        }
+
+        const scrollContainer = selectionPanel.closest('.mobile-modal__body');
+
+        if (!scrollContainer) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const panelRect = selectionPanel.getBoundingClientRect();
+            const targetTop = scrollContainer.scrollTop + (panelRect.top - containerRect.top) - 8;
+
+            scrollContainer.scrollTo({
+                top: Math.max(0, targetTop),
+                behavior: 'smooth'
+            });
+        });
     }
 
     function getCompressionRuntime() {
@@ -512,38 +543,47 @@
         return parts.slice(0, 3).join(' · ');
     }
 
-    function buildContainerStateFacts(containerState) {
+    function buildContainerStateParameterSummary(containerState) {
         if (!containerState || typeof containerState !== 'object') {
-            return [];
+            return '';
         }
 
         const isEmpty = typeof containerState.itemId === 'string'
             ? containerState.itemId === 'flask_empty'
             : !containerState.drinkable && !containerState.recipeReady && !containerState.useTransitionStateId;
         const fillLabel = isEmpty ? 'пустая' : 'полная';
-        const stateParts = [fillLabel];
+        const parts = [fillLabel];
 
         if (containerState.stateLabel && containerState.stateLabel !== fillLabel) {
-            stateParts.push(containerState.stateLabel);
+            parts.push(containerState.stateLabel);
         }
 
-        return [
-            {
-                label: 'Контейнер',
-                value: stateParts.join(' · ')
-            },
-            {
-                label: 'Назначение',
-                value: [
-                    containerState.drinkable ? 'пригодна для питья' : 'не для питья',
-                    containerState.recipeReady ? 'пригодна для рецепта' : 'не для рецепта'
-                ].join(' · ')
-            }
-        ];
+        return parts.join(' · ');
     }
 
-    function buildSelectedItemFacts(item, definition) {
-        const facts = [];
+    function buildContainerStateEffectSummary(containerState) {
+        if (!containerState || typeof containerState !== 'object') {
+            return '';
+        }
+
+        const parts = [];
+
+        if (containerState.drinkable) {
+            parts.push('пригодна для питья');
+        }
+
+        if (containerState.recipeReady) {
+            parts.push('пригодна для рецепта');
+        }
+
+        if (parts.length === 0 && containerState.stateSummary) {
+            parts.push(containerState.stateSummary);
+        }
+
+        return parts.join(' · ');
+    }
+
+    function buildSelectedItemFacts(item, definition, description) {
         const containerRegistry = getContainerRegistry();
         const containerState = containerRegistry && typeof containerRegistry.getContainerStateByItemId === 'function'
             ? containerRegistry.getContainerStateByItemId(item && item.id ? item.id : (definition && definition.id))
@@ -551,60 +591,34 @@
         const tierLabel = definition && Number.isFinite(definition.lootTier)
             ? `T${definition.lootTier}`
             : 'T0';
+        const containerParameterSummary = buildContainerStateParameterSummary(containerState);
         const parameterParts = [
             tierLabel,
             getItemRarityLabel(definition),
-            ...getItemCategoryLabels(definition).slice(0, 3)
+            ...getItemCategoryLabels(definition).slice(0, 3),
+            containerParameterSummary
+        ].filter(Boolean);
+        const effectParts = [
+            buildConsumableSummary(definition && definition.consumable),
+            buildActiveEffectSummary(definition && definition.activeEffect),
+            buildPassiveEffectSummary(definition && definition.passive),
+            buildContainerStateEffectSummary(containerState)
         ].filter(Boolean);
 
-        if (parameterParts.length > 0) {
-            facts.push({
+        return [
+            {
                 label: 'Параметры',
-                value: parameterParts.join(' · ')
-            });
-        }
-
-        const consumableSummary = buildConsumableSummary(definition && definition.consumable);
-        if (consumableSummary) {
-            facts.push({
-                label: 'Эффект',
-                value: consumableSummary
-            });
-        }
-
-        const activeEffectSummary = buildActiveEffectSummary(definition && definition.activeEffect);
-        if (activeEffectSummary) {
-            facts.push({
-                label: 'Активно',
-                value: activeEffectSummary
-            });
-        }
-
-        facts.push(...buildContainerStateFacts(containerState));
-
-        const passiveEffectSummary = buildPassiveEffectSummary(definition && definition.passive);
-        if (passiveEffectSummary) {
-            facts.push({
-                label: 'Пассивно',
-                value: passiveEffectSummary
-            });
-        }
-
-        if (definition && Number.isFinite(definition.baseValue) && definition.baseValue > 0) {
-            facts.push({
-                label: 'Ценность',
-                value: `${definition.baseValue} зол.`
-            });
-        }
-
-        if (item && Number.isFinite(item.useCount) && item.useCount > 0) {
-            facts.push({
-                label: 'Опыт',
-                value: `использован ${item.useCount} раз`
-            });
-        }
-
-        return facts.slice(0, 5);
+                value: parameterParts.join(' · ') || 'без особых свойств'
+            },
+            {
+                label: 'Эффекты',
+                value: effectParts.join(' · ') || 'прямого эффекта нет'
+            },
+            {
+                label: 'Описание',
+                value: description || 'Описание этого предмета пока не подготовлено.'
+            }
+        ];
     }
 
     function buildFactNode(label, value) {
@@ -846,6 +860,7 @@
         }
 
         if (!selectedItem || !selectedItem.id) {
+            lastMobileSelectionSignature = null;
             refs.inventorySelectionPanel.hidden = true;
             return;
         }
@@ -859,12 +874,13 @@
             : '';
         const description = bridge.getItemDescription(selectedItem.id)
             || `Предмет "${selectedItem.label}" пока без отдельного описания.`;
-        const facts = buildSelectedItemFacts(selectedItem, definition).map(({ label, value }) => buildFactNode(label, value));
+        const facts = buildSelectedItemFacts(selectedItem, definition, description).map(({ label, value }) => buildFactNode(label, value));
         const useSourceButton = getActionSourceButton('use');
         const dropSourceButton = getActionSourceButton('drop');
         const compressionOptions = getCompressionOptions(selectedItem);
         const craftingOptions = getCraftingOptions(selectedItem);
         const craftOptions = [...craftingOptions, ...compressionOptions];
+        const showInventorySelectionActions = isMobileInventoryModalActive();
         const craftingRuntime = getCraftingRuntime();
         const stationRuntime = getStationRuntime();
         const availableStations = craftingRuntime && typeof craftingRuntime.resolveAvailableStations === 'function'
@@ -889,7 +905,8 @@
         }
 
         if (refs.inventorySelectionDescription) {
-            refs.inventorySelectionDescription.textContent = description;
+            refs.inventorySelectionDescription.hidden = true;
+            refs.inventorySelectionDescription.textContent = '';
         }
 
         if (refs.inventorySelectionIcon) {
@@ -901,12 +918,26 @@
             refs.inventorySelectionQuantity.textContent = `x${selectedItem.quantity}`;
         }
 
+        if (refs.inventorySelectionActions) {
+            refs.inventorySelectionActions.hidden = !showInventorySelectionActions;
+        }
+
         if (refs.inventorySelectionUseButton) {
-            refs.inventorySelectionUseButton.disabled = !(useSourceButton && !useSourceButton.disabled);
+            const canUse = Boolean(useSourceButton && !useSourceButton.disabled);
+            refs.inventorySelectionUseButton.hidden = !canUse;
+            refs.inventorySelectionUseButton.disabled = !canUse;
         }
 
         if (refs.inventorySelectionDropButton) {
             refs.inventorySelectionDropButton.disabled = !(dropSourceButton && !dropSourceButton.disabled);
+        }
+
+        const actionsContainer = refs.inventorySelectionActions
+            || (refs.inventorySelectionUseButton && refs.inventorySelectionUseButton.parentElement);
+        if (actionsContainer) {
+            const visibleButtons = Array.from(actionsContainer.querySelectorAll('.inventory-selection-panel__action'))
+                .filter((button) => !button.hidden);
+            actionsContainer.classList.toggle('inventory-selection-panel__actions--single', visibleButtons.length <= 1);
         }
 
         if (refs.inventorySelectionCraftPanel) {
@@ -929,6 +960,12 @@
             refs.inventorySelectionCraftActions.replaceChildren(
                 ...craftOptions.map((option) => buildCraftActionButton(option))
             );
+        }
+
+        const selectionSignature = `${selectedItem.id}:${Number.isFinite(game.state.selectedInventorySlot) ? game.state.selectedInventorySlot : -1}`;
+        if (selectionSignature !== lastMobileSelectionSignature) {
+            lastMobileSelectionSignature = selectionSignature;
+            ensureMobileSelectionPanelVisible(refs.inventorySelectionPanel);
         }
     }
 

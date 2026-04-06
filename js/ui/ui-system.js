@@ -1805,10 +1805,10 @@
         }
     }
 
-    function setActionButtonState(action, enabled, highlighted = false) {
+    function setActionButtonState(action, enabled, highlighted = false, visible = null) {
         const actionUi = getActionUiModule();
         if (actionUi && typeof actionUi.setActionButtonState === 'function') {
-            return actionUi.setActionButtonState(action, enabled, highlighted);
+            return actionUi.setActionButtonState(action, enabled, highlighted, visible);
         }
         const button = elements.actionButtons.find((item) => item.dataset.action === action);
 

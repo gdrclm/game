@@ -1036,7 +1036,7 @@
         return collectTerrainResourceAtTarget(target);
     }
 
-    function setActionButtonState(action, enabled, highlighted = false) {
+    function setActionButtonState(action, enabled, highlighted = false, visible = null) {
         const elements = bridge.getElements();
         const button = elements.actionButtons.find((item) => item.dataset.action === action);
 
@@ -1101,6 +1101,7 @@
         const selectedWorldTerrain = getTerrainTargetForTile(selectedWorldTileInfo, { includeHarvested: true });
         const canDropItem = Boolean(selectedItem);
         const baseEnabled = !game.state.isGameOver && !game.state.isMoving;
+        const hasNearbyInteractionContext = Boolean(activeInteraction);
         const canWalkRoute = Boolean(
             baseEnabled
             && !game.state.isPaused
@@ -1118,7 +1119,9 @@
             || selectedWorldTerrain
             || selectedWorldTileInfo
         );
-        const canSleepNow = Boolean(shelterEncounter);
+        const canSleepNow = baseEnabled;
+        const highlightSleep = Boolean(shelterEncounter || game.state.activeHouse);
+        const showDropInHud = Boolean(baseEnabled && canDropItem && hasNearbyInteractionContext);
 
         return {
             walk: {
@@ -1137,9 +1140,9 @@
                 visible: baseEnabled && canTalkInteraction
             },
             sleep: {
-                enabled: baseEnabled && canSleepNow,
-                highlighted: canSleepNow,
-                visible: baseEnabled && canSleepNow
+                enabled: canSleepNow,
+                highlighted: highlightSleep,
+                visible: canSleepNow
             },
             inspect: {
                 enabled: baseEnabled && canInspectNow,
@@ -1149,7 +1152,7 @@
             drop: {
                 enabled: baseEnabled && canDropItem,
                 highlighted: canDropItem,
-                visible: baseEnabled && canDropItem
+                visible: showDropInHud
             }
         };
     }
@@ -1462,6 +1465,75 @@
         }
     }
 
+    function getTileDisplayLabel(tileInfo) {
+        if (!tileInfo) {
+            return 'клетка';
+        }
+
+        const tileLabel = bridge.getTileLabel(tileInfo.tileType || 'grass');
+        const travelLabel = tileInfo.travelLabel || tileLabel;
+        return travelLabel !== tileLabel
+            ? `${travelLabel} (${tileLabel})`
+            : travelLabel;
+    }
+
+    function getTileInspectSummary(tileInfo) {
+        if (!tileInfo) {
+            return 'Выбрана клетка. Нажми "Изучить", чтобы получить совет по местности.';
+        }
+
+        const displayLabel = getTileDisplayLabel(tileInfo);
+        const bandLabel = bridge.getTravelBandLabel(tileInfo.travelBand || 'normal');
+        return `Выбрана клетка: ${displayLabel}. Это ${bandLabel}.`;
+    }
+
+    function getTileAdviceMessage(tileInfo) {
+        if (!tileInfo) {
+            return 'Изучить: местность рядом. Совет: смотри на клетку как на часть маршрута, а не как на отдельный шаг.';
+        }
+
+        const displayLabel = getTileDisplayLabel(tileInfo);
+        const zoneAdviceByKey = {
+            dryTrail: 'это хороший участок для длинного продвижения: по нему удобно экономить силы и выравнивать маршрут.',
+            oldBridge: 'старый мост лучше проходить без лишних остановок: он хорош как короткая переправа, а не как место для манёвра.',
+            collapseSpan: 'хрупкий пролёт стоит брать только тогда, когда уже виден безопасный выход с другой стороны.',
+            coldFord: 'в холодный брод заходи только с запасом, чтобы следующая связка клеток не добила темп.',
+            drainingLowland: 'истощающую низину лучше пересекать по делу, а не ради лишней разведки в сторону.',
+            badSector: 'плохой сектор окупается только если на нём есть нужный ресурс или короткий путь дальше.',
+            cursedTrail: 'заражённую тропу не стоит брать ради мелкой выгоды: вход сюда должен что-то реально выигрывать.',
+            riskyProximity: 'рядом опасность, поэтому не задерживайся здесь дольше, чем нужно для прохода.',
+            houseDebris: 'у завалов лучше держаться прямого курса и не тратить здесь лишние клетки без пользы.',
+            deepMud: 'глубокую грязь стоит брать только при понятной выгоде и с запасом на выход.',
+            swamp: 'болото съедает темп, поэтому лучше проходить его по самой короткой линии.',
+            dangerPass: 'опасный проход хорош только тогда, когда заметно сокращает дорогу.',
+            drainZone: 'зону истощения лучше пересекать быстро и не растягивать на ней манёвр.'
+        };
+        const tileAdviceByType = {
+            trail: 'это удобная клетка для разгона и добора дистанции без лишних потерь.',
+            grass: 'нейтральная местность: на ней удобно выравнивать путь перед тяжёлыми участками.',
+            shore: 'берег полезен как подход к воде и мостам, но не всегда стоит отдельного крюка.',
+            bridge: 'мост ценен как дешёвая переправа, поэтому думай не о нём, а о том, что ждёт сразу за ним.',
+            reeds: 'тростник утяжеляет путь, поэтому заходи сюда только если клетка действительно что-то даёт.',
+            rubble: 'осыпь лучше пересекать по делу, без длинных петель и лишних остановок.',
+            mud: 'грязь быстро съедает темп, так что лишний заход сюда почти всегда плохая сделка.',
+            water: 'по воде пешком не пройти: ищи мост, обход или способ быстро сделать переправу.',
+            house: 'дом хорош как опорная точка, вокруг него удобно перестраивать дальнейший маршрут.'
+        };
+        const bandAdviceByKey = {
+            cheap: 'это лёгкий участок, на котором удобно экономить силы и добирать ход.',
+            normal: 'держи эту клетку в общем ритме маршрута и не делай ради неё лишний крюк.',
+            rough: 'тяжёлую клетку лучше брать только тогда, когда она даёт явную выгоду.',
+            hazard: 'опасную клетку не стоит брать без запаса и понятного выхода дальше.',
+            blocked: 'эта клетка сама по себе не для прохода: нужен обход или специальный способ пересечения.'
+        };
+        const advice = zoneAdviceByKey[tileInfo.travelZoneKey]
+            || tileAdviceByType[tileInfo.tileType]
+            || bandAdviceByKey[tileInfo.travelBand]
+            || 'смотри на эту местность как на часть маршрута: важен не один шаг, а связка следующих клеток.';
+
+        return `Изучить: ${displayLabel}. Совет: ${advice}`;
+    }
+
     function getInteractionDescriptionSafe(interaction) {
         if (!interaction) {
             return '';
@@ -1676,6 +1748,12 @@
             return true;
         }
 
+        if (tileInfo) {
+            bridge.setActionMessage(`${getTileInspectSummary(tileInfo)} Нажми "Изучить", чтобы получить совет по этой клетке.`);
+            bridge.renderAfterStateChange(['location', 'actions', 'actionHint']);
+            return true;
+        }
+
         return false;
     }
 
@@ -1692,18 +1770,6 @@
         const penaltySummary = bridge.getActivePenaltySummary(tileInfo, 3);
         const hasRoute = Array.isArray(game.state.route) && game.state.route.length > 0 && !game.state.isMoving;
 
-        if (hasRoute) {
-            const previewSuffix = game.state.routePreviewLength > game.state.route.length
-                ? ` из ${game.state.routePreviewLength}`
-                : '';
-            const totalCost = bridge.formatRouteCost(game.state.routeTotalCost);
-            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
-                ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
-                : '';
-
-            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
-        }
-
         if (selectedItem) {
             const containerHint = getContainerActionHint(selectedItem);
             if (containerHint) {
@@ -1719,6 +1785,30 @@
             }
 
             return `Выбран предмет: ${selectedItem.label}. Нажми "Осмотреть", чтобы увидеть описание.`;
+        }
+
+        if (selectedWorldInteraction) {
+            return `${getInteractionDescriptionSafe(selectedWorldInteraction)} Нажми "Изучить", чтобы получить совет по прохождению.`;
+        }
+
+        if (selectedWorldTerrain) {
+            return `${getTerrainInspectMessageSafe(selectedWorldTerrain)} Нажми "Изучить", чтобы увидеть совет по этой клетке.`;
+        }
+
+        if (selectedWorldTileInfo) {
+            return `${getTileInspectSummary(selectedWorldTileInfo)} Нажми "Изучить", чтобы получить совет по этой клетке.`;
+        }
+
+        if (hasRoute) {
+            const previewSuffix = game.state.routePreviewLength > game.state.route.length
+                ? ` из ${game.state.routePreviewLength}`
+                : '';
+            const totalCost = bridge.formatRouteCost(game.state.routeTotalCost);
+            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
+                ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
+                : '';
+
+            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
         }
 
         if (groundItem && inventoryRuntime) {
@@ -1770,50 +1860,14 @@
     }
 
     function updateActionButtons(activeInteraction = game.state.activeInteraction) {
-        const inventoryRuntime = getInventoryRuntime();
-        const itemEffects = getItemEffects();
-        const dialogueRuntime = getDialogueRuntime();
-        const selectedItem = getSelectedInventoryItem();
-        const groundItem = inventoryRuntime ? inventoryRuntime.getCurrentGroundItem() : null;
-        const encounter = bridge.getHouseEncounter(activeInteraction);
-        const canTalkInteraction = encounter
-            && dialogueRuntime
-            && dialogueRuntime.canStartDialogue(activeInteraction);
-        const canUseInteraction = encounter
-            && !bridge.isHouseResolved(activeInteraction)
-            && encounter.kind !== 'shelter'
-            && !canTalkInteraction;
-        const shelterNearby = encounter && encounter.kind === 'shelter';
-        const canUseItem = Boolean(
-            selectedItem
-            && itemEffects
-            && typeof itemEffects.canUseInventoryItem === 'function'
-            && itemEffects.canUseInventoryItem(selectedItem)
-        );
-        const canUseBridgeCharge = Boolean(
-            !selectedItem
-            && itemEffects
-            && typeof itemEffects.canUseBridgeCharge === 'function'
-            && itemEffects.canUseBridgeCharge()
-        );
-        const canUseGroundItem = Boolean(groundItem);
-        const canUseTerrain = Boolean(getGatherableTerrainTarget());
-        const inspectableTerrain = getInspectableTerrainTarget();
-        const canDropItem = Boolean(selectedItem);
-        const baseEnabled = !game.state.isGameOver && !game.state.isMoving;
-        const canWalkRoute = baseEnabled && !game.state.isPaused && !game.state.isMapOpen && Array.isArray(game.state.route) && game.state.route.length > 0;
+        const actionAvailability = buildActionAvailabilityState(activeInteraction);
 
-        setActionButtonState('walk', canWalkRoute, canWalkRoute);
-
-        setActionButtonState(
-            'use',
-            baseEnabled && (canUseItem || canUseBridgeCharge || canUseGroundItem || canUseInteraction || canUseTerrain),
-            Boolean(canUseItem || canUseBridgeCharge || canUseGroundItem || canUseInteraction || canUseTerrain)
-        );
-        setActionButtonState('talk', baseEnabled && Boolean(canTalkInteraction), Boolean(canTalkInteraction));
-        setActionButtonState('sleep', baseEnabled, Boolean(shelterNearby || game.state.activeHouse));
-        setActionButtonState('inspect', baseEnabled, Boolean(selectedItem || groundItem || inspectableTerrain || activeInteraction));
-        setActionButtonState('drop', baseEnabled && canDropItem, canDropItem);
+        setActionButtonState('walk', actionAvailability.walk.enabled, actionAvailability.walk.highlighted, actionAvailability.walk.visible);
+        setActionButtonState('use', actionAvailability.use.enabled, actionAvailability.use.highlighted, actionAvailability.use.visible);
+        setActionButtonState('talk', actionAvailability.talk.enabled, actionAvailability.talk.highlighted, actionAvailability.talk.visible);
+        setActionButtonState('sleep', actionAvailability.sleep.enabled, actionAvailability.sleep.highlighted, actionAvailability.sleep.visible);
+        setActionButtonState('inspect', actionAvailability.inspect.enabled, actionAvailability.inspect.highlighted, actionAvailability.inspect.visible);
+        setActionButtonState('drop', actionAvailability.drop.enabled, actionAvailability.drop.highlighted, actionAvailability.drop.visible);
     }
 
     function handleWalkAction() {
@@ -1968,7 +2022,7 @@
         }
 
         if (terrainTarget) {
-            bridge.setActionMessage(getTerrainInspectMessageSafe(terrainTarget));
+            bridge.setActionMessage(getTerrainAdviceMessage(terrainTarget));
             bridge.renderAfterStateChange();
             return;
         }
@@ -1979,14 +2033,7 @@
         }
 
         const tileInfo = routeInspectTileInfo || game.state.activeTileInfo;
-        const tileLabel = bridge.getTileLabel(tileInfo ? tileInfo.tileType : 'grass');
-        const progression = bridge.getCurrentProgression(tileInfo);
-        const suffix = progression ? ` Остров ${progression.islandIndex}: ${progression.label}.` : '';
-        const bandLabel = tileInfo ? bridge.getTravelBandLabel(tileInfo.travelBand) : bridge.getTravelBandLabel('normal');
-        const weightLabel = tileInfo ? bridge.formatRouteCost(tileInfo.travelWeight) : '1.0';
-        const travelLabel = tileInfo ? tileInfo.travelLabel || tileLabel : tileLabel;
-
-        bridge.setActionMessage(`Осмотр: ${travelLabel}, координаты ${tileInfo ? tileInfo.x : game.state.playerPos.x}, ${tileInfo ? tileInfo.y : game.state.playerPos.y}. Это ${bandLabel}, цена шага x${weightLabel}.${suffix}`);
+        bridge.setActionMessage(getTileAdviceMessage(tileInfo));
         bridge.renderAfterStateChange();
     }
 
@@ -2072,18 +2119,6 @@
         const penaltySummary = bridge.getActivePenaltySummary(tileInfo, 3);
         const hasRoute = Array.isArray(game.state.route) && game.state.route.length > 0 && !game.state.isMoving;
 
-        if (hasRoute) {
-            const previewSuffix = game.state.routePreviewLength > game.state.route.length
-                ? ` из ${game.state.routePreviewLength}`
-                : '';
-            const totalCost = bridge.formatRouteCost(game.state.routeTotalCost);
-            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
-                ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
-                : '';
-
-            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
-        }
-
         if (selectedItem) {
             if (itemEffects && itemEffects.isBridgeBuilderItem(selectedItem.id)) {
                 return `Выбран предмет: ${selectedItem.label}. Подойди к узкому водному проходу и нажми "Использовать", чтобы уложить мост.`;
@@ -2096,16 +2131,32 @@
             return `Выбран предмет: ${selectedItem.label}. Нажми "Изучить", чтобы увидеть описание.`;
         }
 
-        if (groundItem && inventoryRuntime) {
-            return `Под ногами лежит: ${inventoryRuntime.getGroundItemDescription(groundItem)}. Нажми "Использовать", чтобы подобрать.`;
-        }
-
         if (selectedWorldInteraction) {
             return `${getInteractionDescriptionSafe(selectedWorldInteraction)} Нажми "Изучить", чтобы получить совет по прохождению.`;
         }
 
         if (selectedWorldTerrain) {
             return `${getTerrainInspectMessageSafe(selectedWorldTerrain)} Нажми "Изучить", чтобы увидеть совет по этой клетке.`;
+        }
+
+        if (selectedWorldTileInfo) {
+            return `${getTileInspectSummary(selectedWorldTileInfo)} Нажми "Изучить", чтобы получить совет по этой клетке.`;
+        }
+
+        if (hasRoute) {
+            const previewSuffix = game.state.routePreviewLength > game.state.route.length
+                ? ` из ${game.state.routePreviewLength}`
+                : '';
+            const totalCost = bridge.formatRouteCost(game.state.routeTotalCost);
+            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
+                ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
+                : '';
+
+            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
+        }
+
+        if (groundItem && inventoryRuntime) {
+            return `Под ногами лежит: ${inventoryRuntime.getGroundItemDescription(groundItem)}. Нажми "Использовать", чтобы подобрать.`;
         }
 
         if (itemEffects && typeof itemEffects.canUseBridgeCharge === 'function' && itemEffects.canUseBridgeCharge()) {
@@ -2155,12 +2206,12 @@
     updateActionButtons = function updateActionButtonsSafe(activeInteraction = game.state.activeInteraction) {
         const actionAvailability = buildActionAvailabilityState(activeInteraction);
 
-        setActionButtonState('walk', actionAvailability.walk.enabled, actionAvailability.walk.highlighted);
-        setActionButtonState('use', actionAvailability.use.enabled, actionAvailability.use.highlighted);
-        setActionButtonState('talk', actionAvailability.talk.enabled, actionAvailability.talk.highlighted);
-        setActionButtonState('sleep', actionAvailability.sleep.enabled, actionAvailability.sleep.highlighted);
-        setActionButtonState('inspect', actionAvailability.inspect.enabled, actionAvailability.inspect.highlighted);
-        setActionButtonState('drop', actionAvailability.drop.enabled, actionAvailability.drop.highlighted);
+        setActionButtonState('walk', actionAvailability.walk.enabled, actionAvailability.walk.highlighted, actionAvailability.walk.visible);
+        setActionButtonState('use', actionAvailability.use.enabled, actionAvailability.use.highlighted, actionAvailability.use.visible);
+        setActionButtonState('talk', actionAvailability.talk.enabled, actionAvailability.talk.highlighted, actionAvailability.talk.visible);
+        setActionButtonState('sleep', actionAvailability.sleep.enabled, actionAvailability.sleep.highlighted, actionAvailability.sleep.visible);
+        setActionButtonState('inspect', actionAvailability.inspect.enabled, actionAvailability.inspect.highlighted, actionAvailability.inspect.visible);
+        setActionButtonState('drop', actionAvailability.drop.enabled, actionAvailability.drop.highlighted, actionAvailability.drop.visible);
     };
 
     handleInspectAction = function handleInspectActionSafe() {
@@ -2198,7 +2249,7 @@
         }
 
         if (terrainTarget) {
-            bridge.setActionMessage(getTerrainInspectMessageSafe(terrainTarget));
+            bridge.setActionMessage(getTerrainAdviceMessage(terrainTarget));
             bridge.renderAfterStateChange();
             return;
         }
@@ -2209,14 +2260,7 @@
         }
 
         const tileInfo = selectedWorldTileInfo || routeInspectTileInfo || game.state.activeTileInfo;
-        const tileLabel = bridge.getTileLabel(tileInfo ? tileInfo.tileType : 'grass');
-        const progression = bridge.getCurrentProgression(tileInfo);
-        const suffix = progression ? ` Остров ${progression.islandIndex}: ${progression.label}.` : '';
-        const bandLabel = tileInfo ? bridge.getTravelBandLabel(tileInfo.travelBand) : bridge.getTravelBandLabel('normal');
-        const weightLabel = tileInfo ? bridge.formatRouteCost(tileInfo.travelWeight) : '1.0';
-        const travelLabel = tileInfo ? tileInfo.travelLabel || tileLabel : tileLabel;
-
-        bridge.setActionMessage(`Изучить: ${travelLabel}, координаты ${tileInfo ? tileInfo.x : game.state.playerPos.x}, ${tileInfo ? tileInfo.y : game.state.playerPos.y}. Это ${bandLabel}, цена шага x${weightLabel}.${suffix}`);
+        bridge.setActionMessage(getTileAdviceMessage(tileInfo));
         bridge.renderAfterStateChange();
     };
 

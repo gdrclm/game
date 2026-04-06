@@ -344,9 +344,15 @@
             refs.mobileQuestButton.classList.toggle('is-active', activePanelKey === 'quests');
         }
 
-        const canUse = syncMobileActionButton(refs.mobileUseButton, 'use', { hideWhenUnavailable: true });
+        const canUse = syncMobileActionButton(refs.mobileUseButton, 'use', {
+            hideWhenUnavailable: false,
+            alwaysShow: true
+        });
         const canSleep = syncMobileActionButton(refs.mobileSleepButton, 'sleep', { hideWhenUnavailable: true });
-        const canInspect = syncMobileActionButton(refs.mobileInspectButton, 'inspect', { hideWhenUnavailable: true });
+        const canInspect = syncMobileActionButton(refs.mobileInspectButton, 'inspect', {
+            hideWhenUnavailable: false,
+            alwaysShow: true
+        });
         const canTalk = syncMobileActionButton(refs.mobileTalkButton, 'talk', { hideWhenUnavailable: true });
         const canDrop = syncMobileActionButton(refs.mobileDropButton, 'drop', { hideWhenUnavailable: true });
 
@@ -368,15 +374,18 @@
 
         const actionState = getDesktopActionState(action);
         const isVisible = actionState.isVisible;
+        const buttonVisible = options.alwaysShow ? true : isVisible;
 
         button.disabled = !actionState.isEnabled;
         button.classList.toggle('is-ready', isVisible);
 
-        if (options.hideWhenUnavailable) {
+        if (options.alwaysShow) {
+            button.hidden = false;
+        } else if (options.hideWhenUnavailable) {
             button.hidden = !isVisible;
         }
 
-        return isVisible;
+        return buttonVisible;
     }
 
     function syncHintText() {

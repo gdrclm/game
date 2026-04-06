@@ -60,6 +60,7 @@
     let mapHoverTileKey = '';
     let mapHoverCanvasX = 0;
     let mapHoverCanvasY = 0;
+    let selectedMapIslandIndex = null;
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
@@ -126,6 +127,10 @@
         clearMapHoverTimer();
         mapHoverTileKey = '';
         hideMapHoverCard();
+    }
+
+    function resetSelectedMapIsland() {
+        selectedMapIslandIndex = null;
     }
 
     function bindEvents() {
@@ -272,6 +277,7 @@
         if (nextValue) {
             resetMapPan();
             resetMapHoverState();
+            resetSelectedMapIsland();
             setMapZoom(mapZoom, { silent: true });
             const runtime = getMapRuntime();
             if (runtime && typeof runtime.captureVisibleWorld === 'function') {
@@ -282,6 +288,7 @@
         } else {
             stopMapDrag();
             resetMapHoverState();
+            resetSelectedMapIsland();
         }
 
         bridge.renderAfterStateChange();
@@ -496,6 +503,116 @@
         }
 
         return MAP_TILE_COLORS[entry.baseTileType] || MAP_TILE_COLORS[entry.tileType] || MAP_TILE_COLORS.unloaded;
+    }
+
+    function isIslandLandEntry(entry) {
+        if (!entry) {
+            return false;
+        }
+
+        if (entry.tileType === 'house') {
+            return true;
+        }
+
+        const baseTileType = entry.baseTileType || entry.tileType || '';
+        return baseTileType !== 'water' && baseTileType !== 'unloaded';
+    }
+
+    function resolveClickedIslandIndex(entry) {
+        if (!entry || !isIslandLandEntry(entry) || !Number.isFinite(entry.islandIndex)) {
+            return null;
+        }
+
+        return Math.max(1, Math.floor(entry.islandIndex));
+    }
+
+    function selectMapIsland(entry) {
+        const islandIndex = resolveClickedIslandIndex(entry);
+
+        if (islandIndex === null) {
+            return null;
+        }
+
+        selectedMapIslandIndex = islandIndex;
+        return islandIndex;
+    }
+
+    function hasSameIslandLandNeighbor(tileIndex, islandIndex, worldX, worldY) {
+        const neighbor = tileIndex.get(`${worldX},${worldY}`);
+        return Boolean(
+            neighbor
+            && Number.isFinite(neighbor.islandIndex)
+            && Math.floor(neighbor.islandIndex) === islandIndex
+            && isIslandLandEntry(neighbor)
+        );
+    }
+
+    function drawSelectedIslandOutline(ctx, exploredTiles, tileIndex, bounds, layout, islandIndex) {
+        if (!Number.isFinite(islandIndex) || !Array.isArray(exploredTiles) || exploredTiles.length === 0 || !tileIndex || tileIndex.size === 0) {
+            return;
+        }
+
+        const normalizedIslandIndex = Math.floor(islandIndex);
+        const segments = [];
+
+        exploredTiles.forEach((entry) => {
+            if (!entry || !isIslandLandEntry(entry) || Math.floor(entry.islandIndex) !== normalizedIslandIndex) {
+                return;
+            }
+
+            const left = getCanvasX(entry.x, bounds, layout);
+            const top = getCanvasY(entry.y, bounds, layout);
+            const right = left + layout.cellSize;
+            const bottom = top + layout.cellSize;
+
+            if (!hasSameIslandLandNeighbor(tileIndex, normalizedIslandIndex, entry.x, entry.y - 1)) {
+                segments.push([left, top, right, top]);
+            }
+
+            if (!hasSameIslandLandNeighbor(tileIndex, normalizedIslandIndex, entry.x + 1, entry.y)) {
+                segments.push([right, top, right, bottom]);
+            }
+
+            if (!hasSameIslandLandNeighbor(tileIndex, normalizedIslandIndex, entry.x, entry.y + 1)) {
+                segments.push([left, bottom, right, bottom]);
+            }
+
+            if (!hasSameIslandLandNeighbor(tileIndex, normalizedIslandIndex, entry.x - 1, entry.y)) {
+                segments.push([left, top, left, bottom]);
+            }
+        });
+
+        if (segments.length === 0) {
+            return;
+        }
+
+        const traceSegments = () => {
+            ctx.beginPath();
+            segments.forEach(([startX, startY, endX, endY]) => {
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+            });
+        };
+        const glowWidth = Math.max(4, layout.cellSize * 0.5);
+        const coreWidth = Math.max(2, layout.cellSize * 0.2);
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        traceSegments();
+        ctx.strokeStyle = 'rgba(159, 255, 120, 0.9)';
+        ctx.lineWidth = glowWidth;
+        ctx.shadowColor = 'rgba(179, 255, 125, 0.92)';
+        ctx.shadowBlur = Math.max(10, layout.cellSize * 1.35);
+        ctx.stroke();
+
+        traceSegments();
+        ctx.strokeStyle = '#ebffad';
+        ctx.lineWidth = coreWidth;
+        ctx.shadowBlur = 0;
+        ctx.stroke();
+        ctx.restore();
     }
 
     function drawBackground(ctx, width, height) {
@@ -825,6 +942,15 @@
             drawBookmarkMarker(ctx, drawX, drawY, layout.cellSize);
         });
 
+        drawSelectedIslandOutline(
+            ctx,
+            exploredTiles,
+            lastRenderedTileIndex,
+            bounds,
+            layout,
+            selectedMapIslandIndex
+        );
+
         ctx.fillStyle = '#f8f3d0';
         ctx.beginPath();
         ctx.arc(playerX, playerY, Math.max(3, layout.cellSize * 0.42), 0, Math.PI * 2);
@@ -943,6 +1069,7 @@
             return;
         }
 
+        selectMapIsland(hovered.entry);
         toggleMapBookmark(hovered.entry);
         renderMapPanel();
     }

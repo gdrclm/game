@@ -837,8 +837,12 @@
 
     function drawResourceNode(screenX, baseY, interaction, resolved) {
         const context = window.Game.ctx;
+        const { tileHeight } = window.Game.config;
         const renderKind = interaction.renderKind || interaction.resourceNodeKind || 'bush';
         const shadowRadius = renderKind === 'tree' ? 16 : 12;
+        const stateOverlayBounds = renderKind === 'tree'
+            ? { x: -24, y: -68, width: 48, height: 70 }
+            : { x: -20, y: -36, width: 40, height: 38 };
 
         drawShadow(screenX, baseY + 4, shadowRadius, 5);
 
@@ -846,18 +850,31 @@
         context.translate(screenX, baseY);
 
         if (renderKind === 'tree') {
+            const upperCanopyY = -tileHeight - 16;
+
             context.fillStyle = '#6c4726';
-            context.fillRect(-4, -26, 8, 24);
+            context.fillRect(-4, -30, 8, 28);
+            context.fillRect(-2, -44, 4, 12);
             context.fillStyle = '#4c7a3d';
             context.beginPath();
-            context.arc(-8, -24, 9, 0, Math.PI * 2);
-            context.arc(0, -31, 12, 0, Math.PI * 2);
-            context.arc(10, -23, 9, 0, Math.PI * 2);
+            context.arc(-8, -26, 9, 0, Math.PI * 2);
+            context.arc(0, -34, 12, 0, Math.PI * 2);
+            context.arc(10, -25, 9, 0, Math.PI * 2);
+            context.arc(-6, upperCanopyY + 4, 10, 0, Math.PI * 2);
+            context.arc(3, upperCanopyY - 4, 13, 0, Math.PI * 2);
+            context.arc(14, upperCanopyY + 3, 9, 0, Math.PI * 2);
             context.fill();
             context.fillStyle = '#78a35a';
             context.beginPath();
-            context.arc(-3, -24, 8, 0, Math.PI * 2);
-            context.arc(7, -29, 6, 0, Math.PI * 2);
+            context.arc(-3, -25, 8, 0, Math.PI * 2);
+            context.arc(7, -31, 6, 0, Math.PI * 2);
+            context.arc(0, upperCanopyY + 1, 8, 0, Math.PI * 2);
+            context.arc(10, upperCanopyY - 2, 6, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            context.beginPath();
+            context.arc(1, upperCanopyY - 6, 5, 0, Math.PI * 2);
+            context.arc(6, -37, 4, 0, Math.PI * 2);
             context.fill();
         } else if (renderKind === 'stonePile') {
             fillPolygon(context, [
@@ -954,10 +971,10 @@
 
         if (interaction.nodeState === 'used') {
             context.fillStyle = 'rgba(92, 68, 42, 0.22)';
-            context.fillRect(-18, -32, 36, 30);
+            context.fillRect(stateOverlayBounds.x + 2, stateOverlayBounds.y + 4, stateOverlayBounds.width - 4, stateOverlayBounds.height - 8);
         } else if (interaction.nodeState === 'depleted') {
             context.fillStyle = 'rgba(150, 150, 150, 0.34)';
-            context.fillRect(-20, -36, 40, 38);
+            context.fillRect(stateOverlayBounds.x, stateOverlayBounds.y, stateOverlayBounds.width, stateOverlayBounds.height);
             context.strokeStyle = 'rgba(90, 90, 90, 0.55)';
             context.lineWidth = 1.6;
             context.beginPath();
@@ -980,7 +997,7 @@
 
         if (resolved) {
             context.fillStyle = 'rgba(210, 210, 210, 0.32)';
-            context.fillRect(-20, -36, 40, 38);
+            context.fillRect(stateOverlayBounds.x, stateOverlayBounds.y, stateOverlayBounds.width, stateOverlayBounds.height);
         }
 
         context.restore();

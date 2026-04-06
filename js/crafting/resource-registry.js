@@ -365,6 +365,12 @@
             placementProfile: {
                 biomeLabel: 'meadow/grass',
                 allowedTravelBands: ['normal', 'rough'],
+                clusterProfile: {
+                    minCount: 2,
+                    maxCount: 3,
+                    radius: 1,
+                    includeDiagonals: true
+                },
                 neighborRequirements: [
                     {
                         matchTileTypes: ['grass', 'reeds'],
@@ -490,7 +496,14 @@
             preferredTileTypes: ['grass', 'shore'],
             placementProfile: {
                 biomeLabel: 'safe-medium',
-                allowedTravelBands: ['normal', 'rough']
+                allowedTravelBands: ['normal', 'rough'],
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['grass', 'reeds'],
+                        minCount: 2,
+                        includeDiagonals: true
+                    }
+                ]
             },
             gatherProfile: {
                 resourceId: 'wood',
