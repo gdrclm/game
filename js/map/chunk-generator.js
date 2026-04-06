@@ -893,7 +893,8 @@
             {
                 progression,
                 chunkRecord,
-                trailMeta
+                trailMeta,
+                travelZones
             }
         );
         expedition.applyCollapsedBridges(chunkData, travelZones, chunkX, chunkY);

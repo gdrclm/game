@@ -15,6 +15,22 @@
         return game.systems.itemRegistry || game.systems.loot || null;
     }
 
+    function getContainerRegistry() {
+        return game.systems.containerRegistry || null;
+    }
+
+    function getInteractionsRuntime() {
+        return game.systems.interactions || null;
+    }
+
+    function getGameEvents() {
+        return game.systems.gameEvents || null;
+    }
+
+    function getWorld() {
+        return game.systems.world || null;
+    }
+
     function getMapRuntime() {
         return game.systems.mapRuntime || null;
     }
@@ -240,8 +256,340 @@
         ) || itemId === 'ferryBoard' || itemId === 'roughBridge';
     }
 
+    function getContainerStateForItem(itemOrId) {
+        const itemId = itemOrId && typeof itemOrId === 'object'
+            ? itemOrId.id
+            : itemOrId;
+        const containerRegistry = getContainerRegistry();
+        return containerRegistry && typeof containerRegistry.getContainerStateByItemId === 'function'
+            ? containerRegistry.getContainerStateByItemId(itemId)
+            : null;
+    }
+
+    function getInteractionAtWorld(x, y) {
+        const world = getWorld();
+        const interactions = getInteractionsRuntime();
+        const tileInfo = world && typeof world.getTileInfo === 'function'
+            ? world.getTileInfo(x, y, { generateIfMissing: false })
+            : null;
+
+        if (tileInfo && tileInfo.interaction) {
+            return tileInfo.interaction;
+        }
+
+        return interactions && typeof interactions.getInteractionAtWorld === 'function'
+            ? interactions.getInteractionAtWorld(x, y, { generateIfMissing: false })
+            : null;
+    }
+
+    function findNearbyWaterSourceInteraction() {
+        const playerPos = game.state.playerPos || { x: 0, y: 0 };
+        const selectedTile = game.state.selectedWorldTile || null;
+        const positions = [
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x) + 1, y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x) - 1, y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) + 1 },
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) - 1 }
+        ];
+
+        if (selectedTile) {
+            const selectedDistance = Math.abs(Math.round(selectedTile.x) - Math.round(playerPos.x)) + Math.abs(Math.round(selectedTile.y) - Math.round(playerPos.y));
+            if (selectedDistance <= 1) {
+                positions.unshift({
+                    x: Math.round(selectedTile.x),
+                    y: Math.round(selectedTile.y)
+                });
+            }
+        }
+
+        const seen = new Set();
+        for (const position of positions) {
+            const key = `${position.x},${position.y}`;
+            if (seen.has(key)) {
+                continue;
+            }
+
+            seen.add(key);
+            const interaction = getInteractionAtWorld(position.x, position.y);
+            if (interaction && interaction.kind === 'resourceNode' && interaction.resourceNodeKind === 'waterSource') {
+                return interaction;
+            }
+        }
+
+        return null;
+    }
+
+    function getActiveContainerFillContext(containerState) {
+        if (!containerState || !containerState.id) {
+            return null;
+        }
+
+        const containerRegistry = getContainerRegistry();
+        const interactions = getInteractionsRuntime();
+        const nearbyWaterSource = findNearbyWaterSourceInteraction();
+
+        if (
+            nearbyWaterSource
+            && nearbyWaterSource.kind === 'resourceNode'
+            && nearbyWaterSource.resourceNodeKind === 'waterSource'
+        ) {
+            const syncedInteraction = interactions && typeof interactions.syncResourceNodeInteractionState === 'function'
+                ? interactions.syncResourceNodeInteractionState(nearbyWaterSource)
+                : nearbyWaterSource;
+            const targetStateId = containerRegistry && typeof containerRegistry.getFillTargetStateId === 'function'
+                ? containerRegistry.getFillTargetStateId(containerState.id, 'waterSource')
+                : '';
+
+            if (
+                targetStateId
+                && syncedInteraction.nodeState !== 'depleted'
+                && syncedInteraction.nodeState !== 'regenerating'
+                && !syncedInteraction.islandLimitExhausted
+            ) {
+                return {
+                    sourceKind: 'waterSource',
+                    sourceLabel: syncedInteraction.label || 'точка воды',
+                    targetStateId,
+                    interaction: syncedInteraction
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function getContainerUseContext(item) {
+        const containerState = getContainerStateForItem(item);
+        if (!containerState) {
+            return null;
+        }
+
+        const fillContext = getActiveContainerFillContext(containerState);
+        if (fillContext) {
+            return {
+                kind: 'fill',
+                containerState,
+                fillContext
+            };
+        }
+
+        if (containerState.drinkable) {
+            return {
+                kind: 'drink',
+                containerState
+            };
+        }
+
+        return null;
+    }
+
+    function buildContainerTransformFailureMessage(targetLabel, reason) {
+        if (reason === 'full') {
+            return `В сумке нет места, чтобы получить "${targetLabel}". Освободи слот или собери такой же предмет в существующую стопку.`;
+        }
+
+        return `Не удалось получить "${targetLabel}".`;
+    }
+
+    function buildContainerNodeStateSummary(resourceNodeState) {
+        if (!resourceNodeState) {
+            return '';
+        }
+
+        if (resourceNodeState.nodeState === 'used') {
+            return ` Источник надорван: осталось ${resourceNodeState.durabilityRemaining} из ${resourceNodeState.durabilityMax}.`;
+        }
+
+        if (resourceNodeState.nodeState === 'depleted') {
+            return resourceNodeState.nodeStateReason === 'islandLimit' && resourceNodeState.islandLimitMax
+                ? ` Лимит этого источника на острове исчерпан: ${resourceNodeState.islandLimitConsumed || resourceNodeState.islandLimitMax} из ${resourceNodeState.islandLimitMax}.`
+                : ' Источник сейчас исчерпан.';
+        }
+
+        if (resourceNodeState.nodeState === 'regenerating') {
+            return ' Источник ушёл в восстановление.';
+        }
+
+        return '';
+    }
+
+    function emitContainerGatherEvent(fillContext, targetState, resourceNodeState = null) {
+        const gameEvents = getGameEvents();
+        if (!gameEvents || typeof gameEvents.emitResourceGathered !== 'function') {
+            return;
+        }
+
+        const sourceTile = fillContext && fillContext.interaction && Number.isFinite(fillContext.interaction.worldX) && Number.isFinite(fillContext.interaction.worldY)
+            ? {
+                x: fillContext.interaction.worldX,
+                y: fillContext.interaction.worldY,
+                tileType: fillContext.interaction.tileType || fillContext.interaction.baseTileType || ''
+            }
+            : (game.state.activeTileInfo
+                ? {
+                    x: game.state.activeTileInfo.x,
+                    y: game.state.activeTileInfo.y,
+                    tileType: game.state.activeTileInfo.tileType || game.state.activeTileInfo.baseTileType || ''
+                }
+                : null);
+
+        gameEvents.emitResourceGathered({
+            resourceId: 'water',
+            resourceFamilyId: 'water',
+            itemId: targetState && targetState.itemId ? targetState.itemId : '',
+            quantity: 1,
+            sourceLabel: fillContext && fillContext.sourceLabel ? fillContext.sourceLabel : 'источник воды',
+            collectedLabel: targetState && targetState.label ? targetState.label : 'воду',
+            tile: sourceTile,
+            nodeStateAfter: resourceNodeState
+                ? {
+                    nodeState: resourceNodeState.nodeState,
+                    durabilityRemaining: resourceNodeState.durabilityRemaining,
+                    durabilityMax: resourceNodeState.durabilityMax
+                }
+                : null,
+            gatherCost: null,
+            gatherRisk: null,
+            sourceKind: fillContext && fillContext.sourceKind ? fillContext.sourceKind : ''
+        });
+    }
+
+    function useContainerItem(item) {
+        const inventoryRuntime = getInventoryRuntime();
+        const containerRegistry = getContainerRegistry();
+        const selectedIndex = game.state.selectedInventorySlot;
+        const useContext = getContainerUseContext(item);
+
+        if (!useContext || !inventoryRuntime || typeof selectedIndex !== 'number') {
+            return null;
+        }
+
+        const currentState = useContext.containerState;
+
+        if (useContext.kind === 'fill') {
+            const targetState = containerRegistry && typeof containerRegistry.getContainerStateDefinition === 'function'
+                ? containerRegistry.getContainerStateDefinition(useContext.fillContext.targetStateId)
+                : null;
+            const targetDefinition = targetState && targetState.itemId ? getItemDefinition(targetState.itemId) : null;
+
+            if (!targetState || !targetState.itemId) {
+                return {
+                    success: false,
+                    message: 'Для этой фляги не найдено состояние наполнения.',
+                    effectDrops: []
+                };
+            }
+
+            const transformOutcome = typeof inventoryRuntime.transformInventoryItemAtIndex === 'function'
+                ? inventoryRuntime.transformInventoryItemAtIndex(selectedIndex, targetState.itemId, 1, {
+                    useCount: Math.max(0, item.useCount || 0) + 1
+                })
+                : { success: false, reason: 'unavailable', item: null };
+
+            if (!transformOutcome.success) {
+                return {
+                    success: false,
+                    message: buildContainerTransformFailureMessage(targetState.label || 'наполненная фляга', transformOutcome.reason),
+                    effectDrops: []
+                };
+            }
+
+            let resourceNodeState = null;
+            const interactions = getInteractionsRuntime();
+            if (
+                useContext.fillContext.sourceKind === 'waterSource'
+                && interactions
+                && typeof interactions.consumeResourceNodeInteraction === 'function'
+            ) {
+                resourceNodeState = interactions.consumeResourceNodeInteraction(useContext.fillContext.interaction);
+            }
+
+            if (game.systems.world && typeof game.systems.world.updatePlayerContext === 'function') {
+                game.systems.world.updatePlayerContext(game.state.playerPos);
+            }
+
+            emitContainerGatherEvent(useContext.fillContext, targetState, resourceNodeState);
+            game.state.selectedInventorySlot = null;
+
+            return {
+                success: true,
+                message: `Фляга набрана у "${useContext.fillContext.sourceLabel}": получена сырая вода.${buildContainerNodeStateSummary(resourceNodeState)}`,
+                effectDrops: targetState
+                    ? [buildItemEffectDrop({
+                        id: targetState.itemId,
+                        label: targetDefinition && targetDefinition.label ? targetDefinition.label : targetState.label,
+                        icon: targetDefinition && targetDefinition.icon ? targetDefinition.icon : '?',
+                        quantity: 1
+                    })].filter(Boolean)
+                    : []
+            };
+        }
+
+        if (useContext.kind === 'drink') {
+            const nextState = currentState.useTransitionStateId && containerRegistry && typeof containerRegistry.getContainerStateDefinition === 'function'
+                ? containerRegistry.getContainerStateDefinition(currentState.useTransitionStateId)
+                : null;
+            const nextDefinition = nextState && nextState.itemId ? getItemDefinition(nextState.itemId) : null;
+
+            if (!nextState || !nextState.itemId) {
+                return {
+                    success: false,
+                    message: `Для "${item.label}" не найдено состояние пустого контейнера.`,
+                    effectDrops: []
+                };
+            }
+
+            const consumableEffect = getConsumableEffectForUse(item);
+            const transformOutcome = typeof inventoryRuntime.transformInventoryItemAtIndex === 'function'
+                ? inventoryRuntime.transformInventoryItemAtIndex(selectedIndex, nextState.itemId, 1, {
+                    useCount: Math.max(0, item.useCount || 0) + 1
+                })
+                : { success: false, reason: 'unavailable', item: null };
+
+            if (!transformOutcome.success) {
+                return {
+                    success: false,
+                    message: buildContainerTransformFailureMessage(nextState.label || 'пустая фляга', transformOutcome.reason),
+                    effectDrops: []
+                };
+            }
+
+            const applied = consumableEffect ? applyInventoryConsumableEffect(consumableEffect) : {};
+            game.state.selectedInventorySlot = null;
+            const messageParts = [`Использован предмет "${item.label}". Фляга опустела.`];
+
+            if (Object.keys(applied).length > 0) {
+                messageParts.push(`Получено: ${bridge.describeAppliedRewards(applied)}.`);
+            }
+
+            return {
+                success: true,
+                message: messageParts.join(' '),
+                applied,
+                effectDrops: buildRewardEffectDrops(applied).concat(
+                    nextState ? [buildItemEffectDrop({
+                        id: nextState.itemId,
+                        label: nextDefinition && nextDefinition.label ? nextDefinition.label : nextState.label,
+                        icon: nextDefinition && nextDefinition.icon ? nextDefinition.icon : '?',
+                        quantity: 1
+                    })].filter(Boolean) : []
+                )
+            };
+        }
+
+        return null;
+    }
+
     function canUseInventoryItem(item) {
-        return Boolean(item && (getConsumableEffectForUse(item) || getActiveEffectForUse(item)));
+        return Boolean(
+            item
+            && (
+                getContainerUseContext(item)
+                || getConsumableEffectForUse(item)
+                || getActiveEffectForUse(item)
+            )
+        );
     }
 
     function getBuildDirectionCandidates() {
@@ -791,19 +1139,40 @@
         }
 
         if (activeEffect.kind === 'travelBuff') {
+            const freeSteps = Math.max(0, activeEffect.freeSteps || 0);
+            const messageParts = [];
+
+            if (freeSteps > 0) {
+                messageParts.push(`Следующие ${freeSteps} шагов бесплатны.`);
+            }
+
+            if (Number.isFinite(activeEffect.discountMultiplier) && activeEffect.discountMultiplier < 1) {
+                const savedPercent = Math.round((1 - activeEffect.discountMultiplier) * 100);
+                const durationSteps = Number.isFinite(activeEffect.durationSteps) && activeEffect.durationSteps > 0
+                    ? activeEffect.durationSteps
+                    : null;
+                messageParts.push(durationSteps
+                    ? `Цена маршрута снижена на ${savedPercent}% на ${durationSteps} шагов.`
+                    : `Цена маршрута снижена на ${savedPercent}%.`);
+            }
+
+            if (Array.isArray(activeEffect.ignoreTravelZones) && activeEffect.ignoreTravelZones.length > 0) {
+                messageParts.push('Часть тяжёлых зон временно игнорируется.');
+            }
+
             addActiveEffect({
                 kind: 'travelBuff',
                 label: activeEffect.label || item.label,
                 remainingSteps: Number.isFinite(activeEffect.durationSteps)
                     ? activeEffect.durationSteps
-                    : Math.max(0, activeEffect.freeSteps || 0),
-                freeSteps: Math.max(0, activeEffect.freeSteps || 0),
+                    : freeSteps,
+                freeSteps,
                 discountMultiplier: activeEffect.discountMultiplier,
                 ignoreTravelZones: normalizeIgnoredTravelZones(activeEffect.ignoreTravelZones)
             });
             return {
                 success: true,
-                message: `Активирован дорожный эффект "${item.label}".`,
+                message: messageParts.join(' ') || `Активирован дорожный эффект "${item.label}".`,
                 effectDrops: [],
                 consumeItem: true
             };
@@ -952,14 +1321,19 @@
             };
         }
 
+        const containerOutcome = useContainerItem(item);
+        if (containerOutcome) {
+            return containerOutcome;
+        }
+
         const consumableEffect = getConsumableEffectForUse(item);
         const activeEffect = getActiveEffectForUse(item);
         const applied = consumableEffect ? applyInventoryConsumableEffect(consumableEffect) : {};
         const activationResult = activeEffect ? activateEffectFromItem(item, activeEffect) : null;
         const shouldConsume = Boolean(consumableEffect) || Boolean(activationResult && activationResult.consumeItem);
+        const selectedIndex = game.state.selectedInventorySlot;
 
         if (shouldConsume && inventoryRuntime) {
-            const selectedIndex = game.state.selectedInventorySlot;
             if (typeof selectedIndex === 'number') {
                 inventoryRuntime.markInventoryItemUsed(selectedIndex);
             }
@@ -967,6 +1341,7 @@
         }
 
         if (consumableEffect || (activationResult && activationResult.success)) {
+            game.state.selectedInventorySlot = null;
             const messageParts = [`Использован предмет "${item.label}".`];
 
             if (Object.keys(applied).length > 0) {

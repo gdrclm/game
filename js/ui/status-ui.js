@@ -342,7 +342,8 @@
             : game.systems.expedition.getTraversalWeight(tileInfo);
         const traversalDrain = Math.max(0, baseTraversalCost * focusMultiplier * criticalDrainMultiplier);
         const energyDrain = Math.max(0.45, traversalDrain * bridge.getStepEnergyDrainMultiplier(tileInfo));
-        const hungerDrain = Math.max(0.45, traversalDrain);
+        const openingHungerDrainMultiplier = bridge.getOpeningHungerDrainMultiplier();
+        const hungerDrain = Math.max(0.45 * openingHungerDrainMultiplier, traversalDrain * openingHungerDrainMultiplier);
         const coldDelta = game.state.activeHouse
             ? bridge.scaleRecovery(3)
             : -Math.max(0.2, game.systems.expedition.scaleTraversalDrain(1 / bridge.coldDrainDivider, tileInfo) * criticalDrainMultiplier);

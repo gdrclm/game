@@ -23,8 +23,192 @@
         return game.systems.resourceRegistry || null;
     }
 
+    function getContainerRegistry() {
+        return game.systems.containerRegistry || null;
+    }
+
     function getGameEvents() {
         return game.systems.gameEvents || null;
+    }
+
+    function getInteractionsRuntime() {
+        return game.systems.interactions || null;
+    }
+
+    function getCurrentTimeOfDayAdvancesElapsed() {
+        return Number.isFinite(game.state.timeOfDayAdvancesElapsed)
+            ? Math.max(0, Math.floor(game.state.timeOfDayAdvancesElapsed))
+            : 0;
+    }
+
+    function syncResourceNodeInteraction(interaction) {
+        const interactions = getInteractionsRuntime();
+        return interactions && typeof interactions.syncResourceNodeInteractionState === 'function'
+            ? interactions.syncResourceNodeInteractionState(interaction)
+            : interaction;
+    }
+
+    function isResourceNodeInteraction(interaction) {
+        const interactions = getInteractionsRuntime();
+        return interactions && typeof interactions.isResourceNodeInteraction === 'function'
+            ? interactions.isResourceNodeInteraction(interaction)
+            : Boolean(interaction && interaction.kind === 'resourceNode');
+    }
+
+    function cloneProfile(profile) {
+        return profile && typeof profile === 'object'
+            ? { ...profile }
+            : null;
+    }
+
+    function buildResourceNodeRequirementMessage(profile, interaction, definition) {
+        if (interaction && interaction.nodeStateReason === 'islandLimit' && interaction.islandLimitMax) {
+            return `На этом острове лимит на "${interaction.label || definition.label || 'этот ресурс'}" исчерпан: ${interaction.islandLimitConsumed || interaction.islandLimitMax} из ${interaction.islandLimitMax}.`;
+        }
+
+        if (interaction && interaction.nodeState === 'depleted') {
+            return `"${interaction.label || definition.label || 'Этот узел'}" исчерпан.`;
+        }
+
+        if (interaction && interaction.nodeState === 'regenerating') {
+            const readyAtAdvance = Number.isFinite(interaction.regenerationReadyAtAdvance)
+                ? interaction.regenerationReadyAtAdvance
+                : null;
+            const remainingAdvances = readyAtAdvance === null
+                ? null
+                : Math.max(0, readyAtAdvance - getCurrentTimeOfDayAdvancesElapsed());
+            const regenerationHint = remainingAdvances === 1
+                ? ' Он восстановится после следующей смены времени суток.'
+                : (remainingAdvances && remainingAdvances > 1
+                    ? ` Он восстановится через ${remainingAdvances} смены времени суток.`
+                    : ' Он ещё восстанавливается.');
+            return `"${interaction.label || definition.label || 'Этот узел'}" восстанавливается.${regenerationHint}`;
+        }
+
+        if (profile && profile.requiredInventoryItemId) {
+            const itemLabel = profile.requiredInventoryItemLabel || profile.requiredInventoryItemId;
+            return `Для "${interaction.label || definition.label || 'этого узла'}" нужен предмет "${itemLabel}".`;
+        }
+
+        return interaction.interactionHint
+            || definition.interactionHint
+            || `Сейчас "${interaction.label || definition.label || 'этот узел'}" использовать нельзя.`;
+    }
+
+    function buildResourceNodeGatherProfile(interaction, tileInfo) {
+        if (!isResourceNodeInteraction(interaction)) {
+            return null;
+        }
+
+        const syncedInteraction = syncResourceNodeInteraction(interaction) || interaction;
+        const resourceRegistry = getResourceRegistry();
+        const inventoryRuntime = getInventoryRuntime();
+        const definition = resourceRegistry && typeof resourceRegistry.getResourceNodeDefinition === 'function'
+            ? resourceRegistry.getResourceNodeDefinition(syncedInteraction.resourceNodeKind)
+            : null;
+        const tileType = tileInfo ? (tileInfo.baseTileType || tileInfo.tileType || '') : '';
+        const resourceId = syncedInteraction.resourceId || (definition ? definition.resourceId : '') || '';
+        const defaultCollectedLabelByResource = {
+            grass: 'траву',
+            stone: 'камень',
+            rubble: 'щебень',
+            wood: 'дерево',
+            water: 'воду',
+            fish: 'рыбу'
+        };
+        const defaultSourceLabel = (syncedInteraction.label || (definition ? definition.label : '') || 'ресурсный узел').toLowerCase();
+        const profile = cloneProfile(syncedInteraction.gatherProfile || (definition ? definition.gatherProfile : null)) || {
+            resourceId,
+            resourceFamilyId: resourceId,
+            itemId: '',
+            sourceLabel: defaultSourceLabel,
+            collectedLabel: defaultCollectedLabelByResource[resourceId] || defaultSourceLabel,
+            adviceKey: resourceId,
+            allowAdjacent: true
+        };
+
+        profile.resourceId = profile.resourceId || resourceId;
+        profile.resourceFamilyId = profile.resourceFamilyId || profile.resourceId || resourceId;
+        profile.sourceLabel = profile.sourceLabel || defaultSourceLabel;
+        profile.collectedLabel = profile.collectedLabel || defaultCollectedLabelByResource[resourceId] || defaultSourceLabel;
+        profile.adviceKey = profile.adviceKey || resourceId;
+        profile.allowAdjacent = profile.allowAdjacent !== false;
+        profile.nodeState = syncedInteraction.nodeState || 'fresh';
+        profile.nodeStateReason = syncedInteraction.nodeStateReason || 'durability';
+        profile.nodeStateLabel = syncedInteraction.nodeStateLabel || profile.nodeState;
+        profile.durabilityRemaining = Number.isFinite(syncedInteraction.durabilityRemaining)
+            ? syncedInteraction.durabilityRemaining
+            : 0;
+        profile.durabilityMax = Number.isFinite(syncedInteraction.durabilityMax)
+            ? syncedInteraction.durabilityMax
+            : Math.max(1, profile.durabilityRemaining || 1);
+        profile.respawnPolicyMode = syncedInteraction.respawnPolicyMode || '';
+        profile.respawnPolicyLabel = syncedInteraction.respawnPolicyLabel || '';
+        profile.islandLimitConsumed = Number.isFinite(syncedInteraction.islandLimitConsumed)
+            ? syncedInteraction.islandLimitConsumed
+            : 0;
+        profile.islandLimitMax = Number.isFinite(syncedInteraction.islandLimitMax)
+            ? syncedInteraction.islandLimitMax
+            : null;
+        profile.islandLimitRemaining = Number.isFinite(syncedInteraction.islandLimitRemaining)
+            ? syncedInteraction.islandLimitRemaining
+            : null;
+        profile.islandLimitExhausted = Boolean(syncedInteraction.islandLimitExhausted);
+
+        if (syncedInteraction.resourceNodeKind === 'grassBush' && resourceRegistry && typeof resourceRegistry.getResourceSubtypeDefinition === 'function') {
+            const subtypeId = tileType === 'reeds' ? 'lowlandGrass' : 'fieldGrass';
+            const subtype = resourceRegistry.getResourceSubtypeDefinition(subtypeId);
+
+            if (subtype) {
+                profile.resourceFamilyId = subtype.familyResourceId || profile.resourceFamilyId || 'grass';
+                profile.itemId = subtype.familyItemId || profile.itemId || 'raw_grass';
+                profile.resourceSubtypeId = subtype.id;
+                profile.resourceSubtypeLabel = subtype.label || '';
+                profile.adviceKey = subtype.adviceKey || profile.adviceKey;
+                profile.legacyHarvestItemIds = Array.isArray(subtype.legacyItemIds)
+                    ? subtype.legacyItemIds.slice()
+                    : [];
+                profile.collectedLabel = subtype.collectedLabel || profile.collectedLabel;
+                profile.sourceLabel = tileType === 'reeds'
+                    ? 'куст низинной травы'
+                    : 'луговой куст травы';
+            }
+        }
+
+        if (!profile.itemId) {
+            profile.canGather = false;
+            profile.requirementMessage = buildResourceNodeRequirementMessage(profile, syncedInteraction, definition || {});
+            return profile;
+        }
+
+        if (profile.nodeState === 'depleted' || profile.nodeState === 'regenerating') {
+            profile.canGather = false;
+            profile.requirementMessage = buildResourceNodeRequirementMessage(profile, syncedInteraction, definition || {});
+            return profile;
+        }
+
+        if (
+            profile.requiredInventoryItemId
+            && inventoryRuntime
+            && typeof inventoryRuntime.countInventoryItem === 'function'
+            && inventoryRuntime.countInventoryItem(profile.requiredInventoryItemId) < 1
+        ) {
+            profile.canGather = false;
+            profile.requirementMessage = buildResourceNodeRequirementMessage(profile, syncedInteraction, definition || {});
+            return profile;
+        }
+
+        profile.canGather = true;
+        return profile;
+    }
+
+    function isTerrainTargetGatherAvailable(target) {
+        return Boolean(
+            target
+            && target.profile
+            && target.profile.itemId
+            && target.profile.canGather !== false
+        );
     }
 
     function isDialogueEncounter(encounter, activeInteraction = game.state.activeInteraction) {
@@ -74,29 +258,26 @@
             return null;
         }
 
-        const baseTileType = tileInfo.baseTileType || tileInfo.tileType;
-        const resourceRegistry = getResourceRegistry();
-        const registryProfile = resourceRegistry && typeof resourceRegistry.getTerrainGatherProfile === 'function'
-            ? resourceRegistry.getTerrainGatherProfile(baseTileType)
-            : null;
-
-        if ((baseTileType === 'rubble' || baseTileType === 'rock') && registryProfile) {
-            return registryProfile;
+        const resourceNodeProfile = buildResourceNodeGatherProfile(tileInfo.interaction, tileInfo);
+        if (resourceNodeProfile) {
+            return resourceNodeProfile;
         }
 
         if (tileInfo.travelZoneKey === 'badSector') {
             return {
+                resourceId: 'soil',
+                resourceFamilyId: 'soil',
                 itemId: 'soilClod',
                 sourceLabel: 'плохой сектор',
                 collectedLabel: 'комья земли',
                 adviceKey: 'soil',
                 conversionHint: 'Пять единиц этого сырья можно сжать руками в земляной ресурс.',
-                allowAdjacent: false
+                allowAdjacent: false,
+                gatherCost: {
+                    routeCost: 1.25,
+                    timeSteps: 2
+                }
             };
-        }
-
-        if (registryProfile) {
-            return registryProfile;
         }
 
         return null;
@@ -122,6 +303,11 @@
             return false;
         }
 
+        if (tileInfo.interaction && isResourceNodeInteraction(tileInfo.interaction)) {
+            syncResourceNodeInteraction(tileInfo.interaction);
+            return false;
+        }
+
         const harvested = getHarvestedTerrainState();
         const harvestKeyIds = getTerrainHarvestKeyIds(profile);
         return Boolean(
@@ -135,11 +321,331 @@
             return;
         }
 
+        if (tileInfo.interaction && isResourceNodeInteraction(tileInfo.interaction)) {
+            return;
+        }
+
         const harvested = getHarvestedTerrainState();
         harvested[getTerrainGatherKey(tileInfo)] = true;
         getTerrainHarvestKeyIds(profile).forEach((itemId) => {
             harvested[`${itemId}:${tileInfo.x},${tileInfo.y}`] = true;
         });
+    }
+
+    function formatTempoStepLabel(stepCount) {
+        const absoluteCount = Math.abs(Math.floor(stepCount));
+        const lastDigit = absoluteCount % 10;
+        const lastTwoDigits = absoluteCount % 100;
+
+        if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+            return 'шагов маршрута';
+        }
+
+        if (lastDigit === 1) {
+            return 'шаг маршрута';
+        }
+
+        if (lastDigit >= 2 && lastDigit <= 4) {
+            return 'шага маршрута';
+        }
+
+        return 'шагов маршрута';
+    }
+
+    function buildGatherCostProfile(profile, tileInfo = game.state.activeTileInfo) {
+        const sourceCost = profile && profile.gatherCost && typeof profile.gatherCost === 'object'
+            ? profile.gatherCost
+            : {};
+        const fallbackRouteCost = tileInfo && Number.isFinite(tileInfo.travelWeight)
+            ? Math.max(0.5, tileInfo.travelWeight)
+            : 1;
+        const routeCost = Number.isFinite(sourceCost.routeCost)
+            ? Math.max(0.25, sourceCost.routeCost)
+            : fallbackRouteCost;
+        const timeSteps = Number.isFinite(sourceCost.timeSteps)
+            ? Math.max(1, Math.floor(sourceCost.timeSteps))
+            : 1;
+
+        return {
+            routeCost,
+            routeCostLabel: bridge.formatRouteCost(routeCost),
+            timeSteps,
+            timeLabel: `+${timeSteps} ${formatTempoStepLabel(timeSteps)}`
+        };
+    }
+
+    function getGatherCostSentence(profile, tileInfo = game.state.activeTileInfo) {
+        const gatherCost = buildGatherCostProfile(profile, tileInfo);
+        return `Цена сбора: x${gatherCost.routeCostLabel} и ${gatherCost.timeLabel}.`;
+    }
+
+    function applyGatherTempoCost(target) {
+        if (!target || !target.profile) {
+            return {
+                gatherCost: buildGatherCostProfile(null, game.state.activeTileInfo),
+                timeAdvances: 0,
+                timeMessages: []
+            };
+        }
+
+        const tileInfo = game.state.activeTileInfo || target.tileInfo;
+        const gatherCost = buildGatherCostProfile(target.profile, tileInfo);
+        const focusMultiplier = bridge.getFocusMultiplier();
+        const criticalDrainMultiplier = bridge.getCriticalDepletionMultiplier();
+        const traversalDrain = Math.max(0, gatherCost.routeCost * focusMultiplier * criticalDrainMultiplier);
+        const openingHungerDrainMultiplier = bridge.getOpeningHungerDrainMultiplier();
+        const energyDrain = Math.max(0.4 * gatherCost.timeSteps, traversalDrain * bridge.getStepEnergyDrainMultiplier(tileInfo));
+        const hungerDrain = Math.max(0.4 * gatherCost.timeSteps * openingHungerDrainMultiplier, traversalDrain * openingHungerDrainMultiplier);
+        const coldDelta = game.state.activeHouse
+            ? 0
+            : -Math.max(
+                0.15 * gatherCost.timeSteps,
+                game.systems.expedition.scaleTraversalDrain(gatherCost.routeCost / bridge.coldDrainDivider, tileInfo) * criticalDrainMultiplier
+            );
+
+        bridge.applyStatDeltas({
+            energy: -energyDrain,
+            hunger: -hungerDrain,
+            cold: coldDelta
+        });
+
+        if (game.state.isGameOver) {
+            return {
+                gatherCost,
+                timeAdvances: 0,
+                timeMessages: []
+            };
+        }
+
+        const movement = game.systems.movement || null;
+        const timeOutcome = movement && typeof movement.consumeActionTempo === 'function'
+            ? movement.consumeActionTempo({
+                virtualSteps: gatherCost.timeSteps,
+                silent: true,
+                reasonLabel: 'за сбором'
+            })
+            : {
+                virtualStepsApplied: 0,
+                timeAdvances: 0,
+                messages: []
+            };
+
+        return {
+            gatherCost,
+            timeAdvances: Number.isFinite(timeOutcome.timeAdvances) ? timeOutcome.timeAdvances : 0,
+            timeMessages: Array.isArray(timeOutcome.messages) ? timeOutcome.messages.filter(Boolean) : []
+        };
+    }
+
+    function getGatherRiskChanceLabel(chance) {
+        return `${Math.round(Math.max(0, chance) * 100)}%`;
+    }
+
+    function buildGatherRiskProfile(profile, tileInfo = game.state.activeTileInfo) {
+        const sourceRisk = profile && profile.gatherRisk && typeof profile.gatherRisk === 'object'
+            ? profile.gatherRisk
+            : null;
+
+        if (!sourceRisk) {
+            return null;
+        }
+
+        const islandIndex = tileInfo && tileInfo.progression && Number.isFinite(tileInfo.progression.islandIndex)
+            ? Math.max(1, Math.floor(tileInfo.progression.islandIndex))
+            : Math.max(1, Math.floor(game.state.currentIslandIndex || 1));
+        const startIsland = Number.isFinite(sourceRisk.startIsland)
+            ? Math.max(1, Math.floor(sourceRisk.startIsland))
+            : 19;
+
+        if (islandIndex < startIsland) {
+            return null;
+        }
+
+        const rewardScaling = game.systems.rewardScaling || null;
+        const pressureTier = rewardScaling && typeof rewardScaling.getIslandPressureTier === 'function'
+            ? rewardScaling.getIslandPressureTier(tileInfo)
+            : 0;
+        const weather = rewardScaling && typeof rewardScaling.getWeather === 'function'
+            ? rewardScaling.getWeather(tileInfo)
+            : null;
+        const baseChance = Number.isFinite(sourceRisk.baseChance) ? Math.max(0, sourceRisk.baseChance) : 0.12;
+        const islandChanceStep = Number.isFinite(sourceRisk.islandChanceStep) ? Math.max(0, sourceRisk.islandChanceStep) : 0.01;
+        const pressureChanceStep = Number.isFinite(sourceRisk.pressureChanceStep) ? Math.max(0, sourceRisk.pressureChanceStep) : 0.02;
+        const badWeatherChanceBonus = Number.isFinite(sourceRisk.badWeatherChanceBonus) ? Math.max(0, sourceRisk.badWeatherChanceBonus) : 0.03;
+        const maxChance = Number.isFinite(sourceRisk.maxChance) ? Math.max(baseChance, sourceRisk.maxChance) : 0.3;
+        const weatherBonus = weather && weather.key && weather.key !== 'clear'
+            ? badWeatherChanceBonus
+            : 0;
+        const chance = Math.min(
+            maxChance,
+            baseChance
+                + Math.max(0, islandIndex - startIsland) * islandChanceStep
+                + Math.max(0, pressureTier) * pressureChanceStep
+                + weatherBonus
+        );
+
+        return {
+            ...sourceRisk,
+            islandIndex,
+            startIsland,
+            pressureTier,
+            weatherKey: weather && weather.key ? weather.key : 'clear',
+            chance,
+            chanceLabel: getGatherRiskChanceLabel(chance),
+            outcomes: sourceRisk.outcomes && typeof sourceRisk.outcomes === 'object'
+                ? { ...sourceRisk.outcomes }
+                : {
+                    noise: 2,
+                    extraDrain: 3,
+                    loseTurn: 1,
+                    localPressure: 2
+                }
+        };
+    }
+
+    function pickWeightedGatherRiskOutcome(outcomes = {}) {
+        const normalizedEntries = Object.entries(outcomes)
+            .map(([key, value]) => [key, Number.isFinite(value) ? Math.max(0, value) : 0])
+            .filter(([, weight]) => weight > 0);
+
+        if (normalizedEntries.length === 0) {
+            return 'extraDrain';
+        }
+
+        const totalWeight = normalizedEntries.reduce((sum, [, weight]) => sum + weight, 0);
+        let roll = Math.random() * totalWeight;
+
+        for (const [key, weight] of normalizedEntries) {
+            roll -= weight;
+            if (roll <= 0) {
+                return key;
+            }
+        }
+
+        return normalizedEntries[normalizedEntries.length - 1][0];
+    }
+
+    function applyGatherRiskExtraDrain(target, riskProfile) {
+        const tileInfo = game.state.activeTileInfo || target.tileInfo;
+        const gatherCost = buildGatherCostProfile(target.profile, tileInfo);
+        const extraDrainFactor = Number.isFinite(riskProfile.extraDrainFactor)
+            ? Math.max(0.5, riskProfile.extraDrainFactor)
+            : 0.8;
+        const focusMultiplier = bridge.getFocusMultiplier();
+        const criticalDrainMultiplier = bridge.getCriticalDepletionMultiplier();
+        const traversalDrain = Math.max(0, gatherCost.routeCost * extraDrainFactor * focusMultiplier * criticalDrainMultiplier);
+        const openingHungerDrainMultiplier = bridge.getOpeningHungerDrainMultiplier();
+        const energyDrain = Math.max(0.65, traversalDrain * bridge.getStepEnergyDrainMultiplier(tileInfo));
+        const hungerDrain = Math.max(0.65, traversalDrain * openingHungerDrainMultiplier);
+        const coldDelta = game.state.activeHouse
+            ? 0
+            : -Math.max(
+                0.25,
+                game.systems.expedition.scaleTraversalDrain((gatherCost.routeCost * extraDrainFactor) / bridge.coldDrainDivider, tileInfo) * criticalDrainMultiplier
+            );
+
+        bridge.applyStatDeltas({
+            energy: -energyDrain,
+            hunger: -hungerDrain,
+            cold: coldDelta
+        });
+
+        return {
+            energyDrain,
+            hungerDrain,
+            coldDelta
+        };
+    }
+
+    function getGatherRiskWarning(profile, tileInfo = game.state.activeTileInfo) {
+        const riskProfile = buildGatherRiskProfile(profile, tileInfo);
+
+        if (!riskProfile) {
+            return '';
+        }
+
+        return ` На поздних островах риск сбора около ${riskProfile.chanceLabel}: возможны шум, лишний drain, потеря хода или рост local pressure.`;
+    }
+
+    function applyGatherRiskOutcome(target) {
+        const tileInfo = game.state.activeTileInfo || target.tileInfo;
+        const riskProfile = buildGatherRiskProfile(target && target.profile, tileInfo);
+
+        if (!riskProfile || Math.random() >= riskProfile.chance) {
+            return {
+                triggered: false,
+                riskProfile
+            };
+        }
+
+        const rewardScaling = game.systems.rewardScaling || null;
+        const movement = game.systems.movement || null;
+        const ui = game.systems.ui || null;
+        const outcomeKey = pickWeightedGatherRiskOutcome(riskProfile.outcomes);
+        let message = '';
+        let timeAdvances = 0;
+        let pressureAdded = 0;
+
+        if (outcomeKey === 'noise') {
+            const noiseSteps = Number.isFinite(riskProfile.noiseTimeSteps)
+                ? Math.max(1, Math.floor(riskProfile.noiseTimeSteps))
+                : 1;
+            const timeOutcome = movement && typeof movement.consumeActionTempo === 'function'
+                ? movement.consumeActionTempo({
+                    virtualSteps: noiseSteps,
+                    silent: true,
+                    reasonLabel: 'из-за шума'
+                })
+                : { timeAdvances: 0, messages: [] };
+
+            timeAdvances = Number.isFinite(timeOutcome.timeAdvances) ? timeOutcome.timeAdvances : 0;
+            message = `Сбор вышел шумным: пришлось затаиться и потерять темп.${Array.isArray(timeOutcome.messages) && timeOutcome.messages.length > 0 ? ` ${timeOutcome.messages.join(' ')}` : ''}`;
+        } else if (outcomeKey === 'extraDrain') {
+            applyGatherRiskExtraDrain(target, riskProfile);
+            message = 'Сбор дался тяжелее обычного: ушло больше сил и припасов, чем ожидалось.';
+        } else if (outcomeKey === 'loseTurn') {
+            const lostTurnSteps = Math.max(2, bridge.getRouteLengthLimit());
+            const timeOutcome = movement && typeof movement.consumeActionTempo === 'function'
+                ? movement.consumeActionTempo({
+                    virtualSteps: lostTurnSteps,
+                    silent: true,
+                    reasonLabel: 'из-за сорванного сбора'
+                })
+                : { timeAdvances: 0, messages: [] };
+
+            timeAdvances = Number.isFinite(timeOutcome.timeAdvances) ? timeOutcome.timeAdvances : 0;
+
+            if (ui && typeof ui.applyPathCompletionCosts === 'function' && !game.state.isGameOver) {
+                ui.applyPathCompletionCosts();
+            }
+
+            message = `Сбор затянулся: потерян целый ход на восстановление маршрута.${Array.isArray(timeOutcome.messages) && timeOutcome.messages.length > 0 ? ` ${timeOutcome.messages.join(' ')}` : ''}`;
+        } else if (outcomeKey === 'localPressure') {
+            pressureAdded = Number.isFinite(riskProfile.localPressureSteps)
+                ? Math.max(1, Math.floor(riskProfile.localPressureSteps))
+                : 2;
+
+            if (rewardScaling && typeof rewardScaling.addIslandPressureSteps === 'function') {
+                rewardScaling.addIslandPressureSteps(tileInfo, pressureAdded);
+            }
+
+            const pressureSummary = rewardScaling && typeof rewardScaling.getIslandPressureSummary === 'function'
+                ? rewardScaling.getIslandPressureSummary(tileInfo)
+                : '';
+            message = `Сбор всколыхнул остров: местная нагрузка выросла${pressureSummary ? ` (${pressureSummary})` : ''}.`;
+        } else {
+            applyGatherRiskExtraDrain(target, riskProfile);
+            message = 'Поздний сбор прошёл с лишними потерями.';
+        }
+
+        return {
+            triggered: true,
+            outcomeKey,
+            message,
+            riskProfile,
+            timeAdvances,
+            pressureAdded
+        };
     }
 
     function invalidateTerrainTileRenderCache(worldX, worldY) {
@@ -157,8 +663,44 @@
         }
     }
 
+    function buildTerrainTarget(tileInfo, profile, isHarvested) {
+        const normalizedProfile = profile && typeof profile === 'object'
+            ? {
+                ...profile,
+                gatherCost: buildGatherCostProfile(profile, game.state.activeTileInfo || tileInfo)
+            }
+            : profile;
+
+        return {
+            tileInfo,
+            profile: normalizedProfile,
+            isHarvested,
+            interaction: tileInfo && isResourceNodeInteraction(tileInfo.interaction)
+                ? tileInfo.interaction
+                : null
+        };
+    }
+
+    function shouldIncludeTerrainTarget(target, options = {}) {
+        const { includeHarvested = false, includeUnavailable = false } = options;
+
+        if (!target || !target.profile) {
+            return false;
+        }
+
+        if (!includeHarvested && target.isHarvested) {
+            return false;
+        }
+
+        if (!includeUnavailable && !isTerrainTargetGatherAvailable(target)) {
+            return false;
+        }
+
+        return true;
+    }
+
     function getTerrainTarget(options = {}) {
-        const { includeHarvested = false, allowSelectedItem = false } = options;
+        const { includeHarvested = false, allowSelectedItem = false, includeUnavailable = false } = options;
         const world = game.systems.world;
 
         if (!world || typeof world.getTileInfo !== 'function') {
@@ -175,8 +717,9 @@
 
         if (currentProfile) {
             const isHarvested = isTerrainAlreadyHarvested(currentTileInfo, currentProfile);
-            if (includeHarvested || !isHarvested) {
-                return { tileInfo: currentTileInfo, profile: currentProfile, isHarvested };
+            const target = buildTerrainTarget(currentTileInfo, currentProfile, isHarvested);
+            if (shouldIncludeTerrainTarget(target, { includeHarvested, includeUnavailable })) {
+                return target;
             }
         }
 
@@ -196,8 +739,9 @@
             }
 
             const isHarvested = isTerrainAlreadyHarvested(tileInfo, profile);
-            if (includeHarvested || !isHarvested) {
-                return { tileInfo, profile, isHarvested };
+            const target = buildTerrainTarget(tileInfo, profile, isHarvested);
+            if (shouldIncludeTerrainTarget(target, { includeHarvested, includeUnavailable })) {
+                return target;
             }
         }
 
@@ -215,7 +759,7 @@
     }
 
     function getInspectableTerrainTarget() {
-        return getTerrainTarget({ includeHarvested: true, allowSelectedItem: true });
+        return getTerrainTarget({ includeHarvested: true, allowSelectedItem: true, includeUnavailable: true });
     }
 
     function getRouteInspectTileInfo() {
@@ -257,7 +801,7 @@
     }
 
     function getTerrainTargetForTile(tileInfo, options = {}) {
-        const { includeHarvested = false } = options;
+        const { includeHarvested = false, includeUnavailable = false } = options;
         const profile = getTerrainGatherProfile(tileInfo);
 
         if (!profile) {
@@ -265,11 +809,13 @@
         }
 
         const isHarvested = isTerrainAlreadyHarvested(tileInfo, profile);
-        if (!includeHarvested && isHarvested) {
+        const target = buildTerrainTarget(tileInfo, profile, isHarvested);
+
+        if (!shouldIncludeTerrainTarget(target, { includeHarvested, includeUnavailable })) {
             return null;
         }
 
-        return { tileInfo, profile, isHarvested };
+        return target;
     }
 
     function isTerrainTargetWithinGatherReach(target) {
@@ -305,6 +851,14 @@
             return false;
         }
 
+        if (!isTerrainTargetGatherAvailable(target)) {
+            bridge.setActionMessage(target.profile && target.profile.requirementMessage
+                ? target.profile.requirementMessage
+                : 'Сейчас этот ресурс собрать нельзя.');
+            bridge.renderAfterStateChange();
+            return true;
+        }
+
         const outcome = inventoryRuntime.addInventoryItem(target.profile.itemId, 1, {
             resourceFamilyId: target.profile.resourceFamilyId || target.profile.resourceId || '',
             resourceSubtypeId: target.profile.resourceSubtypeId || '',
@@ -318,8 +872,21 @@
         }
 
         markTerrainHarvested(target.tileInfo, target.profile);
+        let resourceNodeState = null;
+        if (target.interaction && isResourceNodeInteraction(target.interaction)) {
+            const interactions = getInteractionsRuntime();
+            if (interactions && typeof interactions.consumeResourceNodeInteraction === 'function') {
+                resourceNodeState = interactions.consumeResourceNodeInteraction(target.interaction);
+            }
+        }
         invalidateTerrainTileRenderCache(target.tileInfo.x, target.tileInfo.y);
         refreshPlayerContext();
+        const gatherTempoOutcome = applyGatherTempoCost(target);
+        const gatherRiskOutcome = applyGatherRiskOutcome(target);
+
+        if (target.interaction && isResourceNodeInteraction(target.interaction)) {
+            resourceNodeState = syncResourceNodeInteraction(target.interaction) || resourceNodeState;
+        }
 
         const drops = [];
         if (itemEffects && typeof itemEffects.buildItemEffectDrop === 'function' && registry) {
@@ -360,8 +927,24 @@
         }
 
         const addedConversion = (outcome.conversions || []).find((conversion) => conversion.added && conversion.item);
+        const gatherCostSummary = ` ${getGatherCostSentence(target.profile, game.state.activeTileInfo || target.tileInfo)}`;
         const conversionSummary = addedConversion
             ? ` Пять единиц автоматически объединены в "${addedConversion.item.label}".`
+            : '';
+        const nodeStateSummary = resourceNodeState && resourceNodeState.nodeState === 'used'
+            ? ` Узел истощается: осталось ${resourceNodeState.durabilityRemaining} из ${resourceNodeState.durabilityMax} сборов.`
+            : (resourceNodeState && resourceNodeState.nodeState === 'depleted'
+                ? (resourceNodeState.nodeStateReason === 'islandLimit'
+                    ? ` Лимит этого ресурса на острове исчерпан: ${resourceNodeState.islandLimitConsumed || resourceNodeState.islandLimitMax} из ${resourceNodeState.islandLimitMax}.`
+                    : ' Узел полностью исчерпан.')
+                : (resourceNodeState && resourceNodeState.nodeState === 'regenerating'
+                    ? ' Узел переходит в восстановление.'
+                    : ''));
+        const timeAdvanceSummary = gatherTempoOutcome.timeMessages.length > 0
+            ? ` ${gatherTempoOutcome.timeMessages.join(' ')}`
+            : '';
+        const gatherRiskSummary = gatherRiskOutcome.triggered
+            ? ` Риск позднего сбора: ${gatherRiskOutcome.message}`
             : '';
         const gameEvents = getGameEvents();
 
@@ -378,6 +961,28 @@
                     : null,
                 sourceLabel: target.profile.sourceLabel || '',
                 collectedLabel: target.profile.collectedLabel || '',
+                gatherCost: {
+                    routeCost: gatherTempoOutcome.gatherCost.routeCost,
+                    routeCostLabel: gatherTempoOutcome.gatherCost.routeCostLabel,
+                    timeSteps: gatherTempoOutcome.gatherCost.timeSteps,
+                    timeAdvances: gatherTempoOutcome.timeAdvances
+                },
+                gatherRisk: gatherRiskOutcome.triggered
+                    ? {
+                        outcomeKey: gatherRiskOutcome.outcomeKey,
+                        chance: gatherRiskOutcome.riskProfile ? gatherRiskOutcome.riskProfile.chance : 0,
+                        chanceLabel: gatherRiskOutcome.riskProfile ? gatherRiskOutcome.riskProfile.chanceLabel : '0%',
+                        pressureAdded: gatherRiskOutcome.pressureAdded || 0,
+                        timeAdvances: gatherRiskOutcome.timeAdvances || 0
+                    }
+                    : null,
+                nodeStateAfter: resourceNodeState
+                    ? {
+                        nodeState: resourceNodeState.nodeState,
+                        durabilityRemaining: resourceNodeState.durabilityRemaining,
+                        durabilityMax: resourceNodeState.durabilityMax
+                    }
+                    : null,
                 conversions: (outcome.conversions || []).map((conversion) => ({
                     sourceItemId: conversion.sourceItemId || '',
                     targetItemId: conversion.targetItemId || '',
@@ -393,13 +998,24 @@
             });
         }
 
-        bridge.setActionMessage(`Собрано: ${target.profile.collectedLabel} с участка "${target.profile.sourceLabel}".${conversionSummary}`);
+        if (game.state.isGameOver) {
+            bridge.renderAfterStateChange();
+            return true;
+        }
+
+        bridge.setActionMessage(`Собрано: ${target.profile.collectedLabel} с участка "${target.profile.sourceLabel}".${gatherCostSummary}${conversionSummary}${nodeStateSummary}${timeAdvanceSummary}${gatherRiskSummary}`);
         bridge.renderAfterStateChange();
         return true;
     }
 
     function collectTerrainResource() {
-        return collectTerrainResourceAtTarget(getGatherableTerrainTarget());
+        const selectedTarget = getTerrainTargetForTile(getSelectedWorldTileInfo(), { includeUnavailable: true });
+
+        if (selectedTarget && !selectedTarget.isHarvested && isTerrainTargetWithinGatherReach(selectedTarget)) {
+            return collectTerrainResourceAtTarget(selectedTarget);
+        }
+
+        return collectTerrainResourceAtTarget(getTerrainTarget({ includeUnavailable: true }));
     }
 
     function tryCollectClickedRock(tileInfo) {
@@ -407,11 +1023,11 @@
             return false;
         }
 
-        if (!tileInfo || (tileInfo.baseTileType || tileInfo.tileType) !== 'rock') {
+        if (!tileInfo) {
             return false;
         }
 
-        const target = getTerrainTargetForTile(tileInfo);
+        const target = getTerrainTargetForTile(tileInfo, { includeUnavailable: true });
 
         if (!target || !target.profile.clickToCollect || !isTerrainTargetWithinGatherReach(target)) {
             return false;
@@ -432,24 +1048,160 @@
         button.classList.toggle('hud-button--available', Boolean(enabled && highlighted));
     }
 
+    function getShelterEncounter(activeInteraction = game.state.activeInteraction) {
+        const activeEncounter = bridge.getHouseEncounter(activeInteraction);
+        if (activeEncounter && activeEncounter.kind === 'shelter') {
+            return activeEncounter;
+        }
+
+        const activeHouseEncounter = bridge.getHouseEncounter(game.state.activeHouse);
+        if (activeHouseEncounter && activeHouseEncounter.kind === 'shelter') {
+            return activeHouseEncounter;
+        }
+
+        return null;
+    }
+
+    function buildActionAvailabilityState(activeInteraction = game.state.activeInteraction) {
+        const inventoryRuntime = getInventoryRuntime();
+        const itemEffects = getItemEffects();
+        const dialogueRuntime = getDialogueRuntime();
+        const selectedItem = getSelectedInventoryItem();
+        const groundItem = inventoryRuntime ? inventoryRuntime.getCurrentGroundItem() : null;
+        const encounter = bridge.getHouseEncounter(activeInteraction);
+        const canTalkInteraction = Boolean(
+            encounter
+            && dialogueRuntime
+            && dialogueRuntime.canStartDialogue(activeInteraction)
+        );
+        const canUseInteraction = Boolean(
+            encounter
+            && !bridge.isHouseResolved(activeInteraction)
+            && encounter.kind !== 'shelter'
+            && !canTalkInteraction
+        );
+        const shelterEncounter = getShelterEncounter(activeInteraction);
+        const canUseItem = Boolean(
+            selectedItem
+            && itemEffects
+            && typeof itemEffects.canUseInventoryItem === 'function'
+            && itemEffects.canUseInventoryItem(selectedItem)
+        );
+        const canUseBridgeCharge = Boolean(
+            !selectedItem
+            && itemEffects
+            && typeof itemEffects.canUseBridgeCharge === 'function'
+            && itemEffects.canUseBridgeCharge()
+        );
+        const canUseGroundItem = Boolean(groundItem);
+        const canUseTerrain = Boolean(getGatherableTerrainTarget());
+        const inspectableTerrain = getInspectableTerrainTarget();
+        const selectedWorldTileInfo = getSelectedWorldTileInfo();
+        const selectedWorldInteraction = getSelectedWorldInteraction(selectedWorldTileInfo);
+        const selectedWorldTerrain = getTerrainTargetForTile(selectedWorldTileInfo, { includeHarvested: true });
+        const canDropItem = Boolean(selectedItem);
+        const baseEnabled = !game.state.isGameOver && !game.state.isMoving;
+        const canWalkRoute = Boolean(
+            baseEnabled
+            && !game.state.isPaused
+            && !game.state.isMapOpen
+            && Array.isArray(game.state.route)
+            && game.state.route.length > 0
+        );
+        const canUseNow = Boolean(canUseItem || canUseBridgeCharge || canUseGroundItem || canUseInteraction || canUseTerrain);
+        const canInspectNow = Boolean(
+            selectedItem
+            || groundItem
+            || inspectableTerrain
+            || activeInteraction
+            || selectedWorldInteraction
+            || selectedWorldTerrain
+            || selectedWorldTileInfo
+        );
+        const canSleepNow = Boolean(shelterEncounter);
+
+        return {
+            walk: {
+                enabled: canWalkRoute,
+                highlighted: canWalkRoute,
+                visible: canWalkRoute
+            },
+            use: {
+                enabled: baseEnabled && canUseNow,
+                highlighted: canUseNow,
+                visible: baseEnabled && canUseNow
+            },
+            talk: {
+                enabled: baseEnabled && canTalkInteraction,
+                highlighted: canTalkInteraction,
+                visible: baseEnabled && canTalkInteraction
+            },
+            sleep: {
+                enabled: baseEnabled && canSleepNow,
+                highlighted: canSleepNow,
+                visible: baseEnabled && canSleepNow
+            },
+            inspect: {
+                enabled: baseEnabled && canInspectNow,
+                highlighted: canInspectNow,
+                visible: baseEnabled && canInspectNow
+            },
+            drop: {
+                enabled: baseEnabled && canDropItem,
+                highlighted: canDropItem,
+                visible: baseEnabled && canDropItem
+            }
+        };
+    }
+
+    function getActionAvailability(action, activeInteraction = game.state.activeInteraction) {
+        const actionState = buildActionAvailabilityState(activeInteraction)[action];
+
+        if (!actionState) {
+            return {
+                enabled: false,
+                highlighted: false,
+                visible: false
+            };
+        }
+
+        return { ...actionState };
+    }
+
     function getTerrainActionHint(target) {
         if (!target) {
             return '';
         }
 
+        const gatherCostHint = target.profile
+            ? ` ${getGatherCostSentence(target.profile, game.state.activeTileInfo || target.tileInfo)}`
+            : '';
+        const gatherRiskHint = target.profile
+            ? getGatherRiskWarning(target.profile, game.state.activeTileInfo || target.tileInfo)
+            : '';
         const conversionHint = target.profile && target.profile.conversionHint
             ? ` ${target.profile.conversionHint}`
+            : '';
+        const durabilityHint = target.profile && target.profile.nodeState === 'used'
+            ? ` Узел уже надорван: осталось ${target.profile.durabilityRemaining} из ${target.profile.durabilityMax} сборов.`
+            : '';
+        const policyHint = target.profile && target.profile.respawnPolicyMode === 'hardLimited' && target.profile.islandLimitMax
+            ? ` На острове осталось ${target.profile.islandLimitRemaining} из ${target.profile.islandLimitMax} сборов этого типа.`
             : '';
 
         if (target.isHarvested) {
             return `Здесь уже ничего не осталось: ${target.profile.sourceLabel} на этой клетке собраны.`;
         }
 
-        if (target.profile.clickToCollect) {
-            return `Рядом есть ${target.profile.sourceLabel}. Кликни по соседнему камню или нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}.${conversionHint}`;
+        if (!isTerrainTargetGatherAvailable(target)) {
+            return `${target.profile.requirementMessage || `Рядом есть ${target.profile.sourceLabel}, но сейчас этот ресурс недоступен.`}${gatherCostHint}`;
         }
 
-        return `Рядом есть ${target.profile.sourceLabel}. Нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}.${conversionHint}`;
+        if (target.profile.clickToCollect) {
+            return `Рядом есть ${target.profile.sourceLabel}. Кликни по соседнему камню или нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}.${gatherCostHint}${gatherRiskHint}${conversionHint}${durabilityHint}${policyHint}`;
+        }
+
+        return `Рядом есть ${target.profile.sourceLabel}. Нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}.${gatherCostHint}${gatherRiskHint}${conversionHint}${durabilityHint}${policyHint}`;
     }
 
     function getTerrainInspectMessage(target) {
@@ -465,22 +1217,114 @@
         const positionLabel = tileInfo
             ? `\u043a\u043e\u043e\u0440\u0434\u0438\u043d\u0430\u0442\u044b ${tileInfo.x}, ${tileInfo.y}`
             : '\u044d\u0442\u0430 \u043a\u043b\u0435\u0442\u043a\u0430';
+        const gatherCostHint = target.profile
+            ? ` ${getGatherCostSentence(target.profile, game.state.activeTileInfo || tileInfo)}`
+            : '';
+        const gatherRiskHint = target.profile
+            ? getGatherRiskWarning(target.profile, game.state.activeTileInfo || tileInfo)
+            : '';
         const conversionHint = target.profile && target.profile.conversionHint
             ? ` ${target.profile.conversionHint}`
+            : '';
+        const durabilityHint = target.profile && target.profile.nodeState === 'used'
+            ? ` Узел уже частично снят: осталось ${target.profile.durabilityRemaining} из ${target.profile.durabilityMax} сборов.`
+            : '';
+        const policyHint = target.profile && target.profile.respawnPolicyMode === 'hardLimited' && target.profile.islandLimitMax
+            ? ` Лимит острова: осталось ${target.profile.islandLimitRemaining} из ${target.profile.islandLimitMax} сборов этого типа.`
             : '';
 
         if (target.isHarvested) {
             return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u0443\u0436\u0435 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c, \u043c\u0430\u0442\u0435\u0440\u0438\u0430\u043b \u0441\u043e\u0431\u0440\u0430\u043d.`;
         }
 
-        if (target.profile.clickToCollect) {
-            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. Здесь можно собрать ${target.profile.collectedLabel}. Кликни по соседнему камню или нажми "Использовать".${conversionHint}`;
+        if (!isTerrainTargetGatherAvailable(target)) {
+            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. ${target.profile.requirementMessage || 'Сейчас этот узел недоступен.'}${gatherCostHint}`;
         }
 
-        return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0431\u0440\u0430\u0442\u044c ${target.profile.collectedLabel}.${conversionHint}`;
+        if (target.profile.clickToCollect) {
+            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. Здесь можно собрать ${target.profile.collectedLabel}.${gatherCostHint}${gatherRiskHint} Кликни по соседнему камню или нажми "Использовать".${conversionHint}${durabilityHint}${policyHint}`;
+        }
+
+        return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0431\u0440\u0430\u0442\u044c ${target.profile.collectedLabel}.${gatherCostHint}${gatherRiskHint}${conversionHint}${durabilityHint}${policyHint}`;
     }
 
     getTerrainInspectMessage = getTerrainInspectMessageSafe;
+
+    function getResourceNodeInteractionDescription(interaction) {
+        if (!interaction) {
+            return '';
+        }
+
+        const syncedInteraction = syncResourceNodeInteraction(interaction) || interaction;
+        const label = syncedInteraction.label || 'Ресурсный узел';
+        const descriptionByResource = {
+            grass: 'сырьевой куст травы. Здесь берут raw-слой для лечебной основы, травяной пасты и верёвки.',
+            stone: 'каменная куча. Даёт сырой камень под блоки и тяжёлые строительные рецепты.',
+            rubble: 'щебёночная осыпь. Даёт сырой щебень для засыпки и ремонта.',
+            wood: 'дерево или полезная коряга. Даёт сырое дерево под доски и каркасы.',
+            water: 'точка воды. Здесь пустая фляга наполняется сырой водой, а для рецептов нужна уже чистая.',
+            fish: 'рыболовная точка. Здесь ловят рыбу, если есть удочка.'
+        };
+        const stateDescription = syncedInteraction.nodeState === 'used'
+            ? ` Состояние: ресурс уже частично снят, осталось ${syncedInteraction.durabilityRemaining} из ${syncedInteraction.durabilityMax}.`
+            : (syncedInteraction.nodeState === 'depleted'
+                ? (syncedInteraction.nodeStateReason === 'islandLimit' && syncedInteraction.islandLimitMax
+                    ? ` Состояние: лимит этого ресурса на острове исчерпан (${syncedInteraction.islandLimitConsumed || syncedInteraction.islandLimitMax} из ${syncedInteraction.islandLimitMax}).`
+                    : ' Состояние: узел исчерпан.')
+                : (syncedInteraction.nodeState === 'regenerating'
+                    ? ' Состояние: узел восстанавливается.'
+                    : ' Состояние: свежий узел.'));
+        const policyDescription = syncedInteraction.respawnPolicyLabel
+            ? ` Политика: ${syncedInteraction.respawnPolicyLabel}.`
+            : '';
+        const gatherProfile = buildResourceNodeGatherProfile(syncedInteraction, game.state.activeTileInfo || null);
+        const gatherCostDescription = gatherProfile
+            ? ` ${getGatherCostSentence(gatherProfile, game.state.activeTileInfo || null)}`
+            : '';
+        const gatherRiskDescription = gatherProfile
+            ? getGatherRiskWarning(gatherProfile, game.state.activeTileInfo || null)
+            : '';
+
+        return `${label}: ${descriptionByResource[syncedInteraction.resourceId] || 'отдельный ресурсный узел для добычи сырья.'}${gatherCostDescription}${gatherRiskDescription}${stateDescription}${policyDescription}`;
+    }
+
+    function getResourceNodeInteractionAdvice(interaction) {
+        if (!interaction) {
+            return '';
+        }
+
+        const syncedInteraction = syncResourceNodeInteraction(interaction) || interaction;
+        const label = syncedInteraction.label || 'Ресурсный узел';
+        const adviceByResource = {
+            grass: 'раннюю траву выгодно собирать в безопасной части маршрута, пока отклонение от пути ещё дешёвое.',
+            stone: 'камень лучше брать по дороге на средних островах, когда уже понятно, нужен ли тебе запас под блоки и мосты.',
+            rubble: 'щебень хорош как дешёвый стройматериал, но отдельный крюк ради него окупается не всегда.',
+            wood: 'дерево особенно ценно перед переправами и ремонтными рецептами, поэтому держи его в плане маршрута заранее.',
+            water: 'такие точки воды полезны как опора маршрута: здесь набирают сырую воду, а после длинного крюка удобно восстановиться у колодца.',
+            fish: 'к рыболовной точке лучше идти только с удочкой и когда маршрут уже проходит рядом с водой.'
+        };
+        const stateSuffix = syncedInteraction.nodeState === 'used'
+            ? ' Узел уже частично снят, так что если он нужен, добирай остаток без лишнего крюка.'
+            : (syncedInteraction.nodeState === 'depleted'
+                ? (syncedInteraction.nodeStateReason === 'islandLimit'
+                    ? ' Лимит этого ресурса на острове уже выработан.'
+                    : ' Этот узел сейчас полностью пуст.')
+                : (syncedInteraction.nodeState === 'regenerating'
+                    ? ' Этот узел сейчас в фазе восстановления.'
+                    : ''));
+        const policySuffix = syncedInteraction.respawnPolicyMode === 'hardLimited' && syncedInteraction.islandLimitMax
+            ? ` На острове осталось ${syncedInteraction.islandLimitRemaining} из ${syncedInteraction.islandLimitMax} сборов этого типа.`
+            : '';
+        const gatherProfile = buildResourceNodeGatherProfile(syncedInteraction, game.state.activeTileInfo || null);
+        const gatherCostSuffix = gatherProfile
+            ? ` ${getGatherCostSentence(gatherProfile, game.state.activeTileInfo || null)}`
+            : '';
+        const gatherRiskSuffix = gatherProfile
+            ? getGatherRiskWarning(gatherProfile, game.state.activeTileInfo || null)
+            : '';
+
+        return `Изучить: ${label}. Совет: ${adviceByResource[syncedInteraction.resourceId] || 'оценивай узел как часть маршрута, а не как бесплатный клик.'}${gatherCostSuffix}${gatherRiskSuffix}${stateSuffix}${policySuffix}`;
+    }
 
     function getInteractionDescription(interaction) {
         if (!interaction) {
@@ -498,9 +1342,11 @@
             case 'shelter':
                 return `${label}: полевой лагерь. Здесь можно передохнуть и частично восстановить силы.`;
             case 'well':
-                return `${label}: колодец с чистой водой. Он помогает восстановиться в длинном переходе.`;
+                return `${label}: колодец с чистой водой. Он помогает восстановиться в длинном переходе и служит опорной точкой на маршруте.`;
             case 'forage':
                 return `${label}: куст с полевыми ягодами. Ягоды быстро снимают часть голода.`;
+            case 'resourceNode':
+                return getResourceNodeInteractionDescription(interaction);
             case 'emptyHouse':
                 return `${label}: пустой дом. Внутри может не оказаться пользы, но это укрытие и безопасная точка.`;
             case 'trapHouse':
@@ -549,6 +1395,8 @@
                 return `Изучить: ${label}. Совет: запоминай колодцы на карте и строй маршрут так, чтобы они были промежуточной опорой на длинных островах.`;
             case 'forage':
                 return `Изучить: ${label}. Совет: ягоды лучше срывать, когда голод уже заметно просел, а не тратить их заранее на почти полную шкалу.`;
+            case 'resourceNode':
+                return getResourceNodeInteractionAdvice(interaction);
             case 'emptyHouse':
                 return `Изучить: ${label}. Совет: даже пустой дом полезен как безопасная точка и ориентир на карте.`;
             case 'trapHouse':
@@ -603,6 +1451,12 @@
             case 'soil':
             case 'soilClod':
                 return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: плохой сектор полезен для земли, но заходить туда стоит только с запасом энергии и понятным выходом назад.`;
+            case 'wood':
+                return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: дерево лучше брать перед переправами, ремонтом и длинными островами, когда доски и каркасы могут резко окупить маршрут.`;
+            case 'water':
+                return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: точки воды полезно запоминать как опору маршрута и подводить к ним путь с пустой флягой.`;
+            case 'fish':
+                return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: рыбные точки окупаются, только если у тебя уже есть удочка и заход не ломает темп перехода.`;
             default:
                 return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: оценивай, стоит ли ресурс лишних клеток и просадки характеристик.`;
         }
@@ -630,6 +1484,10 @@
             return inventoryRuntime && typeof inventoryRuntime.getGroundItemDescription === 'function'
                 ? `\u041d\u0430 \u0437\u0435\u043c\u043b\u0435 \u043b\u0435\u0436\u0438\u0442: ${inventoryRuntime.getGroundItemDescription(interaction)}.`
                 : '\u041d\u0430 \u0437\u0435\u043c\u043b\u0435 \u043b\u0435\u0436\u0438\u0442 \u043f\u0440\u0435\u0434\u043c\u0435\u0442.';
+        }
+
+        if (interaction.kind === 'resourceNode') {
+            return getResourceNodeInteractionDescription(interaction);
         }
 
         if (interaction.kind === 'chest') {
@@ -700,6 +1558,10 @@
             return '\u0418\u0437\u0443\u0447\u0438\u0442\u044c: \u043f\u0440\u0435\u0434\u043c\u0435\u0442 \u043d\u0430 \u0437\u0435\u043c\u043b\u0435. \u0421\u043e\u0432\u0435\u0442: \u0441\u043d\u0430\u0447\u0430\u043b\u0430 \u043f\u0440\u043e\u0432\u0435\u0440\u044c \u043c\u0435\u0441\u0442\u043e \u0432 \u0441\u0443\u043c\u043a\u0435, \u0447\u0442\u043e\u0431\u044b \u043d\u0435 \u043f\u043e\u0442\u0435\u0440\u044f\u0442\u044c \u0431\u043e\u043b\u0435\u0435 \u0432\u0430\u0436\u043d\u0443\u044e \u043d\u0430\u0445\u043e\u0434\u043a\u0443 \u043f\u043e\u0437\u0436\u0435.';
         }
 
+        if (interaction.kind === 'resourceNode') {
+            return getResourceNodeInteractionAdvice(interaction);
+        }
+
         if (interaction.kind === 'chest' || interaction.kind === 'finalChest' || interaction.kind === 'jackpotChest') {
             const chestTier = expedition.chestTier || interaction.kind;
             if (chestTier === 'cursed') {
@@ -718,6 +1580,77 @@
         };
 
         return `\u0418\u0437\u0443\u0447\u0438\u0442\u044c: ${label}. \u0421\u043e\u0432\u0435\u0442: ${adviceByKind[interaction.kind] || '\u043e\u0446\u0435\u043d\u0438\u0432\u0430\u0439 \u044d\u0442\u043e\u0442 \u043e\u0431\u044a\u0435\u043a\u0442 \u0432\u043c\u0435\u0441\u0442\u0435 \u0441 \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u043e\u043c, \u043f\u043e\u0433\u043e\u0434\u043e\u0439 \u0438 \u0437\u0430\u043f\u0430\u0441\u043e\u043c \u0445\u0430\u0440\u0430\u043a\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043a.'}`;
+    }
+
+    function getContainerActionHint(item) {
+        const containerRegistry = getContainerRegistry();
+        const containerState = containerRegistry && typeof containerRegistry.getContainerStateByItemId === 'function'
+            ? containerRegistry.getContainerStateByItemId(item && item.id ? item.id : '')
+            : null;
+
+        if (!containerState) {
+            return '';
+        }
+
+        const activeInteraction = game.state.activeInteraction || null;
+        const encounter = bridge.getHouseEncounter(activeInteraction);
+        const interactions = getInteractionsRuntime();
+        const world = game.systems.world || null;
+        const playerPos = game.state.playerPos || { x: 0, y: 0 };
+        const selectedTile = game.state.selectedWorldTile || null;
+        const nearbyPositions = [
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x) + 1, y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x) - 1, y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) + 1 },
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) - 1 }
+        ];
+        if (selectedTile) {
+            const selectedDistance = Math.abs(Math.round(selectedTile.x) - Math.round(playerPos.x)) + Math.abs(Math.round(selectedTile.y) - Math.round(playerPos.y));
+            if (selectedDistance <= 1) {
+                nearbyPositions.unshift({
+                    x: Math.round(selectedTile.x),
+                    y: Math.round(selectedTile.y)
+                });
+            }
+        }
+        const seenPositions = new Set();
+        let nearbyWaterSource = null;
+
+        for (const position of nearbyPositions) {
+            const key = `${position.x},${position.y}`;
+            if (seenPositions.has(key)) {
+                continue;
+            }
+
+            seenPositions.add(key);
+            const tileInfo = world && typeof world.getTileInfo === 'function'
+                ? world.getTileInfo(position.x, position.y, { generateIfMissing: false })
+                : null;
+            const interaction = tileInfo && tileInfo.interaction
+                ? tileInfo.interaction
+                : (interactions && typeof interactions.getInteractionAtWorld === 'function'
+                    ? interactions.getInteractionAtWorld(position.x, position.y, { generateIfMissing: false })
+                    : null);
+
+            if (interaction && interaction.kind === 'resourceNode' && interaction.resourceNodeKind === 'waterSource') {
+                nearbyWaterSource = interaction;
+                break;
+            }
+        }
+
+        if (
+            containerState.id === 'waterFlaskEmpty'
+            && nearbyWaterSource
+        ) {
+            return `Выбрана пустая фляга. Нажми "Использовать", чтобы набрать сырую воду у "${nearbyWaterSource.label || 'точки воды'}".`;
+        }
+
+        if (containerState.drinkable) {
+            return `Выбран предмет: ${item.label}. Нажми "Использовать", чтобы выпить и вернуть пустую флягу.`;
+        }
+
+        return `Выбран предмет: ${item.label}. Нажми "Осмотреть", чтобы увидеть состояние контейнера.`;
     }
 
     function describeSelectedWorldTarget(selection = {}) {
@@ -772,6 +1705,11 @@
         }
 
         if (selectedItem) {
+            const containerHint = getContainerActionHint(selectedItem);
+            if (containerHint) {
+                return containerHint;
+            }
+
             if (itemEffects && itemEffects.isBridgeBuilderItem(selectedItem.id)) {
                 return `Выбран предмет: ${selectedItem.label}. Подойди к узкому водному проходу и нажми "Использовать", чтобы уложить мост.`;
             }
@@ -982,7 +1920,7 @@
             return;
         }
 
-        if (game.state.activeInteraction) {
+        if (game.state.activeInteraction && !isResourceNodeInteraction(game.state.activeInteraction)) {
             const encounter = bridge.getHouseEncounter(game.state.activeInteraction);
 
             if (isDialogueEncounter(encounter, game.state.activeInteraction)) {
@@ -1215,61 +2153,14 @@
     };
 
     updateActionButtons = function updateActionButtonsSafe(activeInteraction = game.state.activeInteraction) {
-        const inventoryRuntime = getInventoryRuntime();
-        const itemEffects = getItemEffects();
-        const dialogueRuntime = getDialogueRuntime();
-        const selectedItem = getSelectedInventoryItem();
-        const groundItem = inventoryRuntime ? inventoryRuntime.getCurrentGroundItem() : null;
-        const encounter = bridge.getHouseEncounter(activeInteraction);
-        const canTalkInteraction = encounter
-            && dialogueRuntime
-            && dialogueRuntime.canStartDialogue(activeInteraction);
-        const canUseInteraction = encounter
-            && !bridge.isHouseResolved(activeInteraction)
-            && encounter.kind !== 'shelter'
-            && !canTalkInteraction;
-        const shelterNearby = encounter && encounter.kind === 'shelter';
-        const canUseItem = Boolean(
-            selectedItem
-            && itemEffects
-            && typeof itemEffects.canUseInventoryItem === 'function'
-            && itemEffects.canUseInventoryItem(selectedItem)
-        );
-        const canUseBridgeCharge = Boolean(
-            !selectedItem
-            && itemEffects
-            && typeof itemEffects.canUseBridgeCharge === 'function'
-            && itemEffects.canUseBridgeCharge()
-        );
-        const canUseGroundItem = Boolean(groundItem);
-        const canUseTerrain = Boolean(getGatherableTerrainTarget());
-        const inspectableTerrain = getInspectableTerrainTarget();
-        const selectedWorldTileInfo = getSelectedWorldTileInfo();
-        const selectedWorldInteraction = getSelectedWorldInteraction(selectedWorldTileInfo);
-        const selectedWorldTerrain = getTerrainTargetForTile(selectedWorldTileInfo, { includeHarvested: true });
-        const canDropItem = Boolean(selectedItem);
-        const baseEnabled = !game.state.isGameOver && !game.state.isMoving;
-        const canWalkRoute = baseEnabled
-            && !game.state.isPaused
-            && !game.state.isMapOpen
-            && Array.isArray(game.state.route)
-            && game.state.route.length > 0;
+        const actionAvailability = buildActionAvailabilityState(activeInteraction);
 
-        setActionButtonState('walk', canWalkRoute, canWalkRoute);
-
-        setActionButtonState(
-            'use',
-            baseEnabled && (canUseItem || canUseBridgeCharge || canUseGroundItem || canUseInteraction || canUseTerrain),
-            Boolean(canUseItem || canUseBridgeCharge || canUseGroundItem || canUseInteraction || canUseTerrain)
-        );
-        setActionButtonState('talk', baseEnabled && Boolean(canTalkInteraction), Boolean(canTalkInteraction));
-        setActionButtonState('sleep', baseEnabled, Boolean(shelterNearby || game.state.activeHouse));
-        setActionButtonState(
-            'inspect',
-            baseEnabled,
-            Boolean(selectedItem || groundItem || inspectableTerrain || activeInteraction || selectedWorldInteraction || selectedWorldTerrain || selectedWorldTileInfo)
-        );
-        setActionButtonState('drop', baseEnabled && canDropItem, canDropItem);
+        setActionButtonState('walk', actionAvailability.walk.enabled, actionAvailability.walk.highlighted);
+        setActionButtonState('use', actionAvailability.use.enabled, actionAvailability.use.highlighted);
+        setActionButtonState('talk', actionAvailability.talk.enabled, actionAvailability.talk.highlighted);
+        setActionButtonState('sleep', actionAvailability.sleep.enabled, actionAvailability.sleep.highlighted);
+        setActionButtonState('inspect', actionAvailability.inspect.enabled, actionAvailability.inspect.highlighted);
+        setActionButtonState('drop', actionAvailability.drop.enabled, actionAvailability.drop.highlighted);
     };
 
     handleInspectAction = function handleInspectActionSafe() {
@@ -1332,6 +2223,7 @@
     Object.assign(actionUi, {
         describeSelectedWorldTarget,
         getDefaultActionHint,
+        getActionAvailability,
         setActionButtonState,
         updateActionButtons,
         handleWalkAction,

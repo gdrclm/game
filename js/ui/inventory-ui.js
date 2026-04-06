@@ -12,6 +12,7 @@
         utility: 'утилита',
         info: 'навигация',
         tool: 'инструмент',
+        container: 'контейнер',
         value: 'ценность',
         risk: 'риск',
         material: 'материал',
@@ -208,13 +209,18 @@
 
         if (inventorySelectionCraftActions) {
             inventorySelectionCraftActions.addEventListener('click', (event) => {
-                const craftButton = event.target.closest('[data-compression-recipe-id]');
-
-                if (!craftButton || craftButton.disabled) {
+                const compressionButton = event.target.closest('[data-compression-recipe-id]');
+                if (compressionButton && !compressionButton.disabled) {
+                    triggerCompressionRecipe(compressionButton.getAttribute('data-compression-recipe-id'));
                     return;
                 }
 
-                triggerCompressionRecipe(craftButton.getAttribute('data-compression-recipe-id'));
+                const craftingButton = event.target.closest('[data-crafting-recipe-id]');
+                if (!craftingButton || craftingButton.disabled) {
+                    return;
+                }
+
+                triggerCraftingRecipe(craftingButton.getAttribute('data-crafting-recipe-id'));
             });
         }
 
@@ -227,6 +233,10 @@
 
     function getCraftingRuntime() {
         return game.systems.craftingRuntime || null;
+    }
+
+    function getContainerRegistry() {
+        return game.systems.containerRegistry || null;
     }
 
     function getStationRuntime() {
@@ -502,8 +512,42 @@
         return parts.slice(0, 3).join(' · ');
     }
 
+    function buildContainerStateFacts(containerState) {
+        if (!containerState || typeof containerState !== 'object') {
+            return [];
+        }
+
+        const isEmpty = typeof containerState.itemId === 'string'
+            ? containerState.itemId === 'flask_empty'
+            : !containerState.drinkable && !containerState.recipeReady && !containerState.useTransitionStateId;
+        const fillLabel = isEmpty ? 'пустая' : 'полная';
+        const stateParts = [fillLabel];
+
+        if (containerState.stateLabel && containerState.stateLabel !== fillLabel) {
+            stateParts.push(containerState.stateLabel);
+        }
+
+        return [
+            {
+                label: 'Контейнер',
+                value: stateParts.join(' · ')
+            },
+            {
+                label: 'Назначение',
+                value: [
+                    containerState.drinkable ? 'пригодна для питья' : 'не для питья',
+                    containerState.recipeReady ? 'пригодна для рецепта' : 'не для рецепта'
+                ].join(' · ')
+            }
+        ];
+    }
+
     function buildSelectedItemFacts(item, definition) {
         const facts = [];
+        const containerRegistry = getContainerRegistry();
+        const containerState = containerRegistry && typeof containerRegistry.getContainerStateByItemId === 'function'
+            ? containerRegistry.getContainerStateByItemId(item && item.id ? item.id : (definition && definition.id))
+            : null;
         const tierLabel = definition && Number.isFinite(definition.lootTier)
             ? `T${definition.lootTier}`
             : 'T0';
@@ -535,6 +579,8 @@
                 value: activeEffectSummary
             });
         }
+
+        facts.push(...buildContainerStateFacts(containerState));
 
         const passiveEffectSummary = buildPassiveEffectSummary(definition && definition.passive);
         if (passiveEffectSummary) {
@@ -631,6 +677,7 @@
 
             return {
                 recipeId: recipe.recipeId,
+                actionType: 'compression',
                 title: recipe.result && recipe.result.label ? recipe.result.label : recipe.label,
                 subtitle: statusLabel,
                 disabled,
@@ -639,11 +686,109 @@
         });
     }
 
-    function buildCompressionActionButton(option) {
+    function buildMissingIngredientStatusLabel(missingIngredients = []) {
+        const missingEntry = Array.isArray(missingIngredients) ? missingIngredients[0] : null;
+
+        if (!missingEntry) {
+            return 'Не хватает ингредиентов';
+        }
+
+        const quantity = Number.isFinite(missingEntry.required) && missingEntry.required > 1
+            ? ` x${missingEntry.required}`
+            : '';
+        return `Нужно: ${(missingEntry.label || missingEntry.id || 'ингредиент')}${quantity}`;
+    }
+
+    function buildMissingEnvironmentStatusLabel(missingEnvironments = []) {
+        const missingEntry = Array.isArray(missingEnvironments) ? missingEnvironments[0] : null;
+        return `Нужно рядом: ${missingEntry && (missingEntry.label || missingEntry.id) ? (missingEntry.label || missingEntry.id) : 'обязательное окружение'}`;
+    }
+
+    function recipeUsesInventoryItem(recipe, itemId) {
+        if (!recipe || !itemId || !Array.isArray(recipe.ingredients)) {
+            return false;
+        }
+
+        return recipe.ingredients.some((ingredient) => ingredient
+            && ingredient.kind !== 'environment'
+            && ingredient.gameplaySupport
+            && ingredient.gameplaySupport.supported
+            && Array.isArray(ingredient.gameplaySupport.bindings)
+            && ingredient.gameplaySupport.bindings.some((binding) => binding && binding.itemId === itemId));
+    }
+
+    function getCraftingOptions(item) {
+        const craftingRuntime = getCraftingRuntime();
+        const stationRuntime = getStationRuntime();
+        const compressionRuntime = getCompressionRuntime();
+
+        if (!craftingRuntime || !item || !item.id || typeof craftingRuntime.getCompiledRecipes !== 'function' || typeof craftingRuntime.evaluateRecipeAgainstInventory !== 'function') {
+            return [];
+        }
+
+        return craftingRuntime.getCompiledRecipes()
+            .filter((recipe) => recipe && recipe.recipeId && recipe.supportsGameplayInventory)
+            .filter((recipe) => !(compressionRuntime && typeof compressionRuntime.isCompressionRecipe === 'function' && compressionRuntime.isCompressionRecipe(recipe)))
+            .filter((recipe) => recipeUsesInventoryItem(recipe, item.id))
+            .map((recipe) => {
+                const evaluation = craftingRuntime.evaluateRecipeAgainstInventory(recipe.recipeId, {
+                    scanNearbyEnvironment: true
+                });
+                const stationLabel = stationRuntime && typeof stationRuntime.getStationLabel === 'function'
+                    ? stationRuntime.getStationLabel(recipe.station, recipe.station || '')
+                    : (recipe.stationLabel || recipe.station || '');
+                let statusLabel = stationLabel ? `Станция: ${stationLabel}` : '';
+                let disabled = false;
+
+                if (evaluation) {
+                    switch (evaluation.reason) {
+                    case 'missing-ingredients':
+                        statusLabel = buildMissingIngredientStatusLabel(evaluation.missingIngredients);
+                        disabled = true;
+                        break;
+                    case 'wrong-station':
+                        statusLabel = stationLabel ? `Нужен ${stationLabel}` : 'Нужна станция';
+                        disabled = true;
+                        break;
+                    case 'missing-environment':
+                        statusLabel = buildMissingEnvironmentStatusLabel(evaluation.missingEnvironments);
+                        disabled = true;
+                        break;
+                    case 'inventory-full':
+                        statusLabel = 'В сумке нет места';
+                        disabled = true;
+                        break;
+                    default:
+                        if (evaluation.success) {
+                            statusLabel = stationLabel ? `${stationLabel} · готово` : 'Готово';
+                        } else if (evaluation.message) {
+                            statusLabel = evaluation.message;
+                            disabled = true;
+                        }
+                        break;
+                    }
+                }
+
+                return {
+                    recipeId: recipe.recipeId,
+                    actionType: 'crafting',
+                    title: recipe.label || (recipe.result && recipe.result.label) || recipe.recipeId,
+                    subtitle: statusLabel,
+                    disabled,
+                    message: evaluation && evaluation.message ? evaluation.message : ''
+                };
+            });
+    }
+
+    function buildCraftActionButton(option) {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'hud-button inventory-selection-panel__craft-action';
-        button.setAttribute('data-compression-recipe-id', option.recipeId);
+        if (option.actionType === 'compression') {
+            button.setAttribute('data-compression-recipe-id', option.recipeId);
+        } else {
+            button.setAttribute('data-crafting-recipe-id', option.recipeId);
+        }
         button.disabled = Boolean(option.disabled);
 
         const titleNode = document.createElement('span');
@@ -677,6 +822,21 @@
         return Boolean(outcome && outcome.success);
     }
 
+    function triggerCraftingRecipe(recipeId) {
+        const craftingRuntime = getCraftingRuntime();
+
+        if (!craftingRuntime || typeof craftingRuntime.craftRecipeAgainstInventory !== 'function') {
+            return false;
+        }
+
+        const outcome = craftingRuntime.craftRecipeAgainstInventory(recipeId, {
+            scanNearbyEnvironment: true
+        });
+        bridge.setActionMessage(outcome && outcome.message ? outcome.message : 'Не удалось выполнить крафт.');
+        bridge.renderAfterStateChange();
+        return Boolean(outcome && outcome.success);
+    }
+
     function syncSelectionPanel() {
         const refs = getPanelElements();
         const selectedItem = bridge.getSelectedInventoryItem();
@@ -703,6 +863,8 @@
         const useSourceButton = getActionSourceButton('use');
         const dropSourceButton = getActionSourceButton('drop');
         const compressionOptions = getCompressionOptions(selectedItem);
+        const craftingOptions = getCraftingOptions(selectedItem);
+        const craftOptions = [...craftingOptions, ...compressionOptions];
         const craftingRuntime = getCraftingRuntime();
         const stationRuntime = getStationRuntime();
         const availableStations = craftingRuntime && typeof craftingRuntime.resolveAvailableStations === 'function'
@@ -748,22 +910,24 @@
         }
 
         if (refs.inventorySelectionCraftPanel) {
-            refs.inventorySelectionCraftPanel.hidden = compressionOptions.length === 0;
+            refs.inventorySelectionCraftPanel.hidden = craftOptions.length === 0;
         }
 
         if (refs.inventorySelectionCraftLabel) {
-            refs.inventorySelectionCraftLabel.textContent = 'Переработка сырья';
+            refs.inventorySelectionCraftLabel.textContent = craftingOptions.length > 0 && compressionOptions.length > 0
+                ? 'Крафт и переработка'
+                : (craftingOptions.length > 0 ? 'Крафт у станции' : 'Переработка сырья');
         }
 
         if (refs.inventorySelectionCraftHint) {
-            refs.inventorySelectionCraftHint.textContent = compressionOptions.length > 0
-                ? `Выбери результат ниже. Сейчас доступны станции: ${availableStationLabels.join(', ')}.`
+            refs.inventorySelectionCraftHint.textContent = craftOptions.length > 0
+                ? `Выбери действие ниже. Сейчас доступны станции: ${availableStationLabels.join(', ')}.`
                 : '';
         }
 
         if (refs.inventorySelectionCraftActions) {
             refs.inventorySelectionCraftActions.replaceChildren(
-                ...compressionOptions.map((option) => buildCompressionActionButton(option))
+                ...craftOptions.map((option) => buildCraftActionButton(option))
             );
         }
     }

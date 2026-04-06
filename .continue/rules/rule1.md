@@ -1,1 +1,0 @@
-"You have my full permission to edit any file in the codebase. Do not ask for confirmation before using the edit_existing_file tool. If a task requires changes in multiple files, proceed with all of them immediately. Your goal is to implement the solution, not just discuss it."

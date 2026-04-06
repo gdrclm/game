@@ -81,7 +81,7 @@
         return `Нагрузка острова ${tier}/${islandPressureTierCap}`;
     }
 
-    function recordIslandTraversalStep(tileInfo = game.state.activeTileInfo) {
+    function addIslandPressureSteps(tileInfo = game.state.activeTileInfo, steps = 1) {
         if (!tileInfo || tileInfo.house || !tileInfo.progression) {
             return getIslandPressureSteps(tileInfo);
         }
@@ -89,8 +89,15 @@
         const islandIndex = getIslandIndex(tileInfo);
         const pressureState = getIslandPressureState();
         const maxSteps = islandPressureThreshold * (islandPressureTierCap + 1);
-        pressureState[islandIndex] = clamp((pressureState[islandIndex] || 0) + 1, 0, maxSteps);
+        const normalizedSteps = Number.isFinite(steps)
+            ? Math.max(0, Math.floor(steps))
+            : 0;
+        pressureState[islandIndex] = clamp((pressureState[islandIndex] || 0) + normalizedSteps, 0, maxSteps);
         return pressureState[islandIndex];
+    }
+
+    function recordIslandTraversalStep(tileInfo = game.state.activeTileInfo) {
+        return addIslandPressureSteps(tileInfo, 1);
     }
 
     function getWeather(tileInfo = game.state.activeTileInfo) {
@@ -382,6 +389,7 @@
         getIslandPressureSteps,
         getIslandPressureTier,
         getIslandPressureSummary,
+        addIslandPressureSteps,
         recordIslandTraversalStep,
         getWeather,
         getWeatherLabel: (tileInfo = game.state.activeTileInfo) => getWeather(tileInfo).label,

@@ -3,6 +3,9 @@
     const ui = game.systems.ui = game.systems.ui || {};
     const statMaximum = 100;
     const coldDrainDivider = 3;
+    const OPENING_HUNGER_DRAIN_MULTIPLIER = 0.5;
+    const OPENING_HUNGER_DRAIN_ADVANCE_LIMIT = 9;
+    const OPENING_HUNGER_DRAIN_FADE_ADVANCES = 2;
     const tileLabels = {
         trail: 'тропа',
         grass: 'трава',
@@ -253,6 +256,33 @@
 
     function getCurrentProgression(tileInfo = game.state.activeTileInfo) {
         return tileInfo && tileInfo.progression ? tileInfo.progression : null;
+    }
+
+    function getTimeOfDayAdvancesElapsed() {
+        const rawValue = typeof game.state.timeOfDayAdvancesElapsed === 'number'
+            ? game.state.timeOfDayAdvancesElapsed
+            : 0;
+        const normalizedValue = Math.max(0, Math.floor(rawValue));
+        game.state.timeOfDayAdvancesElapsed = normalizedValue;
+        return normalizedValue;
+    }
+
+    function getOpeningHungerDrainMultiplier() {
+        const elapsedAdvances = getTimeOfDayAdvancesElapsed();
+
+        if (elapsedAdvances < OPENING_HUNGER_DRAIN_ADVANCE_LIMIT) {
+            return OPENING_HUNGER_DRAIN_MULTIPLIER;
+        }
+
+        const fadeProgress = OPENING_HUNGER_DRAIN_FADE_ADVANCES > 0
+            ? Math.min(
+                1,
+                Math.max(0, (elapsedAdvances - OPENING_HUNGER_DRAIN_ADVANCE_LIMIT + 1) / OPENING_HUNGER_DRAIN_FADE_ADVANCES)
+            )
+            : 1;
+
+        return OPENING_HUNGER_DRAIN_MULTIPLIER
+            + (1 - OPENING_HUNGER_DRAIN_MULTIPLIER) * fadeProgress;
     }
 
     function scaleDrain(value, tileInfo = game.state.activeTileInfo) {
@@ -3455,6 +3485,7 @@
         getGroundItemDescription,
         getItemDefinition,
         getItemDescription,
+        getOpeningHungerDrainMultiplier,
         getRouteBandBreakdown,
         getRouteLengthLimit,
         getRouteReasonBreakdown,
@@ -3465,6 +3496,7 @@
         getStatValue,
         getStepEnergyDrainMultiplier,
         getTileLabel,
+        getTimeOfDayAdvancesElapsed,
         getTimeOfDayLabel,
         getSceneZoom,
         getTravelBandLabel,

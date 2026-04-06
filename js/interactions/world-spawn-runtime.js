@@ -3,6 +3,20 @@
     const worldSpawnRuntime = game.systems.worldSpawnRuntime = game.systems.worldSpawnRuntime || {};
     const interactionShared = game.systems.interactionShared = game.systems.interactionShared || {};
 
+    function cloneValue(value) {
+        if (Array.isArray(value)) {
+            return value.map(cloneValue);
+        }
+
+        if (value && typeof value === 'object') {
+            return Object.fromEntries(
+                Object.entries(value).map(([key, nestedValue]) => [key, cloneValue(nestedValue)])
+            );
+        }
+
+        return value;
+    }
+
     function tileKey(x, y) {
         return game.systems.houseLayout.tileKey(x, y);
     }
@@ -13,6 +27,428 @@
 
     function getLootSystem() {
         return game.systems.loot || null;
+    }
+
+    function getResourceRegistry() {
+        return game.systems.resourceRegistry || null;
+    }
+
+    function getStateSchema() {
+        return game.systems.stateSchema || null;
+    }
+
+    function getCraftingStateStore() {
+        if (!game.state || typeof game.state !== 'object') {
+            return {};
+        }
+
+        if (!game.state.craftingState || typeof game.state.craftingState !== 'object') {
+            const stateSchema = getStateSchema();
+            const defaultCraftingState = stateSchema && typeof stateSchema.createDomainState === 'function'
+                ? stateSchema.createDomainState().craftingState
+                : {
+                    resources: {},
+                    containers: {},
+                    knownRecipes: {},
+                    stationUnlocks: {},
+                    resourceNodesState: {},
+                    resourceNodeIslandState: {}
+                };
+
+            game.state.craftingState = cloneValue(defaultCraftingState);
+        }
+
+        return game.state.craftingState;
+    }
+
+    function getResourceNodeStateStore() {
+        const craftingState = getCraftingStateStore();
+
+        if (!craftingState.resourceNodesState || typeof craftingState.resourceNodesState !== 'object') {
+            craftingState.resourceNodesState = {};
+        }
+
+        return craftingState.resourceNodesState;
+    }
+
+    function getResourceNodeIslandStateStore() {
+        const craftingState = getCraftingStateStore();
+
+        if (!craftingState.resourceNodeIslandState || typeof craftingState.resourceNodeIslandState !== 'object') {
+            craftingState.resourceNodeIslandState = {};
+        }
+
+        return craftingState.resourceNodeIslandState;
+    }
+
+    function getCurrentTimeOfDayAdvancesElapsed() {
+        return Number.isFinite(game.state.timeOfDayAdvancesElapsed)
+            ? Math.max(0, Math.floor(game.state.timeOfDayAdvancesElapsed))
+            : 0;
+    }
+
+    function getResourceNodeDefinition(resourceNodeKind) {
+        const resourceRegistry = getResourceRegistry();
+        return resourceRegistry && typeof resourceRegistry.getResourceNodeDefinition === 'function'
+            ? resourceRegistry.getResourceNodeDefinition(resourceNodeKind)
+            : null;
+    }
+
+    function getResourceNodeRespawnPolicy(definition) {
+        const resourceRegistry = getResourceRegistry();
+        if (resourceRegistry && typeof resourceRegistry.getResourceNodeRespawnPolicy === 'function') {
+            return resourceRegistry.getResourceNodeRespawnPolicy(definition);
+        }
+
+        return {
+            mode: 'singleUse',
+            islandLimit: null,
+            limitGroupId: definition && definition.resourceId ? definition.resourceId : ''
+        };
+    }
+
+    function getResourceNodeRespawnPolicyLabel(policy) {
+        const resourceRegistry = getResourceRegistry();
+        if (resourceRegistry && typeof resourceRegistry.getResourceNodeRespawnPolicyLabel === 'function') {
+            return resourceRegistry.getResourceNodeRespawnPolicyLabel(policy);
+        }
+
+        return 'одноразовый узел';
+    }
+
+    function getResourceNodeDurabilityProfile(definition) {
+        const profile = definition && definition.durabilityProfile && typeof definition.durabilityProfile === 'object'
+            ? definition.durabilityProfile
+            : {};
+        return {
+            maxHarvests: Math.max(1, Math.floor(Number(profile.maxHarvests) || 1)),
+            regenerationTimeAdvances: Math.max(0, Math.floor(Number(profile.regenerationTimeAdvances) || 0))
+        };
+    }
+
+    function getResourceNodeStateLabel(nodeState) {
+        switch (nodeState) {
+            case 'used':
+                return 'used';
+            case 'depleted':
+                return 'depleted';
+            case 'regenerating':
+                return 'regenerating';
+            case 'fresh':
+            default:
+                return 'fresh';
+        }
+    }
+
+    function getInteractionIslandIndex(interaction, definition = null) {
+        if (interaction && Number.isFinite(interaction.islandIndex)) {
+            return Math.max(1, Math.floor(interaction.islandIndex));
+        }
+
+        if (interaction && interaction.expedition && Number.isFinite(interaction.expedition.islandIndex)) {
+            return Math.max(1, Math.floor(interaction.expedition.islandIndex));
+        }
+
+        const resolvedDefinition = definition || (interaction ? getResourceNodeDefinition(interaction.resourceNodeKind) : null);
+        const window = resolvedDefinition && resolvedDefinition.requiredIslands ? resolvedDefinition.requiredIslands : null;
+        if (window && Number.isFinite(window.from)) {
+            return Math.max(1, Math.floor(window.from));
+        }
+
+        return Number.isFinite(game.state.currentIslandIndex)
+            ? Math.max(1, Math.floor(game.state.currentIslandIndex))
+            : 1;
+    }
+
+    function buildResourceNodeIslandLimitKey(interaction, definition, policy) {
+        if (!policy || policy.mode !== 'hardLimited') {
+            return '';
+        }
+
+        const islandIndex = getInteractionIslandIndex(interaction, definition);
+        const limitGroupId = policy.limitGroupId || (definition && definition.resourceId) || (definition && definition.id) || 'resourceNode';
+        return `${islandIndex}:${limitGroupId}`;
+    }
+
+    function resolveResourceNodeIslandLimitEntry(entry, policy) {
+        return {
+            consumed: Number.isFinite(entry && entry.consumed)
+                ? Math.max(0, Math.floor(entry.consumed))
+                : 0,
+            islandLimit: Number.isFinite(policy && policy.islandLimit)
+                ? Math.max(1, Math.floor(policy.islandLimit))
+                : null
+        };
+    }
+
+    function persistResourceNodeIslandLimitEntry(limitKey, entry) {
+        if (!limitKey) {
+            return null;
+        }
+
+        const stateStore = getResourceNodeIslandStateStore();
+        if (!entry || !Number.isFinite(entry.consumed) || entry.consumed <= 0) {
+            delete stateStore[limitKey];
+            return null;
+        }
+
+        stateStore[limitKey] = {
+            consumed: Math.max(0, Math.floor(entry.consumed)),
+            islandLimit: Number.isFinite(entry.islandLimit) ? Math.max(1, Math.floor(entry.islandLimit)) : null
+        };
+        return stateStore[limitKey];
+    }
+
+    function getResourceNodeIslandLimitSnapshot(interaction, definition, policy) {
+        const limitKey = buildResourceNodeIslandLimitKey(interaction, definition, policy);
+        const entry = limitKey
+            ? getResourceNodeIslandStateStore()[limitKey]
+            : null;
+        const resolved = resolveResourceNodeIslandLimitEntry(entry, policy);
+        const remaining = resolved.islandLimit === null
+            ? null
+            : Math.max(0, resolved.islandLimit - resolved.consumed);
+
+        return {
+            limitKey,
+            islandIndex: getInteractionIslandIndex(interaction, definition),
+            consumed: resolved.consumed,
+            islandLimit: resolved.islandLimit,
+            remaining,
+            exhausted: resolved.islandLimit !== null && resolved.consumed >= resolved.islandLimit
+        };
+    }
+
+    function consumeResourceNodeIslandLimit(interaction, definition, policy, amount = 1) {
+        const snapshot = getResourceNodeIslandLimitSnapshot(interaction, definition, policy);
+        if (!snapshot.limitKey || !Number.isFinite(snapshot.islandLimit)) {
+            return snapshot;
+        }
+
+        const nextEntry = {
+            consumed: snapshot.consumed + Math.max(0, Math.floor(amount)),
+            islandLimit: snapshot.islandLimit
+        };
+        persistResourceNodeIslandLimitEntry(snapshot.limitKey, nextEntry);
+        return getResourceNodeIslandLimitSnapshot(interaction, definition, policy);
+    }
+
+    function buildDefaultResourceNodeStateEntry(definition) {
+        const durabilityProfile = getResourceNodeDurabilityProfile(definition);
+        return {
+            nodeState: 'fresh',
+            nodeStateReason: 'durability',
+            durabilityRemaining: durabilityProfile.maxHarvests,
+            durabilityMax: durabilityProfile.maxHarvests,
+            regenerationTimeAdvances: durabilityProfile.regenerationTimeAdvances,
+            regenerationReadyAtAdvance: null
+        };
+    }
+
+    function resolveResourceNodeStateEntry(entry, definition) {
+        const defaults = buildDefaultResourceNodeStateEntry(definition);
+        const normalizedEntry = entry && typeof entry === 'object'
+            ? cloneValue(entry)
+            : {};
+        const resolved = {
+            nodeState: typeof normalizedEntry.nodeState === 'string'
+                ? normalizedEntry.nodeState.trim().toLowerCase()
+                : defaults.nodeState,
+            nodeStateReason: 'durability',
+            durabilityRemaining: Number.isFinite(normalizedEntry.durabilityRemaining)
+                ? Math.max(0, Math.floor(normalizedEntry.durabilityRemaining))
+                : defaults.durabilityRemaining,
+            durabilityMax: defaults.durabilityMax,
+            regenerationTimeAdvances: defaults.regenerationTimeAdvances,
+            regenerationReadyAtAdvance: Number.isFinite(normalizedEntry.regenerationReadyAtAdvance)
+                ? Math.max(0, Math.floor(normalizedEntry.regenerationReadyAtAdvance))
+                : null
+        };
+        const currentAdvance = getCurrentTimeOfDayAdvancesElapsed();
+
+        if (resolved.nodeState === 'regenerating' && resolved.regenerationTimeAdvances > 0 && resolved.regenerationReadyAtAdvance === null) {
+            resolved.regenerationReadyAtAdvance = currentAdvance + resolved.regenerationTimeAdvances;
+        }
+
+        if (
+            resolved.nodeState === 'regenerating'
+            && resolved.regenerationReadyAtAdvance !== null
+            && currentAdvance >= resolved.regenerationReadyAtAdvance
+        ) {
+            resolved.nodeState = 'fresh';
+            resolved.durabilityRemaining = resolved.durabilityMax;
+            resolved.regenerationReadyAtAdvance = null;
+        }
+
+        if (resolved.durabilityRemaining >= resolved.durabilityMax && resolved.nodeState !== 'regenerating') {
+            resolved.nodeState = 'fresh';
+        } else if (resolved.durabilityRemaining > 0 && resolved.nodeState !== 'regenerating') {
+            resolved.nodeState = 'used';
+        } else if (resolved.durabilityRemaining <= 0 && resolved.nodeState !== 'regenerating') {
+            resolved.nodeState = resolved.regenerationTimeAdvances > 0 ? 'regenerating' : 'depleted';
+        }
+
+        if (resolved.nodeState === 'regenerating' && resolved.regenerationTimeAdvances <= 0) {
+            resolved.nodeState = 'depleted';
+            resolved.regenerationReadyAtAdvance = null;
+        }
+
+        resolved.nodeStateLabel = getResourceNodeStateLabel(resolved.nodeState);
+        return resolved;
+    }
+
+    function isDefaultResourceNodeStateEntry(entry) {
+        return Boolean(
+            entry
+            && entry.nodeState === 'fresh'
+            && entry.durabilityRemaining >= entry.durabilityMax
+            && entry.regenerationReadyAtAdvance === null
+        );
+    }
+
+    function persistResourceNodeStateEntry(interactionId, entry) {
+        if (!interactionId) {
+            return null;
+        }
+
+        const stateStore = getResourceNodeStateStore();
+
+        if (!entry || isDefaultResourceNodeStateEntry(entry)) {
+            delete stateStore[interactionId];
+            return null;
+        }
+
+        stateStore[interactionId] = {
+            nodeState: entry.nodeState,
+            durabilityRemaining: entry.durabilityRemaining,
+            regenerationReadyAtAdvance: entry.regenerationReadyAtAdvance
+        };
+        return stateStore[interactionId];
+    }
+
+    function syncResourceNodeInteractionState(interaction, definition = null) {
+        if (!isResourceNodeInteraction(interaction)) {
+            return interaction;
+        }
+
+        const resolvedDefinition = definition || getResourceNodeDefinition(interaction.resourceNodeKind);
+        const stateStore = getResourceNodeStateStore();
+        const resolvedState = resolveResourceNodeStateEntry(stateStore[interaction.id], resolvedDefinition);
+        const respawnPolicy = getResourceNodeRespawnPolicy(resolvedDefinition);
+        const limitSnapshot = getResourceNodeIslandLimitSnapshot(interaction, resolvedDefinition, respawnPolicy);
+        const nextState = {
+            ...resolvedState,
+            respawnPolicyMode: respawnPolicy.mode,
+            respawnPolicyLabel: getResourceNodeRespawnPolicyLabel(respawnPolicy),
+            islandLimitConsumed: limitSnapshot.consumed,
+            islandLimitMax: limitSnapshot.islandLimit,
+            islandLimitRemaining: limitSnapshot.remaining,
+            islandLimitExhausted: limitSnapshot.exhausted
+        };
+
+        if (limitSnapshot.exhausted && respawnPolicy.mode === 'hardLimited') {
+            nextState.nodeState = 'depleted';
+            nextState.nodeStateLabel = getResourceNodeStateLabel('depleted');
+            nextState.nodeStateReason = 'islandLimit';
+            nextState.regenerationReadyAtAdvance = null;
+        }
+
+        persistResourceNodeStateEntry(interaction.id, resolvedState);
+        interaction.nodeState = nextState.nodeState;
+        interaction.nodeStateReason = nextState.nodeStateReason;
+        interaction.nodeStateLabel = nextState.nodeStateLabel;
+        interaction.durabilityRemaining = nextState.durabilityRemaining;
+        interaction.durabilityMax = nextState.durabilityMax;
+        interaction.regenerationTimeAdvances = nextState.regenerationTimeAdvances;
+        interaction.regenerationReadyAtAdvance = nextState.regenerationReadyAtAdvance;
+        interaction.respawnPolicyMode = nextState.respawnPolicyMode;
+        interaction.respawnPolicyLabel = nextState.respawnPolicyLabel;
+        interaction.islandLimitConsumed = nextState.islandLimitConsumed;
+        interaction.islandLimitMax = nextState.islandLimitMax;
+        interaction.islandLimitRemaining = nextState.islandLimitRemaining;
+        interaction.islandLimitExhausted = nextState.islandLimitExhausted;
+        return interaction;
+    }
+
+    function consumeResourceNodeInteraction(interaction) {
+        if (!isResourceNodeInteraction(interaction)) {
+            return null;
+        }
+
+        const definition = getResourceNodeDefinition(interaction.resourceNodeKind);
+        const respawnPolicy = getResourceNodeRespawnPolicy(definition);
+        const currentState = resolveResourceNodeStateEntry(
+            getResourceNodeStateStore()[interaction.id],
+            definition
+        );
+        const limitSnapshot = getResourceNodeIslandLimitSnapshot(interaction, definition, respawnPolicy);
+
+        if (
+            currentState.nodeState === 'depleted'
+            || currentState.nodeState === 'regenerating'
+            || (respawnPolicy.mode === 'hardLimited' && limitSnapshot.exhausted)
+        ) {
+            syncResourceNodeInteractionState(interaction, definition);
+            return cloneValue({
+                ...currentState,
+                respawnPolicyMode: respawnPolicy.mode,
+                respawnPolicyLabel: getResourceNodeRespawnPolicyLabel(respawnPolicy),
+                islandLimitConsumed: limitSnapshot.consumed,
+                islandLimitMax: limitSnapshot.islandLimit,
+                islandLimitRemaining: limitSnapshot.remaining,
+                islandLimitExhausted: limitSnapshot.exhausted,
+                nodeStateReason: limitSnapshot.exhausted ? 'islandLimit' : currentState.nodeStateReason
+            });
+        }
+
+        const nextRemaining = Math.max(0, currentState.durabilityRemaining - 1);
+        const nextState = {
+            ...currentState,
+            durabilityRemaining: nextRemaining,
+            nodeState: 'fresh',
+            regenerationReadyAtAdvance: null
+        };
+
+        if (nextRemaining <= 0) {
+            if (currentState.regenerationTimeAdvances > 0) {
+                nextState.nodeState = 'regenerating';
+                nextState.regenerationReadyAtAdvance = getCurrentTimeOfDayAdvancesElapsed() + currentState.regenerationTimeAdvances;
+            } else {
+                nextState.nodeState = 'depleted';
+            }
+        } else if (nextRemaining < currentState.durabilityMax) {
+            nextState.nodeState = 'used';
+        }
+
+        const nextLimitSnapshot = respawnPolicy.mode === 'hardLimited'
+            ? consumeResourceNodeIslandLimit(interaction, definition, respawnPolicy, 1)
+            : limitSnapshot;
+
+        if (respawnPolicy.mode === 'hardLimited' && nextLimitSnapshot.exhausted) {
+            nextState.nodeState = 'depleted';
+            nextState.nodeStateReason = 'islandLimit';
+            nextState.regenerationReadyAtAdvance = null;
+        }
+
+        nextState.nodeStateLabel = getResourceNodeStateLabel(nextState.nodeState);
+        persistResourceNodeStateEntry(interaction.id, nextState);
+        Object.assign(interaction, nextState, {
+            respawnPolicyMode: respawnPolicy.mode,
+            respawnPolicyLabel: getResourceNodeRespawnPolicyLabel(respawnPolicy),
+            islandLimitConsumed: nextLimitSnapshot.consumed,
+            islandLimitMax: nextLimitSnapshot.islandLimit,
+            islandLimitRemaining: nextLimitSnapshot.remaining,
+            islandLimitExhausted: nextLimitSnapshot.exhausted
+        });
+        return cloneValue({
+            ...nextState,
+            respawnPolicyMode: respawnPolicy.mode,
+            respawnPolicyLabel: getResourceNodeRespawnPolicyLabel(respawnPolicy),
+            islandLimitConsumed: nextLimitSnapshot.consumed,
+            islandLimitMax: nextLimitSnapshot.islandLimit,
+            islandLimitRemaining: nextLimitSnapshot.remaining,
+            islandLimitExhausted: nextLimitSnapshot.exhausted
+        });
     }
 
     function isInteriorInteractionKind(kind) {
@@ -27,6 +463,10 @@
 
     function isGroundItemInteraction(interaction) {
         return Boolean(interaction && interaction.kind === 'groundItem');
+    }
+
+    function isResourceNodeInteraction(interaction) {
+        return Boolean(interaction && interaction.kind === 'resourceNode');
     }
 
     function getGroundItemsState() {
@@ -336,6 +776,356 @@
 
             return predicate(chunkData[nextY][nextX], nextX, nextY) ? count + 1 : count;
         }, 0);
+    }
+
+    function getResourceNodeDefinitions() {
+        const resourceRegistry = getResourceRegistry();
+        return resourceRegistry && typeof resourceRegistry.getResourceNodeDefinitions === 'function'
+            ? resourceRegistry.getResourceNodeDefinitions()
+            : [];
+    }
+
+    function getResourceNodePlacementProfile(definition) {
+        return definition && definition.placementProfile && typeof definition.placementProfile === 'object'
+            ? definition.placementProfile
+            : null;
+    }
+
+    function getTravelZoneKeyAt(travelZones, x, y) {
+        return Array.isArray(travelZones) && Array.isArray(travelZones[y])
+            ? travelZones[y][x] || 'none'
+            : 'none';
+    }
+
+    function getTravelBandForSpawnTile(tileType, travelZoneKey) {
+        const content = game.systems.content || null;
+        const tileBand = content && typeof content.getTileRouteBand === 'function'
+            ? content.getTileRouteBand(tileType)
+            : 'normal';
+
+        if (!content || typeof content.getTravelZoneDefinition !== 'function' || !travelZoneKey || travelZoneKey === 'none') {
+            return tileBand || 'normal';
+        }
+
+        const zoneDefinition = content.getTravelZoneDefinition(travelZoneKey);
+        return zoneDefinition && zoneDefinition.routeBand
+            ? zoneDefinition.routeBand
+            : (tileBand || 'normal');
+    }
+
+    function countPlacementRequirementMatches(chunkData, travelZones, x, y, requirement = {}) {
+        const matchTileTypes = Array.isArray(requirement.matchTileTypes)
+            ? requirement.matchTileTypes
+            : [];
+        const matchTravelZoneKeys = Array.isArray(requirement.matchTravelZoneKeys)
+            ? requirement.matchTravelZoneKeys
+            : [];
+        const matchTravelBands = Array.isArray(requirement.matchTravelBands)
+            ? requirement.matchTravelBands
+            : [];
+
+        return countNeighborTiles(
+            chunkData,
+            x,
+            y,
+            (candidateTileType, candidateX, candidateY) => {
+                const candidateTravelZoneKey = getTravelZoneKeyAt(travelZones, candidateX, candidateY);
+                const candidateTravelBand = getTravelBandForSpawnTile(candidateTileType, candidateTravelZoneKey);
+
+                if (matchTileTypes.length > 0 && matchTileTypes.includes(candidateTileType)) {
+                    return true;
+                }
+
+                if (matchTravelZoneKeys.length > 0 && matchTravelZoneKeys.includes(candidateTravelZoneKey)) {
+                    return true;
+                }
+
+                if (matchTravelBands.length > 0 && matchTravelBands.includes(candidateTravelBand)) {
+                    return true;
+                }
+
+                return false;
+            },
+            requirement.includeDiagonals !== false
+        );
+    }
+
+    function isResourceNodeTileAllowed(definition, tileType, travelZoneKey = 'none', travelBand = 'normal', chunkData = null, travelZones = null, x = 0, y = 0, chunkRecord = null) {
+        if (!definition) {
+            return false;
+        }
+
+        const sourceTileTypes = Array.isArray(definition.sourceTileTypes)
+            ? definition.sourceTileTypes
+            : [];
+        const sourceTileMatch = sourceTileTypes.length === 0 || sourceTileTypes.includes(tileType);
+        const placementProfile = getResourceNodePlacementProfile(definition);
+
+        if (!placementProfile) {
+            return sourceTileMatch;
+        }
+
+        const allowedTravelZoneKeys = Array.isArray(placementProfile.allowedTravelZoneKeys)
+            ? placementProfile.allowedTravelZoneKeys
+            : [];
+        const travelZoneMatch = allowedTravelZoneKeys.includes(travelZoneKey);
+        const allowTravelZoneFallback = Boolean(placementProfile.allowTravelZoneFallback && travelZoneMatch);
+
+        if (!sourceTileMatch && !allowTravelZoneFallback) {
+            return false;
+        }
+
+        const allowedTravelBands = Array.isArray(placementProfile.allowedTravelBands)
+            ? placementProfile.allowedTravelBands
+            : [];
+        if (allowedTravelBands.length > 0 && !allowedTravelBands.includes(travelBand)) {
+            return false;
+        }
+
+        const requiredChunkTags = Array.isArray(placementProfile.requiredChunkTags)
+            ? placementProfile.requiredChunkTags
+            : [];
+        if (requiredChunkTags.length > 0) {
+            const chunkTags = chunkRecord && chunkRecord.tags instanceof Set ? chunkRecord.tags : new Set();
+            if (!requiredChunkTags.every((tag) => chunkTags.has(tag))) {
+                return false;
+            }
+        }
+
+        const neighborRequirements = Array.isArray(placementProfile.neighborRequirements)
+            ? placementProfile.neighborRequirements
+            : [];
+        for (const requirement of neighborRequirements) {
+            const minCount = Number.isFinite(requirement && requirement.minCount)
+                ? Math.max(0, Math.floor(requirement.minCount))
+                : 0;
+
+            if (minCount <= 0) {
+                continue;
+            }
+
+            if (countPlacementRequirementMatches(chunkData, travelZones, x, y, requirement) < minCount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function isIslandWithinWindow(definition, progression) {
+        if (!progression || !Number.isFinite(progression.islandIndex)) {
+            return true;
+        }
+
+        const window = definition && definition.requiredIslands ? definition.requiredIslands : null;
+        if (!window) {
+            return true;
+        }
+
+        const fromIsland = Number.isFinite(window.from) ? window.from : 1;
+        const toIsland = Number.isFinite(window.to) ? window.to : Infinity;
+        return progression.islandIndex >= fromIsland && progression.islandIndex <= toIsland;
+    }
+
+    function getResourceNodeSpawnLimit(definition, progression, chunkData) {
+        if (!definition || !isIslandWithinWindow(definition, progression)) {
+            return 0;
+        }
+
+        const islandIndex = progression && Number.isFinite(progression.islandIndex)
+            ? progression.islandIndex
+            : 1;
+        const hasWaterTiles = Array.isArray(chunkData)
+            && chunkData.some((row) => Array.isArray(row) && row.some((tileType) => tileType === 'water' || tileType === 'shore' || tileType === 'reeds'));
+
+        switch (definition.id) {
+            case 'grassBush':
+                return islandIndex <= 6 ? 3 : 2;
+            case 'stonePile':
+                return islandIndex <= 15 ? 2 : 1;
+            case 'rubbleScree':
+                return islandIndex >= 7 && islandIndex <= 24 ? 2 : 1;
+            case 'woodTree':
+                return islandIndex >= 2 ? 2 : 0;
+            case 'waterSource':
+                return hasWaterTiles ? 2 : 0;
+            case 'fishingSpot':
+                return islandIndex >= 6 && hasWaterTiles ? 1 : 0;
+            default:
+                return 0;
+        }
+    }
+
+    function scoreResourceNodeCandidate(definition, chunkData, travelZones, x, y, houses, random) {
+        const tileType = chunkData[y][x];
+        const travelZoneKey = getTravelZoneKeyAt(travelZones, x, y);
+        const travelBand = getTravelBandForSpawnTile(tileType, travelZoneKey);
+        const nearestHouseDistance = getNearestHouseDistance(x, y, houses);
+        const safeNearestHouseDistance = Number.isFinite(nearestHouseDistance) ? nearestHouseDistance : 6;
+        const edgeDistance = Math.min(x, y, game.config.chunkSize - 1 - x, game.config.chunkSize - 1 - y);
+        const trailNeighbors = countNeighborTiles(chunkData, x, y, (candidate) => candidate === 'trail' || candidate === 'bridge', true);
+        const waterNeighbors = countNeighborTiles(chunkData, x, y, (candidate) => candidate === 'water', true);
+        const rockNeighbors = countNeighborTiles(chunkData, x, y, (candidate) => candidate === 'rock', true);
+        const grassNeighbors = countNeighborTiles(chunkData, x, y, (candidate) => candidate === 'grass', true);
+        const reedsNeighbors = countNeighborTiles(chunkData, x, y, (candidate) => candidate === 'reeds', true);
+        const rubbleNeighbors = countNeighborTiles(chunkData, x, y, (candidate) => candidate === 'rubble', true);
+        let score = random() * 0.2 + Math.min(edgeDistance, 4) * 0.08;
+
+        if (Array.isArray(definition.preferredTileTypes) && definition.preferredTileTypes.includes(tileType)) {
+            score += 1.6;
+        }
+
+        switch (definition.id) {
+            case 'grassBush':
+                score += tileType === 'grass' ? 2.6 : 1.8;
+                score += Math.max(0, safeNearestHouseDistance - 1) * 0.55;
+                score += trailNeighbors * 0.35 + waterNeighbors * 0.2;
+                score += (grassNeighbors + reedsNeighbors) * 0.18;
+                break;
+            case 'stonePile':
+                score += tileType === 'rock' ? 3.4 : 0;
+                score += rockNeighbors * 0.5 + trailNeighbors * 0.4;
+                score += Math.max(0, safeNearestHouseDistance - 1) * 0.2;
+                break;
+            case 'rubbleScree':
+                score += tileType === 'rubble' ? 3 : 0;
+                score += travelZoneKey === 'badSector' ? 2.4 : 0;
+                score += rubbleNeighbors * 0.4;
+                score += trailNeighbors * 0.55 + rockNeighbors * 0.2;
+                score += Math.max(0, safeNearestHouseDistance - 1) * 0.18;
+                break;
+            case 'woodTree':
+                score += tileType === 'grass' ? 2.1 : (tileType === 'shore' ? 1.8 : 1.5);
+                score += travelBand === 'normal' ? 1.2 : (travelBand === 'rough' ? 0.7 : -2.8);
+                score += waterNeighbors * 0.45;
+                score += Math.max(0, safeNearestHouseDistance - 1) * 0.42;
+                score -= trailNeighbors * 0.08;
+                break;
+            case 'waterSource':
+                score += tileType === 'water' ? 2.6 : 2.1;
+                score += reedsNeighbors * 0.35;
+                score += waterNeighbors * 1.25 + trailNeighbors * 0.25;
+                break;
+            case 'fishingSpot':
+                score += tileType === 'water' ? 2.8 : (tileType === 'reeds' ? 2.4 : 1.9);
+                score += reedsNeighbors * 0.45;
+                score += waterNeighbors * 1.6 + trailNeighbors * 0.2;
+                break;
+            default:
+                score += safeNearestHouseDistance * 0.15;
+                break;
+        }
+
+        return score;
+    }
+
+    function collectResourceNodeCandidates(chunkData, travelZones, houseCellSet, occupiedKeys, houses, random, definition, chunkRecord = null) {
+        const candidates = [];
+        const chunkSize = game.config.chunkSize;
+
+        for (let y = 0; y < chunkSize; y++) {
+            for (let x = 0; x < chunkSize; x++) {
+                const key = tileKey(x, y);
+                const tileType = chunkData[y][x];
+                const travelZoneKey = getTravelZoneKeyAt(travelZones, x, y);
+                const travelBand = getTravelBandForSpawnTile(tileType, travelZoneKey);
+
+                if (
+                    houseCellSet.has(key)
+                    || occupiedKeys.has(key)
+                    || !isResourceNodeTileAllowed(definition, tileType, travelZoneKey, travelBand, chunkData, travelZones, x, y, chunkRecord)
+                ) {
+                    continue;
+                }
+
+                const score = scoreResourceNodeCandidate(definition, chunkData, travelZones, x, y, houses, random);
+                if (score <= 0.4) {
+                    continue;
+                }
+
+                candidates.push({ x, y, score });
+            }
+        }
+
+        return candidates.sort((left, right) => right.score - left.score);
+    }
+
+    function createResourceNodeInteractionRecord(chunkX, chunkY, localX, localY, definition, progression = null) {
+        const interactionId = `resource-node:${definition.id}:${chunkX}:${chunkY}:${localX}:${localY}`;
+        const islandIndex = progression && Number.isFinite(progression.islandIndex)
+            ? Math.max(1, Math.floor(progression.islandIndex))
+            : (Number.isFinite(game.state.currentIslandIndex) ? Math.max(1, Math.floor(game.state.currentIslandIndex)) : 1);
+        const expedition = {
+            kind: 'resourceNode',
+            label: definition.label,
+            summary: definition.summary || '',
+            resourceId: definition.resourceId,
+            resourceNodeKind: definition.id,
+            family: definition.family || 'resourceNode',
+            islandIndex
+        };
+        const interaction = createStandaloneInteractionRecord(
+            chunkX,
+            chunkY,
+            localX,
+            localY,
+            expedition,
+            {
+                id: interactionId,
+                houseId: interactionId,
+                kind: 'resourceNode',
+                label: definition.label,
+                placement: 'exterior',
+                renderDepthOffset: 0.29
+            }
+        );
+
+        interaction.family = 'resourceNode';
+        interaction.resourceId = definition.resourceId;
+        interaction.resourceNodeKind = definition.id;
+        interaction.resourceNodeFamily = definition.family || 'resourceNode';
+        interaction.renderKind = definition.renderKind || definition.id;
+        interaction.summary = definition.summary || '';
+        interaction.islandIndex = islandIndex;
+        interaction.gatherProfile = definition.gatherProfile ? cloneValue(definition.gatherProfile) : null;
+        interaction.interactionHint = definition.interactionHint || '';
+        interaction.durabilityProfile = definition.durabilityProfile ? cloneValue(definition.durabilityProfile) : null;
+        interaction.respawnPolicy = definition.respawnPolicy ? cloneValue(definition.respawnPolicy) : null;
+
+        return syncResourceNodeInteractionState(interaction, definition);
+    }
+
+    function appendResourceNodeInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options = {}) {
+        const progression = options.progression || null;
+        const chunkRecord = options.chunkRecord || null;
+        const travelZones = Array.isArray(options.travelZones) ? options.travelZones : null;
+        const houseCellSet = getHouseCellSet(houses);
+
+        getResourceNodeDefinitions().forEach((definition) => {
+            const spawnLimit = getResourceNodeSpawnLimit(definition, progression, chunkData);
+            const candidates = spawnLimit > 0
+                ? collectResourceNodeCandidates(chunkData, travelZones, houseCellSet, occupiedKeys, houses, random, definition, chunkRecord)
+                : [];
+            const picked = [];
+
+            candidates.forEach((candidate) => {
+                if (picked.length >= spawnLimit) {
+                    return;
+                }
+
+                const isTooClose = picked.some((entry) => Math.abs(entry.x - candidate.x) + Math.abs(entry.y - candidate.y) < 2);
+                if (isTooClose) {
+                    return;
+                }
+
+                picked.push(candidate);
+            });
+
+            picked.forEach((candidate) => {
+                occupiedKeys.add(tileKey(candidate.x, candidate.y));
+                result.push(createResourceNodeInteractionRecord(chunkX, chunkY, candidate.x, candidate.y, definition, progression));
+            });
+        });
     }
 
     function collectSpecialInteractionCandidates(chunkData, houseCellSet, occupiedKeys, houses, random, plan = {}) {
@@ -752,6 +1542,7 @@
 
         appendSpecialInteractionPlans(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
         appendTrailCacheInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
+        appendResourceNodeInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
         appendPersistentGroundItems(result, chunkX, chunkY, houses);
         return result;
     }
@@ -862,6 +1653,10 @@
                 game.state.activeInteractionId = null;
             }
 
+            if (game.state.selectedWorldInteractionId === targetId) {
+                game.state.selectedWorldInteractionId = null;
+            }
+
             return true;
         }
 
@@ -871,7 +1666,9 @@
     Object.assign(interactionShared, {
         tileKey,
         isGroundItemInteraction,
-        buildInteractionTileMap
+        isResourceNodeInteraction,
+        buildInteractionTileMap,
+        syncResourceNodeInteractionState
     });
 
     Object.assign(worldSpawnRuntime, {
@@ -879,7 +1676,11 @@
         buildInteractionTileMap,
         addGroundItemDrop,
         replaceGroundItemAtWorld,
-        removeInteraction
+        removeInteraction,
+        isResourceNodeInteraction,
+        syncResourceNodeInteractionState,
+        consumeResourceNodeInteraction,
+        getResourceNodeStateLabel
     });
 
     const interactions = game.systems.interactions = game.systems.interactions || {};
@@ -889,6 +1690,10 @@
         buildInteractionTileMap,
         addGroundItemDrop,
         replaceGroundItemAtWorld,
-        removeInteraction
+        removeInteraction,
+        isResourceNodeInteraction,
+        syncResourceNodeInteractionState,
+        consumeResourceNodeInteraction,
+        getResourceNodeStateLabel
     });
 })();

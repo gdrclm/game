@@ -5,6 +5,8 @@
     const DOMAIN_SAVE_VERSION = 1;
     const CRAFTING_STATE_SAVE_VERSION = 2;
     const RAW_RESOURCE_LAYER_SAVE_VERSION = 3;
+    const RESOURCE_NODE_RESPAWN_POLICY_SAVE_VERSION = 4;
+    const WATER_FLASK_CONTAINER_SAVE_VERSION = 5;
     const LEGACY_RAW_RESOURCE_ITEM_MIGRATIONS = Object.freeze({
         lowlandGrass: {
             itemId: 'raw_grass',
@@ -26,14 +28,19 @@
         },
         grassResource: { itemId: 'raw_grass', label: 'Трава', icon: 'TR', quantityMultiplier: 5, resourceFamilyId: 'grass' },
         rubbleChunk: { itemId: 'raw_rubble', label: 'Щебень', icon: 'OS', quantityMultiplier: 1, resourceFamilyId: 'rubble' },
-        stoneResource: { itemId: 'raw_stone', label: 'Камень', icon: 'KS', quantityMultiplier: 5, resourceFamilyId: 'stone' }
+        stoneResource: { itemId: 'raw_stone', label: 'Камень', icon: 'KS', quantityMultiplier: 5, resourceFamilyId: 'stone' },
+        waterFlask: { itemId: 'flask_water_full', label: 'Фляга кипячёной воды', icon: 'FW', quantityMultiplier: 1, resourceFamilyId: 'water' }
     });
     const RAW_STACKABLE_ITEM_IDS = new Set([
         'raw_grass',
         'raw_stone',
         'raw_rubble',
         'raw_wood',
-        'raw_fish'
+        'raw_fish',
+        'flask_empty',
+        'flask_water_dirty',
+        'flask_water_full',
+        'flask_water_alchemy'
     ]);
 
     function isPlainObject(value) {
@@ -175,7 +182,8 @@
             containers: snapshot.containers,
             knownRecipes: snapshot.knownRecipes,
             stationUnlocks: snapshot.stationUnlocks,
-            resourceNodesState: snapshot.resourceNodesState
+            resourceNodesState: snapshot.resourceNodesState,
+            resourceNodeIslandState: snapshot.resourceNodeIslandState
         };
     }
 
@@ -192,7 +200,10 @@
             stationUnlocks: isPlainObject(source.stationUnlocks) ? cloneValue(source.stationUnlocks) : cloneValue(defaults.stationUnlocks),
             resourceNodesState: isPlainObject(source.resourceNodesState)
                 ? cloneValue(source.resourceNodesState)
-                : cloneValue(defaults.resourceNodesState)
+                : cloneValue(defaults.resourceNodesState),
+            resourceNodeIslandState: isPlainObject(source.resourceNodeIslandState)
+                ? cloneValue(source.resourceNodeIslandState)
+                : cloneValue(defaults.resourceNodeIslandState)
         };
     }
 
@@ -273,6 +284,49 @@
         };
     }
 
+    function migrateSnapshotToVersion4(snapshot) {
+        const craftingState = buildMigratedCraftingState(snapshot);
+
+        if (!isPlainObject(craftingState.resourceNodeIslandState)) {
+            craftingState.resourceNodeIslandState = {};
+        }
+
+        return {
+            saveVersion: RESOURCE_NODE_RESPAWN_POLICY_SAVE_VERSION,
+            player: isPlainObject(snapshot.player) ? cloneValue(snapshot.player) : {},
+            craftingState,
+            world: isPlainObject(snapshot.world) ? cloneValue(snapshot.world) : {},
+            narrative: isPlainObject(snapshot.narrative) ? cloneValue(snapshot.narrative) : {},
+            ui: isPlainObject(snapshot.ui) ? cloneValue(snapshot.ui) : {}
+        };
+    }
+
+    function migrateSnapshotToVersion5(snapshot) {
+        const player = isPlainObject(snapshot.player) ? cloneValue(snapshot.player) : {};
+        const world = isPlainObject(snapshot.world) ? cloneValue(snapshot.world) : {};
+
+        if (Array.isArray(player.inventory)) {
+            player.inventory = mergeMigratedStackableItems(player.inventory);
+
+            if (typeof player.selectedInventorySlot === 'number' && !player.inventory[player.selectedInventorySlot]) {
+                player.selectedInventorySlot = null;
+            }
+        }
+
+        if (isPlainObject(world.groundItemsByKey)) {
+            world.groundItemsByKey = migrateGroundItemsByKey(world.groundItemsByKey);
+        }
+
+        return {
+            saveVersion: WATER_FLASK_CONTAINER_SAVE_VERSION,
+            player,
+            craftingState: buildMigratedCraftingState(snapshot),
+            world,
+            narrative: isPlainObject(snapshot.narrative) ? cloneValue(snapshot.narrative) : {},
+            ui: isPlainObject(snapshot.ui) ? cloneValue(snapshot.ui) : {}
+        };
+    }
+
     function normalizeSnapshot(snapshot) {
         const normalizedDomains = stateSchema.normalizeDomains({
             meta: {
@@ -330,6 +384,18 @@
 
             if (version === CRAFTING_STATE_SAVE_VERSION) {
                 snapshot = migrateSnapshotToVersion3(snapshot);
+                version = snapshot.saveVersion;
+                continue;
+            }
+
+            if (version === RAW_RESOURCE_LAYER_SAVE_VERSION) {
+                snapshot = migrateSnapshotToVersion4(snapshot);
+                version = snapshot.saveVersion;
+                continue;
+            }
+
+            if (version === RESOURCE_NODE_RESPAWN_POLICY_SAVE_VERSION) {
+                snapshot = migrateSnapshotToVersion5(snapshot);
                 version = snapshot.saveVersion;
                 continue;
             }

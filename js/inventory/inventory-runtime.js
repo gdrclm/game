@@ -171,6 +171,33 @@
         };
     }
 
+    function findEmptyInventorySlot(excludeIndex = -1) {
+        return getInventory().findIndex((item, index) => index < getUnlockedInventorySlots() && index !== excludeIndex && !item);
+    }
+
+    function buildTransformedInventoryItemMetadata(item, metadata = {}) {
+        const reservedKeys = new Set([
+            'id',
+            'icon',
+            'label',
+            'quantity',
+            'obtainedIslandIndex',
+            'useCount'
+        ]);
+        const passthroughMetadata = Object.fromEntries(
+            Object.entries(item || {}).filter(([key]) => !reservedKeys.has(key))
+        );
+
+        return {
+            ...passthroughMetadata,
+            obtainedIslandIndex: Number.isFinite(metadata.obtainedIslandIndex)
+                ? metadata.obtainedIslandIndex
+                : Math.max(1, item && item.obtainedIslandIndex ? item.obtainedIslandIndex : game.state.currentIslandIndex || 1),
+            useCount: Math.max(0, Number.isFinite(metadata.useCount) ? metadata.useCount : (item && item.useCount) || 0),
+            ...metadata
+        };
+    }
+
     function removeInventoryItemAtIndex(index, quantity = 1) {
         if (typeof index !== 'number' || index < 0 || index >= getUnlockedInventorySlots()) {
             return null;
@@ -201,6 +228,121 @@
         }
 
         return removedItem;
+    }
+
+    function transformInventoryItemAtIndex(index, nextItemId, quantity = 1, metadata = {}) {
+        if (typeof index !== 'number' || index < 0 || index >= getUnlockedInventorySlots()) {
+            return {
+                success: false,
+                reason: 'invalid-index',
+                item: null,
+                targetIndex: null
+            };
+        }
+
+        const currentItem = getInventory()[index];
+        const nextDefinition = getItemDefinition(nextItemId);
+        if (!currentItem) {
+            return {
+                success: false,
+                reason: 'missing',
+                item: null,
+                targetIndex: null
+            };
+        }
+
+        if (!nextDefinition) {
+            return {
+                success: false,
+                reason: 'unknown',
+                item: null,
+                targetIndex: null
+            };
+        }
+
+        if (currentItem.id === nextItemId) {
+            return {
+                success: true,
+                reason: 'same-item',
+                item: normalizeInventoryItem(currentItem),
+                targetIndex: index
+            };
+        }
+
+        const registry = getItemRegistry();
+        const inventory = getInventory();
+        const currentQuantity = Math.max(1, currentItem.quantity || 1);
+        const transformQuantity = Math.max(1, Math.min(currentQuantity, quantity));
+        const isTargetStackable = registry && typeof registry.isItemStackable === 'function'
+            ? registry.isItemStackable(nextItemId)
+            : false;
+        const existingTargetIndex = isTargetStackable
+            ? inventory.findIndex((item, itemIndex) => itemIndex !== index && item && item.id === nextItemId)
+            : -1;
+        const needsSeparateSlot = currentQuantity > transformQuantity && existingTargetIndex === -1;
+        const emptyIndex = needsSeparateSlot ? findEmptyInventorySlot(index) : -1;
+
+        if (needsSeparateSlot && emptyIndex === -1) {
+            return {
+                success: false,
+                reason: 'full',
+                item: null,
+                targetIndex: null
+            };
+        }
+
+        const nextItemMetadata = buildTransformedInventoryItemMetadata(currentItem, metadata);
+        const createdItem = registry && typeof registry.createInventoryItem === 'function'
+            ? registry.createInventoryItem(nextItemId, transformQuantity, nextItemMetadata)
+            : normalizeInventoryItem({
+                ...nextItemMetadata,
+                id: nextItemId,
+                quantity: transformQuantity
+            });
+
+        if (currentQuantity <= transformQuantity) {
+            if (existingTargetIndex >= 0) {
+                inventory[existingTargetIndex].quantity = Math.max(1, (inventory[existingTargetIndex].quantity || 1) + transformQuantity);
+                inventory[index] = null;
+                if (game.state.selectedInventorySlot === index) {
+                    game.state.selectedInventorySlot = null;
+                }
+                return {
+                    success: true,
+                    reason: 'merged',
+                    item: normalizeInventoryItem(inventory[existingTargetIndex]),
+                    targetIndex: existingTargetIndex
+                };
+            }
+
+            inventory[index] = normalizeInventoryItem(createdItem);
+            return {
+                success: true,
+                reason: 'replaced',
+                item: normalizeInventoryItem(inventory[index]),
+                targetIndex: index
+            };
+        }
+
+        currentItem.quantity = currentQuantity - transformQuantity;
+
+        if (existingTargetIndex >= 0) {
+            inventory[existingTargetIndex].quantity = Math.max(1, (inventory[existingTargetIndex].quantity || 1) + transformQuantity);
+            return {
+                success: true,
+                reason: 'merged',
+                item: normalizeInventoryItem(inventory[existingTargetIndex]),
+                targetIndex: existingTargetIndex
+            };
+        }
+
+        inventory[emptyIndex] = normalizeInventoryItem(createdItem);
+        return {
+            success: true,
+            reason: 'split',
+            item: normalizeInventoryItem(inventory[emptyIndex]),
+            targetIndex: emptyIndex
+        };
     }
 
     function countInventoryItem(itemId) {
@@ -386,6 +528,7 @@
         normalizeInventoryItem,
         addInventoryItem,
         removeInventoryItemAtIndex,
+        transformInventoryItemAtIndex,
         countInventoryItem,
         canAddInventoryItem,
         getItemConversionRecipe,

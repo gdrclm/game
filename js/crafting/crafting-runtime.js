@@ -44,6 +44,10 @@
         return game.systems.componentRegistry || null;
     }
 
+    function getContainerRegistry() {
+        return game.systems.containerRegistry || null;
+    }
+
     function getInventoryRuntime() {
         return game.systems.inventoryRuntime || null;
     }
@@ -58,6 +62,14 @@
 
     function getGameEvents() {
         return game.systems.gameEvents || null;
+    }
+
+    function getInteractionsRuntime() {
+        return game.systems.interactions || null;
+    }
+
+    function getWorld() {
+        return game.systems.world || null;
     }
 
     function emitGameEvent(helperName, eventType, payload) {
@@ -76,6 +88,168 @@
         return typeof gameEvents.emit === 'function'
             ? gameEvents.emit(eventType, safePayload)
             : null;
+    }
+
+    function normalizeEnvironmentId(value) {
+        return typeof value === 'string'
+            ? value.trim()
+            : '';
+    }
+
+    function addEnvironmentId(environmentIds, value) {
+        const normalizedValue = normalizeEnvironmentId(value);
+        if (normalizedValue) {
+            environmentIds.add(normalizedValue);
+        }
+    }
+
+    function addInteractionEnvironmentIds(environmentIds, interaction) {
+        if (!interaction || typeof interaction !== 'object') {
+            return;
+        }
+
+        addEnvironmentId(environmentIds, interaction.kind);
+        addEnvironmentId(environmentIds, interaction.family);
+        addEnvironmentId(environmentIds, interaction.resourceNodeKind);
+        addEnvironmentId(environmentIds, interaction.resourceNodeFamily);
+        addEnvironmentId(environmentIds, interaction.resourceId);
+
+        if (interaction.expedition && typeof interaction.expedition === 'object') {
+            addEnvironmentId(environmentIds, interaction.expedition.kind);
+            addEnvironmentId(environmentIds, interaction.expedition.family);
+            addEnvironmentId(environmentIds, interaction.expedition.resourceNodeKind);
+            addEnvironmentId(environmentIds, interaction.expedition.resourceNodeFamily);
+            addEnvironmentId(environmentIds, interaction.expedition.resourceId);
+        }
+    }
+
+    function getInteractionAtWorld(x, y) {
+        const world = getWorld();
+        const interactions = getInteractionsRuntime();
+        const tileInfo = world && typeof world.getTileInfo === 'function'
+            ? world.getTileInfo(x, y, { generateIfMissing: false })
+            : null;
+
+        if (tileInfo && tileInfo.interaction) {
+            return tileInfo.interaction;
+        }
+
+        return interactions && typeof interactions.getInteractionAtWorld === 'function'
+            ? interactions.getInteractionAtWorld(x, y, { generateIfMissing: false })
+            : null;
+    }
+
+    function collectNearbyEnvironmentIds(environmentIds) {
+        const playerPos = game.state && game.state.playerPos ? game.state.playerPos : { x: 0, y: 0 };
+        const selectedTile = game.state && game.state.selectedWorldTile ? game.state.selectedWorldTile : null;
+        const positions = [
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x) + 1, y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x) - 1, y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) + 1 },
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) - 1 }
+        ];
+        const seen = new Set();
+
+        if (selectedTile) {
+            const selectedX = Math.round(selectedTile.x);
+            const selectedY = Math.round(selectedTile.y);
+            const selectedDistance = Math.abs(selectedX - Math.round(playerPos.x)) + Math.abs(selectedY - Math.round(playerPos.y));
+
+            if (selectedDistance <= 1) {
+                positions.unshift({ x: selectedX, y: selectedY });
+            }
+        }
+
+        positions.forEach((position) => {
+            const key = `${position.x},${position.y}`;
+            if (seen.has(key)) {
+                return;
+            }
+
+            seen.add(key);
+            addInteractionEnvironmentIds(environmentIds, getInteractionAtWorld(position.x, position.y));
+        });
+    }
+
+    function resolveAvailableEnvironmentIds(options = {}) {
+        const environmentIds = new Set();
+        const normalizedSources = [
+            options.environmentId,
+            options.environment,
+            options.environmentIds,
+            options.availableEnvironmentIds,
+            options.environments
+        ];
+
+        normalizedSources.forEach((source) => {
+            if (Array.isArray(source)) {
+                source.forEach((value) => addEnvironmentId(environmentIds, value));
+                return;
+            }
+
+            addEnvironmentId(environmentIds, source);
+        });
+
+        addInteractionEnvironmentIds(environmentIds, options.interaction || null);
+        addInteractionEnvironmentIds(environmentIds, options.activeInteraction || game.state.activeInteraction || null);
+
+        if (options.scanNearbyEnvironment !== false) {
+            collectNearbyEnvironmentIds(environmentIds);
+        }
+
+        return [...environmentIds];
+    }
+
+    function getMissingRecipeEnvironments(recipe, availableEnvironmentIds = []) {
+        const availableSet = new Set((Array.isArray(availableEnvironmentIds) ? availableEnvironmentIds : [])
+            .map((environmentId) => normalizeEnvironmentId(environmentId))
+            .filter(Boolean));
+
+        return (Array.isArray(recipe && recipe.ingredients) ? recipe.ingredients : [])
+            .filter((ingredient) => ingredient && ingredient.kind === 'environment')
+            .filter((ingredient) => !availableSet.has(normalizeEnvironmentId(ingredient.id)))
+            .map((ingredient) => ({
+                kind: ingredient.kind,
+                id: ingredient.id,
+                label: ingredient.label || ingredient.id
+            }));
+    }
+
+    function buildMissingEnvironmentSummary(missingEnvironments = []) {
+        return missingEnvironments
+            .map((entry) => entry.label || entry.id)
+            .join(', ');
+    }
+
+    function buildMissingEnvironmentError(recipe, missingEnvironments = []) {
+        const requiredSummary = buildMissingEnvironmentSummary(missingEnvironments);
+
+        return {
+            success: false,
+            reason: 'missing-environment',
+            recipe,
+            missingEnvironments: cloneValue(missingEnvironments),
+            message: requiredSummary
+                ? `Для рецепта "${recipe.label}" рядом нужен источник: ${requiredSummary}.`
+                : `Для рецепта "${recipe.label}" не хватает обязательного окружения.`
+        };
+    }
+
+    function buildReturnedContainerSummary(returnedContainers = []) {
+        return (Array.isArray(returnedContainers) ? returnedContainers : [])
+            .map((entry) => {
+                if (!entry) {
+                    return '';
+                }
+
+                const quantity = Number.isFinite(entry.quantity) && entry.quantity > 1
+                    ? ` x${entry.quantity}`
+                    : '';
+                return `${entry.label || entry.id || 'контейнер'}${quantity}`;
+            })
+            .filter(Boolean)
+            .join(', ');
     }
 
     function getItemDefinition(itemId) {
@@ -106,7 +280,8 @@
                     containers: {},
                     knownRecipes: {},
                     stationUnlocks: {},
-                    resourceNodesState: {}
+                    resourceNodesState: {},
+                    resourceNodeIslandState: {}
                 };
 
             game.state.craftingState = cloneValue(defaultCraftingState);
@@ -326,14 +501,31 @@
             return null;
         }
 
+        if (ingredient.containerReturn === false) {
+            return null;
+        }
+
         if (ingredient.containerReturn && ingredient.containerReturn.kind && ingredient.containerReturn.id) {
             return buildAbstractEntry(ingredient.containerReturn, ingredient.quantity);
         }
 
-        if (ingredient.kind === 'itemState' && ingredient.id === 'waterFlaskFull') {
-            return buildStockEntry('itemState', 'waterFlaskEmpty', 'Пустая фляга', ingredient.quantity, {
-                gameplayItemId: 'waterFlask'
-            });
+        if (ingredient.kind === 'itemState') {
+            const containerRegistry = getContainerRegistry();
+            const stateDefinition = containerRegistry && typeof containerRegistry.getContainerStateDefinition === 'function'
+                ? containerRegistry.getContainerStateDefinition(ingredient.id)
+                : null;
+            const returnStateId = stateDefinition && typeof stateDefinition.craftIngredientReturnStateId === 'string'
+                ? stateDefinition.craftIngredientReturnStateId.trim()
+                : '';
+            const returnState = returnStateId && containerRegistry && typeof containerRegistry.getContainerStateDefinition === 'function'
+                ? containerRegistry.getContainerStateDefinition(returnStateId)
+                : null;
+
+            if (returnState && returnState.id) {
+                return buildStockEntry('itemState', returnState.id, returnState.label || ingredient.label, ingredient.quantity, {
+                    gameplayItemId: returnState.itemId || ''
+                });
+            }
         }
 
         return null;
@@ -364,13 +556,33 @@
         const seenBindings = new Set();
 
         return rawBindings.map((itemId) => {
-            if (itemId === 'waterFlask') {
-                return null;
-            }
-
             const unitsPerItem = /Resource$/i.test(itemId) ? 5 : 1;
             const binding = buildDirectGameplayBinding(itemId, unitsPerItem);
             const bindingKey = binding ? `${binding.itemId}:${binding.unitsPerItem}` : '';
+
+            if (!binding || seenBindings.has(bindingKey)) {
+                return null;
+            }
+
+            seenBindings.add(bindingKey);
+            return binding;
+        }).filter(Boolean);
+    }
+
+    function getItemStateGameplayBindings(stateId, fallbackItemId = '') {
+        const containerRegistry = getContainerRegistry();
+        const stateDefinition = containerRegistry && typeof containerRegistry.getContainerStateDefinition === 'function'
+            ? containerRegistry.getContainerStateDefinition(stateId)
+            : null;
+        const itemIds = [...new Set([
+            stateDefinition && stateDefinition.itemId ? stateDefinition.itemId : '',
+            typeof fallbackItemId === 'string' ? fallbackItemId.trim() : ''
+        ].filter(Boolean))];
+        const seenBindings = new Set();
+
+        return itemIds.map((itemId) => {
+            const binding = buildDirectGameplayBinding(itemId, 1);
+            const bindingKey = binding ? binding.itemId : '';
 
             if (!binding || seenBindings.has(bindingKey)) {
                 return null;
@@ -422,11 +634,10 @@
         }
 
         if (entry.kind === 'itemState') {
-            return {
-                supported: false,
-                bindings: [],
-                reason: 'state-unmodeled'
-            };
+            const bindings = getItemStateGameplayBindings(entry.id, entry.gameplayItemId);
+            return bindings.length > 0
+                ? { supported: true, bindings, reason: null }
+                : { supported: false, bindings: [], reason: 'state-unmodeled' };
         }
 
         if (entry.gameplayItemId) {
@@ -474,11 +685,10 @@
         }
 
         if (entry.kind === 'itemState') {
-            return {
-                supported: false,
-                binding: null,
-                reason: 'state-unmodeled'
-            };
+            const bindings = getItemStateGameplayBindings(entry.id, entry.gameplayItemId);
+            return bindings.length === 1
+                ? { supported: true, binding: bindings[0], reason: null }
+                : { supported: false, binding: null, reason: bindings.length > 1 ? 'ambiguous-state' : 'state-unmodeled' };
         }
 
         if (entry.kind === 'structure') {
@@ -763,6 +973,12 @@
             return buildStationError(recipe, availableStations);
         }
 
+        const availableEnvironmentIds = resolveAvailableEnvironmentIds(options);
+        const missingEnvironments = getMissingRecipeEnvironments(recipe, availableEnvironmentIds);
+        if (missingEnvironments.length > 0) {
+            return buildMissingEnvironmentError(recipe, missingEnvironments);
+        }
+
         const stockEntries = normalizeCraftStockEntries(options.stockEntries || []);
         const missingIngredients = recipe.ingredients
             .filter((ingredient) => ingredient.consumed !== false && ingredient.kind !== 'environment')
@@ -824,6 +1040,8 @@
             ...evaluation.recipe.containerReturns
         ].filter(Boolean));
         nextStockEntries = addStockEntries(nextStockEntries, producedEntries);
+        const returnedContainers = normalizeCraftStockEntries(evaluation.recipe.containerReturns);
+        const returnedContainerSummary = buildReturnedContainerSummary(returnedContainers);
 
         const craftResult = {
             success: true,
@@ -831,10 +1049,12 @@
             recipe: evaluation.recipe,
             consumedEntries: normalizeCraftStockEntries(consumedEntries),
             result: cloneValue(evaluation.recipe.result),
-            returnedContainers: normalizeCraftStockEntries(evaluation.recipe.containerReturns),
+            returnedContainers,
             producedEntries,
             stockEntries: nextStockEntries,
-            message: `Собрано: "${evaluation.recipe.result.label}".`
+            message: returnedContainerSummary
+                ? `Собрано: "${evaluation.recipe.result.label}". Возвращено: ${returnedContainerSummary}.`
+                : `Собрано: "${evaluation.recipe.result.label}".`
         };
 
         emitCraftingOutcomeEvents(craftResult, options);
@@ -1042,6 +1262,12 @@
             return buildStationError(recipe, availableStations);
         }
 
+        const availableEnvironmentIds = resolveAvailableEnvironmentIds(options);
+        const missingEnvironments = getMissingRecipeEnvironments(recipe, availableEnvironmentIds);
+        if (missingEnvironments.length > 0) {
+            return buildMissingEnvironmentError(recipe, missingEnvironments);
+        }
+
         if (!recipe.supportsGameplayInventory) {
             return buildUnsupportedInventoryError(recipe);
         }
@@ -1187,6 +1413,7 @@
                 quantity: entry.quantity,
                 itemId: entry.itemId
             }));
+        const returnedContainerSummary = buildReturnedContainerSummary(returnedContainers);
 
         const craftResult = {
             success: true,
@@ -1208,7 +1435,9 @@
             returnedContainers,
             addedEntries,
             conversions,
-            message: `Собрано: "${evaluation.recipe.result.label}".`
+            message: returnedContainerSummary
+                ? `Собрано: "${evaluation.recipe.result.label}". Возвращено: ${returnedContainerSummary}.`
+                : `Собрано: "${evaluation.recipe.result.label}".`
         };
 
         emitCraftingOutcomeEvents(craftResult, options);

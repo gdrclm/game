@@ -247,7 +247,11 @@ function advanceTimeOfDayAfterMovement(options = {}) {
     const render = window.Game.systems.render || null;
     const courierRuntime = window.Game.systems.courierRuntime || null;
     const ui = window.Game.systems.ui || null;
-    const { messagePrefix = '' } = options;
+    const {
+        messagePrefix = '',
+        silent = false,
+        reasonLabel = 'в пути'
+    } = options;
 
     if (!render || typeof render.advanceTimeOfDay !== 'function') {
         return false;
@@ -260,27 +264,82 @@ function advanceTimeOfDayAfterMovement(options = {}) {
         ? courierRuntime.processDueCourierJobs()
         : null;
 
-    if (ui && typeof ui.setActionMessage === 'function') {
-        const trimmedPrefix = typeof messagePrefix === 'string' ? messagePrefix.trim() : '';
-        const messageParts = [];
+    const trimmedPrefix = typeof messagePrefix === 'string' ? messagePrefix.trim() : '';
+    const messageParts = [];
 
-        if (nextTimeOfDay && nextTimeOfDay.label) {
-            messageParts.push(`Прошло время в пути. Теперь ${nextTimeOfDay.label.toLowerCase()}.`);
-        }
+    if (nextTimeOfDay && nextTimeOfDay.label) {
+        const normalizedReasonLabel = typeof reasonLabel === 'string' && reasonLabel.trim()
+            ? reasonLabel.trim()
+            : 'в пути';
+        messageParts.push(`Прошло время ${normalizedReasonLabel}. Теперь ${nextTimeOfDay.label.toLowerCase()}.`);
+    }
 
-        if (courierOutcome && Array.isArray(courierOutcome.messages) && courierOutcome.messages.length > 0) {
-            messageParts.push(...courierOutcome.messages);
-        }
+    if (courierOutcome && Array.isArray(courierOutcome.messages) && courierOutcome.messages.length > 0) {
+        messageParts.push(...courierOutcome.messages);
+    }
 
-        if (messageParts.length > 0) {
-            const combinedMessage = messageParts.join(' ');
-            ui.lastActionContextKey = getCurrentActionContextKey();
-            ui.setActionMessage(trimmedPrefix ? `${trimmedPrefix} ${combinedMessage}` : combinedMessage);
-        }
+    const combinedMessage = messageParts.length > 0 ? messageParts.join(' ') : '';
+
+    if (!silent && ui && typeof ui.setActionMessage === 'function' && combinedMessage) {
+        ui.lastActionContextKey = getCurrentActionContextKey();
+        ui.setActionMessage(trimmedPrefix ? `${trimmedPrefix} ${combinedMessage}` : combinedMessage);
     }
 
     markMovementUiDirty(MOVEMENT_UI_SECTIONS);
-    return true;
+    return {
+        nextTimeOfDay,
+        courierOutcome,
+        message: combinedMessage
+    };
+}
+
+function consumeActionTempo(options = {}) {
+    const {
+        virtualSteps = 1,
+        silent = true,
+        messagePrefix = '',
+        reasonLabel = 'в пути'
+    } = options;
+    const normalizedSteps = Math.max(0, Math.floor(virtualSteps));
+
+    if (normalizedSteps <= 0) {
+        return {
+            virtualStepsApplied: 0,
+            timeAdvances: 0,
+            messages: []
+        };
+    }
+
+    for (let stepIndex = 0; stepIndex < normalizedSteps; stepIndex++) {
+        incrementTimeOfDayStepCounter();
+    }
+
+    const timeMessages = [];
+    let timeAdvances = 0;
+
+    while (shouldAdvanceTimeOfDayAfterStep()) {
+        const outcome = advanceTimeOfDayAfterMovement({
+            messagePrefix,
+            silent,
+            reasonLabel
+        });
+
+        if (outcome && outcome.message) {
+            timeMessages.push(outcome.message);
+        }
+
+        timeAdvances++;
+    }
+
+    if (timeAdvances === 0) {
+        markMovementUiDirty(MOVEMENT_UI_SECTIONS);
+    }
+
+    return {
+        virtualStepsApplied: normalizedSteps,
+        timeAdvances,
+        messages: timeMessages
+    };
 }
 
 function startMovement() {
@@ -647,5 +706,6 @@ function unloadDistantChunks() {
 
 window.Game.systems.movement = {
     startMovement,
-    endMovement
+    endMovement,
+    consumeActionTempo
 };

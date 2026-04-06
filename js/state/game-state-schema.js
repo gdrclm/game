@@ -1,6 +1,6 @@
 (() => {
     const stateSchema = window.Game.systems.stateSchema = window.Game.systems.stateSchema || {};
-    const SAVE_VERSION = 3;
+    const SAVE_VERSION = 5;
 
     function isPlainObject(value) {
         return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -76,7 +76,8 @@
             containers: {},
             knownRecipes: {},
             stationUnlocks: {},
-            resourceNodesState: {}
+            resourceNodesState: {},
+            resourceNodeIslandState: {}
         };
     }
 
@@ -86,7 +87,8 @@
             containers: state.containers,
             knownRecipes: state.knownRecipes,
             stationUnlocks: state.stationUnlocks,
-            resourceNodesState: state.resourceNodesState
+            resourceNodesState: state.resourceNodesState,
+            resourceNodeIslandState: state.resourceNodeIslandState
         };
     }
 

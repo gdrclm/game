@@ -155,10 +155,10 @@
             type: 'raw',
             label: 'Вода',
             source: 'Водоём + пустая фляга',
-            baseConversion: ['Фляга: пустая -> полная'],
+            baseConversion: ['Фляга: пустая -> сырая', 'сырая -> кипячёная', 'кипячёная -> алхимическая'],
             mainRole: 'Питьё, варка, алхимия',
             requiredIslands: { from: 1, to: 30 },
-            currentInventoryItemIds: ['waterFlask']
+            currentInventoryItemIds: ['flask_water_full', 'flask_water_alchemy']
         },
         {
             id: 'fish',
@@ -224,6 +224,77 @@
         };
     }
 
+    const lateGatherRiskProfiles = {
+        stone: {
+            startIsland: 19,
+            baseChance: 0.12,
+            islandChanceStep: 0.012,
+            pressureChanceStep: 0.025,
+            badWeatherChanceBonus: 0.03,
+            maxChance: 0.28,
+            outcomes: {
+                extraDrain: 4,
+                localPressure: 3,
+                loseTurn: 2,
+                noise: 1
+            },
+            extraDrainFactor: 0.8,
+            localPressureSteps: 2,
+            noiseTimeSteps: 1
+        },
+        rubble: {
+            startIsland: 19,
+            baseChance: 0.13,
+            islandChanceStep: 0.014,
+            pressureChanceStep: 0.03,
+            badWeatherChanceBonus: 0.03,
+            maxChance: 0.3,
+            outcomes: {
+                localPressure: 4,
+                extraDrain: 3,
+                noise: 2,
+                loseTurn: 1
+            },
+            extraDrainFactor: 0.82,
+            localPressureSteps: 3,
+            noiseTimeSteps: 1
+        },
+        wood: {
+            startIsland: 19,
+            baseChance: 0.14,
+            islandChanceStep: 0.014,
+            pressureChanceStep: 0.03,
+            badWeatherChanceBonus: 0.04,
+            maxChance: 0.33,
+            outcomes: {
+                loseTurn: 3,
+                localPressure: 3,
+                extraDrain: 2,
+                noise: 2
+            },
+            extraDrainFactor: 0.9,
+            localPressureSteps: 3,
+            noiseTimeSteps: 1
+        },
+        fish: {
+            startIsland: 19,
+            baseChance: 0.15,
+            islandChanceStep: 0.013,
+            pressureChanceStep: 0.03,
+            badWeatherChanceBonus: 0.04,
+            maxChance: 0.34,
+            outcomes: {
+                noise: 4,
+                extraDrain: 3,
+                localPressure: 2,
+                loseTurn: 1
+            },
+            extraDrainFactor: 0.78,
+            localPressureSteps: 2,
+            noiseTimeSteps: 1
+        }
+    };
+
     const terrainGatherProfiles = {
         rubble: {
             resourceId: 'rubble',
@@ -233,7 +304,12 @@
             adviceKey: 'rubble',
             legacyHarvestItemIds: ['rubbleChunk'],
             conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц можно сжать в гравийную засыпку.',
-            allowAdjacent: false
+            allowAdjacent: false,
+            gatherCost: {
+                routeCost: 1.4,
+                timeSteps: 2
+            },
+            gatherRisk: cloneValue(lateGatherRiskProfiles.rubble)
         },
         rock: {
             resourceId: 'stone',
@@ -244,32 +320,329 @@
             legacyHarvestItemIds: ['rubbleChunk'],
             conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц можно сжать в каменный блок.',
             allowAdjacent: true,
-            clickToCollect: true
+            clickToCollect: true,
+            gatherCost: {
+                routeCost: 1.35,
+                timeSteps: 2
+            },
+            gatherRisk: cloneValue(lateGatherRiskProfiles.stone)
         },
         reeds: buildSubtypeTerrainGatherProfile('lowlandGrass', {
             conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц идут в базу лечения или травяную пасту, а десять на верстаке в верёвку.',
-            allowAdjacent: false
+            allowAdjacent: false,
+            gatherCost: {
+                routeCost: 0.75,
+                timeSteps: 1
+            }
         }),
         grass: buildSubtypeTerrainGatherProfile('fieldGrass', {
             conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц идут в базу лечения или травяную пасту, а десять на верстаке в верёвку.',
-            allowAdjacent: false
+            allowAdjacent: false,
+            gatherCost: {
+                routeCost: 0.75,
+                timeSteps: 1
+            }
         })
     };
+    const resourceNodeDefinitions = [
+        {
+            id: 'grassBush',
+            resourceId: 'grass',
+            label: 'Куст травы',
+            family: 'flora',
+            renderKind: 'bush',
+            respawnPolicy: {
+                mode: 'newRun'
+            },
+            durabilityProfile: {
+                maxHarvests: 2,
+                regenerationTimeAdvances: 1
+            },
+            summary: 'Сырьевой куст для ранней травы с лугов и кромки тростника.',
+            requiredIslands: { from: 1, to: 6 },
+            sourceTileTypes: ['grass', 'reeds'],
+            preferredTileTypes: ['grass'],
+            placementProfile: {
+                biomeLabel: 'meadow/grass',
+                allowedTravelBands: ['normal', 'rough'],
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['grass', 'reeds'],
+                        minCount: 3,
+                        includeDiagonals: true
+                    }
+                ]
+            },
+            gatherProfile: {
+                resourceId: 'grass',
+                resourceFamilyId: 'grass',
+                itemId: 'raw_grass',
+                sourceLabel: 'куст травы',
+                collectedLabel: 'траву',
+                adviceKey: 'grass',
+                conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц идут в базу лечения или травяную пасту, а десять на верстаке в верёвку.',
+                allowAdjacent: true,
+                gatherCost: {
+                    routeCost: 0.75,
+                    timeSteps: 1
+                }
+            }
+        },
+        {
+            id: 'stonePile',
+            resourceId: 'stone',
+            label: 'Каменная куча',
+            family: 'mineral',
+            renderKind: 'stonePile',
+            respawnPolicy: {
+                mode: 'singleUse'
+            },
+            durabilityProfile: {
+                maxHarvests: 1,
+                regenerationTimeAdvances: 0
+            },
+            summary: 'Тяжёлый каменный выступ для маршрутов, где нужен запас под блоки и мосты.',
+            requiredIslands: { from: 4, to: 15 },
+            sourceTileTypes: ['rock'],
+            preferredTileTypes: ['rock'],
+            gatherProfile: {
+                resourceId: 'stone',
+                resourceFamilyId: 'stone',
+                itemId: 'raw_stone',
+                sourceLabel: 'каменная куча',
+                collectedLabel: 'камень',
+                adviceKey: 'stone',
+                conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц можно сжать в каменный блок.',
+                allowAdjacent: true,
+                clickToCollect: true,
+                gatherCost: {
+                    routeCost: 1.35,
+                    timeSteps: 2
+                },
+                gatherRisk: cloneValue(lateGatherRiskProfiles.stone)
+            }
+        },
+        {
+            id: 'rubbleScree',
+            resourceId: 'rubble',
+            label: 'Щебёночная осыпь',
+            family: 'mineral',
+            renderKind: 'rubblePile',
+            respawnPolicy: {
+                mode: 'hardLimited',
+                islandLimit: 3,
+                limitGroupId: 'rubble'
+            },
+            durabilityProfile: {
+                maxHarvests: 2,
+                regenerationTimeAdvances: 0
+            },
+            summary: 'Сыпучая осыпь под ремонт и дешёвый строительный заполнитель.',
+            requiredIslands: { from: 7, to: 24 },
+            sourceTileTypes: ['rubble'],
+            preferredTileTypes: ['rubble'],
+            placementProfile: {
+                biomeLabel: 'badSector/rubble',
+                allowedTravelZoneKeys: ['badSector'],
+                allowTravelZoneFallback: true,
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['rubble', 'rock'],
+                        minCount: 1,
+                        includeDiagonals: true
+                    }
+                ]
+            },
+            gatherProfile: {
+                resourceId: 'rubble',
+                resourceFamilyId: 'rubble',
+                itemId: 'raw_rubble',
+                sourceLabel: 'щебёночная осыпь',
+                collectedLabel: 'щебень',
+                adviceKey: 'rubble',
+                conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц можно сжать в гравийную засыпку.',
+                allowAdjacent: true,
+                gatherCost: {
+                    routeCost: 1.4,
+                    timeSteps: 2
+                },
+                gatherRisk: cloneValue(lateGatherRiskProfiles.rubble)
+            }
+        },
+        {
+            id: 'woodTree',
+            resourceId: 'wood',
+            label: 'Дерево',
+            family: 'flora',
+            renderKind: 'tree',
+            respawnPolicy: {
+                mode: 'hardLimited',
+                islandLimit: 3,
+                limitGroupId: 'wood'
+            },
+            durabilityProfile: {
+                maxHarvests: 2,
+                regenerationTimeAdvances: 0
+            },
+            summary: 'Полезное дерево или коряга для досок, каркасов и лагерного топлива.',
+            requiredIslands: { from: 2, to: 30 },
+            sourceTileTypes: ['grass', 'shore', 'reeds'],
+            preferredTileTypes: ['grass', 'shore'],
+            placementProfile: {
+                biomeLabel: 'safe-medium',
+                allowedTravelBands: ['normal', 'rough']
+            },
+            gatherProfile: {
+                resourceId: 'wood',
+                resourceFamilyId: 'wood',
+                itemId: 'raw_wood',
+                sourceLabel: 'дерево',
+                collectedLabel: 'дерево',
+                adviceKey: 'wood',
+                conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц идут в доску, а десять в каркас.',
+                allowAdjacent: true,
+                gatherCost: {
+                    routeCost: 1.55,
+                    timeSteps: 2
+                },
+                gatherRisk: cloneValue(lateGatherRiskProfiles.wood)
+            }
+        },
+        {
+            id: 'waterSource',
+            resourceId: 'water',
+            label: 'Точка воды',
+            family: 'liquid',
+            renderKind: 'waterSource',
+            respawnPolicy: {
+                mode: 'newRun'
+            },
+            durabilityProfile: {
+                maxHarvests: 1,
+                regenerationTimeAdvances: 1
+            },
+            summary: 'Место, где пустая фляга наполняется сырой водой.',
+            requiredIslands: { from: 1, to: 30 },
+            sourceTileTypes: ['water', 'shore', 'reeds'],
+            preferredTileTypes: ['shore', 'reeds', 'water'],
+            placementProfile: {
+                biomeLabel: 'water/reeds',
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['water', 'reeds'],
+                        minCount: 2,
+                        includeDiagonals: true
+                    }
+                ]
+            },
+            interactionHint: 'Для воды нужна пустая фляга: здесь набирается сырая вода, а для рецептов нужна уже чистая.',
+            gatherProfile: null
+        },
+        {
+            id: 'fishingSpot',
+            resourceId: 'fish',
+            label: 'Рыболовная точка',
+            family: 'aquatic',
+            renderKind: 'fishingSpot',
+            respawnPolicy: {
+                mode: 'newRun'
+            },
+            durabilityProfile: {
+                maxHarvests: 2,
+                regenerationTimeAdvances: 1
+            },
+            summary: 'Точка улова у воды: по правилам нужна удочка, а рыба идёт в мясо и жир.',
+            requiredIslands: { from: 6, to: 24 },
+            sourceTileTypes: ['water', 'reeds', 'shore'],
+            preferredTileTypes: ['water', 'reeds'],
+            placementProfile: {
+                biomeLabel: 'water/reeds',
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['water', 'reeds'],
+                        minCount: 2,
+                        includeDiagonals: true
+                    }
+                ]
+            },
+            gatherProfile: {
+                resourceId: 'fish',
+                resourceFamilyId: 'fish',
+                itemId: 'raw_fish',
+                sourceLabel: 'рыболовная точка',
+                collectedLabel: 'рыбу',
+                adviceKey: 'fish',
+                conversionHint: 'Собери улов и выбери его в сумке: пять единиц идут в рыбное мясо, а десять в рыбий жир.',
+                allowAdjacent: true,
+                gatherCost: {
+                    routeCost: 1.45,
+                    timeSteps: 2
+                },
+                gatherRisk: cloneValue(lateGatherRiskProfiles.fish),
+                requiredInventoryItemId: 'fishingRod',
+                requiredInventoryItemLabel: 'Удочка путника'
+            }
+        }
+    ];
+    const resourceNodeById = Object.fromEntries(resourceNodeDefinitions.map((definition) => [definition.id, definition]));
 
     const resourceCatalogItems = [
         {
-            id: 'waterFlask',
+            id: 'flask_empty',
             resourceId: 'water',
-            label: 'Фляга воды',
+            label: 'Пустая фляга',
+            icon: 'FE',
+            lootTier: 1,
+            categories: 'utility container',
+            extra: {
+                stackable: true,
+                chestWeight: 6,
+                merchantWeight: 8,
+                baseValue: 4,
+                containerId: 'waterFlask',
+                containerStateId: 'waterFlaskEmpty',
+                description: 'Пустая фляга под воду. У точки воды она наполняется сырой водой, а в лагере эту воду можно вскипятить в чистую.'
+            }
+        },
+        {
+            id: 'flask_water_dirty',
+            resourceId: 'water',
+            label: 'Фляга сырой воды',
+            icon: 'FD',
+            lootTier: 1,
+            categories: 'consumable survival container',
+            extra: {
+                stackable: true,
+                chestWeight: 0,
+                merchantWeight: 0,
+                baseValue: 5,
+                containerId: 'waterFlask',
+                containerStateId: 'waterFlaskDirty',
+                description: 'Сырая вода из природного источника. Её можно пить, но в лагере с одной топливной связкой лучше вскипятить её в чистую воду.',
+                consumable: {
+                    ignoreRecoveryScaling: true,
+                    allowPartialHunger: true,
+                    hunger: 8,
+                    focus: 18,
+                    energy: 22
+                }
+            }
+        },
+        {
+            id: 'flask_water_full',
+            resourceId: 'water',
+            label: 'Фляга кипячёной воды',
             icon: 'FW',
             lootTier: 1,
-            categories: 'consumable survival',
+            categories: 'consumable survival container',
             extra: {
                 stackable: true,
                 chestWeight: 10,
                 merchantWeight: 10,
                 baseValue: 7,
-                description: 'Чистая вода. Восстанавливает фокус, энергию и немного сбивает голод.',
+                containerId: 'waterFlask',
+                containerStateId: 'waterFlaskFull',
+                description: 'Кипячёная вода. Её можно пить и использовать в пищевых лагерных рецептах, а при желании довести дальше до алхимической воды.',
                 consumable: {
                     ignoreRecoveryScaling: true,
                     allowPartialHunger: true,
@@ -277,6 +650,23 @@
                     focus: 40,
                     energy: 50
                 }
+            }
+        },
+        {
+            id: 'flask_water_alchemy',
+            resourceId: 'water',
+            label: 'Фляга алхимической воды',
+            icon: 'FA',
+            lootTier: 2,
+            categories: 'utility survival container',
+            extra: {
+                stackable: true,
+                chestWeight: 0,
+                merchantWeight: 0,
+                baseValue: 8,
+                containerId: 'waterFlask',
+                containerStateId: 'waterFlaskAlchemy',
+                description: 'Подготовленная вода для лагерной алхимии. Её не пьют напрямую: она идёт в отвары, тоники и сложные настои.'
             }
         },
         {
@@ -400,6 +790,59 @@
         return terrainGatherProfiles[tileType] ? cloneValue(terrainGatherProfiles[tileType]) : null;
     }
 
+    function getResourceNodeDefinition(resourceNodeId) {
+        return resourceNodeById[resourceNodeId] ? cloneValue(resourceNodeById[resourceNodeId]) : null;
+    }
+
+    function getResourceNodeDefinitions(resourceId = '') {
+        const normalizedResourceId = typeof resourceId === 'string' ? resourceId.trim() : '';
+        return resourceNodeDefinitions
+            .filter((definition) => !normalizedResourceId || definition.resourceId === normalizedResourceId)
+            .map((definition) => cloneValue(definition));
+    }
+
+    function getResourceNodeRespawnPolicy(definitionOrId) {
+        const definition = typeof definitionOrId === 'string'
+            ? resourceNodeById[definitionOrId]
+            : definitionOrId;
+        const policy = definition && definition.respawnPolicy && typeof definition.respawnPolicy === 'object'
+            ? definition.respawnPolicy
+            : {};
+        const mode = typeof policy.mode === 'string' && policy.mode.trim()
+            ? policy.mode.trim()
+            : 'singleUse';
+        const islandLimit = Number.isFinite(policy.islandLimit)
+            ? Math.max(1, Math.floor(policy.islandLimit))
+            : null;
+        const limitGroupId = typeof policy.limitGroupId === 'string' && policy.limitGroupId.trim()
+            ? policy.limitGroupId.trim()
+            : (definition && definition.resourceId ? definition.resourceId : '');
+
+        return {
+            mode,
+            islandLimit,
+            limitGroupId
+        };
+    }
+
+    function getResourceNodeRespawnPolicyLabel(policyOrMode) {
+        const policy = typeof policyOrMode === 'string'
+            ? { mode: policyOrMode }
+            : (policyOrMode || {});
+
+        switch (policy.mode) {
+            case 'newRun':
+                return 'восстанавливается новым забегом';
+            case 'hardLimited':
+                return policy.islandLimit
+                    ? `жёсткий лимит ${policy.islandLimit} на остров`
+                    : 'жёстко лимитирован на острове';
+            case 'singleUse':
+            default:
+                return 'одноразовый узел';
+        }
+    }
+
     function getTerrainGatherLegacyItemIds(tileType) {
         const profile = getTerrainGatherProfile(tileType);
         return profile && Array.isArray(profile.legacyHarvestItemIds)
@@ -418,6 +861,7 @@
         baseResources,
         resourceSubtypeDefinitions,
         terrainGatherProfiles,
+        resourceNodeDefinitions,
         resourceCatalogItems,
         createValidatedResourceRegistry,
         getBaseResourceDefinition,
@@ -429,6 +873,10 @@
         buildCatalogEntries,
         getLegacyTerrainGatherItemIds,
         getTerrainGatherProfile,
+        getResourceNodeDefinition,
+        getResourceNodeDefinitions,
+        getResourceNodeRespawnPolicy,
+        getResourceNodeRespawnPolicyLabel,
         getTerrainGatherLegacyItemIds,
         normalizeResourceDefinition,
         validateBaseResourceDefinition

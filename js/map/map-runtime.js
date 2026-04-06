@@ -260,6 +260,10 @@
             return '';
         }
 
+        if (interaction.kind === 'resourceNode') {
+            return interaction.resourceId || '';
+        }
+
         if (interaction.kind === 'well') {
             return 'well';
         }
@@ -300,16 +304,8 @@
             return interactionResourceKind;
         }
 
-        if ((baseTileType === 'rubble' || baseTileType === 'rock') && !isTerrainHarvested(worldX, worldY, getLegacyHarvestItemIds(baseTileType))) {
-            return 'stone';
-        }
-
         if (travelZoneKey === 'badSector' && !isTerrainHarvested(worldX, worldY, 'soilClod')) {
             return 'soil';
-        }
-
-        if (baseTileType === 'reeds' && !isTerrainHarvested(worldX, worldY, getLegacyHarvestItemIds('reeds'))) {
-            return 'grass';
         }
 
         return '';

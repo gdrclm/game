@@ -1,27 +1,32 @@
-В соответствии с файлами craft_design.md и craft_rules.md 
+
 
 Блок A. Архитектурный фундамент крафта
 1–8
-Создать js/crafting/resource-registry.js и вынести туда все базовые ресурсы: трава, камень, щебень, дерево, вода, рыба.
-Создать js/crafting/component-registry.js и описать промежуточные компоненты: травяная паста, травяная база лечения, верёвка, доска, рама лодки, гравийная засыпка, каменный блок, рыбное мясо, рыбий жир.
-Создать js/crafting/recipe-registry.js с нормализованной структурой рецепта: recipeId / station / tier / ingredients / result / tags / islandNeedProfile.
-Создать js/crafting/crafting-runtime.js и вынести туда саму сборку рецептов, проверку ингредиентов, расход, возврат контейнеров, результат и ошибки крафта.
-Создать js/crafting/station-runtime.js с типами станций: hand / camp / bench / workbench / smithy / scribe / altar.
-Добавить в save schema отдельный домен craftingState, чтобы не смешивать его с inventory/world/ui. Это соответствует текущему архитектурному правилу про state ownership.
-Добавить versioned migration для новой формы сохранения: resources, containers, knownRecipes, stationUnlocks, resourceNodesState.
-Добавить маленький event bus файл js/events/game-events.js и события под крафт: resource:gathered, craft:completed, container:changed, station:used, recipe:unlocked. ROADMAP прямо рекомендует event bus как следующий шаг.
+1.Создать js/crafting/resource-registry.js и вынести туда все базовые ресурсы: трава, камень, щебень, дерево, вода, рыба.
+2.Создать js/crafting/component-registry.js и описать промежуточные компоненты: травяная паста, травяная база лечения, верёвка, доска, рама лодки, гравийная засыпка, каменный блок, рыбное мясо, рыбий жир.
+3.Создать js/crafting/recipe-registry.js с нормализованной структурой рецепта: recipeId / station / tier / ingredients / result / tags / islandNeedProfile.
+4.Создать js/crafting/crafting-runtime.js и вынести туда саму сборку рецептов, проверку ингредиентов, расход, возврат контейнеров, результат и ошибки крафта.
+5.Создать js/crafting/station-runtime.js с типами станций: hand / camp / bench / workbench / smithy / scribe / altar.
+6.Добавить в save schema отдельный домен craftingState, чтобы не смешивать его с inventory/world/ui. Это соответствует текущему архитектурному правилу про state ownership.
+7.Добавить versioned migration для новой формы сохранения: resources, containers, knownRecipes, stationUnlocks, resourceNodesState.
+8.Добавить маленький event bus файл js/events/game-events.js и события под крафт: resource:gathered, craft:completed, container:changed, station:used, recipe:unlocked. ROADMAP прямо рекомендует event bus как следующий шаг.
+
+
+Обязательно проверь В соответствии с файлами craft_design.md и craft_rules.md 
+
+
 Блок B. Ресурсный слой и raw-сбор
 9–18
-Убрать логику “ресурс = сразу почти товар” и ввести явный слой raw_*: raw_grass, raw_stone, raw_rubble, raw_wood, raw_fish.
-Переделать текущие lowlandGrass и fieldGrass в подтипы одного семейства сырья, а не в почти готовый лут. Сейчас каталог уже содержит их как предметы-конверсии.
-Переделать rubbleChunk -> stoneResource, soilClod -> soilResource, grass -> grassResource в новый единый compression pipeline 5 raw -> 1 component, а не как частные ad-hoc conversions внутри item catalog.
-Ввести отдельный resourceNode тип interaction для мира: куст травы, каменная куча, щебёночная осыпь, дерево, точка воды, рыболовная точка.
-Добавить визуальные типы world interaction для ресурсов в world-spawn-runtime.js через новый kind family, а не как сундук/дом-заглушку. База для world placement там уже есть.
-Ввести durability/state у ресурсных узлов: fresh / used / depleted / regenerating.
-Добавить respawn policy по острову: часть узлов одноразовые, часть восстанавливается при новом забеге, часть жёстко лимитирована.
-Привязать узлы к биомным/топологическим условиям: трава в meadow/grass, рыба около воды/reeds, щебень в bad sectors и осыпях, дерево — в безопасных или среднеопасных зонах.
-Добавить отдельную метрику “время/стоимость сбора”, чтобы сбор был не бесплатным кликом, а реальным обменом на темп маршрута.
-Добавить возможность частичной неудачи/риска на сборе редких ресурсов поздних островов: шум, лишний drain, потеря хода, ухудшение local pressure.
+9.Убрать логику “ресурс = сразу почти товар” и ввести явный слой raw_*: raw_grass, raw_stone, raw_rubble, raw_wood, raw_fish.
+10.Переделать текущие lowlandGrass и fieldGrass в подтипы одного семейства сырья, а не в почти готовый лут. Сейчас каталог уже содержит их как предметы-конверсии.
+11.Переделать rubbleChunk -> stoneResource, soilClod -> soilResource, grass -> grassResource в новый единый compression pipeline 5 raw -> 1 component, а не как частные ad-hoc conversions внутри item catalog.
+12.Ввести отдельный resourceNode тип interaction для мира: куст травы, каменная куча, щебёночная осыпь, дерево, точка воды, рыболовная точка.
+13.Добавить визуальные типы world interaction для ресурсов в world-spawn-runtime.js через новый kind family, а не как сундук/дом-заглушку. База для world placement там уже есть.
+14.Ввести durability/state у ресурсных узлов: fresh / used / depleted / regenerating.
+15.Добавить respawn policy по острову: часть узлов одноразовые, часть восстанавливается при новом забеге, часть жёстко лимитирована.
+16.Привязать узлы к биомным/топологическим условиям: трава в meadow/grass, рыба около воды/reeds, щебень в bad sectors и осыпях, дерево — в безопасных или среднеопасных зонах.
+17.Добавить отдельную метрику “время/стоимость сбора”, чтобы сбор был не бесплатным кликом, а реальным обменом на темп маршрута.
+18.Добавить возможность частичной неудачи/риска на сборе редких ресурсов поздних островов: шум, лишний drain, потеря хода, ухудшение local pressure.
 Блок C. Контейнеры и вода
 19–25
 Переделать текущую waterFlask из обычного consumable в stateful container: flask_empty -> flask_water_dirty/full -> flask_empty. Сейчас это просто consumable item, а не контейнерная система.

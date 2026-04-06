@@ -22,8 +22,12 @@
     };
     const MAP_RESOURCE_COLORS = {
         stone: '#ccb78e',
+        rubble: '#d8c29c',
         soil: '#b57e56',
         grass: '#9dd26c',
+        wood: '#bea06a',
+        water: '#7ec8ea',
+        fish: '#8fd9ff',
         berries: '#d86f87',
         well: '#7ec8ea'
     };

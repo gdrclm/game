@@ -271,17 +271,59 @@
             ingredients: [
                 createIngredient('environment', 'waterSource', 'Водоём', 1, { consumed: false }),
                 createIngredient('itemState', 'waterFlaskEmpty', 'Пустая фляга', 1, {
-                    gameplayItemId: 'waterFlask'
+                    gameplayItemId: 'flask_empty'
                 })
             ],
-            result: createResult('itemState', 'waterFlaskFull', 'Полная фляга', 1, {
-                gameplayItemId: 'waterFlask'
+            result: createResult('itemState', 'waterFlaskDirty', 'Фляга сырой воды', 1, {
+                gameplayItemId: 'flask_water_dirty'
             }),
             tags: ['base-conversion', 'water', 'survival', 'state-change'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 1, to: 30, priority: 'critical', note: 'Базовая вода нужна на всём маршруте.' }
             ]),
-            notes: 'В документах вода существует как состояние фляги: пустая -> полная.'
+            notes: 'В документах вода существует как состояние фляги: пустая -> полная. В runtime природный источник сначала даёт сырую воду как промежуточное состояние.'
+        },
+        {
+            recipeId: 'boil-water',
+            label: 'Вскипятить воду',
+            station: 'camp',
+            stationLabel: 'Лагерь',
+            tier: RECIPE_TIERS.baseConversion,
+            ingredients: [
+                createIngredient('itemState', 'waterFlaskDirty', 'Фляга сырой воды', 1, {
+                    gameplayItemId: 'flask_water_dirty'
+                }),
+                createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
+            ],
+            result: createResult('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, {
+                gameplayItemId: 'flask_water_full'
+            }),
+            tags: ['base-conversion', 'water', 'camp', 'fuel', 'survival', 'state-change'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 1, to: 30, priority: 'critical', note: 'Лагерь должен переводить сырую воду в безопасную для рецептов и длинных переходов.' }
+            ]),
+            notes: 'По craft-документам лагерь отвечает за воду и варку. Здесь сырая вода кипятится в чистую с затратой одной топливной связки.'
+        },
+        {
+            recipeId: 'prepare-alchemy-water',
+            label: 'Подготовить алхимическую воду',
+            station: 'camp',
+            stationLabel: 'Лагерь',
+            tier: RECIPE_TIERS.survivalAndEnergy,
+            ingredients: [
+                createIngredient('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, {
+                    gameplayItemId: 'flask_water_full',
+                    containerReturn: false
+                })
+            ],
+            result: createResult('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, {
+                gameplayItemId: 'flask_water_alchemy'
+            }),
+            tags: ['water', 'camp', 'alchemy', 'state-change'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 1, to: 30, priority: 'recommended', note: 'Отдельный алхимический уровень воды для лагерных настоев и усиленных рецептов.' }
+            ]),
+            notes: 'Расширение поверх craft-доков: кипячёная вода может быть дополнительно подготовлена в специальную алхимическую форму для не-пищевых лагерных рецептов.'
         },
         {
             recipeId: 'grass-to-healing-base',
@@ -484,7 +526,7 @@
             stationLabel: 'Лагерь',
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
-                createIngredient('itemState', 'waterFlaskFull', 'Полная фляга', 1, { gameplayItemId: 'waterFlask' }),
+                createIngredient('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, { gameplayItemId: 'flask_water_alchemy' }),
                 createIngredient('component', 'healingBase', 'Травяная база лечения', 1)
             ],
             result: createResult('item', 'healingBrew', 'Отвар лечения', 1),
@@ -501,7 +543,7 @@
             stationLabel: 'Лагерь',
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
-                createIngredient('itemState', 'waterFlaskFull', 'Полная фляга', 1, { gameplayItemId: 'waterFlask' }),
+                createIngredient('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, { gameplayItemId: 'flask_water_alchemy' }),
                 createIngredient('component', 'herbalPaste', 'Травяная паста', 1)
             ],
             result: createResult('item', 'energyTonic', 'Энергетик', 1),
@@ -538,7 +580,7 @@
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
                 createIngredient('component', 'fishMeat', 'Рыбное мясо', 1),
-                createIngredient('itemState', 'waterFlaskFull', 'Полная фляга', 1, { gameplayItemId: 'waterFlask' }),
+                createIngredient('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, { gameplayItemId: 'flask_water_full' }),
                 createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
             ],
             result: createResult('item', 'heartyRation', 'Сытный паёк', 1),
@@ -556,7 +598,7 @@
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
                 createIngredient('component', 'fishMeat', 'Рыбное мясо', 2),
-                createIngredient('itemState', 'waterFlaskFull', 'Полная фляга', 1, { gameplayItemId: 'waterFlask' }),
+                createIngredient('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, { gameplayItemId: 'flask_water_full' }),
                 createIngredient('component', 'herbalPaste', 'Травяная паста', 1),
                 createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
             ],
@@ -576,7 +618,7 @@
             ingredients: [
                 createIngredient('component', 'healingBase', 'Травяная база лечения', 1),
                 createIngredient('component', 'herbalPaste', 'Травяная паста', 1),
-                createIngredient('itemState', 'waterFlaskFull', 'Полная фляга', 1, { gameplayItemId: 'waterFlask' })
+                createIngredient('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, { gameplayItemId: 'flask_water_alchemy' })
             ],
             result: createResult('item', 'secondWind', 'Второе дыхание', 1),
             tags: ['survival', 'movement', 'camp', 'advanced'],

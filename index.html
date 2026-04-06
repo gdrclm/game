@@ -102,17 +102,17 @@
                         <p id="mobileHintText" class="panel-copy">Выдели клетку или объект, чтобы увидеть подсказку.</p>
                     </div>
                     <div class="mobile-controls">
-                        <button id="mobileWalkButton" class="mobile-walk-button" type="button" aria-label="Двигаться дальше" title="Двигаться дальше">
+                        <button id="mobileWalkButton" class="mobile-walk-button" type="button" aria-label="Двигаться дальше" title="Двигаться дальше" hidden>
                             <span class="mobile-walk-button__label">Двигаться дальше</span>
                         </button>
                         <div id="mobileActionRack" class="mobile-action-rack" aria-label="Быстрые действия">
-                            <button id="mobileUseButton" class="mobile-quick-action mobile-quick-action--use" type="button" aria-label="Использовать" title="Использовать">
+                            <button id="mobileUseButton" class="mobile-quick-action mobile-quick-action--use" type="button" aria-label="Использовать" title="Использовать" hidden>
                                 <span class="mobile-quick-action__label">Использовать</span>
                             </button>
-                            <button id="mobileSleepButton" class="mobile-quick-action mobile-quick-action--sleep" type="button" aria-label="Спать" title="Спать">
+                            <button id="mobileSleepButton" class="mobile-quick-action mobile-quick-action--sleep" type="button" aria-label="Спать" title="Спать" hidden>
                                 <span class="mobile-quick-action__label">Спать</span>
                             </button>
-                            <button id="mobileInspectButton" class="mobile-quick-action mobile-quick-action--inspect" type="button" aria-label="Изучить" title="Изучить">
+                            <button id="mobileInspectButton" class="mobile-quick-action mobile-quick-action--inspect" type="button" aria-label="Изучить" title="Изучить" hidden>
                                 <span class="mobile-quick-action__label">Изучить</span>
                             </button>
                             <button id="mobileInventoryButton" class="mobile-dock__button mobile-dock__button--inventory" type="button" aria-label="Сумка" title="Сумка">
@@ -274,6 +274,7 @@
     <script src="js/world-system.js"></script>
     <script src="js/crafting/resource-registry.js"></script>
     <script src="js/crafting/station-runtime.js"></script>
+    <script src="js/crafting/container-registry.js"></script>
     <script src="js/crafting/component-registry.js"></script>
     <script src="js/crafting/recipe-registry.js"></script>
     <script src="js/crafting/crafting-runtime.js"></script>

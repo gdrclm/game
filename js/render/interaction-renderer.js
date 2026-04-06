@@ -835,6 +835,157 @@
         context.restore();
     }
 
+    function drawResourceNode(screenX, baseY, interaction, resolved) {
+        const context = window.Game.ctx;
+        const renderKind = interaction.renderKind || interaction.resourceNodeKind || 'bush';
+        const shadowRadius = renderKind === 'tree' ? 16 : 12;
+
+        drawShadow(screenX, baseY + 4, shadowRadius, 5);
+
+        context.save();
+        context.translate(screenX, baseY);
+
+        if (renderKind === 'tree') {
+            context.fillStyle = '#6c4726';
+            context.fillRect(-4, -26, 8, 24);
+            context.fillStyle = '#4c7a3d';
+            context.beginPath();
+            context.arc(-8, -24, 9, 0, Math.PI * 2);
+            context.arc(0, -31, 12, 0, Math.PI * 2);
+            context.arc(10, -23, 9, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = '#78a35a';
+            context.beginPath();
+            context.arc(-3, -24, 8, 0, Math.PI * 2);
+            context.arc(7, -29, 6, 0, Math.PI * 2);
+            context.fill();
+        } else if (renderKind === 'stonePile') {
+            fillPolygon(context, [
+                { x: -16, y: 0 },
+                { x: -11, y: -10 },
+                { x: -5, y: -14 },
+                { x: 0, y: -8 },
+                { x: 7, y: -15 },
+                { x: 13, y: -9 },
+                { x: 16, y: 0 }
+            ], '#70747b');
+            fillPolygon(context, [
+                { x: -11, y: -3 },
+                { x: -6, y: -12 },
+                { x: 1, y: -9 },
+                { x: 6, y: -16 },
+                { x: 12, y: -7 },
+                { x: 4, y: -2 }
+            ], '#9ba2ab');
+            fillPolygon(context, [
+                { x: -2, y: -7 },
+                { x: 4, y: -14 },
+                { x: 8, y: -8 },
+                { x: 2, y: -3 }
+            ], '#c4ccd4');
+        } else if (renderKind === 'rubblePile') {
+            fillPolygon(context, [
+                { x: -15, y: 0 },
+                { x: -10, y: -7 },
+                { x: -3, y: -10 },
+                { x: 5, y: -8 },
+                { x: 13, y: -4 },
+                { x: 15, y: 0 }
+            ], '#8a765f');
+            fillPolygon(context, [
+                { x: -9, y: -2 },
+                { x: -4, y: -8 },
+                { x: 2, y: -10 },
+                { x: 9, y: -5 },
+                { x: 4, y: -1 }
+            ], '#b39b7b');
+            context.fillStyle = '#d2bb93';
+            context.fillRect(-7, -6, 3, 3);
+            context.fillRect(-1, -9, 3, 3);
+            context.fillRect(5, -6, 3, 3);
+        } else if (renderKind === 'waterSource') {
+            context.fillStyle = '#5da4cf';
+            context.beginPath();
+            context.ellipse(0, -5, 14, 8, 0, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = '#8dd3f0';
+            context.beginPath();
+            context.ellipse(0, -6, 9, 4.5, 0, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = '#6f8f48';
+            context.fillRect(-11, -15, 2, 12);
+            context.fillRect(-7, -18, 2, 15);
+            context.fillRect(7, -16, 2, 13);
+            context.fillRect(11, -13, 2, 10);
+        } else if (renderKind === 'fishingSpot') {
+            context.fillStyle = '#4f95c2';
+            context.beginPath();
+            context.ellipse(0, -4, 15, 8, 0, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = '#84ccef';
+            context.beginPath();
+            context.ellipse(-2, -5, 10, 4.5, 0, 0, Math.PI * 2);
+            context.fill();
+            context.strokeStyle = '#e8f3ff';
+            context.lineWidth = 1.2;
+            context.beginPath();
+            context.moveTo(5, -18);
+            context.quadraticCurveTo(12, -21, 12, -10);
+            context.stroke();
+            context.fillStyle = '#e15050';
+            context.beginPath();
+            context.arc(12, -9, 2, 0, Math.PI * 2);
+            context.fill();
+        } else {
+            context.fillStyle = '#4d7b38';
+            context.beginPath();
+            context.arc(-8, -10, 8, 0, Math.PI * 2);
+            context.arc(0, -16, 10, 0, Math.PI * 2);
+            context.arc(9, -10, 8, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = '#73a554';
+            context.beginPath();
+            context.arc(-2, -9, 8, 0, Math.PI * 2);
+            context.arc(7, -15, 6, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = '#6a4a2d';
+            context.fillRect(-1, -5, 2, 7);
+        }
+
+        if (interaction.nodeState === 'used') {
+            context.fillStyle = 'rgba(92, 68, 42, 0.22)';
+            context.fillRect(-18, -32, 36, 30);
+        } else if (interaction.nodeState === 'depleted') {
+            context.fillStyle = 'rgba(150, 150, 150, 0.34)';
+            context.fillRect(-20, -36, 40, 38);
+            context.strokeStyle = 'rgba(90, 90, 90, 0.55)';
+            context.lineWidth = 1.6;
+            context.beginPath();
+            context.moveTo(-12, -24);
+            context.lineTo(12, -6);
+            context.moveTo(-12, -6);
+            context.lineTo(12, -24);
+            context.stroke();
+        } else if (interaction.nodeState === 'regenerating') {
+            context.fillStyle = 'rgba(115, 213, 184, 0.16)';
+            context.beginPath();
+            context.ellipse(0, -18, 20, 14, 0, 0, Math.PI * 2);
+            context.fill();
+            context.strokeStyle = 'rgba(157, 244, 225, 0.6)';
+            context.lineWidth = 1.4;
+            context.beginPath();
+            context.arc(0, -17, 11, Math.PI * 0.12, Math.PI * 1.78);
+            context.stroke();
+        }
+
+        if (resolved) {
+            context.fillStyle = 'rgba(210, 210, 210, 0.32)';
+            context.fillRect(-20, -36, 40, 38);
+        }
+
+        context.restore();
+    }
+
     function drawGroundItem(screenX, baseY, interaction) {
         const context = window.Game.ctx;
         const icon = interaction.icon || '?';
@@ -903,6 +1054,13 @@
     }
 
     function drawInteraction(interaction) {
+        if (interaction.kind === 'resourceNode') {
+            const interactions = window.Game.systems.interactions || null;
+            if (interactions && typeof interactions.syncResourceNodeInteractionState === 'function') {
+                interactions.syncResourceNodeInteractionState(interaction);
+            }
+        }
+
         const { tileHeight } = window.Game.config;
         const { x: screenX, y: screenY } = window.Game.systems.camera.isoToScreen(interaction.worldX, interaction.worldY);
         const baseY = screenY + tileHeight / 2 + 2;
@@ -940,6 +1098,11 @@
 
         if (interaction.kind === 'forage') {
             drawForageBush(screenX, baseY, resolved);
+            return;
+        }
+
+        if (interaction.kind === 'resourceNode') {
+            drawResourceNode(screenX, baseY, interaction, resolved);
             return;
         }
 

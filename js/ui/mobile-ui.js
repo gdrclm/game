@@ -248,13 +248,25 @@
 
     function getDesktopActionState(action) {
         const sourceButton = getDesktopActionButton(action);
-        const isEnabled = Boolean(sourceButton && !sourceButton.disabled);
-        const isHighlighted = Boolean(isEnabled && sourceButton.classList.contains('hud-button--available'));
+        const actionUi = game.systems.actionUi || null;
+        const availability = actionUi && typeof actionUi.getActionAvailability === 'function'
+            ? actionUi.getActionAvailability(action)
+            : null;
+        const isEnabled = availability
+            ? Boolean(availability.enabled)
+            : Boolean(sourceButton && !sourceButton.disabled);
+        const isHighlighted = availability
+            ? Boolean(availability.highlighted)
+            : Boolean(isEnabled && sourceButton.classList.contains('hud-button--available'));
+        const isVisible = availability
+            ? Boolean(availability.visible)
+            : isHighlighted;
 
         return {
             sourceButton,
             isEnabled,
-            isHighlighted
+            isHighlighted,
+            isVisible
         };
     }
 
@@ -313,8 +325,8 @@
 
         if (refs.mobileWalkButton) {
             refs.mobileWalkButton.disabled = !walkState.isEnabled;
-            refs.mobileWalkButton.hidden = !walkState.isHighlighted;
-            refs.mobileWalkButton.classList.toggle('is-ready', walkState.isHighlighted);
+            refs.mobileWalkButton.hidden = !walkState.isVisible;
+            refs.mobileWalkButton.classList.toggle('is-ready', walkState.isVisible);
         }
 
         if (refs.mobileInventoryBadge) {
@@ -355,10 +367,10 @@
         }
 
         const actionState = getDesktopActionState(action);
-        const isVisible = actionState.isHighlighted;
+        const isVisible = actionState.isVisible;
 
         button.disabled = !actionState.isEnabled;
-        button.classList.toggle('is-ready', actionState.isHighlighted);
+        button.classList.toggle('is-ready', isVisible);
 
         if (options.hideWhenUnavailable) {
             button.hidden = !isVisible;
