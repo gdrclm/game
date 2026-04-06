@@ -1,6 +1,6 @@
 (() => {
     const stateSchema = window.Game.systems.stateSchema = window.Game.systems.stateSchema || {};
-    const SAVE_VERSION = 5;
+    const SAVE_VERSION = 6;
 
     function isPlainObject(value) {
         return Boolean(value) && typeof value === 'object' && !Array.isArray(value);

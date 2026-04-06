@@ -147,11 +147,22 @@
                     <div class="pause-overlay__panel">
                         <p id="statusOverlayKicker" class="hud-kicker">Пауза</p>
                         <h2 id="statusOverlayTitle" class="hud-title hud-title--compact">Пауза</h2>
-                        <div class="pause-overlay__actions">
+                        <p id="statusOverlayMessage" class="panel-copy pause-overlay__message" hidden></p>
+                        <div id="pauseMainActions" class="pause-overlay__actions">
                             <button id="pauseResumeButton" class="hud-button hud-button--pause" type="button">Продолжить</button>
+                            <button id="pauseSaveButton" class="hud-button" type="button">Сохранить</button>
+                            <button id="pauseLoadButton" class="hud-button" type="button">Загрузить</button>
                             <button id="newGameButton" class="hud-button hud-button--new-game" type="button">Новая игра</button>
                             <button id="installButton" class="hud-button hud-button--install" type="button" hidden>Установить</button>
                         </div>
+                        <section id="pauseSlotMenu" class="pause-overlay__slot-menu" hidden aria-live="polite">
+                            <p id="pauseSlotMenuSummary" class="panel-copy pause-overlay__slot-summary">Выбери слот.</p>
+                            <p id="pauseSlotMenuStatus" class="panel-copy pause-overlay__slot-status" hidden></p>
+                            <div id="pauseSlotList" class="pause-overlay__slot-list"></div>
+                            <div class="pause-overlay__slot-actions">
+                                <button id="pauseBackButton" class="hud-button" type="button">Назад</button>
+                            </div>
+                        </section>
                         <p id="pwaStatus" class="panel-copy pwa-status" aria-live="polite">
                             Автономный режим будет доступен после первого запуска онлайн.
                         </p>
@@ -200,6 +211,7 @@
                     <p id="mapPanelSummary" class="panel-copy map-panel__summary"></p>
                     <div class="map-panel__canvas-wrap">
                         <canvas id="mapCanvas" class="map-panel__canvas" width="960" height="640" aria-label="Карта архипелага"></canvas>
+                        <p id="mapIslandBadge" class="map-panel__island-badge" hidden aria-hidden="true">Выбран остров</p>
                         <div id="mapHoverCard" class="map-panel__hover-card" hidden aria-hidden="true">
                             <p id="mapHoverCardTile" class="map-panel__hover-line map-panel__hover-line--tile">Клетка</p>
                             <p id="mapHoverCardIsland" class="map-panel__hover-line map-panel__hover-line--island">Остров</p>

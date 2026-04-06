@@ -345,6 +345,25 @@
             notes: 'Базовый лечебный пакет из 5 единиц травы.'
         },
         {
+            recipeId: 'reeds-to-healing-base',
+            label: 'Лечебная основа из тростника',
+            station: 'hand',
+            stationLabel: 'Руки',
+            tier: RECIPE_TIERS.baseConversion,
+            ingredients: [
+                createIngredient('resource', 'reeds', 'Тростник', 5)
+            ],
+            result: createResult('component', 'healingBase', 'Травяная база лечения', 1, {
+                aliases: ['База лечения']
+            }),
+            tags: ['base-conversion', 'component', 'reeds', 'healing'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 1, to: 12, priority: 'recommended', note: 'Запасной лечебный источник у воды и тростниковых кромок.' },
+                { from: 13, to: 30, priority: 'recommended', note: 'Хороший страхующий ресурс, если трава уже снята по маршруту.' }
+            ]),
+            notes: 'Альтернативный лечебный пакет из 5 единиц тростника.'
+        },
+        {
             recipeId: 'grass-to-herbal-paste',
             label: 'Травяная паста',
             station: 'hand',
@@ -381,6 +400,27 @@
                 { from: 25, to: 27, priority: 'recommended', note: 'Полезна в поздней маршрутной утилите.' }
             ]),
             notes: 'Верстачная упаковка травы в ранний утилитарный компонент.'
+        },
+        {
+            recipeId: 'reeds-to-rope',
+            label: 'Верёвка из тростника',
+            station: 'bench',
+            stationLabel: 'Верстак',
+            tier: RECIPE_TIERS.baseConversion,
+            ingredients: [
+                createIngredient('resource', 'reeds', 'Тростник', 10)
+            ],
+            result: createResult('component', 'rope', 'Верёвка', 1, {
+                aliases: ['Верёвка из тростника'],
+                gameplayItemId: 'rope'
+            }),
+            tags: ['base-conversion', 'component', 'reeds', 'movement', 'construction'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 4, to: 6, priority: 'critical', note: 'Позволяет собрать первую верёвку даже на водных кромках.' },
+                { from: 13, to: 18, priority: 'critical', note: 'Поддерживает лодку и ремонт, если основной травяной слой уже снят.' },
+                { from: 25, to: 27, priority: 'recommended', note: 'Полезен как резервный волокнистый ресурс в позднем маршруте.' }
+            ]),
+            notes: 'Верстачная упаковка тростника в тот же утилитарный компонент.'
         },
         {
             recipeId: 'stone-to-stone-block',
@@ -495,12 +535,14 @@
             ingredients: [
                 createIngredient('resource', 'fish', 'Рыба', 5)
             ],
-            result: createResult('component', 'fishMeat', 'Рыбное мясо', 1),
+            result: createResult('component', 'fishMeat', 'Рыбное мясо', 1, {
+                gameplayItemId: 'fishMeat'
+            }),
             tags: ['base-conversion', 'component', 'fish', 'food', 'camp'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 7, to: 21, priority: 'critical', note: 'Основной пищевой компонент длинных серий.' }
             ]),
-            notes: 'Лагерная разделка улова в пищевой компонент.'
+            notes: 'Лагерная разделка любого рыбного улова в пищевой компонент. Gameplay-слой принимает обычную, редкую и трофейную рыбу как одну семейную resource-ветку.'
         },
         {
             recipeId: 'fish-to-fish-oil',
@@ -511,13 +553,15 @@
             ingredients: [
                 createIngredient('resource', 'fish', 'Рыба', 10)
             ],
-            result: createResult('component', 'fishOil', 'Рыбий жир', 1),
+            result: createResult('component', 'fishOil', 'Рыбий жир', 1, {
+                gameplayItemId: 'fishOil'
+            }),
             tags: ['base-conversion', 'component', 'fish', 'oil', 'camp'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 16, to: 18, priority: 'critical', note: 'Обязателен для готовой лодки.' },
                 { from: 25, to: 27, priority: 'recommended', note: 'Полезен в поздней логистике и утилите.' }
             ]),
-            notes: 'Плотный лагерный компонент для лодки и поздних рецептов.'
+            notes: 'Плотный лагерный компонент для лодки и поздних рецептов. Gameplay-слой принимает любую рыбу семейства fish, а не только ранний обычный улов.'
         },
         {
             recipeId: 'healing-brew',
@@ -573,6 +617,45 @@
             notes: 'Самая простая лагерная еда на базе рыбы и топлива.'
         },
         {
+            recipeId: 'raw-fish-ration',
+            label: 'Сухпаёк из улова',
+            station: 'camp',
+            stationLabel: 'Лагерь',
+            tier: RECIPE_TIERS.survivalAndEnergy,
+            ingredients: [
+                createIngredient('resource', 'fish', 'Рыба', 5),
+                createIngredient('item', 'fuelBundle', 'Топливная связка', 1)
+            ],
+            result: createResult('item', 'ration', 'Сухпаёк', 1, {
+                gameplayItemId: 'ration'
+            }),
+            tags: ['survival', 'food', 'camp', 'ration', 'shortcut', 'emergency', 'fish'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 7, to: 21, priority: 'recommended', note: 'Прямой походный сухпаёк из свежего улова, когда игроку важнее темп, чем промежуточный компонент.' }
+            ]),
+            notes: 'Gameplay-shortcut поверх документов: GDD допускает сухпаёк как крафт из еды, а craft-доки сохраняют полную ветку через рыбное мясо для остальных лагерных рецептов.'
+        },
+        {
+            recipeId: 'fish-broth',
+            label: 'Рыбный бульон',
+            station: 'camp',
+            stationLabel: 'Лагерь',
+            tier: RECIPE_TIERS.survivalAndEnergy,
+            ingredients: [
+                createIngredient('component', 'fishMeat', 'Рыбное мясо', 1),
+                createIngredient('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, { gameplayItemId: 'flask_water_full' }),
+                createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
+            ],
+            result: createResult('item', 'fishBroth', 'Рыбный бульон', 1, {
+                gameplayItemId: 'fishBroth'
+            }),
+            tags: ['survival', 'food', 'camp', 'broth', 'emergency', 'fish'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 7, to: 18, priority: 'recommended', note: 'Лёгкая горячая еда на случай, когда нужен быстрый recovery, но ещё рано тратить редкие травяные компоненты.' }
+            ]),
+            notes: 'Простая аварийная рыбная еда. В отличие от крепкого бульона не требует травяной пасты и даёт более дешёвую горячую поддержку темпа.'
+        },
+        {
             recipeId: 'hearty-ration',
             label: 'Сытный паёк',
             station: 'camp',
@@ -589,6 +672,25 @@
                 { from: 7, to: 18, priority: 'critical', note: 'Нужен с 7 острова для длинных маршрутов.' }
             ]),
             notes: 'Усиленный рацион с водой для средней фазы.'
+        },
+        {
+            recipeId: 'salted-fish',
+            label: 'Солёная рыба',
+            station: 'camp',
+            stationLabel: 'Лагерь',
+            tier: RECIPE_TIERS.survivalAndEnergy,
+            ingredients: [
+                createIngredient('component', 'fishMeat', 'Рыбное мясо', 1),
+                createIngredient('item', 'survivalSalt', 'Соль выживания', 1)
+            ],
+            result: createResult('item', 'saltedFish', 'Солёная рыба', 1, {
+                gameplayItemId: 'saltedFish'
+            }),
+            tags: ['survival', 'food', 'camp', 'emergency', 'fish', 'preserved'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 7, to: 21, priority: 'situational', note: 'Полезна, когда игрок хочет быстро законсервировать улов и не держать сырьё в сумке.' }
+            ]),
+            notes: 'Расширение поверх craft-доков: в документах нет отдельной солёной рыбы, поэтому это интерпретация через существующую Соль выживания как быстрый способ перевести рыбу в непортящуюся аварийную еду.'
         },
         {
             recipeId: 'strong-broth',
@@ -728,6 +830,46 @@
                 { from: 16, to: 30, priority: 'critical', note: 'После 16 острова нужен как постоянная страховка.' }
             ]),
             notes: 'Ремонтный комплект для поддержания лодки в рабочем состоянии.'
+        },
+        {
+            recipeId: 'fog-lantern',
+            label: 'Фонарь тумана',
+            station: 'workbench',
+            stationLabel: 'Мастерская',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'board', 'Доска', 1),
+                createIngredient('component', 'fishOil', 'Рыбий жир', 1),
+                createIngredient('component', 'rope', 'Верёвка', 1, { gameplayItemId: 'rope' })
+            ],
+            result: createResult('item', 'fogLantern', 'Фонарь тумана', 1, {
+                gameplayItemId: 'fogLantern'
+            }),
+            tags: ['utility', 'info', 'light', 'oil', 'workbench'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 10, to: 18, priority: 'critical', note: 'Даёт свет и чтение карты в туманных и дорогих маршрутах.' }
+            ]),
+            notes: 'Интерпретация item-list из craft-доков: рыбный жир здесь работает как честное масляное топливо фонаря.'
+        },
+        {
+            recipeId: 'merchant-beacon',
+            label: 'Маяк торговца',
+            station: 'workbench',
+            stationLabel: 'Мастерская',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'stoneBlock', 'Каменный блок', 1),
+                createIngredient('component', 'fishOil', 'Рыбий жир', 1),
+                createIngredient('component', 'rope', 'Верёвка', 1, { gameplayItemId: 'rope' })
+            ],
+            result: createResult('item', 'merchantBeacon', 'Маяк торговца', 1, {
+                gameplayItemId: 'merchantBeacon'
+            }),
+            tags: ['utility', 'info', 'trade', 'late', 'oil', 'workbench'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 16, to: 24, priority: 'recommended', note: 'Помогает искать торговца и не тратить поздние шаги вслепую.' }
+            ]),
+            notes: 'Поздняя сигнальная утилита на базе рыбьего жира: расширяет рыбий жир из просто еды в экономический и маршрутный ресурс.'
         },
         {
             recipeId: 'island-drill',

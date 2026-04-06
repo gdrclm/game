@@ -110,6 +110,7 @@
         const resourceId = syncedInteraction.resourceId || (definition ? definition.resourceId : '') || '';
         const defaultCollectedLabelByResource = {
             grass: 'траву',
+            reeds: 'тростник',
             stone: 'камень',
             rubble: 'щебень',
             wood: 'дерево',
@@ -160,6 +161,7 @@
             const subtype = resourceRegistry.getResourceSubtypeDefinition(subtypeId);
 
             if (subtype) {
+                profile.resourceId = subtype.familyResourceId || profile.resourceId || resourceId;
                 profile.resourceFamilyId = subtype.familyResourceId || profile.resourceFamilyId || 'grass';
                 profile.itemId = subtype.familyItemId || profile.itemId || 'raw_grass';
                 profile.resourceSubtypeId = subtype.id;
@@ -170,8 +172,23 @@
                     : [];
                 profile.collectedLabel = subtype.collectedLabel || profile.collectedLabel;
                 profile.sourceLabel = tileType === 'reeds'
-                    ? 'куст низинной травы'
+                    ? 'заросли тростника'
                     : 'луговой куст травы';
+            }
+        }
+
+        if (profile.resourceFamilyId === 'fish' && resourceRegistry && typeof resourceRegistry.resolveFishCatchDefinition === 'function') {
+            const islandIndex = tileInfo && tileInfo.progression && Number.isFinite(tileInfo.progression.islandIndex)
+                ? Math.max(1, Math.floor(tileInfo.progression.islandIndex))
+                : (Number.isFinite(syncedInteraction.islandIndex) ? Math.max(1, Math.floor(syncedInteraction.islandIndex)) : Math.max(1, Math.floor(game.state.currentIslandIndex || 1)));
+            const catchDefinition = resourceRegistry.resolveFishCatchDefinition(islandIndex);
+
+            if (catchDefinition) {
+                profile.itemId = catchDefinition.itemId || profile.itemId || 'raw_fish';
+                profile.resourceCatchId = catchDefinition.id || '';
+                profile.resourceCatchLabel = catchDefinition.label || '';
+                profile.resourceCatchRarityLabel = catchDefinition.rarityLabel || '';
+                profile.collectedLabel = catchDefinition.collectedLabel || profile.collectedLabel;
             }
         }
 
@@ -1262,6 +1279,7 @@
         const label = syncedInteraction.label || 'Ресурсный узел';
         const descriptionByResource = {
             grass: 'сырьевой куст травы. Здесь берут raw-слой для лечебной основы, травяной пасты и верёвки.',
+            reeds: 'заросли тростника. Здесь берут сырой тростник под лечебную основу и верёвку.',
             stone: 'каменная куча. Даёт сырой камень под блоки и тяжёлые строительные рецепты.',
             rubble: 'щебёночная осыпь. Даёт сырой щебень для засыпки и ремонта.',
             wood: 'дерево или полезная коряга. Даёт сырое дерево под доски и каркасы.',
@@ -1300,6 +1318,7 @@
         const label = syncedInteraction.label || 'Ресурсный узел';
         const adviceByResource = {
             grass: 'раннюю траву выгодно собирать в безопасной части маршрута, пока отклонение от пути ещё дешёвое.',
+            reeds: 'тростник полезен у воды как запасной волокнистый ресурс: бери его, когда он закрывает лечение или верёвку без длинного крюка.',
             stone: 'камень лучше брать по дороге на средних островах, когда уже понятно, нужен ли тебе запас под блоки и мосты.',
             rubble: 'щебень хорош как дешёвый стройматериал, но отдельный крюк ради него окупается не всегда.',
             wood: 'дерево особенно ценно перед переправами и ремонтными рецептами, поэтому держи его в плане маршрута заранее.',
@@ -1336,6 +1355,9 @@
 
         const expedition = interaction.expedition || {};
         const label = expedition.label || interaction.label || 'объект';
+        const workbenchDescription = expedition.stationId === 'workbench'
+            ? 'явная мастерская. Рядом можно открыть сумку и увидеть рецепты мастерской и верстака.'
+            : 'явный верстак. Рядом можно открыть сумку и увидеть рецепты верстака.';
 
         switch (interaction.kind) {
             case 'merchant':
@@ -1343,7 +1365,11 @@
             case 'artisan':
                 return `${label}: ремесленник по сумкам. Он открывает новые слоты и собирает особые наборы вещей.`;
             case 'shelter':
-                return `${label}: полевой лагерь. Здесь можно передохнуть и частично восстановить силы.`;
+                return `${label}: укрытие для отдыха. Здесь можно передохнуть и переждать тяжёлый участок пути.`;
+            case 'camp':
+                return `${label}: явный лагерный очаг. Здесь собираются походные рецепты, вода и еда.`;
+            case 'workbench':
+                return `${label}: ${workbenchDescription}`;
             case 'well':
                 return `${label}: колодец с чистой водой. Он помогает восстановиться в длинном переходе и служит опорной точкой на маршруте.`;
             case 'forage':
@@ -1386,6 +1412,9 @@
 
         const expedition = interaction.expedition || {};
         const label = expedition.label || interaction.label || 'объект';
+        const workbenchAdvice = expedition.stationId === 'workbench'
+            ? 'держи рядом сырьё и открывай сумку у мастерской: рецепты там теперь разбиты по станциям и не прячутся в общей куче.'
+            : 'подходи к верстаку с сырьём заранее: так проще увидеть, что собирается именно на верстаке, а не руками.';
 
         switch (interaction.kind) {
             case 'merchant':
@@ -1393,7 +1422,11 @@
             case 'artisan':
                 return `Изучить: ${label}. Совет: держи в сумке разные категории вещей, чтобы быстрее закрывать квесты на новые слоты.`;
             case 'shelter':
-                return `Изучить: ${label}. Совет: лагерь лучше использовать до полного истощения, чтобы не заходить в снежный ком штрафов.`;
+                return `Изучить: ${label}. Совет: укрытие лучше использовать до полного истощения, чтобы не заходить в снежный ком штрафов.`;
+            case 'camp':
+                return `Изучить: ${label}. Совет: подходи к очагу с флягой, топливом и сырьём заранее: лагерные рецепты теперь открываются только у отдельной точки крафта.`;
+            case 'workbench':
+                return `Изучить: ${label}. Совет: ${workbenchAdvice}`;
             case 'well':
                 return `Изучить: ${label}. Совет: запоминай колодцы на карте и строй маршрут так, чтобы они были промежуточной опорой на длинных островах.`;
             case 'forage':
@@ -1447,7 +1480,7 @@
             case 'grass':
                 return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: полевую траву удобно собирать на старте острова, когда маршрут ещё короткий и вокруг много безопасных клеток.`;
             case 'reeds':
-                return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: тростник собирай только если он стоит рядом с маршрутом, потому что сам по себе он утяжеляет путь.`;
+                return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: тростник хорош как запасной ресурс у воды: из него собирают лечебную основу и верёвку, но сам крюк в тростник должен окупаться маршрутом.`;
             case 'stone':
             case 'rubble':
                 return `Изучить: ${target.profile.sourceLabel}, ${positionLabel}. Совет: камень и осыпь лучше брать по дороге, а не делать ради них отдельный дорогой заход.`;
@@ -1585,7 +1618,9 @@
 
         const descriptionByKind = {
             artisan: '\u0440\u0435\u043c\u0435\u0441\u043b\u0435\u043d\u043d\u0438\u043a \u043f\u043e \u0441\u0443\u043c\u043a\u0430\u043c. \u041e\u043d \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u043d\u043e\u0432\u044b\u0435 \u0441\u043b\u043e\u0442\u044b \u0438 \u0441\u043e\u0431\u0438\u0440\u0430\u0435\u0442 \u043e\u0441\u043e\u0431\u044b\u0435 \u043d\u0430\u0431\u043e\u0440\u044b \u0432\u0435\u0449\u0435\u0439.',
-            shelter: '\u043f\u043e\u043b\u0435\u0432\u043e\u0439 \u043b\u0430\u0433\u0435\u0440\u044c. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u043f\u0435\u0440\u0435\u0434\u043e\u0445\u043d\u0443\u0442\u044c \u0438 \u0447\u0430\u0441\u0442\u0438\u0447\u043d\u043e \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0438\u043b\u044b.',
+            shelter: '\u0443\u043a\u0440\u044b\u0442\u0438\u0435 \u0434\u043b\u044f \u043e\u0442\u0434\u044b\u0445\u0430. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u043f\u0435\u0440\u0435\u0434\u043e\u0445\u043d\u0443\u0442\u044c \u0438 \u043f\u0435\u0440\u0435\u0436\u0434\u0430\u0442\u044c \u0442\u044f\u0436\u0451\u043b\u044b\u0439 \u0443\u0447\u0430\u0441\u0442\u043e\u043a \u043f\u0443\u0442\u0438.',
+            camp: '\u044f\u0432\u043d\u044b\u0439 \u043b\u0430\u0433\u0435\u0440\u043d\u044b\u0439 \u043e\u0447\u0430\u0433. \u0418\u043c\u0435\u043d\u043d\u043e \u0437\u0434\u0435\u0441\u044c \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442\u0441\u044f \u043b\u0430\u0433\u0435\u0440\u043d\u044b\u0439 \u043a\u0440\u0430\u0444\u0442 \u0434\u043b\u044f \u0432\u043e\u0434\u044b, \u0435\u0434\u044b \u0438 \u043f\u043e\u0445\u043e\u0434\u043d\u044b\u0445 \u0440\u0435\u0446\u0435\u043f\u0442\u043e\u0432.',
+            workbench: '\u044f\u0432\u043d\u044b\u0439 \u0432\u0435\u0440\u0441\u0442\u0430\u043a \u0438\u043b\u0438 \u043c\u0430\u0441\u0442\u0435\u0440\u0441\u043a\u0430\u044f. \u041e\u0442\u043a\u0440\u043e\u0439 \u0441\u0443\u043c\u043a\u0443 \u0440\u044f\u0434\u043e\u043c, \u0447\u0442\u043e\u0431\u044b \u0443\u0432\u0438\u0434\u0435\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0440\u0435\u0446\u0435\u043f\u0442\u043e\u0432 \u043f\u043e \u0441\u0442\u0430\u043d\u0446\u0438\u044f\u043c.',
             well: '\u043a\u043e\u043b\u043e\u0434\u0435\u0446 \u0441 \u0447\u0438\u0441\u0442\u043e\u0439 \u0432\u043e\u0434\u043e\u0439. \u041e\u043d \u043f\u043e\u043c\u043e\u0433\u0430\u0435\u0442 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c\u0441\u044f \u0432 \u0434\u043b\u0438\u043d\u043d\u043e\u043c \u043f\u0435\u0440\u0435\u0445\u043e\u0434\u0435.',
             forage: '\u043a\u0443\u0441\u0442 \u0441 \u043f\u043e\u043b\u0435\u0432\u044b\u043c\u0438 \u044f\u0433\u043e\u0434\u0430\u043c\u0438. \u042f\u0433\u043e\u0434\u044b \u0431\u044b\u0441\u0442\u0440\u043e \u0441\u043d\u0438\u043c\u0430\u044e\u0442 \u0447\u0430\u0441\u0442\u044c \u0433\u043e\u043b\u043e\u0434\u0430.',
             emptyHouse: '\u043f\u0443\u0441\u0442\u043e\u0439 \u0434\u043e\u043c. \u0412\u043d\u0443\u0442\u0440\u0438 \u043c\u043e\u0436\u0435\u0442 \u043d\u0435 \u043e\u043a\u0430\u0437\u0430\u0442\u044c\u0441\u044f \u043f\u043e\u043b\u044c\u0437\u044b, \u043d\u043e \u044d\u0442\u043e \u0443\u043a\u0440\u044b\u0442\u0438\u0435 \u0438 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u0430\u044f \u0442\u043e\u0447\u043a\u0430.',
@@ -1644,7 +1679,9 @@
         }
 
         const adviceByKind = {
-            shelter: '\u043b\u0430\u0433\u0435\u0440\u044c \u043b\u0443\u0447\u0448\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u0434\u043e \u043f\u043e\u043b\u043d\u043e\u0433\u043e \u0438\u0441\u0442\u043e\u0449\u0435\u043d\u0438\u044f, \u0447\u0442\u043e\u0431\u044b \u043d\u0435 \u0437\u0430\u0445\u043e\u0434\u0438\u0442\u044c \u0432 \u0441\u043d\u0435\u0436\u043d\u044b\u0439 \u043a\u043e\u043c \u0448\u0442\u0440\u0430\u0444\u043e\u0432.',
+            shelter: '\u0443\u043a\u0440\u044b\u0442\u0438\u0435 \u043b\u0443\u0447\u0448\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u0434\u043e \u043f\u043e\u043b\u043d\u043e\u0433\u043e \u0438\u0441\u0442\u043e\u0449\u0435\u043d\u0438\u044f, \u0447\u0442\u043e\u0431\u044b \u043d\u0435 \u0437\u0430\u0445\u043e\u0434\u0438\u0442\u044c \u0432 \u0441\u043d\u0435\u0436\u043d\u044b\u0439 \u043a\u043e\u043c \u0448\u0442\u0440\u0430\u0444\u043e\u0432.',
+            camp: '\u043f\u043e\u0434\u0445\u043e\u0434\u0438 \u043a \u043b\u0430\u0433\u0435\u0440\u043d\u043e\u043c\u0443 \u043e\u0447\u0430\u0433\u0443 \u0441 \u0444\u043b\u044f\u0433\u043e\u0439, \u0442\u043e\u043f\u043b\u0438\u0432\u043e\u043c \u0438 \u0441\u044b\u0440\u044c\u0451\u043c: \u0442\u043e\u043b\u044c\u043a\u043e \u043e\u043d \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u043b\u0430\u0433\u0435\u0440\u043d\u044b\u0435 \u0440\u0435\u0446\u0435\u043f\u0442\u044b.',
+            workbench: '\u043f\u043e\u0434\u0445\u043e\u0434\u0438 \u043a \u0441\u0442\u0430\u043d\u0446\u0438\u0438 \u0441 \u0441\u044b\u0440\u044c\u0451\u043c \u0438 \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0439 \u0441\u0443\u043c\u043a\u0443 \u0440\u044f\u0434\u043e\u043c: \u0442\u0430\u043c \u0442\u0435\u043f\u0435\u0440\u044c \u0432\u0438\u0434\u043d\u043e, \u0447\u0442\u043e \u0441\u043e\u0431\u0438\u0440\u0430\u0435\u0442\u0441\u044f \u0438\u043c\u0435\u043d\u043d\u043e \u043d\u0430 \u0432\u0435\u0440\u0441\u0442\u0430\u043a\u0435 \u0438 \u0432 \u043c\u0430\u0441\u0442\u0435\u0440\u0441\u043a\u043e\u0439.',
             well: '\u0437\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u0439 \u043a\u043e\u043b\u043e\u0434\u0446\u044b \u043d\u0430 \u043a\u0430\u0440\u0442\u0435 \u0438 \u0441\u0442\u0440\u043e\u0439 \u043c\u0430\u0440\u0448\u0440\u0443\u0442 \u0442\u0430\u043a, \u0447\u0442\u043e\u0431\u044b \u043e\u043d\u0438 \u0431\u044b\u043b\u0438 \u043f\u0440\u043e\u043c\u0435\u0436\u0443\u0442\u043e\u0447\u043d\u043e\u0439 \u043e\u043f\u043e\u0440\u043e\u0439 \u043d\u0430 \u0434\u043b\u0438\u043d\u043d\u044b\u0445 \u043e\u0441\u0442\u0440\u043e\u0432\u0430\u0445.',
             forage: '\u044f\u0433\u043e\u0434\u044b \u043b\u0443\u0447\u0448\u0435 \u0441\u0440\u044b\u0432\u0430\u0442\u044c, \u043a\u043e\u0433\u0434\u0430 \u0433\u043e\u043b\u043e\u0434 \u0443\u0436\u0435 \u0437\u0430\u043c\u0435\u0442\u043d\u043e \u043f\u0440\u043e\u0441\u0435\u043b, \u0430 \u043d\u0435 \u0442\u0440\u0430\u0442\u0438\u0442\u044c \u0438\u0445 \u0437\u0430\u0440\u0430\u043d\u0435\u0435 \u043d\u0430 \u043f\u043e\u0447\u0442\u0438 \u043f\u043e\u043b\u043d\u0443\u044e \u0448\u043a\u0430\u043b\u0443.',
             emptyHouse: '\u0434\u0430\u0436\u0435 \u043f\u0443\u0441\u0442\u043e\u0439 \u0434\u043e\u043c \u043f\u043e\u043b\u0435\u0437\u0435\u043d \u043a\u0430\u043a \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u0430\u044f \u0442\u043e\u0447\u043a\u0430 \u0438 \u043e\u0440\u0438\u0435\u043d\u0442\u0438\u0440 \u043d\u0430 \u043a\u0430\u0440\u0442\u0435.',
@@ -1826,6 +1863,14 @@
 
             if (encounter.kind === 'shelter') {
                 return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Спать".`;
+            }
+
+            if (encounter.kind === 'camp') {
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать", затем открой сумку для лагерного крафта.`;
+            }
+
+            if (encounter.kind === 'workbench') {
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать", затем открой сумку, чтобы увидеть рецепты по станциям.`;
             }
 
             if (encounter.kind === 'well') {
@@ -2170,6 +2215,14 @@
 
             if (encounter.kind === 'shelter') {
                 return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Спать".`;
+            }
+
+            if (encounter.kind === 'camp') {
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать", затем открой сумку для лагерного крафта.`;
+            }
+
+            if (encounter.kind === 'workbench') {
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать", затем открой сумку, чтобы увидеть рецепты по станциям.`;
             }
 
             if (encounter.kind === 'well') {

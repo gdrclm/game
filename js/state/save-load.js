@@ -2,20 +2,22 @@
     const saveLoad = window.Game.systems.saveLoad = window.Game.systems.saveLoad || {};
     const stateSchema = window.Game.systems.stateSchema;
     const STORAGE_KEY = 'iso_game_save';
+    const SAVE_SLOT_PREFIX = 'iso_game_save_slot_';
+    const SAVE_SLOT_RECORD_VERSION = 1;
+    const SAVE_SLOT_COUNT = 6;
     const DOMAIN_SAVE_VERSION = 1;
     const CRAFTING_STATE_SAVE_VERSION = 2;
     const RAW_RESOURCE_LAYER_SAVE_VERSION = 3;
     const RESOURCE_NODE_RESPAWN_POLICY_SAVE_VERSION = 4;
     const WATER_FLASK_CONTAINER_SAVE_VERSION = 5;
+    const REEDS_RESOURCE_SPLIT_SAVE_VERSION = 6;
     const LEGACY_RAW_RESOURCE_ITEM_MIGRATIONS = Object.freeze({
         lowlandGrass: {
-            itemId: 'raw_grass',
-            label: 'Трава',
-            icon: 'TR',
+            itemId: 'raw_reeds',
+            label: 'Тростник',
+            icon: 'RT',
             quantityMultiplier: 1,
-            resourceFamilyId: 'grass',
-            resourceSubtypeId: 'lowlandGrass',
-            resourceSubtypeLabel: 'Низинная трава'
+            resourceFamilyId: 'reeds'
         },
         fieldGrass: {
             itemId: 'raw_grass',
@@ -33,6 +35,7 @@
     });
     const RAW_STACKABLE_ITEM_IDS = new Set([
         'raw_grass',
+        'raw_reeds',
         'raw_stone',
         'raw_rubble',
         'raw_wood',
@@ -114,6 +117,27 @@
         if (targetSubtypeId && sourceSubtypeId === targetSubtypeId && !targetItem.resourceSubtypeLabel && sourceItem.resourceSubtypeLabel) {
             targetItem.resourceSubtypeLabel = sourceItem.resourceSubtypeLabel;
         }
+    }
+
+    function migrateSplitReedResourceItem(item) {
+        if (!isPlainObject(item) || typeof item.id !== 'string') {
+            return cloneValue(item);
+        }
+
+        const migratedItem = cloneValue(item);
+        const subtypeId = typeof migratedItem.resourceSubtypeId === 'string'
+            ? migratedItem.resourceSubtypeId.trim()
+            : '';
+
+        if (migratedItem.id === 'raw_grass' && subtypeId === 'lowlandGrass') {
+            migratedItem.id = 'raw_reeds';
+            migratedItem.label = 'Тростник';
+            migratedItem.icon = 'RT';
+            migratedItem.resourceFamilyId = 'reeds';
+            clearRawSubtypeMetadata(migratedItem);
+        }
+
+        return migratedItem;
     }
 
     function mergeMigratedStackableItems(items = []) {
@@ -219,13 +243,188 @@
             narrative: cloneValue(domains.narrative),
             ui: {
                 ...cloneValue(domains.ui),
+                isPaused: false,
+                isMapOpen: false,
                 lastActionMessage: uiSystem && typeof uiSystem.lastActionMessage === 'string'
                     ? uiSystem.lastActionMessage
                     : domains.ui.lastActionMessage,
-                openMerchantHouseId: uiSystem && typeof uiSystem.openMerchantHouseId === 'string'
-                    ? uiSystem.openMerchantHouseId
-                    : domains.ui.openMerchantHouseId
+                openMerchantHouseId: null
             }
+        };
+    }
+
+    function normalizeSlotId(slotId) {
+        const normalized = Number(slotId);
+
+        if (!Number.isInteger(normalized) || normalized < 1 || normalized > SAVE_SLOT_COUNT) {
+            return null;
+        }
+
+        return normalized;
+    }
+
+    function getSaveSlotStorageKey(slotId) {
+        const normalizedSlotId = normalizeSlotId(slotId);
+        return normalizedSlotId === null ? '' : `${SAVE_SLOT_PREFIX}${normalizedSlotId}`;
+    }
+
+    function countOccupiedInventorySlots(inventory = []) {
+        return (Array.isArray(inventory) ? inventory : []).reduce((count, item) => (
+            item ? count + 1 : count
+        ), 0);
+    }
+
+    function buildSaveSlotMetadata(state = window.Game.state, slotId = 1, savedAt = new Date().toISOString()) {
+        return {
+            slotId,
+            savedAt,
+            islandIndex: Number.isFinite(state.currentIslandIndex) ? Math.max(1, Math.floor(state.currentIslandIndex)) : 1,
+            highestIslandIndex: Number.isFinite(state.highestIslandIndex) ? Math.max(1, Math.floor(state.highestIslandIndex)) : 1,
+            gold: Number.isFinite(state.gold) ? Math.max(0, Math.floor(state.gold)) : 0,
+            currentTimeOfDayIndex: Number.isFinite(state.currentTimeOfDayIndex) ? Math.max(0, Math.floor(state.currentTimeOfDayIndex)) : 0,
+            occupiedInventorySlots: countOccupiedInventorySlots(state.inventory),
+            hasWon: Boolean(state.hasWon),
+            isGameOver: Boolean(state.isGameOver)
+        };
+    }
+
+    function buildSaveSlotRecord(slotId, state = window.Game.state) {
+        const normalizedSlotId = normalizeSlotId(slotId);
+        if (normalizedSlotId === null) {
+            return null;
+        }
+
+        const savedAt = new Date().toISOString();
+
+        return {
+            format: 'iso-game-save-slot',
+            version: SAVE_SLOT_RECORD_VERSION,
+            slotId: normalizedSlotId,
+            savedAt,
+            worldSeed: Number.isFinite(window.Game && window.Game.config ? window.Game.config.worldSeed : null)
+                ? window.Game.config.worldSeed
+                : null,
+            metadata: buildSaveSlotMetadata(state, normalizedSlotId, savedAt),
+            snapshot: buildSaveSnapshot(state)
+        };
+    }
+
+    function parseSaveSlotRecord(slotId, serializedValue) {
+        const normalizedSlotId = normalizeSlotId(slotId);
+        if (normalizedSlotId === null || typeof serializedValue !== 'string' || serializedValue.trim() === '') {
+            return null;
+        }
+
+        try {
+            const parsed = JSON.parse(serializedValue);
+            if (!parsed || typeof parsed !== 'object') {
+                return null;
+            }
+
+            if (parsed.format !== 'iso-game-save-slot' || !parsed.snapshot || typeof parsed.snapshot !== 'object') {
+                return null;
+            }
+
+            const savedAt = typeof parsed.savedAt === 'string'
+                ? parsed.savedAt
+                : (parsed.metadata && typeof parsed.metadata.savedAt === 'string' ? parsed.metadata.savedAt : null);
+            const metadata = isPlainObject(parsed.metadata)
+                ? cloneValue(parsed.metadata)
+                : buildSaveSlotMetadata(parsed.snapshot, normalizedSlotId, savedAt || new Date().toISOString());
+
+            metadata.slotId = normalizedSlotId;
+            if (savedAt && !metadata.savedAt) {
+                metadata.savedAt = savedAt;
+            }
+
+            return {
+                format: parsed.format,
+                version: Number.isFinite(parsed.version) ? parsed.version : SAVE_SLOT_RECORD_VERSION,
+                slotId: normalizedSlotId,
+                savedAt: savedAt || metadata.savedAt || null,
+                worldSeed: Number.isFinite(parsed.worldSeed) ? parsed.worldSeed : null,
+                metadata,
+                snapshot: cloneValue(parsed.snapshot)
+            };
+        } catch (error) {
+            console.warn(`Save slot ${normalizedSlotId} parse failed:`, error);
+            return null;
+        }
+    }
+
+    function getSaveSlotRecord(slotId) {
+        if (typeof localStorage === 'undefined') {
+            return null;
+        }
+
+        const storageKey = getSaveSlotStorageKey(slotId);
+        if (!storageKey) {
+            return null;
+        }
+
+        try {
+            return parseSaveSlotRecord(slotId, localStorage.getItem(storageKey));
+        } catch (error) {
+            console.warn(`Save slot ${slotId} read failed:`, error);
+            return null;
+        }
+    }
+
+    function listSaveSlots(slotCount = SAVE_SLOT_COUNT) {
+        const limit = Number.isInteger(slotCount) && slotCount > 0
+            ? Math.min(slotCount, SAVE_SLOT_COUNT)
+            : SAVE_SLOT_COUNT;
+
+        return Array.from({ length: limit }, (_, index) => {
+            const slotId = index + 1;
+            const record = getSaveSlotRecord(slotId);
+
+            return {
+                slotId,
+                occupied: Boolean(record),
+                savedAt: record ? record.savedAt : null,
+                worldSeed: record ? record.worldSeed : null,
+                metadata: record ? cloneValue(record.metadata) : null
+            };
+        });
+    }
+
+    function saveToSlot(slotId, state = window.Game.state) {
+        if (typeof localStorage === 'undefined') {
+            return null;
+        }
+
+        const record = buildSaveSlotRecord(slotId, state);
+        if (!record) {
+            return null;
+        }
+
+        try {
+            localStorage.setItem(getSaveSlotStorageKey(record.slotId), JSON.stringify(record));
+            return {
+                slotId: record.slotId,
+                savedAt: record.savedAt,
+                worldSeed: record.worldSeed,
+                metadata: cloneValue(record.metadata)
+            };
+        } catch (error) {
+            console.warn(`Save slot ${record.slotId} write failed:`, error);
+            return null;
+        }
+    }
+
+    function loadFromSlot(slotId) {
+        const record = getSaveSlotRecord(slotId);
+        if (!record) {
+            return null;
+        }
+
+        return {
+            slotId: record.slotId,
+            savedAt: record.savedAt,
+            worldSeed: record.worldSeed,
+            metadata: cloneValue(record.metadata),
+            snapshot: cloneValue(record.snapshot)
         };
     }
 
@@ -327,6 +526,39 @@
         };
     }
 
+    function migrateSnapshotToVersion6(snapshot) {
+        const player = isPlainObject(snapshot.player) ? cloneValue(snapshot.player) : {};
+        const world = isPlainObject(snapshot.world) ? cloneValue(snapshot.world) : {};
+
+        if (Array.isArray(player.inventory)) {
+            player.inventory = mergeMigratedStackableItems(player.inventory.map((item) => (
+                item ? migrateSplitReedResourceItem(item) : item
+            )));
+
+            if (typeof player.selectedInventorySlot === 'number' && !player.inventory[player.selectedInventorySlot]) {
+                player.selectedInventorySlot = null;
+            }
+        }
+
+        if (isPlainObject(world.groundItemsByKey)) {
+            world.groundItemsByKey = Object.fromEntries(Object.entries(world.groundItemsByKey).map(([worldKey, items]) => [
+                worldKey,
+                migrateGroundItemList((Array.isArray(items) ? items : []).map((item) => (
+                    item ? migrateSplitReedResourceItem(item) : item
+                )))
+            ]));
+        }
+
+        return {
+            saveVersion: REEDS_RESOURCE_SPLIT_SAVE_VERSION,
+            player,
+            craftingState: buildMigratedCraftingState(snapshot),
+            world,
+            narrative: isPlainObject(snapshot.narrative) ? cloneValue(snapshot.narrative) : {},
+            ui: isPlainObject(snapshot.ui) ? cloneValue(snapshot.ui) : {}
+        };
+    }
+
     function normalizeSnapshot(snapshot) {
         const normalizedDomains = stateSchema.normalizeDomains({
             meta: {
@@ -396,6 +628,12 @@
 
             if (version === RESOURCE_NODE_RESPAWN_POLICY_SAVE_VERSION) {
                 snapshot = migrateSnapshotToVersion5(snapshot);
+                version = snapshot.saveVersion;
+                continue;
+            }
+
+            if (version === WATER_FLASK_CONTAINER_SAVE_VERSION) {
+                snapshot = migrateSnapshotToVersion6(snapshot);
                 version = snapshot.saveVersion;
                 continue;
             }
@@ -484,18 +722,28 @@
     }
 
     Object.assign(saveLoad, {
+        SAVE_SLOT_COUNT,
+        SAVE_SLOT_PREFIX,
         STORAGE_KEY,
         applySnapshotToState,
+        buildSaveSlotMetadata,
         buildSaveSnapshot,
         clearStorage,
         hydrateStateFromSnapshot,
+        getSaveSlotStorageKey,
+        listSaveSlots,
         loadFromStorage,
+        loadFromSlot,
         migrateLegacyStateToVersion1,
         migrateSnapshotToVersion2,
         migrateSnapshotToVersion3,
+        migrateSnapshotToVersion4,
+        migrateSnapshotToVersion5,
+        migrateSnapshotToVersion6,
         migrateSnapshot,
         parseState,
         resetRuntimeState,
+        saveToSlot,
         saveToStorage,
         serializeState
     });

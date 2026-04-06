@@ -1,10 +1,262 @@
 (() => {
     const statusUi = window.Game.systems.statusUi = window.Game.systems.statusUi || {};
     const bridge = window.Game.systems.uiBridge;
+    const PAUSE_MENU_MODE_MAIN = 'main';
+    const PAUSE_MENU_MODE_SAVE = 'save';
+    const PAUSE_MENU_MODE_LOAD = 'load';
+    const TIME_OF_DAY_LABELS = Object.freeze(['Рассвет', 'День', 'Сумерки', 'Ночь']);
     let sleepOverlayAnimationFrameId = null;
+    let pauseMenuMode = PAUSE_MENU_MODE_MAIN;
+    let pauseMenuStatusMessage = '';
 
     if (!bridge) {
         return;
+    }
+
+    function getSaveLoadSystem() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.saveLoad || null : null;
+    }
+
+    function getGameLifecycle() {
+        return window.Game && window.Game.systems ? window.Game.systems.gameLifecycle || null : null;
+    }
+
+    function canUseSaveSlots() {
+        return typeof localStorage !== 'undefined'
+            && Boolean(getSaveLoadSystem());
+    }
+
+    function resetPauseMenuState() {
+        pauseMenuMode = PAUSE_MENU_MODE_MAIN;
+        pauseMenuStatusMessage = '';
+    }
+
+    function setPauseMenuMode(nextMode) {
+        pauseMenuMode = nextMode;
+        pauseMenuStatusMessage = '';
+    }
+
+    function setPauseMenuStatus(message) {
+        pauseMenuStatusMessage = typeof message === 'string' ? message : '';
+    }
+
+    function getPauseModeSummary() {
+        if (pauseMenuMode === PAUSE_MENU_MODE_SAVE) {
+            return 'Выбери слот, чтобы сохранить текущее прохождение или перезаписать существующее.';
+        }
+
+        if (pauseMenuMode === PAUSE_MENU_MODE_LOAD) {
+            return 'Выбери сохранённый слот, чтобы загрузить прохождение.';
+        }
+
+        return '';
+    }
+
+    function getTimeOfDayLabelByIndex(index) {
+        if (!Number.isFinite(index)) {
+            return 'Неизвестно';
+        }
+
+        return TIME_OF_DAY_LABELS[Math.max(0, Math.floor(index)) % TIME_OF_DAY_LABELS.length] || 'Неизвестно';
+    }
+
+    function formatSavedAt(savedAt) {
+        if (typeof savedAt !== 'string' || !savedAt) {
+            return 'Нет даты';
+        }
+
+        const parsedDate = new Date(savedAt);
+        if (Number.isNaN(parsedDate.getTime())) {
+            return 'Нет даты';
+        }
+
+        try {
+            return new Intl.DateTimeFormat('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(parsedDate);
+        } catch (error) {
+            return parsedDate.toLocaleString('ru-RU');
+        }
+    }
+
+    function buildPauseSlotMetaParts(slot) {
+        const metadata = slot && slot.metadata ? slot.metadata : null;
+
+        if (!metadata) {
+            return [];
+        }
+
+        return [
+            `Остров ${metadata.islandIndex || 1}`,
+            getTimeOfDayLabelByIndex(metadata.currentTimeOfDayIndex),
+            `Золото ${metadata.gold || 0}`,
+            `Сумка ${metadata.occupiedInventorySlots || 0}`
+        ];
+    }
+
+    function createPauseSlotCard(slot) {
+        const article = document.createElement('article');
+        const top = document.createElement('div');
+        const label = document.createElement('div');
+        const savedAt = document.createElement('div');
+        const meta = document.createElement('div');
+        const note = document.createElement('p');
+        const actionButton = document.createElement('button');
+        const isSaveMode = pauseMenuMode === PAUSE_MENU_MODE_SAVE;
+        const isOccupied = Boolean(slot && slot.occupied);
+        const metaParts = buildPauseSlotMetaParts(slot);
+
+        article.className = 'pause-save-slot';
+        if (!isOccupied) {
+            article.classList.add('pause-save-slot--empty');
+        }
+
+        top.className = 'pause-save-slot__top';
+        label.className = 'pause-save-slot__label';
+        label.textContent = `Слот ${slot.slotId}`;
+        savedAt.className = 'pause-save-slot__saved-at';
+        savedAt.textContent = isOccupied ? formatSavedAt(slot.savedAt) : 'Пустой слот';
+        top.append(label, savedAt);
+
+        meta.className = 'pause-save-slot__meta';
+        if (metaParts.length > 0) {
+            metaParts.forEach((part) => {
+                const chip = document.createElement('span');
+                chip.textContent = part;
+                meta.appendChild(chip);
+            });
+        } else {
+            const chip = document.createElement('span');
+            chip.textContent = 'Сохранения ещё нет';
+            meta.appendChild(chip);
+        }
+
+        note.className = 'pause-save-slot__note';
+        note.textContent = isSaveMode
+            ? (isOccupied ? 'Перезапишет содержимое этого слота.' : 'Сохранит текущее прохождение в этот слот.')
+            : (isOccupied ? 'Загрузит прохождение из этого слота.' : 'Этот слот пока пуст.');
+
+        actionButton.type = 'button';
+        actionButton.className = 'hud-button pause-save-slot__action';
+        actionButton.setAttribute('data-pause-slot-id', String(slot.slotId));
+        actionButton.textContent = isSaveMode
+            ? (isOccupied ? 'Перезаписать' : 'Сохранить')
+            : (isOccupied ? 'Загрузить' : 'Пусто');
+        actionButton.disabled = !isSaveMode && !isOccupied;
+
+        article.append(top, meta, note, actionButton);
+        return article;
+    }
+
+    function renderPauseSlotMenu() {
+        const elements = bridge.getElements();
+        const saveLoad = getSaveLoadSystem();
+        const isMainMode = pauseMenuMode === PAUSE_MENU_MODE_MAIN;
+        const showSlotMenu = !isMainMode && canUseSaveSlots() && saveLoad && typeof saveLoad.listSaveSlots === 'function';
+        const slots = showSlotMenu ? saveLoad.listSaveSlots() : [];
+
+        if (elements.pauseMainActions) {
+            elements.pauseMainActions.hidden = !isMainMode;
+        }
+
+        if (elements.pauseSlotMenu) {
+            elements.pauseSlotMenu.hidden = !showSlotMenu;
+        }
+
+        if (elements.pwaStatus) {
+            elements.pwaStatus.hidden = !isMainMode;
+        }
+
+        if (elements.pauseSlotMenuSummary) {
+            elements.pauseSlotMenuSummary.textContent = getPauseModeSummary();
+        }
+
+        if (elements.pauseSlotMenuStatus) {
+            const shouldShowStatus = typeof pauseMenuStatusMessage === 'string' && pauseMenuStatusMessage.trim() !== '';
+            elements.pauseSlotMenuStatus.textContent = shouldShowStatus ? pauseMenuStatusMessage : '';
+            elements.pauseSlotMenuStatus.hidden = !shouldShowStatus;
+        }
+
+        if (elements.pauseSlotList) {
+            elements.pauseSlotList.replaceChildren();
+            slots.forEach((slot) => {
+                elements.pauseSlotList.appendChild(createPauseSlotCard(slot));
+            });
+        }
+    }
+
+    function openPauseSaveMenu() {
+        if (!canUseSaveSlots()) {
+            return false;
+        }
+
+        setPauseMenuMode(PAUSE_MENU_MODE_SAVE);
+        bridge.renderAfterStateChange(['status']);
+        return true;
+    }
+
+    function openPauseLoadMenu() {
+        if (!canUseSaveSlots()) {
+            return false;
+        }
+
+        setPauseMenuMode(PAUSE_MENU_MODE_LOAD);
+        bridge.renderAfterStateChange(['status']);
+        return true;
+    }
+
+    function closePauseSlotMenu() {
+        resetPauseMenuState();
+        bridge.renderAfterStateChange(['status']);
+    }
+
+    function handlePauseSlotListClick(event) {
+        const actionButton = event.target.closest('[data-pause-slot-id]');
+        const slotId = Number(actionButton && actionButton.getAttribute('data-pause-slot-id'));
+
+        if (!actionButton || actionButton.disabled || !Number.isInteger(slotId)) {
+            return false;
+        }
+
+        const saveLoad = getSaveLoadSystem();
+        if (!saveLoad) {
+            return false;
+        }
+
+        if (pauseMenuMode === PAUSE_MENU_MODE_SAVE) {
+            const savedRecord = typeof saveLoad.saveToSlot === 'function'
+                ? saveLoad.saveToSlot(slotId, bridge.getGame().state)
+                : null;
+
+            setPauseMenuStatus(savedRecord
+                ? `Слот ${slotId} сохранён.`
+                : `Не удалось сохранить слот ${slotId}.`);
+            bridge.renderAfterStateChange(['status']);
+            return Boolean(savedRecord);
+        }
+
+        if (pauseMenuMode === PAUSE_MENU_MODE_LOAD) {
+            const lifecycle = getGameLifecycle();
+            const loaded = lifecycle && typeof lifecycle.loadGameFromSlot === 'function'
+                ? lifecycle.loadGameFromSlot(slotId)
+                : false;
+
+            if (!loaded) {
+                setPauseMenuStatus(`Слот ${slotId} пуст или повреждён.`);
+                bridge.renderAfterStateChange(['status']);
+                return false;
+            }
+
+            resetPauseMenuState();
+            return true;
+        }
+
+        return false;
     }
 
     function ensureSleepOverlay() {
@@ -220,6 +472,14 @@
         const elements = bridge.getElements();
         const showOverlay = Boolean(game.state.isPaused || game.state.hasWon || game.state.isGameOver);
         const isDefeat = Boolean(!game.state.hasWon && bridge.isAllStatsDepleted());
+        const isSaveMode = pauseMenuMode === PAUSE_MENU_MODE_SAVE;
+        const isLoadMode = pauseMenuMode === PAUSE_MENU_MODE_LOAD;
+        const isMainMode = pauseMenuMode === PAUSE_MENU_MODE_MAIN;
+        const canUseSlots = canUseSaveSlots();
+
+        if (!showOverlay) {
+            resetPauseMenuState();
+        }
 
         if (elements.pauseOverlay) {
             elements.pauseOverlay.classList.toggle('is-visible', showOverlay);
@@ -227,30 +487,73 @@
         }
 
         if (elements.statusOverlayKicker) {
-            elements.statusOverlayKicker.textContent = game.state.hasWon
-                ? 'Экспедиция'
-                : (isDefeat ? '' : (game.state.isGameOver ? 'Статус' : 'Пауза'));
-        }
-
-        if (elements.statusOverlayTitle) {
-            elements.statusOverlayTitle.textContent = game.state.hasWon
-                ? 'Победа'
-                : (isDefeat ? 'Ты умер' : 'Пауза');
-        }
-
-        if (elements.statusOverlayMessage) {
-            elements.statusOverlayMessage.textContent = game.state.hasWon
-                ? (game.state.victoryMessage || 'Главный сундук найден. Экспедиция завершена.')
+            elements.statusOverlayKicker.textContent = isSaveMode
+                ? 'Меню сохранения'
                 : (
-                    isDefeat
-                        ? ''
+                    isLoadMode
+                        ? 'Меню загрузки'
                         : (
-                            game.state.isGameOver
-                                ? 'Все характеристики упали до нуля. Нажми "Новая игра", чтобы начать заново.'
-                                : ''
+                            game.state.hasWon
+                                ? 'Экспедиция'
+                                : (isDefeat ? '' : (game.state.isGameOver ? 'Статус' : 'Пауза'))
                         )
                 );
         }
+
+        if (elements.statusOverlayTitle) {
+            elements.statusOverlayTitle.textContent = isSaveMode
+                ? 'Сохранить'
+                : (
+                    isLoadMode
+                        ? 'Загрузить'
+                        : (
+                            game.state.hasWon
+                                ? 'Победа'
+                                : (isDefeat ? 'Ты умер' : 'Пауза')
+                        )
+                );
+        }
+
+        if (elements.statusOverlayMessage) {
+            const overlayMessage = isSaveMode
+                ? 'Текущее прохождение сохранится в выбранный слот.'
+                : (
+                    isLoadMode
+                        ? 'Загрузка заменит текущее прохождение состоянием выбранного слота.'
+                        : (
+                            game.state.hasWon
+                                ? (game.state.victoryMessage || 'Главный сундук найден. Экспедиция завершена.')
+                                : (
+                                    isDefeat
+                                        ? ''
+                                        : (
+                                            game.state.isGameOver
+                                                ? 'Все характеристики упали до нуля. Нажми "Новая игра", чтобы начать заново.'
+                                                : ''
+                                        )
+                                )
+                        )
+                );
+
+            elements.statusOverlayMessage.textContent = overlayMessage;
+            elements.statusOverlayMessage.hidden = !overlayMessage;
+        }
+
+        if (elements.pauseResumeButton) {
+            const canResume = Boolean(game.state.isPaused && !game.state.isGameOver && !game.state.hasWon && !isDefeat && isMainMode);
+            elements.pauseResumeButton.hidden = !canResume;
+            elements.pauseResumeButton.disabled = !canResume;
+        }
+
+        if (elements.pauseSaveButton) {
+            elements.pauseSaveButton.disabled = !canUseSlots;
+        }
+
+        if (elements.pauseLoadButton) {
+            elements.pauseLoadButton.disabled = !canUseSlots;
+        }
+
+        renderPauseSlotMenu();
 
         if (elements.pauseButton) {
             const pauseLabel = game.state.isPaused ? 'Продолжить' : 'Пауза';
@@ -258,12 +561,6 @@
             elements.pauseButton.setAttribute('aria-label', pauseLabel);
             elements.pauseButton.setAttribute('title', pauseLabel);
             elements.pauseButton.disabled = Boolean(game.state.isGameOver);
-        }
-
-        if (elements.pauseResumeButton) {
-            const canResume = Boolean(game.state.isPaused && !game.state.isGameOver && !game.state.hasWon && !isDefeat);
-            elements.pauseResumeButton.hidden = !canResume;
-            elements.pauseResumeButton.disabled = !canResume;
         }
 
         document.body.classList.toggle('is-paused', Boolean(game.state.isPaused));
@@ -302,6 +599,11 @@
         }
 
         const nextValue = typeof forceValue === 'boolean' ? forceValue : !game.state.isPaused;
+
+        if (!nextValue || (nextValue && !game.state.isPaused)) {
+            resetPauseMenuState();
+        }
+
         game.state.isPaused = nextValue;
 
         if (typeof bridge.renderAfterStateChange === 'function') {
@@ -327,6 +629,7 @@
             return false;
         }
 
+        resetPauseMenuState();
         lifecycle.startNewGame();
         return true;
     }
@@ -379,6 +682,10 @@
     }
 
     Object.assign(statusUi, {
+        closePauseSlotMenu,
+        handlePauseSlotListClick,
+        openPauseLoadMenu,
+        openPauseSaveMenu,
         updateStats,
         updateLocationSummaries,
         updateProgressSummaries,

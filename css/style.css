@@ -365,6 +365,15 @@ button:focus-visible,
     line-height: 1.02;
 }
 
+.panel-toggle__meta {
+    color: rgba(226, 243, 252, 0.78);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.25;
+}
+
 .panel-toggle__icon {
     display: inline-flex;
     align-items: center;
@@ -713,7 +722,7 @@ button:focus-visible,
 .pause-overlay__panel {
     display: grid;
     gap: 18px;
-    width: min(460px, 100%);
+    width: min(520px, 100%);
     padding: 32px 36px;
     border: 4px solid rgba(255, 255, 255, 0.18);
     border-radius: 30px;
@@ -738,6 +747,10 @@ button:focus-visible,
     line-height: 1.38;
 }
 
+.pause-overlay__message[hidden] {
+    display: none !important;
+}
+
 .pause-overlay__actions {
     display: grid;
     grid-template-columns: 1fr;
@@ -748,6 +761,109 @@ button:focus-visible,
 
 .pause-overlay__actions .hud-button {
     width: 100%;
+}
+
+.pause-overlay__slot-menu {
+    display: grid;
+    gap: 12px;
+    width: min(420px, 100%);
+    margin-inline: auto;
+}
+
+.pause-overlay__slot-menu[hidden] {
+    display: none !important;
+}
+
+.pause-overlay__slot-summary,
+.pause-overlay__slot-status {
+    max-width: 34ch;
+}
+
+.pause-overlay__slot-status {
+    min-height: 1.38em;
+    color: #efffb8;
+    font-weight: 800;
+}
+
+.pause-overlay__slot-status[hidden] {
+    display: none !important;
+}
+
+.pause-overlay__slot-list {
+    display: grid;
+    gap: 10px;
+    max-height: min(48vh, 360px);
+    padding-right: 6px;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+.pause-save-slot {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    text-align: left;
+    border-radius: 22px;
+    background:
+        linear-gradient(180deg, rgba(249, 252, 255, 0.96), rgba(214, 236, 250, 0.92));
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: rgba(8, 43, 81, 0.92);
+    box-shadow:
+        0 10px 20px rgba(1, 14, 34, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.pause-save-slot--empty {
+    background:
+        linear-gradient(180deg, rgba(228, 241, 250, 0.68), rgba(171, 205, 229, 0.58));
+    color: rgba(18, 63, 98, 0.8);
+}
+
+.pause-save-slot__top,
+.pause-save-slot__meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.pause-save-slot__label {
+    font-size: 0.98rem;
+    font-weight: 900;
+}
+
+.pause-save-slot__saved-at {
+    font-size: 0.72rem;
+    font-weight: 800;
+    opacity: 0.74;
+}
+
+.pause-save-slot__meta {
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.pause-save-slot__note {
+    margin: 0;
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.3;
+    opacity: 0.88;
+}
+
+.pause-save-slot__action {
+    width: 100%;
+}
+
+.pause-overlay__slot-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.pause-overlay__slot-actions .hud-button {
+    width: min(220px, 100%);
 }
 
 body.is-paused:not(.is-defeat) #statusOverlayTitle {
@@ -1085,11 +1201,37 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     cursor: grabbing;
 }
 
+.map-panel__island-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 2;
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background:
+        linear-gradient(180deg, rgba(16, 37, 23, 0.94), rgba(10, 26, 18, 0.9));
+    color: #efffb8;
+    font-size: 0.82rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    border: 2px solid rgba(160, 255, 122, 0.58);
+    box-shadow:
+        0 0 0 1px rgba(235, 255, 173, 0.12),
+        0 0 22px rgba(166, 255, 121, 0.26);
+    pointer-events: none;
+}
+
+.map-panel__island-badge[hidden] {
+    display: none !important;
+}
+
 .map-panel__hover-card {
     position: absolute;
     left: 0;
     top: 0;
-    z-index: 2;
+    z-index: 3;
     display: grid;
     gap: 4px;
     max-width: min(220px, calc(100% - 24px));
@@ -1625,6 +1767,49 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     opacity: 0.58;
 }
 
+.inventory-selection-panel__station {
+    display: grid;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.74);
+    border: 1px solid rgba(20, 79, 126, 0.12);
+}
+
+.inventory-selection-panel__station-kicker,
+.inventory-selection-panel__station-title,
+.inventory-selection-panel__station-summary,
+.inventory-selection-panel__craft-group-title {
+    margin: 0;
+}
+
+.inventory-selection-panel__station-kicker {
+    color: rgba(15, 71, 118, 0.7);
+    font-size: 0.66rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.inventory-selection-panel__station-body {
+    display: grid;
+    gap: 4px;
+}
+
+.inventory-selection-panel__station-title {
+    color: rgba(7, 52, 93, 0.96);
+    font-size: 0.92rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.inventory-selection-panel__station-summary {
+    color: rgba(15, 62, 103, 0.84);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
 .inventory-selection-panel__craft {
     display: grid;
     gap: 10px;
@@ -1660,6 +1845,63 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
 }
 
 .inventory-selection-panel__craft-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.inventory-selection-panel__craft-group {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(242, 249, 253, 0.86);
+    border: 1px solid rgba(20, 79, 126, 0.12);
+}
+
+.inventory-selection-panel__craft-group--current {
+    background: linear-gradient(180deg, rgba(229, 248, 233, 0.94), rgba(244, 251, 255, 0.92));
+    border-color: rgba(46, 121, 79, 0.24);
+}
+
+.inventory-selection-panel__craft-group--inactive {
+    opacity: 0.8;
+}
+
+.inventory-selection-panel__craft-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.inventory-selection-panel__craft-group-title {
+    color: rgba(7, 52, 93, 0.92);
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.inventory-selection-panel__craft-group-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(20, 79, 126, 0.1);
+    color: rgba(14, 69, 112, 0.82);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.inventory-selection-panel__craft-group--current .inventory-selection-panel__craft-group-badge {
+    background: rgba(67, 164, 100, 0.16);
+    color: rgba(24, 99, 57, 0.9);
+}
+
+.inventory-selection-panel__craft-group-actions {
     display: grid;
     gap: 8px;
 }
@@ -2585,6 +2827,10 @@ body.is-defeat #statusOverlayTitle {
         grid-template-columns: 1fr;
     }
 
+    .pause-overlay__slot-list {
+        max-height: min(42vh, 320px);
+    }
+
     .overlay-card {
         left: var(--scene-safe-left);
         right: auto;
@@ -3388,6 +3634,19 @@ body.is-defeat #statusOverlayTitle {
         display: none;
     }
 
+    .mobile-modal__body .inventory-selection-panel__station {
+        padding: 12px 14px;
+        border-radius: 18px;
+    }
+
+    .mobile-modal__body .inventory-selection-panel__station-title {
+        font-size: 0.96rem;
+    }
+
+    .mobile-modal__body .inventory-selection-panel__station-summary {
+        font-size: 0.74rem;
+    }
+
     .mobile-modal__body .inventory-selection-panel__icon-shell {
         position: relative;
         display: flex;
@@ -3500,6 +3759,13 @@ body.is-defeat #statusOverlayTitle {
         top: calc(env(safe-area-inset-top, 0px) + 10px);
         bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
         padding: 16px;
+    }
+
+    .map-panel__island-badge {
+        top: 14px;
+        left: 14px;
+        padding: 9px 12px;
+        font-size: 0.76rem;
     }
 
     .merchant-panel {

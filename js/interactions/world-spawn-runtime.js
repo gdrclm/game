@@ -746,6 +746,134 @@
         return candidates;
     }
 
+    function normalizeDescriptorValue(value) {
+        return typeof value === 'string'
+            ? value.trim().toLowerCase()
+            : '';
+    }
+
+    function shouldSpawnWorkbenchInteraction(house) {
+        const expedition = house && house.expedition ? house.expedition : null;
+        const kind = normalizeDescriptorValue(expedition && expedition.kind);
+        const buildingType = normalizeDescriptorValue(expedition && expedition.buildingType);
+
+        return kind === 'artisan'
+            || buildingType === 'workshop'
+            || buildingType === 'bridgehouse';
+    }
+
+    function shouldSpawnCampInteraction(house) {
+        const expedition = house && house.expedition ? house.expedition : null;
+        return normalizeDescriptorValue(expedition && expedition.kind) === 'shelter';
+    }
+
+    function buildCampInteractionExpedition(house) {
+        const expedition = house && house.expedition ? house.expedition : {};
+        const ownerLabel = expedition.label || expedition.locationLabel || '';
+        const ownerSuffix = ownerLabel ? ` Рядом: ${ownerLabel}.` : '';
+
+        return {
+            kind: 'camp',
+            family: 'station',
+            label: 'Лагерный очаг',
+            locationLabel: 'Лагерь',
+            summary: `Явная лагерная станция для воды, пищи и походных рецептов.${ownerSuffix}`,
+            stationId: 'camp',
+            stationIds: ['camp'],
+            stationSourceHouseId: house && house.id ? house.id : null
+        };
+    }
+
+    function buildWorkbenchInteractionExpedition(house) {
+        const expedition = house && house.expedition ? house.expedition : {};
+        const buildingType = normalizeDescriptorValue(expedition.buildingType);
+        const primaryStationId = buildingType === 'workshop' || buildingType === 'bridgehouse'
+            ? 'workbench'
+            : 'bench';
+        const stationIds = primaryStationId === 'workbench'
+            ? ['bench', 'workbench']
+            : ['bench'];
+        const label = primaryStationId === 'workbench' ? 'Мастерская' : 'Верстак';
+        const ownerLabel = expedition.label || expedition.locationLabel || '';
+        const ownerSuffix = ownerLabel ? ` Рядом: ${ownerLabel}.` : '';
+
+        return {
+            kind: 'workbench',
+            family: 'station',
+            label,
+            locationLabel: label,
+            summary: primaryStationId === 'workbench'
+                ? `Явная ремесленная станция для строительства, ремонта и тяжёлой утилиты.${ownerSuffix}`
+                : `Явный полевой верстак для верёвок, мостов и простых сборок.${ownerSuffix}`,
+            stationId: primaryStationId,
+            stationIds,
+            buildingType: primaryStationId === 'workbench' ? 'workshop' : 'bench',
+            stationSourceHouseId: house && house.id ? house.id : null
+        };
+    }
+
+    function appendWorkbenchInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random) {
+        if (!shouldSpawnWorkbenchInteraction(house)) {
+            return;
+        }
+
+        const candidates = collectDoorCandidates(house, chunkData, houseCellSet, occupiedKeys, random)
+            .concat(collectPerimeterCandidates(house, chunkData, houseCellSet, occupiedKeys, random))
+            .sort((left, right) => right.score - left.score);
+        const picked = candidates[0];
+
+        if (!picked) {
+            return;
+        }
+
+        const interactionId = `station:${house.id}:${picked.x}:${picked.y}`;
+        occupiedKeys.add(tileKey(picked.x, picked.y));
+        result.push(createStandaloneInteractionRecord(
+            chunkX,
+            chunkY,
+            picked.x,
+            picked.y,
+            buildWorkbenchInteractionExpedition(house),
+            {
+                id: interactionId,
+                houseId: interactionId,
+                placement: 'exterior',
+                renderDepthOffset: 0.38
+            }
+        ));
+    }
+
+    function appendCampInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random) {
+        if (!shouldSpawnCampInteraction(house)) {
+            return;
+        }
+
+        const candidates = collectDoorCandidates(house, chunkData, houseCellSet, occupiedKeys, random)
+            .concat(collectPerimeterCandidates(house, chunkData, houseCellSet, occupiedKeys, random))
+            .sort((left, right) => right.score - left.score);
+        const picked = candidates[0];
+
+        if (!picked) {
+            return;
+        }
+
+        const interactionId = `camp:${house.id}:${picked.x}:${picked.y}`;
+        occupiedKeys.add(tileKey(picked.x, picked.y));
+        result.push(createStandaloneInteractionRecord(
+            chunkX,
+            chunkY,
+            picked.x,
+            picked.y,
+            buildCampInteractionExpedition(house),
+            {
+                id: interactionId,
+                houseId: interactionId,
+                placement: 'exterior',
+                renderDepthOffset: 0.37
+            }
+        ));
+    }
+
     function countNeighborTiles(chunkData, x, y, predicate, includeDiagonals = false) {
         const directions = includeDiagonals
             ? [
@@ -1025,7 +1153,7 @@
         return progression.islandIndex >= fromIsland && progression.islandIndex <= toIsland;
     }
 
-    function getResourceNodeSpawnLimit(definition, progression, chunkData) {
+    function getResourceNodeSpawnLimit(definition, progression, chunkData, random = Math.random) {
         if (!definition || !isIslandWithinWindow(definition, progression)) {
             return 0;
         }
@@ -1033,12 +1161,18 @@
         const islandIndex = progression && Number.isFinite(progression.islandIndex)
             ? progression.islandIndex
             : 1;
-        const hasWaterTiles = Array.isArray(chunkData)
-            && chunkData.some((row) => Array.isArray(row) && row.some((tileType) => tileType === 'water' || tileType === 'shore' || tileType === 'reeds'));
+        const hasTileType = (matchers) => Array.isArray(chunkData)
+            && chunkData.some((row) => Array.isArray(row) && row.some((tileType) => matchers.includes(tileType)));
+        const hasWaterTiles = hasTileType(['water', 'shore', 'reeds']);
+        const hasDeepWaterTiles = hasTileType(['water']);
+        const hasShoreTiles = hasTileType(['shore']);
+        const hasReedsTiles = hasTileType(['reeds']);
 
         switch (definition.id) {
             case 'grassBush':
                 return islandIndex <= 6 ? 3 : 2;
+            case 'reedPatch':
+                return hasWaterTiles ? 2 : 0;
             case 'stonePile':
                 return islandIndex <= 15 ? 2 : 1;
             case 'rubbleScree':
@@ -1048,7 +1182,13 @@
             case 'waterSource':
                 return hasWaterTiles ? 2 : 0;
             case 'fishingSpot':
-                return islandIndex >= 6 && hasWaterTiles ? 1 : 0;
+                return islandIndex >= 6 && islandIndex <= 30 && hasShoreTiles ? 1 : 0;
+            case 'fishingReedsSpot':
+                return islandIndex >= 6 && islandIndex <= 30 && hasReedsTiles ? 1 : 0;
+            case 'fishingCalmSpot':
+                return islandIndex >= 6 && islandIndex <= 30 && hasDeepWaterTiles ? 1 : 0;
+            case 'fishingRareSpot':
+                return islandIndex >= 10 && islandIndex <= 30 && hasDeepWaterTiles && random() <= 0.2 ? 1 : 0;
             default:
                 return 0;
         }
@@ -1080,6 +1220,11 @@
                 score += trailNeighbors * 0.35 + waterNeighbors * 0.2;
                 score += (grassNeighbors + reedsNeighbors) * 0.18;
                 break;
+            case 'reedPatch':
+                score += tileType === 'reeds' ? 3 : 1.6;
+                score += reedsNeighbors * 0.7 + waterNeighbors * 0.55 + trailNeighbors * 0.22;
+                score += Math.max(0, safeNearestHouseDistance - 1) * 0.32;
+                break;
             case 'stonePile':
                 score += tileType === 'rock' ? 3.4 : 0;
                 score += rockNeighbors * 0.5 + trailNeighbors * 0.4;
@@ -1098,7 +1243,7 @@
                     x,
                     y,
                     {
-                        matchResourceNodeKinds: ['grassBush'],
+                        matchResourceNodeKinds: ['grassBush', 'reedPatch'],
                         minCount: 0,
                         maxDistance: 2,
                         includeDiagonals: true
@@ -1116,9 +1261,23 @@
                 score += waterNeighbors * 1.25 + trailNeighbors * 0.25;
                 break;
             case 'fishingSpot':
-                score += tileType === 'water' ? 2.8 : (tileType === 'reeds' ? 2.4 : 1.9);
-                score += reedsNeighbors * 0.45;
-                score += waterNeighbors * 1.6 + trailNeighbors * 0.2;
+                score += tileType === 'shore' ? 3.1 : 0;
+                score += waterNeighbors * 0.55 + reedsNeighbors * 0.3 + trailNeighbors * 0.24;
+                break;
+            case 'fishingReedsSpot':
+                score += tileType === 'reeds' ? 3.2 : 0;
+                score += reedsNeighbors * 0.88 + waterNeighbors * 0.7 + trailNeighbors * 0.1;
+                break;
+            case 'fishingCalmSpot':
+                score += tileType === 'water' ? 3.15 : 0;
+                score += waterNeighbors * 1.55;
+                score -= trailNeighbors * 0.16;
+                break;
+            case 'fishingRareSpot':
+                score += tileType === 'water' ? 3 : 0;
+                score += waterNeighbors * 1.9;
+                score -= reedsNeighbors * 0.12;
+                score -= trailNeighbors * 0.3;
                 break;
             default:
                 score += safeNearestHouseDistance * 0.15;
@@ -1286,7 +1445,7 @@
         const placedResourceNodes = [];
 
         getResourceNodeDefinitions().forEach((definition) => {
-            const spawnLimit = getResourceNodeSpawnLimit(definition, progression, chunkData);
+            const spawnLimit = getResourceNodeSpawnLimit(definition, progression, chunkData, random);
             const candidates = spawnLimit > 0
                 ? collectResourceNodeCandidates(chunkData, travelZones, houseCellSet, occupiedKeys, houses, random, definition, chunkRecord, placedResourceNodes)
                 : [];
@@ -1716,6 +1875,8 @@
                 );
                 house.interactionId = interaction.id;
                 result.push(interaction);
+                appendCampInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random);
+                appendWorkbenchInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random);
             });
 
         appendSpecialInteractionPlans(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);

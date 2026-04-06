@@ -50,6 +50,27 @@
             if (selectionPanel.parentNode !== body) {
                 body.insertBefore(selectionPanel, inventoryGrid);
             }
+
+            if (!document.getElementById('inventorySelectionStationPanel')) {
+                const stationPanel = document.createElement('section');
+                stationPanel.id = 'inventorySelectionStationPanel';
+                stationPanel.className = 'inventory-selection-panel__station';
+                stationPanel.innerHTML = `
+                    <p class="inventory-selection-panel__station-kicker">Текущая станция</p>
+                    <div class="inventory-selection-panel__station-body">
+                        <p id="inventorySelectionStationTitle" class="inventory-selection-panel__station-title">Руки</p>
+                        <p id="inventorySelectionStationSummary" class="inventory-selection-panel__station-summary"></p>
+                    </div>
+                `;
+                const craftPanel = document.getElementById('inventorySelectionCraftPanel');
+
+                if (craftPanel && craftPanel.parentNode === selectionPanel) {
+                    selectionPanel.insertBefore(stationPanel, craftPanel);
+                } else {
+                    selectionPanel.appendChild(stationPanel);
+                }
+            }
+
             return;
         }
 
@@ -78,9 +99,16 @@
                     Выбросить
                 </button>
             </div>
+            <section id="inventorySelectionStationPanel" class="inventory-selection-panel__station">
+                <p class="inventory-selection-panel__station-kicker">Текущая станция</p>
+                <div class="inventory-selection-panel__station-body">
+                    <p id="inventorySelectionStationTitle" class="inventory-selection-panel__station-title">Руки</p>
+                    <p id="inventorySelectionStationSummary" class="inventory-selection-panel__station-summary"></p>
+                </div>
+            </section>
             <section id="inventorySelectionCraftPanel" class="inventory-selection-panel__craft" hidden>
                 <div class="inventory-selection-panel__craft-header">
-                    <p id="inventorySelectionCraftLabel" class="inventory-selection-panel__craft-label">Переработка сырья</p>
+                    <p id="inventorySelectionCraftLabel" class="inventory-selection-panel__craft-label">Рецепты по станциям</p>
                     <p id="inventorySelectionCraftHint" class="inventory-selection-panel__craft-hint"></p>
                 </div>
                 <div id="inventorySelectionCraftActions" class="inventory-selection-panel__craft-actions"></div>
@@ -114,6 +142,18 @@
         const existingBody = document.getElementById('inventoryCardBody');
 
         if (existingToggle && existingBody) {
+            if (!document.getElementById('inventoryPanelStation')) {
+                const toggleText = existingToggle.querySelector('.panel-toggle__text');
+
+                if (toggleText) {
+                    const stationNode = document.createElement('span');
+                    stationNode.id = 'inventoryPanelStation';
+                    stationNode.className = 'panel-toggle__meta';
+                    stationNode.textContent = 'Станция: Руки';
+                    toggleText.appendChild(stationNode);
+                }
+            }
+
             ensureInventorySelectionPanel(existingBody, inventoryGrid);
             return;
         }
@@ -140,6 +180,7 @@
             <span class="panel-toggle__text">
                 <span class="hud-kicker">${kickerText}</span>
                 <span class="hud-title panel-toggle__title">${titleText}</span>
+                <span id="inventoryPanelStation" class="panel-toggle__meta">Станция: Руки</span>
             </span>
             <span id="inventoryPanelToggleIcon" class="panel-toggle__icon" aria-hidden="true">−</span>
         `;
@@ -158,6 +199,7 @@
         return {
             inventoryPanelToggle: document.getElementById('inventoryPanelToggle'),
             inventoryPanelToggleIcon: document.getElementById('inventoryPanelToggleIcon'),
+            inventoryPanelStation: document.getElementById('inventoryPanelStation'),
             inventoryCardBody: document.getElementById('inventoryCardBody'),
             inventorySelectionPanel: document.getElementById('inventorySelectionPanel'),
             inventorySelectionMeta: document.getElementById('inventorySelectionMeta'),
@@ -169,6 +211,9 @@
             inventorySelectionActions: document.getElementById('inventorySelectionActions'),
             inventorySelectionUseButton: document.getElementById('inventorySelectionUseButton'),
             inventorySelectionDropButton: document.getElementById('inventorySelectionDropButton'),
+            inventorySelectionStationPanel: document.getElementById('inventorySelectionStationPanel'),
+            inventorySelectionStationTitle: document.getElementById('inventorySelectionStationTitle'),
+            inventorySelectionStationSummary: document.getElementById('inventorySelectionStationSummary'),
             inventorySelectionCraftPanel: document.getElementById('inventorySelectionCraftPanel'),
             inventorySelectionCraftLabel: document.getElementById('inventorySelectionCraftLabel'),
             inventorySelectionCraftHint: document.getElementById('inventorySelectionCraftHint'),
@@ -275,8 +320,9 @@
     }
 
     function syncInventoryPanelState() {
-        const { inventoryPanelToggle, inventoryPanelToggleIcon, inventoryCardBody } = getPanelElements();
+        const { inventoryPanelToggle, inventoryPanelToggleIcon, inventoryCardBody, inventoryPanelStation } = getPanelElements();
         const collapsed = isInventoryPanelCollapsed();
+        const stationContext = getActiveStationContext();
 
         if (inventoryPanelToggle) {
             inventoryPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
@@ -288,6 +334,10 @@
 
         if (inventoryCardBody) {
             inventoryCardBody.hidden = collapsed;
+        }
+
+        if (inventoryPanelStation) {
+            inventoryPanelStation.textContent = `Станция: ${stationContext.activeSourceLabel || stationContext.activeStationLabel || 'Руки'}`;
         }
     }
 
@@ -583,6 +633,17 @@
         return parts.join(' · ');
     }
 
+    function buildSpoilageParameterSummary(item) {
+        const inventoryRuntime = game.systems.inventoryRuntime || null;
+        const spoilageState = inventoryRuntime && typeof inventoryRuntime.getItemSpoilageState === 'function'
+            ? inventoryRuntime.getItemSpoilageState(item)
+            : null;
+
+        return spoilageState && spoilageState.statusLabel
+            ? `свежесть: ${spoilageState.statusLabel}`
+            : '';
+    }
+
     function buildSelectedItemFacts(item, definition, description) {
         const containerRegistry = getContainerRegistry();
         const containerState = containerRegistry && typeof containerRegistry.getContainerStateByItemId === 'function'
@@ -592,11 +653,13 @@
             ? `T${definition.lootTier}`
             : 'T0';
         const containerParameterSummary = buildContainerStateParameterSummary(containerState);
+        const spoilageParameterSummary = buildSpoilageParameterSummary(item);
         const parameterParts = [
             tierLabel,
             getItemRarityLabel(definition),
             ...getItemCategoryLabels(definition).slice(0, 3),
-            containerParameterSummary
+            containerParameterSummary,
+            spoilageParameterSummary
         ].filter(Boolean);
         const effectParts = [
             buildConsumableSummary(definition && definition.consumable),
@@ -637,9 +700,101 @@
         return row;
     }
 
+    function getActiveStationContext() {
+        const stationRuntime = getStationRuntime();
+
+        if (stationRuntime && typeof stationRuntime.getActiveStationContext === 'function') {
+            return stationRuntime.getActiveStationContext();
+        }
+
+        return {
+            activeStationId: 'hand',
+            activeStationLabel: 'Руки',
+            activeSourceLabel: 'Руки',
+            activeSourceSummary: 'Стартовая станция, доступная без привязки к объекту.',
+            activeSourceName: 'Руки',
+            contextStationIds: ['hand'],
+            contextStationLabels: ['Руки'],
+            sourceContexts: [],
+            availableStations: ['hand'],
+            availableStationLabels: ['Руки']
+        };
+    }
+
+    function resolveRecipeStationDescriptor(recipe) {
+        const stationRuntime = getStationRuntime();
+        const rawStationIds = Array.isArray(recipe && recipe.stationOptions) && recipe.stationOptions.length > 0
+            ? recipe.stationOptions
+            : [recipe && recipe.station];
+        const stationIds = stationRuntime && typeof stationRuntime.normalizeStationList === 'function'
+            ? stationRuntime.normalizeStationList(rawStationIds)
+            : rawStationIds.filter(Boolean);
+        const stationLabels = stationIds.map((stationId) => stationRuntime && typeof stationRuntime.getStationLabel === 'function'
+            ? stationRuntime.getStationLabel(stationId, stationId)
+            : stationId);
+        const primaryStationId = stationIds[0] || 'hand';
+        const primaryStationLabel = stationLabels[0]
+            || (recipe && (recipe.stationLabel || recipe.station))
+            || 'Руки';
+
+        return {
+            stationIds,
+            stationLabels,
+            primaryStationId,
+            primaryStationLabel,
+            stationLabel: stationLabels.join(' / ') || primaryStationLabel
+        };
+    }
+
+    function buildOptionStatusFromEvaluation(evaluation, options = {}) {
+        const requiredQuantity = Number.isFinite(options.requiredQuantity) ? options.requiredQuantity : 0;
+        let statusLabel = options.fallbackStatus || '';
+        let disabled = false;
+
+        if (!evaluation) {
+            return {
+                statusLabel,
+                disabled
+            };
+        }
+
+        switch (evaluation.reason) {
+        case 'missing-ingredients':
+            statusLabel = requiredQuantity > 0
+                ? `Нужно ${requiredQuantity} шт.`
+                : buildMissingIngredientStatusLabel(evaluation.missingIngredients);
+            disabled = true;
+            break;
+        case 'wrong-station':
+            statusLabel = 'Станция не активна';
+            disabled = true;
+            break;
+        case 'missing-environment':
+            statusLabel = buildMissingEnvironmentStatusLabel(evaluation.missingEnvironments);
+            disabled = true;
+            break;
+        case 'inventory-full':
+            statusLabel = 'В сумке нет места';
+            disabled = true;
+            break;
+        default:
+            if (evaluation.success) {
+                statusLabel = 'Готово';
+            } else if (evaluation.message) {
+                statusLabel = evaluation.message;
+                disabled = true;
+            }
+            break;
+        }
+
+        return {
+            statusLabel,
+            disabled
+        };
+    }
+
     function getCompressionOptions(item) {
         const compressionRuntime = getCompressionRuntime();
-        const stationRuntime = getStationRuntime();
 
         if (!compressionRuntime || !item || !item.id) {
             return [];
@@ -650,51 +805,27 @@
 
         return recipes.map((recipe) => {
             const evaluation = evaluations.find((entry) => entry && entry.recipe && entry.recipe.recipeId === recipe.recipeId) || null;
-            const stationLabel = stationRuntime && typeof stationRuntime.getStationLabel === 'function'
-                ? stationRuntime.getStationLabel(recipe.station, recipe.station || '')
-                : (recipe.stationLabel || recipe.station || '');
+            const stationDescriptor = resolveRecipeStationDescriptor(recipe);
             const selectedIngredient = Array.isArray(recipe.ingredients)
                 ? recipe.ingredients.find((ingredient) => ingredient && ingredient.consumed !== false)
                 : null;
             const requiredQuantity = selectedIngredient && Number.isFinite(selectedIngredient.quantity)
                 ? selectedIngredient.quantity
                 : 0;
-            let statusLabel = stationLabel ? `Станция: ${stationLabel}` : '';
-            let disabled = false;
-
-            if (evaluation) {
-                switch (evaluation.reason) {
-                case 'missing-ingredients':
-                    statusLabel = requiredQuantity > 0
-                        ? `Нужно ${requiredQuantity} шт.`
-                        : 'Не хватает сырья';
-                    disabled = true;
-                    break;
-                case 'wrong-station':
-                    statusLabel = stationLabel ? `Нужен ${stationLabel}` : 'Нужна станция';
-                    disabled = true;
-                    break;
-                case 'inventory-full':
-                    statusLabel = 'В сумке нет места';
-                    disabled = true;
-                    break;
-                default:
-                    if (evaluation.success) {
-                        statusLabel = stationLabel ? `${stationLabel} · готово` : 'Готово';
-                    } else if (evaluation.message) {
-                        statusLabel = evaluation.message;
-                        disabled = true;
-                    }
-                    break;
-                }
-            }
+            const optionStatus = buildOptionStatusFromEvaluation(evaluation, {
+                requiredQuantity,
+                fallbackStatus: stationDescriptor.primaryStationLabel ? `Нужен ресурс для "${stationDescriptor.primaryStationLabel}"` : ''
+            });
 
             return {
                 recipeId: recipe.recipeId,
                 actionType: 'compression',
+                stationId: stationDescriptor.primaryStationId,
+                stationLabel: stationDescriptor.stationLabel,
+                stationIds: stationDescriptor.stationIds,
                 title: recipe.result && recipe.result.label ? recipe.result.label : recipe.label,
-                subtitle: statusLabel,
-                disabled,
+                subtitle: optionStatus.statusLabel,
+                disabled: optionStatus.disabled,
                 message: evaluation && evaluation.message ? evaluation.message : ''
             };
         });
@@ -733,7 +864,6 @@
 
     function getCraftingOptions(item) {
         const craftingRuntime = getCraftingRuntime();
-        const stationRuntime = getStationRuntime();
         const compressionRuntime = getCompressionRuntime();
 
         if (!craftingRuntime || !item || !item.id || typeof craftingRuntime.getCompiledRecipes !== 'function' || typeof craftingRuntime.evaluateRecipeAgainstInventory !== 'function') {
@@ -748,50 +878,113 @@
                 const evaluation = craftingRuntime.evaluateRecipeAgainstInventory(recipe.recipeId, {
                     scanNearbyEnvironment: true
                 });
-                const stationLabel = stationRuntime && typeof stationRuntime.getStationLabel === 'function'
-                    ? stationRuntime.getStationLabel(recipe.station, recipe.station || '')
-                    : (recipe.stationLabel || recipe.station || '');
-                let statusLabel = stationLabel ? `Станция: ${stationLabel}` : '';
-                let disabled = false;
-
-                if (evaluation) {
-                    switch (evaluation.reason) {
-                    case 'missing-ingredients':
-                        statusLabel = buildMissingIngredientStatusLabel(evaluation.missingIngredients);
-                        disabled = true;
-                        break;
-                    case 'wrong-station':
-                        statusLabel = stationLabel ? `Нужен ${stationLabel}` : 'Нужна станция';
-                        disabled = true;
-                        break;
-                    case 'missing-environment':
-                        statusLabel = buildMissingEnvironmentStatusLabel(evaluation.missingEnvironments);
-                        disabled = true;
-                        break;
-                    case 'inventory-full':
-                        statusLabel = 'В сумке нет места';
-                        disabled = true;
-                        break;
-                    default:
-                        if (evaluation.success) {
-                            statusLabel = stationLabel ? `${stationLabel} · готово` : 'Готово';
-                        } else if (evaluation.message) {
-                            statusLabel = evaluation.message;
-                            disabled = true;
-                        }
-                        break;
-                    }
-                }
+                const stationDescriptor = resolveRecipeStationDescriptor(recipe);
+                const optionStatus = buildOptionStatusFromEvaluation(evaluation);
 
                 return {
                     recipeId: recipe.recipeId,
                     actionType: 'crafting',
+                    stationId: stationDescriptor.primaryStationId,
+                    stationLabel: stationDescriptor.stationLabel,
+                    stationIds: stationDescriptor.stationIds,
                     title: recipe.label || (recipe.result && recipe.result.label) || recipe.recipeId,
-                    subtitle: statusLabel,
-                    disabled,
+                    subtitle: optionStatus.statusLabel,
+                    disabled: optionStatus.disabled,
                     message: evaluation && evaluation.message ? evaluation.message : ''
                 };
             });
+    }
+
+    function getStationOrderIndex(stationId) {
+        const stationRuntime = getStationRuntime();
+        const stationDefinitions = stationRuntime && typeof stationRuntime.getStationDefinitions === 'function'
+            ? stationRuntime.getStationDefinitions()
+            : [];
+        const index = stationDefinitions.findIndex((station) => station && station.id === stationId);
+        return index >= 0 ? index : 999;
+    }
+
+    function groupCraftOptionsByStation(craftOptions, stationContext) {
+        const availableStations = new Set(Array.isArray(stationContext && stationContext.availableStations)
+            ? stationContext.availableStations
+            : ['hand']);
+        const currentStations = new Set(Array.isArray(stationContext && stationContext.contextStationIds)
+            ? stationContext.contextStationIds
+            : [stationContext && stationContext.activeStationId ? stationContext.activeStationId : 'hand']);
+        const grouped = new Map();
+
+        (Array.isArray(craftOptions) ? craftOptions : []).forEach((option) => {
+            const stationId = option && option.stationId ? option.stationId : 'hand';
+
+            if (!grouped.has(stationId)) {
+                grouped.set(stationId, {
+                    stationId,
+                    stationLabel: option && option.stationLabel ? option.stationLabel : stationId,
+                    options: []
+                });
+            }
+
+            grouped.get(stationId).options.push(option);
+        });
+
+        return [...grouped.values()]
+            .map((group) => ({
+                ...group,
+                isCurrent: currentStations.has(group.stationId),
+                isAvailable: availableStations.has(group.stationId)
+            }))
+            .sort((left, right) => {
+                const leftPriority = left.isCurrent ? 0 : (left.isAvailable ? 1 : 2);
+                const rightPriority = right.isCurrent ? 0 : (right.isAvailable ? 1 : 2);
+
+                if (leftPriority !== rightPriority) {
+                    return leftPriority - rightPriority;
+                }
+
+                return getStationOrderIndex(left.stationId) - getStationOrderIndex(right.stationId);
+            });
+    }
+
+    function buildStationGroupBadge(group) {
+        const badge = document.createElement('span');
+        badge.className = 'inventory-selection-panel__craft-group-badge';
+
+        if (group.stationId === 'hand') {
+            badge.textContent = group.isCurrent ? 'Активна' : 'Всегда доступна';
+            return badge;
+        }
+
+        badge.textContent = group.isCurrent
+            ? 'Активна'
+            : (group.isAvailable ? 'Рядом' : 'Недоступна');
+        return badge;
+    }
+
+    function buildCraftStationGroup(group) {
+        const section = document.createElement('section');
+        section.className = 'inventory-selection-panel__craft-group';
+
+        if (group.isCurrent) {
+            section.classList.add('inventory-selection-panel__craft-group--current');
+        } else if (!group.isAvailable) {
+            section.classList.add('inventory-selection-panel__craft-group--inactive');
+        }
+
+        const header = document.createElement('div');
+        header.className = 'inventory-selection-panel__craft-group-header';
+
+        const titleNode = document.createElement('p');
+        titleNode.className = 'inventory-selection-panel__craft-group-title';
+        titleNode.textContent = group.stationLabel;
+
+        header.append(titleNode, buildStationGroupBadge(group));
+
+        const actions = document.createElement('div');
+        actions.className = 'inventory-selection-panel__craft-group-actions';
+        actions.replaceChildren(...group.options.map((option) => buildCraftActionButton(option)));
+
+        section.append(header, actions);
+        return section;
     }
 
     function buildCraftActionButton(option) {
@@ -881,14 +1074,8 @@
         const craftingOptions = getCraftingOptions(selectedItem);
         const craftOptions = [...craftingOptions, ...compressionOptions];
         const showInventorySelectionActions = isMobileInventoryModalActive();
-        const craftingRuntime = getCraftingRuntime();
-        const stationRuntime = getStationRuntime();
-        const availableStations = craftingRuntime && typeof craftingRuntime.resolveAvailableStations === 'function'
-            ? craftingRuntime.resolveAvailableStations()
-            : ['hand'];
-        const availableStationLabels = availableStations.map((stationId) => stationRuntime && typeof stationRuntime.getStationLabel === 'function'
-            ? stationRuntime.getStationLabel(stationId, stationId)
-            : stationId);
+        const stationContext = getActiveStationContext();
+        const groupedCraftOptions = groupCraftOptionsByStation(craftOptions, stationContext);
 
         refs.inventorySelectionPanel.hidden = false;
 
@@ -940,25 +1127,38 @@
             actionsContainer.classList.toggle('inventory-selection-panel__actions--single', visibleButtons.length <= 1);
         }
 
+        if (refs.inventorySelectionStationPanel) {
+            refs.inventorySelectionStationPanel.hidden = false;
+        }
+
+        if (refs.inventorySelectionStationTitle) {
+            refs.inventorySelectionStationTitle.textContent = stationContext.activeSourceLabel || stationContext.activeStationLabel || 'Руки';
+        }
+
+        if (refs.inventorySelectionStationSummary) {
+            const availableLabels = Array.isArray(stationContext.availableStationLabels) && stationContext.availableStationLabels.length > 0
+                ? stationContext.availableStationLabels.join(', ')
+                : 'Руки';
+            refs.inventorySelectionStationSummary.textContent = `${stationContext.activeSourceSummary} Доступно сейчас: ${availableLabels}.`;
+        }
+
         if (refs.inventorySelectionCraftPanel) {
             refs.inventorySelectionCraftPanel.hidden = craftOptions.length === 0;
         }
 
         if (refs.inventorySelectionCraftLabel) {
-            refs.inventorySelectionCraftLabel.textContent = craftingOptions.length > 0 && compressionOptions.length > 0
-                ? 'Крафт и переработка'
-                : (craftingOptions.length > 0 ? 'Крафт у станции' : 'Переработка сырья');
+            refs.inventorySelectionCraftLabel.textContent = 'Рецепты по станциям';
         }
 
         if (refs.inventorySelectionCraftHint) {
             refs.inventorySelectionCraftHint.textContent = craftOptions.length > 0
-                ? `Выбери действие ниже. Сейчас доступны станции: ${availableStationLabels.join(', ')}.`
+                ? 'Список ниже разбит по станциям, чтобы было видно, что собирается руками, в лагере, на верстаке и в мастерской.'
                 : '';
         }
 
         if (refs.inventorySelectionCraftActions) {
             refs.inventorySelectionCraftActions.replaceChildren(
-                ...craftOptions.map((option) => buildCraftActionButton(option))
+                ...groupedCraftOptions.map((group) => buildCraftStationGroup(group))
             );
         }
 

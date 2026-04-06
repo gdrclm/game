@@ -12,6 +12,7 @@
     const inventoryRuntime = game.systems.inventoryRuntime;
     const gameEvents = game.systems.gameEvents;
     const actionUi = game.systems.actionUi;
+    const inventoryUi = game.systems.inventoryUi;
     const bridge = game.systems.uiBridge;
     const itemEffects = game.systems.itemEffects;
     const rewardScaling = game.systems.rewardScaling;
@@ -105,6 +106,88 @@
         }
 
         delete game.systems.world;
+    }
+
+    function countInventoryByIds(itemIds) {
+        return (Array.isArray(itemIds) ? itemIds : []).reduce((sum, itemId) => sum + inventoryRuntime.countInventoryItem(itemId), 0);
+    }
+
+    function installInventoryUiHarness(options = {}) {
+        const root = document.createElement('section');
+        root.className = 'hud-card';
+        root.id = `inventoryHarness-${Math.random().toString(16).slice(2)}`;
+        root.innerHTML = `
+            <p class="hud-kicker">Сумка</p>
+            <h3 class="hud-title">Инвентарь</h3>
+            <div id="inventoryGrid"></div>
+        `;
+        document.body.appendChild(root);
+
+        const inventoryGrid = root.querySelector('#inventoryGrid');
+        const useButton = document.createElement('button');
+        useButton.type = 'button';
+        useButton.className = 'hud-button';
+        useButton.dataset.action = 'use';
+        useButton.disabled = Boolean(options.useDisabled);
+
+        const dropButton = document.createElement('button');
+        dropButton.type = 'button';
+        dropButton.className = 'hud-button';
+        dropButton.dataset.action = 'drop';
+        dropButton.disabled = Boolean(options.dropDisabled);
+
+        const previousBridgeState = {
+            getElements: bridge.getElements,
+            getGame: bridge.getGame,
+            getUnlockedInventorySlots: bridge.getUnlockedInventorySlots,
+            getInventory: bridge.getInventory,
+            getSelectedInventoryItem: bridge.getSelectedInventoryItem,
+            getItemDefinition: bridge.getItemDefinition,
+            normalizeInventoryItem: bridge.normalizeInventoryItem,
+            getDefaultActionHint: bridge.getDefaultActionHint
+        };
+
+        Object.assign(bridge, {
+            getElements() {
+                return {
+                    actionButtons: [useButton, dropButton],
+                    inventoryGrid,
+                    selectedCharacterPortrait: null
+                };
+            },
+            getGame() {
+                return game;
+            },
+            getUnlockedInventorySlots() {
+                return inventoryRuntime.getUnlockedInventorySlots();
+            },
+            getInventory() {
+                return inventoryRuntime.getInventory();
+            },
+            getSelectedInventoryItem() {
+                return inventoryRuntime.getSelectedInventoryItem();
+            },
+            getItemDefinition(itemId = '') {
+                return itemRegistry.getItemDefinition(itemId);
+            },
+            normalizeInventoryItem(item) {
+                return inventoryRuntime.normalizeInventoryItem(item);
+            },
+            getDefaultActionHint(activeInteraction, tileInfo) {
+                return actionUi.getDefaultActionHint(activeInteraction, tileInfo);
+            }
+        });
+
+        return {
+            root,
+            inventoryGrid,
+            useButton,
+            dropButton,
+            cleanup() {
+                Object.assign(bridge, previousBridgeState);
+                root.remove();
+            }
+        };
     }
 
     function buildLegacySnapshot(overrides = {}) {
@@ -370,7 +453,7 @@
         };
     }
 
-    function buildTestHouse(kind, originX, originY) {
+    function buildTestHouse(kind, originX, originY, expeditionOverrides = {}) {
         const localCells = [
             { x: originX, y: originY },
             { x: originX + 1, y: originY },
@@ -395,9 +478,46 @@
             },
             expedition: {
                 kind,
-                label: kind === 'merchant' ? 'Торговец' : 'Сундук',
-                summary: 'Тестовая точка интереса'
+                label: kind === 'merchant' ? 'Торговец' : (kind === 'artisan' ? 'Ремесленник' : 'Сундук'),
+                summary: 'Тестовая точка интереса',
+                ...cloneValue(expeditionOverrides)
             }
+        };
+    }
+
+    function buildStationInteraction(kind, overrides = {}) {
+        const { expedition: expeditionOverrides = {}, ...restOverrides } = overrides;
+        const defaultExpedition = kind === 'camp'
+            ? {
+                kind: 'camp',
+                label: 'Лагерный очаг',
+                stationId: 'camp',
+                stationIds: ['camp'],
+                summary: 'Тестовая лагерная станция'
+            }
+            : {
+                kind: 'workbench',
+                label: 'Верстак',
+                stationId: 'bench',
+                stationIds: ['bench'],
+                summary: 'Тестовая станция'
+            };
+
+        return {
+            id: `${kind}:test`,
+            kind,
+            houseId: `${kind}:test`,
+            localX: 0,
+            localY: 1,
+            worldX: 0,
+            worldY: 1,
+            renderDepth: 1.35,
+            placement: 'exterior',
+            expedition: {
+                ...defaultExpedition,
+                ...cloneValue(expeditionOverrides)
+            },
+            ...cloneValue(restOverrides)
         };
     }
 
@@ -459,6 +579,9 @@
             },
             restore() {
                 this.ops.push(['restore']);
+            },
+            rotate(angle) {
+                this.ops.push(['rotate', angle]);
             },
             translate(x, y) {
                 this.ops.push(['translate', x, y]);
@@ -527,7 +650,7 @@
 
     addTest('1. resource-registry.js', 'Возвращает все базовые ресурсы по id без undefined', () => {
         resetHarness();
-        const requiredIds = ['grass', 'stone', 'rubble', 'wood', 'water', 'fish'];
+        const requiredIds = ['grass', 'reeds', 'stone', 'rubble', 'wood', 'water', 'fish'];
 
         requiredIds.forEach((resourceId) => {
             assert(resourceRegistry.getBaseResourceDefinition(resourceId), `Не найден ресурс ${resourceId}.`);
@@ -695,6 +818,41 @@
         assert(smithyRecipeIds.includes('island-drill'), 'В кузнице должен быть island-drill.');
     });
 
+    addTest('5. station-runtime.js', 'Активный верстак становится явной станцией для bench/workbench', () => {
+        resetHarness();
+        game.state.activeInteraction = buildStationInteraction('workbench', {
+            expedition: {
+                label: 'Мастерская',
+                stationId: 'workbench',
+                stationIds: ['bench', 'workbench']
+            }
+        });
+
+        const stationContext = stationRuntime.getActiveStationContext();
+        const availableStations = craftingRuntime.resolveAvailableStations();
+
+        assertEqual(stationContext.activeSourceLabel, 'Мастерская', 'Активная станция сверху должна называться "Мастерская".');
+        assertEqual(stationContext.activeStationId, 'workbench', 'Текущая активная станция должна определяться как workbench.');
+        assert(availableStations.includes('bench'), 'Явный верстак должен открывать bench.');
+        assert(availableStations.includes('workbench'), 'Явный верстак должен открывать workbench.');
+    });
+
+    addTest('5. station-runtime.js', 'Shelter сам по себе больше не открывает camp без отдельного лагерного объекта', () => {
+        resetHarness();
+        game.state.activeHouse = buildTestHouse('shelter', 4, 4, {
+            label: 'Тестовое укрытие',
+            locationLabel: 'Тестовое укрытие'
+        });
+
+        const withoutCampStations = craftingRuntime.resolveAvailableStations();
+        assertEqual(withoutCampStations.includes('camp'), false, 'Shelter не должен сам по себе открывать станцию camp.');
+
+        game.state.activeInteraction = buildStationInteraction('camp');
+        const withCampStations = craftingRuntime.resolveAvailableStations();
+
+        assert(withCampStations.includes('camp'), 'Отдельный лагерный объект должен открывать станцию camp.');
+    });
+
     addTest('6. craftingState в save schema', 'Новый сейв содержит craftingState с дефолтной структурой', () => {
         const snapshot = saveLoad.buildSaveSnapshot(stateSchema.createInitialState());
 
@@ -840,12 +998,28 @@
         assertEqual(inventoryRuntime.countInventoryItem('board'), 0, 'Доска не должна появляться напрямую при сборе дерева.');
     });
 
+    addTest('9. raw_* ресурсы', 'Сбор тростника даёт raw_reeds, а не траву или готовый компонент', () => {
+        resetHarness();
+        installResourceNodeWorld('reedPatch', {
+            islandIndex: 3,
+            targetTileType: 'reeds'
+        });
+
+        actionUi.handleUseAction();
+
+        assertEqual(inventoryRuntime.countInventoryItem('raw_reeds'), 1, 'Сбор тростника должен давать raw_reeds.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_grass'), 0, 'Тростник не должен подменяться в raw_grass.');
+        assertEqual(inventoryRuntime.countInventoryItem('healingBase'), 0, 'Готовый лечебный компонент не должен выпадать сразу при сборе тростника.');
+    });
+
     addTest('9. raw_* ресурсы', 'Старые места кода не подменяют raw-resource на старые item ids', () => {
         const grassDefinition = resourceRegistry.getBaseResourceDefinition('grass');
+        const reedsDefinition = resourceRegistry.getBaseResourceDefinition('reeds');
         const stoneDefinition = resourceRegistry.getBaseResourceDefinition('stone');
         const rubbleDefinition = resourceRegistry.getBaseResourceDefinition('rubble');
 
         assertDeepEqual(grassDefinition.currentInventoryItemIds, ['raw_grass'], 'Grass должен ссылаться только на raw_grass.');
+        assertDeepEqual(reedsDefinition.currentInventoryItemIds, ['raw_reeds'], 'Reeds должен ссылаться только на raw_reeds.');
         assertDeepEqual(stoneDefinition.currentInventoryItemIds, ['raw_stone'], 'Stone должен ссылаться только на raw_stone.');
         assertDeepEqual(rubbleDefinition.currentInventoryItemIds, ['raw_rubble'], 'Rubble должен ссылаться только на raw_rubble.');
         assertEqual(itemRegistry.getItemDefinition('grassResource'), null, 'Легаси grassResource больше не должен быть item definition.');
@@ -853,7 +1027,7 @@
         assertEqual(itemRegistry.getItemDefinition('rubbleChunk'), null, 'Легаси rubbleChunk больше не должен быть item definition.');
     });
 
-    addTest('10. семейство сырья травы', 'Оба источника конвертируются в общий pipeline без рассинхрона', () => {
+    addTest('10. тростник как отдельное сырьё', 'Трава и тростник собираются в разные raw-ресурсы без смешивания', () => {
         resetHarness();
         installResourceNodeWorld('grassBush', {
             islandIndex: 4,
@@ -861,20 +1035,17 @@
         });
 
         actionUi.handleUseAction();
-        installResourceNodeWorld('grassBush', {
+        installResourceNodeWorld('reedPatch', {
             islandIndex: 4,
             targetTileType: 'reeds'
         });
         actionUi.handleUseAction();
 
-        const rawGrassStacks = inventoryRuntime.getInventory().filter((item) => item && item.id === 'raw_grass');
-
-        assertEqual(inventoryRuntime.countInventoryItem('raw_grass'), 2, 'Оба источника должны сходиться в raw_grass.');
-        assertEqual(rawGrassStacks.length, 1, 'Оба подтипа должны стекаться в один стек raw_grass.');
-        assert(!rawGrassStacks[0].resourceSubtypeId, 'При смешивании подтипов не должно оставаться рассинхроненного subtypeId.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_grass'), 1, 'Полевой куст должен давать raw_grass.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_reeds'), 1, 'Тростниковый куст должен давать raw_reeds.');
     });
 
-    addTest('10. семейство сырья травы', 'Старые предметы мигрируются, а legacy ids не остаются активными', () => {
+    addTest('10. тростник как отдельное сырьё', 'Старые предметы мигрируются в raw_grass/raw_reeds, а legacy ids не остаются активными', () => {
         const legacySnapshot = buildLegacySnapshot({
             player: {
                 ...buildLegacySnapshot().player,
@@ -888,18 +1059,20 @@
         });
         const migratedSnapshot = saveLoad.migrateSnapshot(legacySnapshot);
         const migratedItems = (migratedSnapshot.player.inventory || []).filter(Boolean);
+        const migratedIds = migratedItems.map((item) => item.id);
 
-        assertEqual(migratedItems.length, 1, 'Легаси трава должна мигрировать в один стек.');
-        assertEqual(migratedItems[0].id, 'raw_grass', 'Легаси трава должна мигрировать в raw_grass.');
-        assertEqual(migratedItems[0].quantity, 2, 'Количество raw_grass после миграции рассчитано неверно.');
+        assertEqual(migratedItems.length, 2, 'Полевая трава и тростник должны мигрировать в два разных ресурса.');
+        assert(migratedIds.includes('raw_grass'), 'fieldGrass должен мигрировать в raw_grass.');
+        assert(migratedIds.includes('raw_reeds'), 'lowlandGrass должен мигрировать в raw_reeds.');
         assertEqual(itemRegistry.getItemDefinition('lowlandGrass'), null, 'lowlandGrass не должен оставаться активным item id.');
         assertEqual(itemRegistry.getItemDefinition('fieldGrass'), null, 'fieldGrass не должен оставаться активным item id.');
     });
 
-    addTest('10. семейство сырья травы', 'Рецепты используют новый общий тип, а не старые отдельные ids', () => {
+    addTest('10. тростник как отдельное сырьё', 'Рецепты используют grass/reeds вместо legacy ids и дают нужные выходы', () => {
         const recipeDefinitions = recipeRegistry.getRecipeDefinitions();
         const legacyIds = new Set(['lowlandGrass', 'fieldGrass', 'grassResource']);
         const grassRecipes = recipeDefinitions.filter((recipe) => ['grass-to-healing-base', 'grass-to-herbal-paste', 'grass-to-rope'].includes(recipe.recipeId));
+        const reedsRecipes = recipeDefinitions.filter((recipe) => ['reeds-to-healing-base', 'reeds-to-rope'].includes(recipe.recipeId));
 
         recipeDefinitions.forEach((recipe) => {
             recipe.ingredients.forEach((ingredient) => {
@@ -912,6 +1085,7 @@
         });
 
         assert(grassRecipes.every((recipe) => recipe.ingredients.some((ingredient) => ingredient.kind === 'resource' && ingredient.id === 'grass')), 'Травяные рецепты должны использовать общий ресурс grass.');
+        assert(reedsRecipes.every((recipe) => recipe.ingredients.some((ingredient) => ingredient.kind === 'resource' && ingredient.id === 'reeds')), 'Тростниковые рецепты должны использовать ресурс reeds.');
     });
 
     addTest('11. compression pipeline', 'Ровно 5 единиц сырья дают 1 компонент', () => {
@@ -997,6 +1171,20 @@
         assertEqual(inventoryRuntime.countInventoryItem('healingBase'), 1, 'healingBase не появился после сжатия.');
     });
 
+    addTest('11. compression pipeline', 'raw_reeds сжимается в healingBase через явный recipeId', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('raw_reeds', 5);
+
+        const outcome = compressionRuntime.compressSourceItem('raw_reeds', {
+            recipeId: 'reeds-to-healing-base',
+            availableStations: ['hand']
+        });
+
+        assert(outcome.success, 'Сжатие raw_reeds в healingBase не завершилось успешно.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_reeds'), 0, 'Тростник не был израсходован полностью.');
+        assertEqual(inventoryRuntime.countInventoryItem('healingBase'), 1, 'healingBase не появился после сжатия тростника.');
+    });
+
     addTest('11. compression pipeline', 'grass-to-rope требует bench и не доступен только на hand', () => {
         resetHarness();
         inventoryRuntime.addInventoryItem('raw_grass', 10);
@@ -1009,6 +1197,29 @@
         assert(ropeEvaluation, 'Оценка recipe grass-to-rope не найдена.');
         assertEqual(ropeEvaluation.success, false, 'Верёвка не должна быть доступна без bench.');
         assertEqual(ropeEvaluation.reason, 'wrong-station', 'Для grass-to-rope ожидалась ошибка wrong-station.');
+    });
+
+    addTest('11. compression pipeline', 'reeds-to-rope требует bench и использует raw_reeds', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('raw_reeds', 10);
+
+        const handEvaluations = compressionRuntime.evaluateCompressionForSourceItem('raw_reeds', {
+            availableStations: ['hand']
+        });
+        const handRopeEvaluation = handEvaluations.find((entry) => entry && entry.recipe && entry.recipe.recipeId === 'reeds-to-rope');
+
+        assert(handRopeEvaluation, 'Оценка recipe reeds-to-rope не найдена.');
+        assertEqual(handRopeEvaluation.success, false, 'Верёвка из тростника не должна быть доступна без bench.');
+        assertEqual(handRopeEvaluation.reason, 'wrong-station', 'Для reeds-to-rope ожидалась ошибка wrong-station.');
+
+        const benchOutcome = compressionRuntime.compressSourceItem('raw_reeds', {
+            recipeId: 'reeds-to-rope',
+            availableStations: ['bench']
+        });
+
+        assert(benchOutcome.success, 'На bench верёвка из тростника должна крафтиться успешно.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_reeds'), 0, 'Тростник должен быть полностью израсходован на верёвку.');
+        assertEqual(inventoryRuntime.countInventoryItem('rope'), 1, 'После крафта из тростника должна появиться верёвка.');
     });
 
     addTest('11. compression pipeline', 'soilClod сжимается через единый pipeline и даёт soilResource', () => {
@@ -1038,7 +1249,10 @@
         assert(nodeKinds.includes('rubbleScree'), 'Не появился rubbleScree.');
         assert(nodeKinds.includes('woodTree'), 'Не появился woodTree.');
         assert(nodeKinds.includes('waterSource'), 'Не появился waterSource.');
-        assert(nodeKinds.includes('fishingSpot'), 'Не появился fishingSpot.');
+        assert(nodeKinds.includes('fishingSpot'), 'Не появился береговой fishingSpot.');
+        assert(nodeKinds.includes('fishingReedsSpot'), 'Не появился fishingReedsSpot.');
+        assert(nodeKinds.includes('fishingCalmSpot'), 'Не появился fishingCalmSpot.');
+        assert(nodeKinds.includes('reedPatch'), 'Не появился reedPatch.');
     });
 
     addTest('12. resourceNode interactions', 'Игрок может кликнуть по ресурсу и получить корректный action hint', () => {
@@ -1074,6 +1288,59 @@
         assertEqual(new Set(interactionKeys).size, interactionKeys.length, 'Interaction-слой дал конфликт нескольких объектов на одной клетке.');
     });
 
+    addTest('12. resourceNode interactions', 'Рядом с мастерской появляется отдельный workbench interaction', () => {
+        resetHarness();
+        const houses = [
+            buildTestHouse('artisan', 9, 12, {
+                label: 'Ремесленник',
+                locationLabel: 'Мастерская',
+                buildingType: 'workshop',
+                summary: 'Тестовая мастерская'
+            })
+        ];
+        const interactions = createChunkInteractionsForTest({
+            islandIndex: 8,
+            chunkSource: buildResourceBiomeChunk(),
+            houses
+        });
+        const artisanInteraction = interactions.find((interaction) => interaction.kind === 'artisan');
+        const workbenchInteraction = interactions.find((interaction) => interaction.kind === 'workbench');
+
+        assert(artisanInteraction, 'В чанке должен появиться artisan interaction.');
+        assert(workbenchInteraction, 'Рядом с мастерской должен появиться отдельный workbench interaction.');
+        assert(Array.isArray(workbenchInteraction.expedition.stationIds) && workbenchInteraction.expedition.stationIds.includes('workbench'), 'У workbench interaction должна быть явная станция workbench.');
+        assert(
+            artisanInteraction.localX !== workbenchInteraction.localX || artisanInteraction.localY !== workbenchInteraction.localY,
+            'Workbenсh не должен накладываться на artisan interaction.'
+        );
+    });
+
+    addTest('12. resourceNode interactions', 'Рядом с shelter появляется отдельный camp interaction', () => {
+        resetHarness();
+        const houses = [
+            buildTestHouse('shelter', 8, 10, {
+                label: 'Укрытие',
+                locationLabel: 'Укрытие',
+                summary: 'Тестовое укрытие'
+            })
+        ];
+        const interactions = createChunkInteractionsForTest({
+            islandIndex: 8,
+            chunkSource: buildResourceBiomeChunk(),
+            houses
+        });
+        const shelterInteraction = interactions.find((interaction) => interaction.kind === 'shelter');
+        const campInteraction = interactions.find((interaction) => interaction.kind === 'camp');
+
+        assert(shelterInteraction, 'В чанке должен появиться shelter interaction.');
+        assert(campInteraction, 'Рядом с shelter должен появиться отдельный camp interaction.');
+        assertEqual(campInteraction.expedition.stationId, 'camp', 'Camp interaction должен открывать только станцию camp.');
+        assert(
+            shelterInteraction.localX !== campInteraction.localX || shelterInteraction.localY !== campInteraction.localY,
+            'Camp interaction не должен накладываться на shelter interaction.'
+        );
+    });
+
     addTest('13. визуальные типы resource nodes', 'У каждого resource node есть видимый renderKind и рендер не падает', () => {
         resetHarness();
         const definitions = resourceRegistry.getResourceNodeDefinitions();
@@ -1093,6 +1360,51 @@
             assert(definition.renderKind, `У ${definition.id} не задан renderKind.`);
             assert(context.ops.some((operation) => operation[0] === 'fill' || operation[0] === 'stroke'), `Рендер ${definition.id} не выполнил ни одной видимой операции.`);
         });
+    });
+
+    addTest('13. визуальные типы resource nodes', 'Отдельный workbench interaction имеет видимый рендер', () => {
+        resetHarness();
+        const interaction = {
+            id: 'render:workbench',
+            kind: 'workbench',
+            worldX: 4,
+            worldY: 4,
+            localX: 4,
+            localY: 4,
+            houseId: 'render:workbench',
+            renderDepth: 8.35,
+            expedition: {
+                kind: 'workbench',
+                label: 'Мастерская',
+                stationId: 'workbench',
+                stationIds: ['bench', 'workbench']
+            }
+        };
+        const context = createRecordingContext();
+
+        game.ctx = context;
+        installInteractionRenderChunk([interaction]);
+        interactionRenderer.drawInteractions(0, 0);
+
+        assert(
+            context.ops.some((operation) => operation[0] === 'fillRect' || operation[0] === 'fill'),
+            'Рендер workbench interaction не выполнил ни одной видимой операции.'
+        );
+    });
+
+    addTest('13. визуальные типы resource nodes', 'Отдельный camp interaction имеет видимый рендер', () => {
+        resetHarness();
+        const interaction = buildStationInteraction('camp');
+        const context = createRecordingContext();
+
+        game.ctx = context;
+        installInteractionRenderChunk([interaction]);
+        interactionRenderer.drawInteractions(0, 0);
+
+        assert(
+            context.ops.some((operation) => operation[0] === 'fillRect' || operation[0] === 'fill'),
+            'Рендер camp interaction не выполнил ни одной видимой операции.'
+        );
     });
 
     addTest('13. визуальные типы resource nodes', 'Дерево визуально занимает две клетки по высоте', () => {
@@ -1294,9 +1606,16 @@
             islandIndex: 8,
             chunkSource: buildDryChunk('grass')
         });
+        const fishingNodeKinds = ['fishingSpot', 'fishingReedsSpot', 'fishingCalmSpot', 'fishingRareSpot'];
 
-        assert(wetInteractions.some((interaction) => interaction.resourceNodeKind === 'fishingSpot'), 'У воды должен появляться fishingSpot.');
-        assert(!dryInteractions.some((interaction) => interaction.resourceNodeKind === 'fishingSpot'), 'В сухой зоне fishingSpot появляться не должен.');
+        assert(
+            wetInteractions.some((interaction) => fishingNodeKinds.includes(interaction.resourceNodeKind)),
+            'У воды должен появляться хотя бы один fishingSpot.'
+        );
+        assert(
+            !dryInteractions.some((interaction) => fishingNodeKinds.includes(interaction.resourceNodeKind)),
+            'В сухой зоне fishing spots появляться не должны.'
+        );
     });
 
     addTest('16. биом и топология resource nodes', 'Трава не спавнится на неподходящих тайлах', () => {
@@ -1527,6 +1846,89 @@
         assert(scaledChance > baselineChance, 'Шанс позднего штрафа должен расти с островом, pressure tier и плохой погодой.');
     });
 
+    addTest('19. stateful waterFlask', 'Пустую флягу можно наполнить у water-source', () => {
+        resetHarness();
+        installResourceNodeWorld('waterSource', {
+            islandIndex: 4,
+            targetTileType: 'shore'
+        });
+        inventoryRuntime.addInventoryItem('flask_empty', 1);
+
+        const flaskIndex = inventoryRuntime.getInventory().findIndex((item) => item && item.id === 'flask_empty');
+        const flask = inventoryRuntime.getInventory()[flaskIndex];
+        game.state.selectedInventorySlot = flaskIndex;
+        const outcome = itemEffects.useInventoryItem(flask);
+
+        assert(outcome && outcome.success, 'Пустая фляга должна наполняться у water-source.');
+        assertEqual(inventoryRuntime.countInventoryItem('flask_empty'), 0, 'Пустая фляга должна уйти из исходного состояния.');
+        assertEqual(inventoryRuntime.countInventoryItem('flask_water_dirty'), 1, 'После наполнения должна появляться фляга сырой воды.');
+    });
+
+    addTest('19. stateful waterFlask', 'Использование полной фляги возвращает flask_empty', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('flask_water_full', 1);
+
+        const flaskIndex = inventoryRuntime.getInventory().findIndex((item) => item && item.id === 'flask_water_full');
+        const flask = inventoryRuntime.getInventory()[flaskIndex];
+        game.state.selectedInventorySlot = flaskIndex;
+        const outcome = itemEffects.useInventoryItem(flask);
+
+        assert(outcome && outcome.success, 'Полная фляга должна использоваться успешно.');
+        assertEqual(inventoryRuntime.countInventoryItem('flask_water_full'), 0, 'После питья полная фляга должна исчезать.');
+        assertEqual(inventoryRuntime.countInventoryItem('flask_empty'), 1, 'После питья должна возвращаться пустая фляга.');
+    });
+
+    addTest('19. stateful waterFlask', 'Полная фляга не стакается некорректно с пустой', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('flask_empty', 1);
+        inventoryRuntime.addInventoryItem('flask_water_full', 1);
+
+        const activeStacks = inventoryRuntime.getInventory().filter(Boolean);
+
+        assertEqual(inventoryRuntime.countInventoryItem('flask_empty'), 1, 'Пустая фляга должна остаться отдельным контейнером.');
+        assertEqual(inventoryRuntime.countInventoryItem('flask_water_full'), 1, 'Полная фляга должна остаться отдельным контейнером.');
+        assert(activeStacks.some((item) => item.id === 'flask_empty'), 'В инвентаре должен быть стек пустой фляги.');
+        assert(activeStacks.some((item) => item.id === 'flask_water_full'), 'В инвентаре должен быть стек полной фляги.');
+        assert(activeStacks.filter((item) => item.id === 'flask_empty' || item.id === 'flask_water_full').length >= 2, 'Пустая и полная фляги не должны схлопываться в один стек.');
+    });
+
+    addTest('20. container model', 'Container item хранит состояние отдельно от обычного consumable', () => {
+        const containerRegistry = game.systems.containerRegistry;
+        const dirtyState = containerRegistry.getContainerStateByItemId('flask_water_dirty');
+        const rationState = containerRegistry.getContainerStateByItemId('ration');
+        const dirtyDefinition = itemRegistry.getItemDefinition('flask_water_dirty');
+
+        assert(containerRegistry.isContainerItem('flask_water_dirty'), 'Фляга с водой должна распознаваться как container item.');
+        assertEqual(Boolean(rationState), false, 'Обычный ration не должен считаться контейнером.');
+        assert(dirtyState && dirtyState.id === 'waterFlaskDirty', 'Состояние контейнера должно читаться отдельно от обычного consumable.');
+        assert((dirtyDefinition.categories || []).includes('container'), 'Container item должен сохранять категорию container в каталоге.');
+    });
+
+    addTest('20. container model', 'Рецепты могут требовать конкретное состояние контейнера', () => {
+        const boilRecipe = recipeRegistry.getRecipeDefinition('boil-water');
+        const brothRecipe = recipeRegistry.getRecipeDefinition('fish-broth');
+        const healingRecipe = recipeRegistry.getRecipeDefinition('healing-brew');
+
+        assert(boilRecipe.ingredients.some((ingredient) => ingredient.kind === 'itemState' && ingredient.id === 'waterFlaskDirty'), 'boil-water должен требовать именно dirty flask.');
+        assert(brothRecipe.ingredients.some((ingredient) => ingredient.kind === 'itemState' && ingredient.id === 'waterFlaskFull'), 'fish-broth должен требовать именно full flask.');
+        assert(healingRecipe.ingredients.some((ingredient) => ingredient.kind === 'itemState' && ingredient.id === 'waterFlaskAlchemy'), 'healing-brew должен требовать именно алхимическую воду.');
+    });
+
+    addTest('20. container model', 'Сейв/лоад не теряет состояние контейнера', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('flask_water_dirty', 1);
+        inventoryRuntime.addInventoryItem('flask_water_full', 1);
+        inventoryRuntime.addInventoryItem('flask_empty', 1);
+
+        const snapshot = saveLoad.buildSaveSnapshot(game.state);
+        const hydratedState = saveLoad.hydrateStateFromSnapshot(snapshot);
+        const hydratedInventory = Array.isArray(hydratedState.inventory) ? hydratedState.inventory : [];
+
+        assert(hydratedInventory.some((item) => item && item.id === 'flask_water_dirty'), 'После загрузки должна сохраниться dirty flask.');
+        assert(hydratedInventory.some((item) => item && item.id === 'flask_water_full'), 'После загрузки должна сохраниться full flask.');
+        assert(hydratedInventory.some((item) => item && item.id === 'flask_empty'), 'После загрузки должна сохраниться empty flask.');
+    });
+
     addTest('21. fill_flask у water-source', 'Наполнение фляги недоступно без water-source даже рядом с колодцем', () => {
         resetHarness();
         installWorld([
@@ -1592,6 +1994,23 @@
         assertEqual(inventoryRuntime.countInventoryItem('flask_water_dirty'), 1, 'У water-source должна получаться именно фляга сырой воды.');
     });
 
+    addTest('21. fill_flask у water-source', 'Action button корректно дизейблится вне valid zone', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('flask_empty', 1);
+        game.state.selectedInventorySlot = inventoryRuntime.getInventory().findIndex((item) => item && item.id === 'flask_empty');
+        const uiHarness = installInventoryUiHarness();
+
+        try {
+            actionUi.updateActionButtons();
+            const availability = actionUi.getActionAvailability('use');
+
+            assertEqual(availability.enabled, false, 'Вне water-source use action не должен быть доступен для empty flask.');
+            assertEqual(uiHarness.useButton.disabled, true, 'Кнопка use должна быть disabled вне valid zone.');
+        } finally {
+            uiHarness.cleanup();
+        }
+    });
+
     addTest('22. boil_water на camp', 'Рецепт кипячения воды живёт на лагере и требует топливную связку', () => {
         const recipe = recipeRegistry.getRecipeDefinition('boil-water');
 
@@ -1603,14 +2022,7 @@
     });
 
     addTest('22. boil_water на camp', 'На лагере грязная вода кипятится в чистую и сжигает fuel bundle', () => {
-        game.state.activeHouse = {
-            id: 'shelter:test',
-            expedition: {
-                kind: 'shelter',
-                label: 'Тестовый лагерь',
-                locationLabel: 'Тестовый лагерь'
-            }
-        };
+        game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_dirty', 1);
         inventoryRuntime.addInventoryItem('fuelBundle', 1);
 
@@ -1631,14 +2043,7 @@
         assertEqual(noCampEvaluation.success, false, 'Без лагеря рецепт не должен быть доступен.');
         assertEqual(noCampEvaluation.reason, 'wrong-station', 'Без лагеря должна возвращаться ошибка станции.');
 
-        game.state.activeHouse = {
-            id: 'shelter:test',
-            expedition: {
-                kind: 'shelter',
-                label: 'Тестовый лагерь',
-                locationLabel: 'Тестовый лагерь'
-            }
-        };
+        game.state.activeInteraction = buildStationInteraction('camp');
 
         const noFuelEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('boil-water');
         assertEqual(noFuelEvaluation.success, false, 'Без топлива рецепт не должен быть доступен даже в лагере.');
@@ -1660,14 +2065,7 @@
     });
 
     addTest('23. full_flask в рецептах', 'Крафт с полной флягой возвращает пустую флягу после рецепта', () => {
-        game.state.activeHouse = {
-            id: 'shelter:test',
-            expedition: {
-                kind: 'shelter',
-                label: 'Тестовый лагерь',
-                locationLabel: 'Тестовый лагерь'
-            }
-        };
+        game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_full', 1);
         inventoryRuntime.addInventoryItem('fishMeat', 1);
         inventoryRuntime.addInventoryItem('fuelBundle', 1);
@@ -1683,14 +2081,7 @@
     });
 
     addTest('23. full_flask в рецептах', 'Сырая вода не подменяет полную флягу в рецептах, которым нужна чистая вода', () => {
-        game.state.activeHouse = {
-            id: 'shelter:test',
-            expedition: {
-                kind: 'shelter',
-                label: 'Тестовый лагерь',
-                locationLabel: 'Тестовый лагерь'
-            }
-        };
+        game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_dirty', 1);
         inventoryRuntime.addInventoryItem('fishMeat', 1);
         inventoryRuntime.addInventoryItem('fuelBundle', 1);
@@ -1700,6 +2091,39 @@
         assertEqual(evaluation.success, false, 'Сырая вода не должна подходить для рецепта с чистой водой.');
         assertEqual(evaluation.reason, 'missing-ingredients', 'Для dirty flask должна возвращаться ошибка missing-ingredients.');
         assert(evaluation.missingIngredients.some((entry) => entry.id === 'waterFlaskFull'), 'Система должна явно просить полную флягу.');
+    });
+
+    addTest('23. full_flask в рецептах', 'Количество контейнеров остаётся консистентным после серии use/craft', () => {
+        resetHarness();
+        installResourceNodeWorld('waterSource', {
+            islandIndex: 6,
+            targetTileType: 'shore'
+        });
+        inventoryRuntime.addInventoryItem('flask_empty', 1);
+        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('healingBase', 1);
+
+        const containerIds = ['flask_empty', 'flask_water_dirty', 'flask_water_full', 'flask_water_alchemy'];
+        const emptyFlaskIndex = inventoryRuntime.getInventory().findIndex((item) => item && item.id === 'flask_empty');
+        game.state.selectedInventorySlot = emptyFlaskIndex;
+        const fillOutcome = itemEffects.useInventoryItem(inventoryRuntime.getInventory()[emptyFlaskIndex]);
+
+        assert(fillOutcome && fillOutcome.success, 'Фляга должна успешно наполниться перед серией крафтов.');
+        assertEqual(countInventoryByIds(containerIds), 1, 'После наполнения количество контейнеров должно остаться равным одному.');
+
+        game.state.activeInteraction = buildStationInteraction('camp');
+        const boilOutcome = craftingRuntime.craftRecipeAgainstInventory('boil-water');
+        assert(boilOutcome && boilOutcome.success, 'boil-water должен успешно пройти в серии.');
+        assertEqual(countInventoryByIds(containerIds), 1, 'После кипячения количество контейнеров должно остаться равным одному.');
+
+        const alchemyOutcome = craftingRuntime.craftRecipeAgainstInventory('prepare-alchemy-water');
+        assert(alchemyOutcome && alchemyOutcome.success, 'prepare-alchemy-water должен успешно пройти в серии.');
+        assertEqual(countInventoryByIds(containerIds), 1, 'После алхимической подготовки количество контейнеров должно остаться равным одному.');
+
+        const healingOutcome = craftingRuntime.craftRecipeAgainstInventory('healing-brew');
+        assert(healingOutcome && healingOutcome.success, 'healing-brew должен успешно пройти в серии.');
+        assertEqual(countInventoryByIds(containerIds), 1, 'После серии use/craft игрок должен сохранить ровно один контейнер.');
+        assertEqual(inventoryRuntime.countInventoryItem('flask_empty'), 1, 'После серии контейнер должен вернуться в empty flask.');
     });
 
     addTest('24. уровни воды', 'Вода разделена на сырую, кипячёную и алхимическую, а лечебная база остаётся отдельным компонентом', () => {
@@ -1715,14 +2139,7 @@
     });
 
     addTest('24. уровни воды', 'Кипячёная вода отдельно переводится в алхимическую без возврата пустой фляги', () => {
-        game.state.activeHouse = {
-            id: 'shelter:test',
-            expedition: {
-                kind: 'shelter',
-                label: 'Тестовый лагерь',
-                locationLabel: 'Тестовый лагерь'
-            }
-        };
+        game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_full', 1);
 
         const outcome = craftingRuntime.craftRecipeAgainstInventory('prepare-alchemy-water');
@@ -1755,14 +2172,7 @@
     });
 
     addTest('24. уровни воды', 'Алхимический рецепт с особой водой возвращает пустую флягу', () => {
-        game.state.activeHouse = {
-            id: 'shelter:test',
-            expedition: {
-                kind: 'shelter',
-                label: 'Тестовый лагерь',
-                locationLabel: 'Тестовый лагерь'
-            }
-        };
+        game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_alchemy', 1);
         inventoryRuntime.addInventoryItem('healingBase', 1);
 
@@ -1772,6 +2182,547 @@
         assertEqual(inventoryRuntime.countInventoryItem('flask_water_alchemy'), 0, 'Алхимическая вода должна расходоваться рецептом.');
         assertEqual(inventoryRuntime.countInventoryItem('flask_empty'), 1, 'После алхимического рецепта должна возвращаться пустая фляга.');
         assertEqual(inventoryRuntime.countInventoryItem('healingBrew'), 1, 'Игрок должен получить алхимический результат рецепта.');
+    });
+
+    addTest('24. уровни воды', 'Простое питьё принимает только допустимые типы воды', () => {
+        assertEqual(itemEffects.canUseInventoryItem({ id: 'flask_empty', label: 'Пустая фляга' }), false, 'Пустая фляга не должна считаться drinkable.');
+        assertEqual(itemEffects.canUseInventoryItem({ id: 'flask_water_dirty', label: 'Фляга сырой воды' }), true, 'Сырая вода должна быть пригодна для простого питья.');
+        assertEqual(itemEffects.canUseInventoryItem({ id: 'flask_water_full', label: 'Фляга кипячёной воды' }), true, 'Кипячёная вода должна быть пригодна для простого питья.');
+        assertEqual(itemEffects.canUseInventoryItem({ id: 'flask_water_alchemy', label: 'Фляга алхимической воды' }), false, 'Алхимическая вода не должна считаться drinkable.');
+    });
+
+    addTest('24. уровни воды', 'UI различает типы воды по названию и иконке', () => {
+        const rawDefinition = itemRegistry.getItemDefinition('flask_water_dirty');
+        const fullDefinition = itemRegistry.getItemDefinition('flask_water_full');
+        const alchemyDefinition = itemRegistry.getItemDefinition('flask_water_alchemy');
+
+        assert(rawDefinition && fullDefinition && alchemyDefinition, 'Все типы воды должны существовать в item catalog.');
+        assert(rawDefinition.label !== fullDefinition.label, 'Сырая и кипячёная вода должны различаться по названию.');
+        assert(fullDefinition.label !== alchemyDefinition.label, 'Кипячёная и алхимическая вода должны различаться по названию.');
+        assert(rawDefinition.icon !== fullDefinition.icon, 'Сырая и кипячёная вода должны различаться по иконке.');
+        assert(fullDefinition.icon !== alchemyDefinition.icon, 'Кипячёная и алхимическая вода должны различаться по иконке.');
+    });
+
+    addTest('25. UI контейнеров', 'В инвентаре видно состояние фляги', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('flask_water_full', 1);
+        game.state.selectedInventorySlot = inventoryRuntime.getInventory().findIndex((item) => item && item.id === 'flask_water_full');
+        const uiHarness = installInventoryUiHarness();
+
+        try {
+            inventoryUi.renderInventory();
+            const factsText = document.getElementById('inventorySelectionFacts').textContent || '';
+
+            assert(/полная/i.test(factsText), 'В selection panel должна быть видна наполненность фляги.');
+            assert(/кипяч[её]ная вода/i.test(factsText), 'В selection panel должно быть видно состояние кипячёной воды.');
+        } finally {
+            uiHarness.cleanup();
+        }
+    });
+
+    addTest('25. UI контейнеров', 'Inspect показывает корректное содержимое контейнера', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('flask_water_dirty', 1);
+        game.state.selectedInventorySlot = inventoryRuntime.getInventory().findIndex((item) => item && item.id === 'flask_water_dirty');
+        const uiHarness = installInventoryUiHarness();
+
+        try {
+            inventoryUi.renderInventory();
+            const title = document.getElementById('inventorySelectionTitle').textContent || '';
+            const factsText = document.getElementById('inventorySelectionFacts').textContent || '';
+
+            assert(/сырой воды/i.test(title), 'Название выбранного контейнера должно показывать сырую воду.');
+            assert(/пригодна для питья/i.test(factsText), 'Inspect должен показывать, что сырая вода пригодна для питья.');
+            assert(!/пригодна для рецепта/i.test(factsText), 'Inspect не должен ошибочно помечать сырую воду как recipe-ready.');
+        } finally {
+            uiHarness.cleanup();
+        }
+    });
+
+    addTest('25. UI контейнеров', 'После использования отображение обновляется сразу', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('flask_water_full', 1);
+        const flaskIndex = inventoryRuntime.getInventory().findIndex((item) => item && item.id === 'flask_water_full');
+        game.state.selectedInventorySlot = flaskIndex;
+        const uiHarness = installInventoryUiHarness({
+            useDisabled: false
+        });
+
+        try {
+            inventoryUi.renderInventory();
+            const outcome = itemEffects.useInventoryItem(inventoryRuntime.getInventory()[flaskIndex]);
+            assert(outcome && outcome.success, 'Полная фляга должна использоваться успешно в UI-тесте.');
+
+            inventoryUi.renderInventory();
+            const emptyFlaskSlotLabel = uiHarness.inventoryGrid.querySelector('.inventory-slot[data-item-id="flask_empty"] .inventory-slot__label');
+            const selectionPanel = document.getElementById('inventorySelectionPanel');
+
+            assert(emptyFlaskSlotLabel && /Пустая фляга/i.test(emptyFlaskSlotLabel.textContent || ''), 'После использования инвентарь должен сразу показать empty flask.');
+            assert(selectionPanel && selectionPanel.hidden, 'После использования selection panel должна сразу обновиться и скрыться.');
+        } finally {
+            uiHarness.cleanup();
+        }
+    });
+
+    addTest('26. fishingRod как unlock рыбалки', 'Удочка больше не даёт пассивный бонус к еде и отдыху', () => {
+        const definition = itemRegistry.getItemDefinition('fishingRod');
+
+        assert(definition, 'fishingRod должен существовать в каталоге.');
+        assertEqual(Boolean(definition.passive), false, 'Удочка больше не должна жить как passive-бафф.');
+        assert(Array.isArray(definition.resourceNodeUnlocks) && definition.resourceNodeUnlocks.includes('fishingSpot'), 'Удочка должна явно отмечаться как unlock для fishingSpot.');
+        assert(definition.resourceNodeUnlocks.includes('fishingReedsSpot'), 'Удочка должна открывать fishingReedsSpot.');
+        assert(definition.resourceNodeUnlocks.includes('fishingCalmSpot'), 'Удочка должна открывать fishingCalmSpot.');
+        assert(definition.resourceNodeUnlocks.includes('fishingRareSpot'), 'Удочка должна открывать fishingRareSpot.');
+        assertEqual((definition.categories || []).includes('food'), false, 'Удочка не должна оставаться food-предметом.');
+    });
+
+    addTest('27. fishing spots по типам воды', 'Береговая, тростниковая и спокойная точки спавнятся на своих тайлах', () => {
+        resetHarness();
+        const source = buildResourceBiomeChunk();
+        const interactions = createChunkInteractionsForTest({
+            islandIndex: 12,
+            chunkSource: source,
+            random: () => 0.4
+        });
+        const shoreSpot = interactions.find((interaction) => interaction.resourceNodeKind === 'fishingSpot');
+        const reedsSpot = interactions.find((interaction) => interaction.resourceNodeKind === 'fishingReedsSpot');
+        const calmSpot = interactions.find((interaction) => interaction.resourceNodeKind === 'fishingCalmSpot');
+
+        assert(shoreSpot, 'На береговом биоме должен появляться fishingSpot.');
+        assert(reedsSpot, 'В тростнике должен появляться fishingReedsSpot.');
+        assert(calmSpot, 'На спокойной воде должен появляться fishingCalmSpot.');
+        assertEqual(source.chunkData[shoreSpot.localY][shoreSpot.localX], 'shore', 'Береговой fishingSpot должен стоять на shore.');
+        assertEqual(source.chunkData[reedsSpot.localY][reedsSpot.localX], 'reeds', 'Тростниковый fishing spot должен стоять на reeds.');
+        assertEqual(source.chunkData[calmSpot.localY][calmSpot.localX], 'water', 'Спокойный fishing spot должен стоять на water.');
+    });
+
+    addTest('27. fishing spots по типам воды', 'Редкая точка появляется только на подходящем водном узле и не обязана появляться всегда', () => {
+        resetHarness();
+        const source = buildResourceBiomeChunk();
+        const regularInteractions = createChunkInteractionsForTest({
+            islandIndex: 12,
+            chunkSource: source,
+            random: () => 0.5
+        });
+        const rareInteractions = createChunkInteractionsForTest({
+            islandIndex: 12,
+            chunkSource: source,
+            random: () => 0.0
+        });
+        const rareSpot = rareInteractions.find((interaction) => interaction.resourceNodeKind === 'fishingRareSpot');
+
+        assert(!regularInteractions.some((interaction) => interaction.resourceNodeKind === 'fishingRareSpot'), 'Редкая точка не должна появляться в каждом обычном спавне.');
+        assert(rareSpot, 'При редком ролле должна появляться fishingRareSpot.');
+        assertEqual(source.chunkData[rareSpot.localY][rareSpot.localX], 'water', 'Редкая рыболовная точка должна стоять на water.');
+    });
+
+    addTest('27. fishing spots по типам воды', 'Игрок взаимодействует с fishing spot как с отдельным resource node', () => {
+        resetHarness();
+        const { interaction, targetTile } = installResourceNodeWorld('fishingSpot', {
+            islandIndex: 8,
+            targetTileType: 'shore'
+        });
+
+        assert(interaction, 'Fishing spot должен существовать как interaction-объект.');
+        assert(targetTile && targetTile.interaction, 'Fishing spot должен быть привязан к отдельной клетке мира.');
+        assertEqual(interaction.kind, 'resourceNode', 'Fishing spot должен жить как отдельный resourceNode interaction.');
+        assertEqual(interaction.resourceNodeKind, 'fishingSpot', 'Fishing spot должен сохранять собственный resourceNodeKind.');
+    });
+
+    addTest('27. fishing spots по типам воды', 'После исчерпания fishing spot меняет состояние', () => {
+        resetHarness();
+        const { interaction } = installResourceNodeWorld('fishingSpot', {
+            islandIndex: 8,
+            targetTileType: 'shore'
+        });
+
+        const firstState = game.systems.interactions.consumeResourceNodeInteraction(interaction);
+        assert(['used', 'depleted'].includes(firstState.nodeState), 'После первого сбора fishing spot должен сменить состояние.');
+
+        const secondState = game.systems.interactions.consumeResourceNodeInteraction(interaction);
+        assert(['regenerating', 'depleted'].includes(secondState.nodeState), 'После исчерпания fishing spot должен перейти в конечное недоступное состояние.');
+    });
+
+    addTest('28. реальные входы/выходы рыбы', 'raw_fish напрямую превращается в fishMeat и fishOil на лагере', () => {
+        resetHarness();
+        game.state.activeInteraction = buildStationInteraction('camp');
+        inventoryRuntime.addInventoryItem('raw_fish', 15);
+
+        const meatEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('fish-to-fish-meat');
+        const meatOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-to-fish-meat');
+        const oilEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('fish-to-fish-oil');
+        const oilOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-to-fish-oil');
+
+        assert(meatEvaluation.success, 'Рецепт fish-to-fish-meat должен быть доступен по raw_fish.');
+        assert(meatOutcome && meatOutcome.success, 'Крафт fish-to-fish-meat должен завершаться успешно.');
+        assert(oilEvaluation.success, 'Рецепт fish-to-fish-oil должен быть доступен по raw_fish.');
+        assert(oilOutcome && oilOutcome.success, 'Крафт fish-to-fish-oil должен завершаться успешно.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish'), 0, 'После двух рецептов весь raw_fish должен быть израсходован.');
+        assertEqual(inventoryRuntime.countInventoryItem('fishMeat'), 1, 'Из 5 raw_fish должно получаться 1 fishMeat.');
+        assertEqual(inventoryRuntime.countInventoryItem('fishOil'), 1, 'Из 10 raw_fish должно получаться 1 fishOil.');
+    });
+
+    addTest('28. реальные входы/выходы рыбы', 'raw_fish + fuel_bundle даёт ration как прямой лагерный shortcut', () => {
+        resetHarness();
+        game.state.activeInteraction = buildStationInteraction('camp');
+        inventoryRuntime.addInventoryItem('raw_fish', 5);
+        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        const rationCountBefore = inventoryRuntime.countInventoryItem('ration');
+
+        const evaluation = craftingRuntime.evaluateRecipeAgainstInventory('raw-fish-ration');
+        const outcome = craftingRuntime.craftRecipeAgainstInventory('raw-fish-ration');
+
+        assert(evaluation.success, 'Рецепт raw-fish-ration должен быть доступен на лагере.');
+        assert(outcome && outcome.success, 'Прямой сухпаёк из raw_fish должен крафтиться успешно.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish'), 0, 'raw_fish должен полностью расходоваться на ration.');
+        assertEqual(inventoryRuntime.countInventoryItem('fuelBundle'), 0, 'fuelBundle должен сгорать при крафте ration.');
+        assertEqual(inventoryRuntime.countInventoryItem('ration'), rationCountBefore + 1, 'Игрок должен получить ещё один ration.');
+    });
+
+    addTest('28. реальные входы/выходы рыбы', 'Рыба участвует в food recipes только через crafting runtime', () => {
+        resetHarness();
+        game.state.activeInteraction = buildStationInteraction('camp');
+        inventoryRuntime.addInventoryItem('raw_fish', 5);
+        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('flask_water_full', 1);
+
+        const meatOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-to-fish-meat');
+        const brothEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('fish-broth');
+        const brothOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-broth');
+
+        assert(meatOutcome && meatOutcome.success, 'Рыба должна сначала пройти через fish-to-fish-meat.');
+        assert(brothEvaluation.success, 'После переработки fishMeat должен участвовать в food recipe через crafting runtime.');
+        assert(brothOutcome && brothOutcome.success, 'Рыбный бульон должен крафтиться через crafting runtime, а не обходным путём.');
+        assertEqual(inventoryRuntime.countInventoryItem('fishBroth'), 1, 'После food recipe игрок должен получить fishBroth.');
+    });
+
+    addTest('26. fishingRod как unlock рыбалки', 'Без удочки рыболовная точка не даёт рыбу и сообщает о требовании инструмента', () => {
+        resetHarness();
+        installResourceNodeWorld('fishingSpot', {
+            islandIndex: 8,
+            targetTileType: 'water'
+        });
+
+        actionUi.handleUseAction();
+
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish'), 0, 'Без удочки рыба не должна собираться.');
+        assert(/Удочка путника/i.test(bridge.lastActionMessage), 'Игрок должен получить понятное сообщение, что нужна удочка.');
+    });
+
+    addTest('26. fishingRod как unlock рыбалки', 'С удочкой открывается сбор рыбы, но не появляются старые баффы восстановления', () => {
+        resetHarness();
+        installResourceNodeWorld('fishingSpot', {
+            islandIndex: 8,
+            targetTileType: 'water'
+        });
+        inventoryRuntime.addInventoryItem('fishingRod', 1);
+
+        const modifiersBeforeGather = itemRegistry.getCurrentModifierSnapshot();
+        actionUi.handleUseAction();
+        const modifiersAfterGather = itemRegistry.getCurrentModifierSnapshot();
+
+        assertEqual(modifiersBeforeGather.foodRecoveryMultiplier, 1, 'Удочка не должна усиливать еду до начала рыбалки.');
+        assertEqual(modifiersBeforeGather.recoveryMultiplier, 1, 'Удочка не должна усиливать отдых до начала рыбалки.');
+        assertEqual(modifiersAfterGather.foodRecoveryMultiplier, 1, 'Удочка не должна давать foodRecoveryMultiplier и после подбора.');
+        assertEqual(modifiersAfterGather.recoveryMultiplier, 1, 'Удочка не должна давать recoveryMultiplier и после подбора.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish'), 1, 'С удочкой рыболовная точка должна давать raw_fish.');
+    });
+
+    addTest('29. fish_oil как лодка / лампы / поздние рецепты / торговля', 'Рыбий жир остаётся обязательным ингредиентом лодки и лодочного ремонта', () => {
+        const boatRecipe = recipeRegistry.getRecipeDefinition('boat');
+        const boatRepairRecipe = recipeRegistry.getRecipeDefinition('boat-repair-kit');
+        const boatIngredientIds = (boatRecipe && Array.isArray(boatRecipe.ingredients) ? boatRecipe.ingredients : []).map((ingredient) => ingredient.id);
+        const repairIngredientIds = (boatRepairRecipe && Array.isArray(boatRepairRecipe.ingredients) ? boatRepairRecipe.ingredients : []).map((ingredient) => ingredient.id);
+
+        assert(boatIngredientIds.includes('fishOil'), 'Готовая лодка должна требовать fishOil.');
+        assert(repairIngredientIds.includes('fishOil'), 'Ремкомплект лодки должен требовать fishOil.');
+    });
+
+    addTest('29. fish_oil как лодка / лампы / поздние рецепты / торговля', 'Фонарь тумана и Маяк торговца крафтятся через fishOil на мастерской', () => {
+        resetHarness();
+        game.state.unlockedInventorySlots = 8;
+        game.state.activeInteraction = buildStationInteraction('workbench', {
+            expedition: {
+                stationId: 'workbench',
+                stationIds: ['bench', 'workbench']
+            }
+        });
+        inventoryRuntime.addInventoryItem('board', 1);
+        inventoryRuntime.addInventoryItem('stoneBlock', 1);
+        inventoryRuntime.addInventoryItem('rope', 2);
+        inventoryRuntime.addInventoryItem('fishOil', 2);
+
+        const lanternEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('fog-lantern');
+        const lanternOutcome = craftingRuntime.craftRecipeAgainstInventory('fog-lantern');
+        const beaconEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('merchant-beacon');
+        const beaconOutcome = craftingRuntime.craftRecipeAgainstInventory('merchant-beacon');
+        const beaconRecipe = recipeRegistry.getRecipeDefinition('merchant-beacon');
+
+        assert(lanternEvaluation.success, 'Фонарь тумана должен собираться через fishOil на мастерской.');
+        assert(lanternOutcome && lanternOutcome.success, 'Крафт фонаря тумана должен завершаться успешно.');
+        assert(beaconEvaluation.success, 'Маяк торговца должен собираться через fishOil на мастерской.');
+        assert(beaconOutcome && beaconOutcome.success, 'Крафт маяка торговца должен завершаться успешно.');
+        assertEqual(inventoryRuntime.countInventoryItem('fogLantern'), 1, 'После крафта должен появляться fogLantern.');
+        assertEqual(inventoryRuntime.countInventoryItem('merchantBeacon'), 1, 'После крафта должен появляться merchantBeacon.');
+        assert(beaconRecipe && Array.isArray(beaconRecipe.tags) && beaconRecipe.tags.includes('late'), 'Маяк торговца должен быть помечен как поздний fishOil-рецепт.');
+    });
+
+    addTest('29. fish_oil как лодка / лампы / поздние рецепты / торговля', 'Рыбий жир получил торговую ценность и вес в merchant-экономике', () => {
+        resetHarness();
+        game.state.currentIslandIndex = 18;
+        const pricing = game.systems.pricing;
+        const fishOilDefinition = itemRegistry.getItemDefinition('fishOil');
+        const rawFishDefinition = itemRegistry.getItemDefinition('raw_fish');
+        const fishOilSellPrice = pricing.getMerchantSellPrice('fishOil', 18);
+        const rawFishSellPrice = pricing.getMerchantSellPrice('raw_fish', 18);
+
+        assert(fishOilDefinition, 'Предмет fishOil должен существовать в каталоге.');
+        assert(rawFishDefinition, 'Предмет raw_fish должен существовать в каталоге.');
+        assert((fishOilDefinition.categories || []).includes('value'), 'fishOil должен считаться торговой ценностью.');
+        assert(fishOilDefinition.merchantWeight > 0, 'fishOil должен попадать в merchant stock.');
+        assert(fishOilDefinition.merchantQuestWeight > 0, 'fishOil должен попадать в merchant quests.');
+        assert(fishOilSellPrice > rawFishSellPrice, 'Продавать fishOil должно быть выгоднее, чем raw_fish.');
+    });
+
+    addTest('30. tier windows рыбы', 'Островные окна разделяют обычную, редкую и трофейную рыбу', () => {
+        const commonFish = resourceRegistry.resolveFishCatchDefinition(8);
+        const rareFish = resourceRegistry.resolveFishCatchDefinition(18);
+        const trophyFish = resourceRegistry.resolveFishCatchDefinition(27);
+
+        assert(commonFish, 'Для раннего окна должна находиться обычная рыба.');
+        assert(rareFish, 'Для среднего окна должна находиться редкая рыба.');
+        assert(trophyFish, 'Для позднего окна должна находиться трофейная рыба.');
+        assertEqual(commonFish.itemId, 'raw_fish', 'Раннее окно должно давать обычную рыбу.');
+        assertEqual(rareFish.itemId, 'raw_fish_rare', 'Среднее окно должно давать редкую рыбу.');
+        assertEqual(trophyFish.itemId, 'raw_fish_trophy', 'Позднее окно должно давать трофейную рыбу.');
+    });
+
+    addTest('30. tier windows рыбы', 'Рыболовная точка выдаёт нужный тип рыбы по окну островов', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('fishingRod', 1);
+        installResourceNodeWorld('fishingSpot', {
+            islandIndex: 8,
+            targetTileType: 'shore'
+        });
+        actionUi.handleUseAction();
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish'), 1, 'На раннем окне должна ловиться обычная рыба.');
+
+        resetHarness();
+        inventoryRuntime.addInventoryItem('fishingRod', 1);
+        installResourceNodeWorld('fishingCalmSpot', {
+            islandIndex: 18,
+            targetTileType: 'water'
+        });
+        actionUi.handleUseAction();
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish_rare'), 1, 'На среднем окне должна ловиться редкая рыба.');
+
+        resetHarness();
+        inventoryRuntime.addInventoryItem('fishingRod', 1);
+        installResourceNodeWorld('fishingRareSpot', {
+            islandIndex: 27,
+            targetTileType: 'water'
+        });
+        actionUi.handleUseAction();
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish_trophy'), 1, 'На позднем окне должна ловиться трофейная рыба.');
+    });
+
+    addTest('30. tier windows рыбы', 'Редкая и трофейная рыба входят в общий fish pipeline для мяса и жира', () => {
+        resetHarness();
+        game.state.activeInteraction = buildStationInteraction('camp');
+        inventoryRuntime.addInventoryItem('raw_fish_rare', 5);
+        inventoryRuntime.addInventoryItem('raw_fish_trophy', 10);
+
+        const meatEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('fish-to-fish-meat');
+        const meatOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-to-fish-meat');
+        const oilEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('fish-to-fish-oil');
+        const oilOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-to-fish-oil');
+
+        assert(meatEvaluation.success, 'Редкая рыба должна входить в общий рецепт fish-to-fish-meat.');
+        assert(meatOutcome && meatOutcome.success, 'Из редкой рыбы должен крафтиться fishMeat.');
+        assert(oilEvaluation.success, 'Трофейная рыба должна входить в общий рецепт fish-to-fish-oil.');
+        assert(oilOutcome && oilOutcome.success, 'Из трофейной рыбы должен крафтиться fishOil.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish_rare'), 0, 'Редкая рыба должна полностью расходоваться в мясе.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish_trophy'), 0, 'Трофейная рыба должна полностью расходоваться в жире.');
+        assertEqual(inventoryRuntime.countInventoryItem('fishMeat'), 1, 'Из редкой рыбы должен появляться fishMeat.');
+        assertEqual(inventoryRuntime.countInventoryItem('fishOil'), 1, 'Из трофейной рыбы должен появляться fishOil.');
+    });
+
+    addTest('30. tier windows рыбы', 'Таблица типов рыбы obey island windows по всей шкале островов', () => {
+        for (let islandIndex = 6; islandIndex <= 30; islandIndex++) {
+            const catchDefinition = resourceRegistry.resolveFishCatchDefinition(islandIndex);
+
+            assert(catchDefinition, `Для острова ${islandIndex} должен находиться тип рыбы.`);
+
+            if (islandIndex <= 12) {
+                assertEqual(catchDefinition.itemId, 'raw_fish', `Остров ${islandIndex} должен оставаться в окне обычной рыбы.`);
+                continue;
+            }
+
+            if (islandIndex <= 24) {
+                assertEqual(catchDefinition.itemId, 'raw_fish_rare', `Остров ${islandIndex} должен оставаться в окне редкой рыбы.`);
+                continue;
+            }
+
+            assertEqual(catchDefinition.itemId, 'raw_fish_trophy', `Остров ${islandIndex} должен оставаться в окне трофейной рыбы.`);
+        }
+    });
+
+    addTest('31. spoilage рыбы', 'Обычная сырая рыба портится после первой смены времени суток', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('raw_fish', 1);
+        game.state.stepsSinceTimeOfDayChange = 29;
+
+        const outcome = game.systems.movement.consumeActionTempo({
+            virtualSteps: 1,
+            silent: false,
+            reasonLabel: 'во время теста'
+        });
+
+        assertEqual(outcome.timeAdvances, 1, 'Тест должен сдвинуть время суток ровно на одну фазу.');
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish'), 0, 'После первой смены времени обычная рыба не должна оставаться сырой.');
+        assertEqual(inventoryRuntime.countInventoryItem('spoiledFish'), 1, 'Обычная сырая рыба должна перейти в spoiledFish.');
+        assert(/испорт/i.test(bridge.lastActionMessage), 'Игрок должен получить сообщение о порче улова.');
+    });
+
+    addTest('31. spoilage рыбы', 'Редкая рыба переживает первую смену времени, но портится на второй', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('raw_fish_rare', 1);
+        game.state.stepsSinceTimeOfDayChange = 29;
+
+        game.systems.movement.consumeActionTempo({
+            virtualSteps: 1,
+            silent: true,
+            reasonLabel: 'во время теста'
+        });
+
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish_rare'), 1, 'После первой смены времени редкая рыба должна остаться свежей.');
+        assertEqual(inventoryRuntime.countInventoryItem('spoiledFish'), 0, 'На первой смене времени редкая рыба не должна портиться.');
+
+        game.state.stepsSinceTimeOfDayChange = 29;
+        game.systems.movement.consumeActionTempo({
+            virtualSteps: 1,
+            silent: true,
+            reasonLabel: 'во время теста'
+        });
+
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish_rare'), 0, 'После второй смены времени редкая рыба должна исчезнуть из сырого стека.');
+        assertEqual(inventoryRuntime.countInventoryItem('spoiledFish'), 1, 'После второй смены времени редкая рыба должна перейти в spoiledFish.');
+    });
+
+    addTest('31. spoilage рыбы', 'Трофейная рыба не получает spoilage-профиль и не портится от времени', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('raw_fish_trophy', 1);
+
+        for (let step = 0; step < 3; step++) {
+            game.state.stepsSinceTimeOfDayChange = 29;
+            game.systems.movement.consumeActionTempo({
+                virtualSteps: 1,
+                silent: true,
+                reasonLabel: 'во время теста'
+            });
+        }
+
+        assertEqual(inventoryRuntime.countInventoryItem('raw_fish_trophy'), 1, 'Трофейная рыба не должна портиться от обычного течения времени.');
+        assertEqual(inventoryRuntime.countInventoryItem('spoiledFish'), 0, 'Трофейная рыба не должна превращаться в spoiledFish.');
+    });
+
+    addTest('31. spoilage рыбы', 'Переработанные рыбные продукты не подменяются системой spoilage', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('fishMeat', 1);
+        const initialRationCount = inventoryRuntime.countInventoryItem('ration');
+
+        for (let step = 0; step < 2; step++) {
+            game.state.stepsSinceTimeOfDayChange = 29;
+            game.systems.movement.consumeActionTempo({
+                virtualSteps: 1,
+                silent: true,
+                reasonLabel: 'во время теста'
+            });
+        }
+
+        assertEqual(inventoryRuntime.countInventoryItem('fishMeat'), 1, 'fishMeat не должен портиться через новый raw-fish spoilage слой.');
+        assertEqual(inventoryRuntime.countInventoryItem('ration'), initialRationCount, 'ration не должен портиться через новый raw-fish spoilage слой.');
+        assertEqual(inventoryRuntime.countInventoryItem('spoiledFish'), 0, 'Новый слой порчи не должен самопроизвольно создавать spoiledFish из готовых продуктов.');
+    });
+
+    addTest('31. spoilage рыбы', 'Сейв/лоад сохраняет таймер порчи сырой рыбы', () => {
+        resetHarness();
+        inventoryRuntime.addInventoryItem('raw_fish', 1);
+        const fishStack = inventoryRuntime.getInventory().find((item) => item && item.id === 'raw_fish');
+        const spoilageState = inventoryRuntime.getItemSpoilageState(fishStack);
+        const snapshot = saveLoad.buildSaveSnapshot(game.state);
+        const hydratedState = saveLoad.hydrateStateFromSnapshot(snapshot);
+        const hydratedFish = hydratedState.inventory.find((item) => item && item.id === 'raw_fish');
+
+        assert(spoilageState, 'Для сырой рыбы должен существовать spoilage state.');
+        assert(hydratedFish, 'После загрузки сырая рыба должна сохраниться в инвентаре.');
+        assertEqual(hydratedFish.spoilsAtAdvance, fishStack.spoilsAtAdvance, 'Таймер порчи должен переживать сейв/лоад.');
+    });
+
+    addTest('32. аварийная еда из рыбы', 'Прямой сухпаёк из улова помечен как аварийная рыбная еда', () => {
+        const recipe = recipeRegistry.getRecipeDefinition('raw-fish-ration');
+
+        assert(recipe, 'Рецепт raw-fish-ration должен существовать.');
+        assert(Array.isArray(recipe.tags) && recipe.tags.includes('emergency'), 'raw-fish-ration должен быть помечен как emergency.');
+        assert(recipe.tags.includes('fish'), 'raw-fish-ration должен оставаться рыбным рецептом.');
+    });
+
+    addTest('32. аварийная еда из рыбы', 'Рыбный бульон крафтится на лагере и возвращает пустую флягу', () => {
+        resetHarness();
+        game.state.activeInteraction = buildStationInteraction('camp');
+        inventoryRuntime.addInventoryItem('fishMeat', 1);
+        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('flask_water_full', 1);
+        const emptyFlaskBefore = inventoryRuntime.countInventoryItem('flask_empty');
+
+        const evaluation = craftingRuntime.evaluateRecipeAgainstInventory('fish-broth');
+        const outcome = craftingRuntime.craftRecipeAgainstInventory('fish-broth');
+
+        assert(evaluation.success, 'Рецепт fish-broth должен быть доступен на лагере.');
+        assert(outcome && outcome.success, 'Рецепт fish-broth должен крафтиться успешно.');
+        assertEqual(inventoryRuntime.countInventoryItem('fishBroth'), 1, 'Игрок должен получить fishBroth.');
+        assertEqual(inventoryRuntime.countInventoryItem('flask_empty'), emptyFlaskBefore + 1, 'После fish-broth должна вернуться пустая фляга.');
+    });
+
+    addTest('32. аварийная еда из рыбы', 'Солёная рыба крафтится из рыбного мяса и соли выживания', () => {
+        resetHarness();
+        game.state.activeInteraction = buildStationInteraction('camp');
+        inventoryRuntime.addInventoryItem('fishMeat', 1);
+        inventoryRuntime.addInventoryItem('survivalSalt', 1);
+
+        const evaluation = craftingRuntime.evaluateRecipeAgainstInventory('salted-fish');
+        const outcome = craftingRuntime.craftRecipeAgainstInventory('salted-fish');
+
+        assert(evaluation.success, 'Рецепт salted-fish должен быть доступен на лагере.');
+        assert(outcome && outcome.success, 'Рецепт salted-fish должен крафтиться успешно.');
+        assertEqual(inventoryRuntime.countInventoryItem('fishMeat'), 0, 'На salted-fish должно уходить рыбное мясо.');
+        assertEqual(inventoryRuntime.countInventoryItem('survivalSalt'), 0, 'На salted-fish должна уходить Соль выживания.');
+        assertEqual(inventoryRuntime.countInventoryItem('saltedFish'), 1, 'Игрок должен получить saltedFish.');
+    });
+
+    addTest('32. аварийная еда из рыбы', 'Все рыбные emergency-рецепты доступны на нужной станции', () => {
+        const recipeIds = ['raw-fish-ration', 'fish-broth', 'salted-fish'];
+
+        recipeIds.forEach((recipeId) => {
+            const recipe = recipeRegistry.getRecipeDefinition(recipeId);
+            assert(recipe, `Не найден emergency-рецепт ${recipeId}.`);
+            assertEqual(recipe.station, 'camp', `Рецепт ${recipeId} должен собираться на лагере.`);
+        });
+    });
+
+    addTest('32. аварийная еда из рыбы', 'Рыбные emergency-рецепты различаются по стоимости и пользе', () => {
+        const rationRecipe = recipeRegistry.getRecipeDefinition('raw-fish-ration');
+        const brothRecipe = recipeRegistry.getRecipeDefinition('fish-broth');
+        const saltedRecipe = recipeRegistry.getRecipeDefinition('salted-fish');
+        const rationEffect = itemRegistry.getConsumableEffect('ration');
+        const brothEffect = itemRegistry.getConsumableEffect('fishBroth');
+        const saltedEffect = itemRegistry.getConsumableEffect('saltedFish');
+
+        assert(rationRecipe.ingredients.length !== brothRecipe.ingredients.length || rationRecipe.ingredients.some((ingredient, index) => ingredient.id !== brothRecipe.ingredients[index].id), 'Сухпаёк и бульон не должны иметь одинаковую стоимость входов.');
+        assert(saltedRecipe.ingredients.some((ingredient) => ingredient.id === 'survivalSalt'), 'Солёная рыба должна отличаться рецептом через Соль выживания.');
+        assert(rationEffect && brothEffect && saltedEffect, 'Все три emergency-еды должны иметь consumable-эффект.');
+        assert((brothEffect.energy || 0) > (saltedEffect.energy || 0), 'Рыбный бульон должен давать больше энергии, чем солёная рыба.');
+        assert((rationEffect.hunger || 0) >= (brothEffect.hunger || 0), 'Сухпаёк должен оставаться самым сильным закрытием голода среди дешёвых emergency-вариантов.');
     });
 
     function renderResults(results) {

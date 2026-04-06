@@ -155,6 +155,100 @@
         return game.state && game.state.activeHouse ? game.state.activeHouse : null;
     }
 
+    function getCurrentActiveInteraction(options = {}) {
+        if (options.activeInteraction) {
+            return options.activeInteraction;
+        }
+
+        return game.state && game.state.activeInteraction ? game.state.activeInteraction : null;
+    }
+
+    function getSourceExpedition(source) {
+        return source && source.expedition ? source.expedition : source;
+    }
+
+    function buildStationSourceContext(source) {
+        const expedition = getSourceExpedition(source);
+
+        if (!expedition || typeof expedition !== 'object') {
+            return null;
+        }
+
+        const sourceKind = normalizeStationId(expedition.kind);
+        const buildingType = normalizeStationId(expedition.buildingType);
+        let primaryStationId = '';
+        let stationIds = [];
+        let contextLabel = '';
+        let contextSummary = '';
+
+        if (sourceKind === 'camp') {
+            primaryStationId = 'camp';
+            stationIds = ['camp'];
+            contextLabel = 'Лагерь';
+            contextSummary = 'Явная лагерная станция для воды, пищи и походных рецептов.';
+        } else if (sourceKind === 'workbench') {
+            const configuredStationIds = normalizeStationList(
+                Array.isArray(expedition.stationIds)
+                    ? expedition.stationIds
+                    : [expedition.stationId]
+            );
+
+            primaryStationId = normalizeStationId(expedition.stationId)
+                || (configuredStationIds.includes('workbench')
+                    ? 'workbench'
+                    : (configuredStationIds[0]
+                        || (buildingType === 'workshop' || buildingType === 'bridgehouse' ? 'workbench' : 'bench')));
+            stationIds = normalizeStationList([primaryStationId, ...configuredStationIds]);
+            contextLabel = primaryStationId === 'workbench' ? 'Мастерская' : 'Верстак';
+            contextSummary = primaryStationId === 'workbench'
+                ? 'Явная ремесленная станция для мостов, ремонта и тяжёлой утилиты.'
+                : 'Явный полевой верстак для верёвок, простых сборок и утилиты.';
+        } else {
+            return null;
+        }
+
+        const sourceLabel = typeof expedition.locationLabel === 'string' && expedition.locationLabel.trim()
+            ? expedition.locationLabel
+            : (typeof expedition.label === 'string' && expedition.label.trim()
+                ? expedition.label
+                : contextLabel);
+
+        return {
+            sourceId: source && source.id ? source.id : `${sourceKind}:${sourceLabel}`,
+            sourceKind,
+            buildingType,
+            sourceLabel,
+            contextLabel,
+            contextSummary,
+            primaryStationId,
+            primaryStationLabel: getStationLabel(primaryStationId),
+            stationIds,
+            stationLabels: stationIds.map((stationId) => getStationLabel(stationId))
+        };
+    }
+
+    function buildSourceContexts(options = {}) {
+        const contexts = [];
+        const seen = new Set();
+        const sources = [
+            getCurrentActiveInteraction(options),
+            getCurrentActiveHouse(options)
+        ];
+
+        sources.forEach((source) => {
+            const context = buildStationSourceContext(source);
+
+            if (!context || seen.has(context.sourceId)) {
+                return;
+            }
+
+            seen.add(context.sourceId);
+            contexts.push(context);
+        });
+
+        return contexts;
+    }
+
     function resolveAvailableStations(options = {}) {
         const explicitStations = Array.isArray(options.availableStations)
             ? options.availableStations
@@ -169,26 +263,39 @@
             return [...stations];
         }
 
-        const activeHouse = getCurrentActiveHouse(options);
-        const expedition = activeHouse && activeHouse.expedition ? activeHouse.expedition : activeHouse;
-
-        if (!expedition) {
-            return [...stations];
-        }
-
-        const houseKind = typeof expedition.kind === 'string' ? expedition.kind.trim().toLowerCase() : '';
-        const buildingType = typeof expedition.buildingType === 'string' ? expedition.buildingType.trim().toLowerCase() : '';
-
-        if (houseKind === 'shelter') {
-            stations.add('camp');
-        }
-
-        if (houseKind === 'artisan' || buildingType === 'workshop' || buildingType === 'bridgehouse') {
-            stations.add('bench');
-            stations.add('workbench');
-        }
+        buildSourceContexts(options).forEach((context) => {
+            context.stationIds.forEach((stationId) => {
+                stations.add(stationId);
+            });
+        });
 
         return [...stations];
+    }
+
+    function getActiveStationContext(options = {}) {
+        const sourceContexts = buildSourceContexts(options);
+        const activeContext = sourceContexts[0] || null;
+        const availableStations = [...new Set(resolveAvailableStations(options)
+            .map((stationId) => normalizeStationId(stationId))
+            .filter(Boolean))];
+        const activeStationId = activeContext && activeContext.primaryStationId
+            ? activeContext.primaryStationId
+            : 'hand';
+
+        return cloneValue({
+            activeStationId,
+            activeStationLabel: getStationLabel(activeStationId),
+            activeSourceLabel: activeContext ? activeContext.contextLabel : 'Руки',
+            activeSourceSummary: activeContext
+                ? activeContext.contextSummary
+                : 'Стартовая станция, доступная без привязки к объекту.',
+            activeSourceName: activeContext ? activeContext.sourceLabel : 'Руки',
+            contextStationIds: activeContext ? activeContext.stationIds : ['hand'],
+            contextStationLabels: activeContext ? activeContext.stationLabels : [getStationLabel('hand')],
+            sourceContexts,
+            availableStations,
+            availableStationLabels: availableStations.map((stationId) => getStationLabel(stationId))
+        });
     }
 
     Object.assign(stationRuntime, {
@@ -199,6 +306,8 @@
         getStationDefinition,
         getStationDefinitions,
         getStationLabel,
+        buildStationSourceContext,
+        getActiveStationContext,
         resolveAvailableStations
     });
 })();

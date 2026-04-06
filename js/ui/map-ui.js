@@ -25,6 +25,7 @@
         rubble: '#d8c29c',
         soil: '#b57e56',
         grass: '#9dd26c',
+        reeds: '#b7d98a',
         wood: '#bea06a',
         water: '#7ec8ea',
         fish: '#8fd9ff',
@@ -100,6 +101,7 @@
             mapZoomIn: document.getElementById('mapZoomIn'),
             mapZoomOut: document.getElementById('mapZoomOut'),
             mapZoomValue: document.getElementById('mapZoomValue'),
+            mapIslandBadge: document.getElementById('mapIslandBadge'),
             mapHoverCard: document.getElementById('mapHoverCard'),
             mapHoverCardTile: document.getElementById('mapHoverCardTile'),
             mapHoverCardIsland: document.getElementById('mapHoverCardIsland')
@@ -123,6 +125,32 @@
         }
     }
 
+    function hideSelectedMapIslandBadge() {
+        const refs = elements || queryElements();
+
+        if (refs.mapIslandBadge) {
+            refs.mapIslandBadge.hidden = true;
+            refs.mapIslandBadge.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    function syncSelectedMapIslandBadge() {
+        const refs = elements || queryElements();
+
+        if (!refs.mapIslandBadge) {
+            return;
+        }
+
+        if (!Number.isFinite(selectedMapIslandIndex)) {
+            hideSelectedMapIslandBadge();
+            return;
+        }
+
+        refs.mapIslandBadge.textContent = `Выбран остров ${Math.floor(selectedMapIslandIndex)}`;
+        refs.mapIslandBadge.hidden = false;
+        refs.mapIslandBadge.setAttribute('aria-hidden', 'false');
+    }
+
     function resetMapHoverState() {
         clearMapHoverTimer();
         mapHoverTileKey = '';
@@ -131,6 +159,7 @@
 
     function resetSelectedMapIsland() {
         selectedMapIslandIndex = null;
+        hideSelectedMapIslandBadge();
     }
 
     function bindEvents() {
@@ -528,12 +557,8 @@
 
     function selectMapIsland(entry) {
         const islandIndex = resolveClickedIslandIndex(entry);
-
-        if (islandIndex === null) {
-            return null;
-        }
-
         selectedMapIslandIndex = islandIndex;
+        syncSelectedMapIslandBadge();
         return islandIndex;
     }
 
@@ -624,14 +649,17 @@
     }
 
     function drawBookmarkMarker(ctx, centerX, centerY, cellSize) {
-        const flagWidth = Math.max(8, cellSize * 0.68);
-        const flagHeight = Math.max(10, cellSize * 0.92);
+        const scale = 3;
+        const flagWidth = Math.max(24, cellSize * 0.68 * scale);
+        const flagHeight = Math.max(30, cellSize * 0.92 * scale);
         const halfWidth = flagWidth / 2;
         const topY = centerY - flagHeight * 0.58;
         const bottomY = topY + flagHeight;
         const notchY = bottomY - Math.max(3, flagHeight * 0.24);
 
         ctx.save();
+        ctx.shadowColor = 'rgba(255, 110, 140, 0.34)';
+        ctx.shadowBlur = Math.max(10, cellSize * 0.9);
         ctx.beginPath();
         ctx.moveTo(centerX - halfWidth, topY);
         ctx.lineTo(centerX + halfWidth, topY);
@@ -642,11 +670,11 @@
         ctx.fillStyle = '#ff7d8d';
         ctx.fill();
         ctx.strokeStyle = '#7a2330';
-        ctx.lineWidth = Math.max(1.5, cellSize * 0.12);
+        ctx.lineWidth = Math.max(2, cellSize * 0.18);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(centerX, centerY - flagHeight * 0.14, Math.max(2, cellSize * 0.14), 0, Math.PI * 2);
+        ctx.arc(centerX, centerY - flagHeight * 0.14, Math.max(4, cellSize * 0.26), 0, Math.PI * 2);
         ctx.fillStyle = '#fff4cf';
         ctx.fill();
 
@@ -835,12 +863,14 @@
             : 'Архипелаг';
 
         refs.mapPanelTitle.textContent = title;
+        syncSelectedMapIslandBadge();
 
         if (!Array.isArray(exploredTiles) || exploredTiles.length === 0) {
             lastRenderedLayout = null;
             lastRenderedBounds = null;
             lastRenderedTileIndex = new Map();
             resetMapHoverState();
+            hideSelectedMapIslandBadge();
             if (refs.mapCanvas) {
                 refs.mapCanvas.classList.remove('is-pannable', 'is-dragging');
             }
@@ -1099,6 +1129,7 @@
             renderMapPanel();
         } else {
             resetMapHoverState();
+            hideSelectedMapIslandBadge();
         }
     }
 

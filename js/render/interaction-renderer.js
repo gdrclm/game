@@ -771,6 +771,90 @@
         context.restore();
     }
 
+    function drawCamp(screenX, baseY, resolved) {
+        const context = window.Game.ctx;
+
+        drawShadow(screenX, baseY + 4, 13, 5);
+
+        context.save();
+        context.translate(screenX, baseY);
+        context.fillStyle = '#6f5130';
+        context.fillRect(-3, -20, 6, 18);
+        context.fillStyle = '#8b6740';
+        context.fillRect(-13, -12, 26, 4);
+        context.save();
+        context.rotate(0.72);
+        context.fillRect(-2, -19, 4, 18);
+        context.restore();
+        context.save();
+        context.rotate(-0.72);
+        context.fillRect(-2, -19, 4, 18);
+        context.restore();
+        context.fillStyle = '#ffb54a';
+        context.beginPath();
+        context.moveTo(0, -26);
+        context.lineTo(8, -12);
+        context.lineTo(0, -6);
+        context.lineTo(-8, -12);
+        context.closePath();
+        context.fill();
+        context.fillStyle = '#ffe18a';
+        context.beginPath();
+        context.moveTo(0, -21);
+        context.lineTo(4, -12);
+        context.lineTo(0, -9);
+        context.lineTo(-4, -12);
+        context.closePath();
+        context.fill();
+
+        if (resolved) {
+            context.fillStyle = 'rgba(210, 210, 210, 0.32)';
+            context.fillRect(-18, -30, 36, 32);
+        }
+
+        context.restore();
+    }
+
+    function drawWorkbench(screenX, baseY, interaction, resolved) {
+        const context = window.Game.ctx;
+        const expedition = interaction && interaction.expedition ? interaction.expedition : {};
+        const stationId = expedition.stationId || 'bench';
+        const isWorkshop = stationId === 'workbench';
+
+        drawShadow(screenX, baseY + 4, isWorkshop ? 16 : 13, 5);
+
+        context.save();
+        context.translate(screenX, baseY);
+        context.fillStyle = isWorkshop ? '#7a5a36' : '#8c683e';
+        context.fillRect(-18, -11, 36, 9);
+        context.fillRect(-14, -20, 4, 20);
+        context.fillRect(10, -20, 4, 20);
+        context.fillStyle = isWorkshop ? '#b99562' : '#d3ac6b';
+        context.fillRect(-16, -20, 32, 10);
+        context.fillStyle = '#6f7f45';
+        context.fillRect(-12, -27, 6, 7);
+        context.fillRect(-3, -29, 6, 9);
+        context.fillRect(6, -26, 6, 6);
+        context.fillStyle = '#394b61';
+        context.fillRect(-2, -33, 4, 13);
+
+        if (isWorkshop) {
+            context.fillStyle = '#4f95c2';
+            context.beginPath();
+            context.arc(14, -24, 4, 0, Math.PI * 2);
+            context.fill();
+            context.fillStyle = '#d4e7f2';
+            context.fillRect(12, -26, 4, 2);
+        }
+
+        if (resolved) {
+            context.fillStyle = 'rgba(210, 210, 210, 0.32)';
+            context.fillRect(-22, -36, 44, 38);
+        }
+
+        context.restore();
+    }
+
     function drawWell(screenX, baseY, resolved) {
         const context = window.Game.ctx;
 
@@ -875,6 +959,23 @@
             context.beginPath();
             context.arc(1, upperCanopyY - 6, 5, 0, Math.PI * 2);
             context.arc(6, -37, 4, 0, Math.PI * 2);
+            context.fill();
+        } else if (renderKind === 'reedPatch') {
+            context.fillStyle = '#6f8f48';
+            context.fillRect(-10, -24, 2, 22);
+            context.fillRect(-6, -28, 2, 26);
+            context.fillRect(-2, -22, 2, 20);
+            context.fillRect(2, -30, 2, 28);
+            context.fillRect(6, -25, 2, 23);
+            context.fillRect(10, -20, 2, 18);
+            context.fillStyle = '#c7a35b';
+            context.fillRect(-10, -28, 3, 8);
+            context.fillRect(-6, -32, 3, 8);
+            context.fillRect(2, -34, 3, 8);
+            context.fillRect(6, -29, 3, 8);
+            context.fillStyle = '#86ad5f';
+            context.beginPath();
+            context.ellipse(0, -7, 14, 5, 0, 0, Math.PI * 2);
             context.fill();
         } else if (renderKind === 'stonePile') {
             fillPolygon(context, [
@@ -1105,6 +1206,16 @@
 
         if (interaction.kind === 'shelter') {
             drawShelter(screenX, baseY, resolved);
+            return;
+        }
+
+        if (interaction.kind === 'camp') {
+            drawCamp(screenX, baseY, resolved);
+            return;
+        }
+
+        if (interaction.kind === 'workbench') {
+            drawWorkbench(screenX, baseY, interaction, resolved);
             return;
         }
 

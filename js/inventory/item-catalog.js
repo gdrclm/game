@@ -136,7 +136,7 @@
             chestWeight: 5,
             merchantWeight: 6,
             baseValue: 13,
-            description: 'Поднимает силы и даёт одно игнорирование плохого дома или ловушки.',
+            description: 'Поднимает силы, даёт одно игнорирование плохого дома или ловушки и может пойти на походную засолку рыбы.',
             consumable: { energy: 20 },
             activeEffect: { kind: 'trapWard', charges: 1 }
         }),
@@ -171,6 +171,22 @@
             baseValue: 18,
             description: 'Густой лагерный бульон для тяжёлых отрезков. Сильно поддерживает восстановление.',
             consumable: { hunger: 100, energy: 45, focus: 15, cold: 16 }
+        }),
+        makeItem('fishBroth', 'Рыбный бульон', 'RB', 2, 'consumable survival food', {
+            stackable: true,
+            chestWeight: 0,
+            merchantWeight: 0,
+            baseValue: 12,
+            description: 'Простой лагерный бульон из рыбы и кипячёной воды. Быстро закрывает аварийный голод на маршруте.',
+            consumable: { hunger: 80, energy: 22, focus: 5, cold: 8 }
+        }),
+        makeItem('saltedFish', 'Солёная рыба', 'SR', 2, 'consumable survival food', {
+            stackable: true,
+            chestWeight: 0,
+            merchantWeight: 0,
+            baseValue: 11,
+            description: 'Засоленный походный улов. Восстанавливает меньше, чем горячая еда, но спасает слот от порчи сырой рыбы.',
+            consumable: { hunger: 65, energy: 12, focus: 4 }
         }),
         makeItem('roadDust', 'Пыль дороги', 'PD', 2, 'consumable movement', {
             stackable: true,
@@ -284,15 +300,13 @@
             description: 'Облегчает проход через тяжёлые зоны и узкие места.',
             activeEffect: { kind: 'travelBuff', ignoreTravelZones: true, durationSteps: 4 }
         }),
-        makeItem('fishingRod', 'Удочка путника', 'UP', 2, 'tool survival utility food', {
+        makeItem('fishingRod', 'Удочка путника', 'UP', 2, 'tool survival utility', {
             chestWeight: 0,
             merchantWeight: 1,
             baseValue: 18,
-            description: 'Дар рыбака. Делает еду и короткий отдых заметно полезнее на длинных островах.',
-            passive: {
-                foodRecoveryMultiplier: 1.18,
-                recoveryMultiplier: 1.05
-            }
+            description: 'Походный инструмент рыбака. Пока удочка лежит в сумке, у рыболовных точек становится доступен сбор рыбы.',
+            resourceUnlocks: ['fish'],
+            resourceNodeUnlocks: ['fishingSpot', 'fishingReedsSpot', 'fishingCalmSpot', 'fishingRareSpot']
         }),
         makeItem('smallPickaxe', 'Кирка разведчика', 'KR', 2, 'tool utility', {
             chestWeight: 3,
@@ -338,14 +352,14 @@
             chestWeight: 3,
             merchantWeight: 4,
             baseValue: 24,
-            description: 'Открывает карту вокруг героя на текущем острове.',
+            description: 'Масляный фонарь на рыбьем жире. Открывает карту вокруг героя на текущем острове.',
             activeEffect: { kind: 'revealMap', mode: 'currentViewBoost' }
         }),
         makeItem('merchantBeacon', 'Маяк торговца', 'MT', 3, 'tool utility info', {
             chestWeight: 2,
             merchantWeight: 4,
             baseValue: 22,
-            description: 'Показывает координаты торговца текущего острова.',
+            description: 'Сигнальный маяк на рыбьем жире. Показывает координаты торговца текущего острова.',
             activeEffect: { kind: 'revealMerchant' }
         }),
         makeItem('bypassCompass', 'Компас обхода', 'KO', 4, 'tool utility movement', {
@@ -841,6 +855,13 @@
             baseValue: 4,
             description: 'Лёгкий перекус на ходу.',
             consumable: { hunger: 100, energy: 8 }
+        }),
+        makeItem('spoiledFish', 'Испорченная рыба', 'IR', 0, 'resource risk', {
+            stackable: true,
+            baseValue: 1,
+            description: 'Испорченный улов. Для еды и крафта уже не годится.',
+            merchantWeight: 0,
+            merchantQuestWeight: 0
         }),
         ...getBaseResourceCatalogEntries(),
         ...getCraftingComponentCatalogEntries(),

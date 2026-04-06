@@ -1317,6 +1317,12 @@
             conditionOverlay: document.getElementById('conditionOverlay'),
             conditionDeathLabel: document.getElementById('conditionDeathLabel'),
             pauseOverlay: document.getElementById('pauseOverlay'),
+            pauseMainActions: document.getElementById('pauseMainActions'),
+            pauseSlotMenu: document.getElementById('pauseSlotMenu'),
+            pauseSlotMenuSummary: document.getElementById('pauseSlotMenuSummary'),
+            pauseSlotMenuStatus: document.getElementById('pauseSlotMenuStatus'),
+            pauseSlotList: document.getElementById('pauseSlotList'),
+            pwaStatus: document.getElementById('pwaStatus'),
             merchantPanel: document.getElementById('merchantPanel'),
             merchantPanelTitle: document.getElementById('merchantPanelTitle'),
             merchantPanelSummary: document.getElementById('merchantPanelSummary'),
@@ -1330,6 +1336,9 @@
             zoomOutButton: document.getElementById('zoomOutButton'),
             zoomInButton: document.getElementById('zoomInButton'),
             pauseResumeButton: document.getElementById('pauseResumeButton'),
+            pauseSaveButton: document.getElementById('pauseSaveButton'),
+            pauseLoadButton: document.getElementById('pauseLoadButton'),
+            pauseBackButton: document.getElementById('pauseBackButton'),
             newGameButton: document.getElementById('newGameButton'),
             inventoryGrid: document.getElementById('inventoryGrid'),
             selectedCharacterPortrait: document.getElementById('selectedCharacterPortrait'),
@@ -2841,6 +2850,18 @@
             return;
         }
 
+        if (encounter.kind === 'camp') {
+            setActionMessage(`${encounter.label}: ${encounter.summary} Это отдельная лагерная точка для воды, еды и лагерных рецептов.`);
+            renderAfterStateChange();
+            return;
+        }
+
+        if (encounter.kind === 'workbench') {
+            setActionMessage(`${encounter.label}: ${encounter.summary} Открой сумку рядом, чтобы увидеть явный список рецептов по станциям.`);
+            renderAfterStateChange();
+            return;
+        }
+
         if (isHouseResolved(source)) {
             setActionMessage(`Дом уже исчерпан: ${encounter.label}.`);
             renderAfterStateChange();
@@ -2953,6 +2974,18 @@
 
         if (encounter.kind === 'islandOriginalNpc') {
             setActionMessage(`${encounter.label}: ${encounter.advice || encounter.description || encounter.summary}`);
+            renderAfterStateChange();
+            return;
+        }
+
+        if (encounter.kind === 'camp') {
+            setActionMessage(`${encounter.label}: ${encounter.summary} Это явная лагерная станция, а не просто shelter-логика.`);
+            renderAfterStateChange();
+            return;
+        }
+
+        if (encounter.kind === 'workbench') {
+            setActionMessage(`${encounter.label}: ${encounter.summary} Это явная станция для крафта у верстака и в мастерской.`);
             renderAfterStateChange();
             return;
         }
@@ -3103,12 +3136,52 @@
             });
         }
 
+        if (elements.pauseSaveButton) {
+            elements.pauseSaveButton.addEventListener('click', () => {
+                const statusUi = getStatusUiModule();
+
+                if (statusUi && typeof statusUi.openPauseSaveMenu === 'function') {
+                    statusUi.openPauseSaveMenu();
+                }
+            });
+        }
+
+        if (elements.pauseLoadButton) {
+            elements.pauseLoadButton.addEventListener('click', () => {
+                const statusUi = getStatusUiModule();
+
+                if (statusUi && typeof statusUi.openPauseLoadMenu === 'function') {
+                    statusUi.openPauseLoadMenu();
+                }
+            });
+        }
+
+        if (elements.pauseBackButton) {
+            elements.pauseBackButton.addEventListener('click', () => {
+                const statusUi = getStatusUiModule();
+
+                if (statusUi && typeof statusUi.closePauseSlotMenu === 'function') {
+                    statusUi.closePauseSlotMenu();
+                }
+            });
+        }
+
         if (elements.newGameButton) {
             elements.newGameButton.addEventListener('click', () => {
                 const statusUi = getStatusUiModule();
 
                 if (statusUi && typeof statusUi.startNewGame === 'function') {
                     statusUi.startNewGame();
+                }
+            });
+        }
+
+        if (elements.pauseSlotList) {
+            elements.pauseSlotList.addEventListener('click', (event) => {
+                const statusUi = getStatusUiModule();
+
+                if (statusUi && typeof statusUi.handlePauseSlotListClick === 'function') {
+                    statusUi.handlePauseSlotListClick(event);
                 }
             });
         }

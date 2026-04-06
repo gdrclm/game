@@ -48,13 +48,130 @@
             : null;
     }
 
+    function getCurrentTimeOfDayAdvanceCount() {
+        const rawValue = game.state && typeof game.state.timeOfDayAdvancesElapsed === 'number'
+            ? game.state.timeOfDayAdvancesElapsed
+            : 0;
+        return Math.max(0, Math.floor(rawValue));
+    }
+
+    function getItemSpoilageProfile(itemOrId) {
+        const itemId = typeof itemOrId === 'string'
+            ? itemOrId
+            : (itemOrId && typeof itemOrId.id === 'string' ? itemOrId.id : '');
+        const definition = itemId ? getItemDefinition(itemId) : null;
+        const spoilage = definition && definition.spoilage && typeof definition.spoilage === 'object'
+            ? definition.spoilage
+            : null;
+        const spoilsAfterAdvances = spoilage && Number.isFinite(spoilage.spoilsAfterAdvances)
+            ? Math.max(1, Math.floor(spoilage.spoilsAfterAdvances))
+            : 0;
+        const spoiledItemId = spoilage && typeof spoilage.spoiledItemId === 'string'
+            ? spoilage.spoiledItemId.trim()
+            : '';
+
+        if (!definition || !spoilage || !spoilsAfterAdvances || !spoiledItemId) {
+            return null;
+        }
+
+        return {
+            itemId,
+            spoilsAfterAdvances,
+            spoiledItemId,
+            spoilageLabel: typeof spoilage.spoilageLabel === 'string' ? spoilage.spoilageLabel.trim() : ''
+        };
+    }
+
+    function ensurePerishableMetadata(item) {
+        if (!item || !item.id) {
+            return item;
+        }
+
+        const spoilageProfile = getItemSpoilageProfile(item);
+        if (!spoilageProfile) {
+            if (Object.prototype.hasOwnProperty.call(item, 'spoilsAtAdvance')) {
+                delete item.spoilsAtAdvance;
+            }
+            return item;
+        }
+
+        if (!Number.isFinite(item.spoilsAtAdvance)) {
+            item.spoilsAtAdvance = getCurrentTimeOfDayAdvanceCount() + spoilageProfile.spoilsAfterAdvances;
+        } else {
+            item.spoilsAtAdvance = Math.max(0, Math.floor(item.spoilsAtAdvance));
+        }
+
+        return item;
+    }
+
+    function mergeSpoilageMetadata(stack, incomingItem) {
+        const spoilageProfile = getItemSpoilageProfile(stack);
+        if (!spoilageProfile || !stack) {
+            return;
+        }
+
+        const incomingSpoilsAtAdvance = incomingItem && Number.isFinite(incomingItem.spoilsAtAdvance)
+            ? Math.max(0, Math.floor(incomingItem.spoilsAtAdvance))
+            : null;
+
+        if (incomingSpoilsAtAdvance === null) {
+            ensurePerishableMetadata(stack);
+            return;
+        }
+
+        stack.spoilsAtAdvance = Number.isFinite(stack.spoilsAtAdvance)
+            ? Math.min(Math.max(0, Math.floor(stack.spoilsAtAdvance)), incomingSpoilsAtAdvance)
+            : incomingSpoilsAtAdvance;
+    }
+
+    function formatAdvanceLabel(remainingAdvances) {
+        const normalizedAdvances = Math.max(0, Math.floor(remainingAdvances));
+
+        if (normalizedAdvances <= 0) {
+            return 'уже испорчено';
+        }
+
+        if (normalizedAdvances === 1) {
+            return 'испортится к следующей смене времени';
+        }
+
+        return `испортится через ${normalizedAdvances} смены времени`;
+    }
+
+    function getItemSpoilageState(item) {
+        if (!item || !item.id) {
+            return null;
+        }
+
+        const spoilageProfile = getItemSpoilageProfile(item);
+        if (!spoilageProfile) {
+            return null;
+        }
+
+        ensurePerishableMetadata(item);
+        const currentAdvance = getCurrentTimeOfDayAdvanceCount();
+        const spoilsAtAdvance = Number.isFinite(item.spoilsAtAdvance)
+            ? Math.max(0, Math.floor(item.spoilsAtAdvance))
+            : currentAdvance + spoilageProfile.spoilsAfterAdvances;
+        const remainingAdvances = Math.max(0, spoilsAtAdvance - currentAdvance);
+
+        return {
+            ...spoilageProfile,
+            currentAdvance,
+            spoilsAtAdvance,
+            remainingAdvances,
+            isSpoiled: remainingAdvances <= 0,
+            statusLabel: formatAdvanceLabel(remainingAdvances)
+        };
+    }
+
     function normalizeInventoryItem(item) {
         if (!item || !item.id) {
             return item;
         }
 
         const definition = getItemDefinition(item.id);
-        return {
+        const normalizedItem = {
             ...item,
             icon: item.icon || (definition ? definition.icon : '?'),
             label: item.label || (definition ? definition.label : item.id),
@@ -62,12 +179,16 @@
             obtainedIslandIndex: Math.max(1, item.obtainedIslandIndex || game.state.currentIslandIndex || 1),
             useCount: Math.max(0, item.useCount || 0)
         };
+
+        return ensurePerishableMetadata(normalizedItem);
     }
 
     function mergeStackMetadata(stack, options = {}) {
         if (!stack || !options || typeof options !== 'object') {
             return;
         }
+
+        mergeSpoilageMetadata(stack, options);
 
         const resourceFamilyId = typeof options.resourceFamilyId === 'string' && options.resourceFamilyId.trim()
             ? options.resourceFamilyId.trim()
@@ -123,6 +244,10 @@
         }
 
         const inventory = getInventory();
+        const nextItem = registry && typeof registry.createInventoryItem === 'function'
+            ? registry.createInventoryItem(itemId, quantity, options)
+            : normalizeInventoryItem({ ...options, id: itemId, quantity });
+        const normalizedNextItem = normalizeInventoryItem(nextItem);
         const isStackable = registry && typeof registry.isItemStackable === 'function'
             ? registry.isItemStackable(itemId)
             : false;
@@ -130,15 +255,15 @@
         if (isStackable) {
             const stack = inventory.find((item) => item && item.id === itemId);
             if (stack) {
-                stack.quantity = Math.max(1, (stack.quantity || 1) + quantity);
+                stack.quantity = Math.max(1, (stack.quantity || 1) + (normalizedNextItem.quantity || quantity));
                 stack.icon = definition.icon;
                 stack.label = definition.label;
                 stack.obtainedIslandIndex = Math.min(
                     Math.max(1, stack.obtainedIslandIndex || game.state.currentIslandIndex || 1),
-                    Math.max(1, options.obtainedIslandIndex || game.state.currentIslandIndex || 1)
+                    Math.max(1, normalizedNextItem.obtainedIslandIndex || game.state.currentIslandIndex || 1)
                 );
                 stack.useCount = Math.max(0, stack.useCount || 0);
-                mergeStackMetadata(stack, options);
+                mergeStackMetadata(stack, normalizedNextItem);
                 return {
                     added: true,
                     reason: 'stacked',
@@ -158,11 +283,7 @@
             };
         }
 
-        const nextItem = registry && typeof registry.createInventoryItem === 'function'
-            ? registry.createInventoryItem(itemId, quantity, options)
-            : normalizeInventoryItem({ id: itemId, quantity });
-
-        inventory[emptyIndex] = normalizeInventoryItem(nextItem);
+        inventory[emptyIndex] = normalizedNextItem;
         return {
             added: true,
             reason: 'new',
@@ -182,7 +303,10 @@
             'label',
             'quantity',
             'obtainedIslandIndex',
-            'useCount'
+            'useCount',
+            'spoilsAtAdvance',
+            'spoiledAtAdvance',
+            'spoiledFromItemId'
         ]);
         const passthroughMetadata = Object.fromEntries(
             Object.entries(item || {}).filter(([key]) => !reservedKeys.has(key))
@@ -520,12 +644,66 @@
         };
     }
 
+    function processPerishableItems(options = {}) {
+        const currentAdvance = Number.isFinite(options.currentAdvance)
+            ? Math.max(0, Math.floor(options.currentAdvance))
+            : getCurrentTimeOfDayAdvanceCount();
+        const spoiledEntries = [];
+        const inventory = getInventory();
+
+        for (let index = 0; index < getUnlockedInventorySlots(); index++) {
+            const item = inventory[index];
+            const spoilageState = getItemSpoilageState(item);
+
+            if (!spoilageState || !spoilageState.isSpoiled) {
+                continue;
+            }
+
+            const quantity = Math.max(1, item.quantity || 1);
+            const transformed = transformInventoryItemAtIndex(index, spoilageState.spoiledItemId, quantity, {
+                spoiledFromItemId: item.id,
+                spoiledAtAdvance: currentAdvance
+            });
+
+            if (!transformed || !transformed.success) {
+                continue;
+            }
+
+            spoiledEntries.push({
+                itemId: item.id,
+                label: item.label || spoilageState.itemId,
+                quantity
+            });
+        }
+
+        const groupedSpoilage = spoiledEntries.reduce((map, entry) => {
+            const currentEntry = map.get(entry.itemId) || {
+                label: entry.label,
+                quantity: 0
+            };
+            currentEntry.quantity += entry.quantity;
+            map.set(entry.itemId, currentEntry);
+            return map;
+        }, new Map());
+
+        const summary = [...groupedSpoilage.values()]
+            .map((entry) => `${entry.label}${entry.quantity > 1 ? ` x${entry.quantity}` : ''}`)
+            .join(', ');
+
+        return {
+            transformedCount: spoiledEntries.length,
+            entries: spoiledEntries,
+            message: summary ? `Часть сырой рыбы испортилась: ${summary}.` : ''
+        };
+    }
+
     Object.assign(inventoryRuntime, {
         getInventory,
         getUnlockedInventorySlots,
         getSelectedInventoryItem,
         getItemDefinition,
         normalizeInventoryItem,
+        getItemSpoilageState,
         addInventoryItem,
         removeInventoryItemAtIndex,
         transformInventoryItemAtIndex,
@@ -539,6 +717,7 @@
         getCurrentGroundItem,
         getGroundItemDescription,
         pickupGroundItem,
-        dropSelectedInventoryItem
+        dropSelectedInventoryItem,
+        processPerishableItems
     });
 })();

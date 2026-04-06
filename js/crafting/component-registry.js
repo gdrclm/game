@@ -295,10 +295,10 @@
             tier: 1,
             craftMethod: 'hand',
             craftMethodLabel: 'Руки',
-            sourceResourceIds: ['grass'],
+            sourceResourceIds: ['grass', 'reeds'],
             resourceInputs: [{ resourceId: 'grass', quantity: 5 }],
-            sourceSummary: 'Сжатая лечебная основа из травы.',
-            baseConversion: ['5 травы -> 1 травяная база лечения'],
+            sourceSummary: 'Сжатая лечебная основа из травы или тростника.',
+            baseConversion: ['5 травы -> 1 травяная база лечения', '5 тростника -> 1 травяная база лечения'],
             mainRole: 'Базовый лечебный компонент для раннего и среднего выживания.',
             usedInRecipes: ['Отвар лечения', 'Второе дыхание'],
             criticalWindows: ['Острова 1-12: стабилизация и лечение', 'Острова 19-30: запас под тяжёлые забеги'],
@@ -331,10 +331,10 @@
             tier: 1,
             craftMethod: 'bench',
             craftMethodLabel: 'Верстак',
-            sourceResourceIds: ['grass'],
+            sourceResourceIds: ['grass', 'reeds'],
             resourceInputs: [{ resourceId: 'grass', quantity: 10 }],
-            sourceSummary: 'Полевой утилитарный компонент из травяного волокна.',
-            baseConversion: ['10 травы -> 1 верёвка'],
+            sourceSummary: 'Полевой утилитарный компонент из травяного или тростникового волокна.',
+            baseConversion: ['10 травы -> 1 верёвка', '10 тростника -> 1 верёвка'],
             mainRole: 'Открывает мосты, лодочные сборки, ремонт и раннюю маршрутную утилиту.',
             usedInRecipes: ['Переносной мост', 'Ремкомплект моста', 'Рама лодки', 'Готовая лодка', 'Ремкомплект лодки'],
             criticalWindows: ['Острова 4-6: первый маршрутный барьер', 'Острова 13-18: лодка и ремонт', 'Острова 25-27: эндгейм-логистика'],
@@ -482,13 +482,13 @@
             craftMethodLabel: 'Лагерь',
             sourceResourceIds: ['fish'],
             resourceInputs: [{ resourceId: 'fish', quantity: 10 }],
-            sourceSummary: 'Плотный жир для лодочного цикла, света и поздней утилиты.',
+            sourceSummary: 'Плотный жир для лодочного цикла, света, поздней утилиты и торговли.',
             baseConversion: ['10 рыбы -> 1 рыбий жир'],
-            mainRole: 'Ключевой ресурс водной фазы и части поздних рецептов.',
-            usedInRecipes: ['Готовая лодка', 'Ремкомплект лодки'],
-            criticalWindows: ['Острова 16-18: обязательная лодка', 'Острова 25-27: поздняя логистика и инструменты'],
+            mainRole: 'Ключевой ресурс для лодки, фонарей, маяков, поздней логистики и выгодного обмена.',
+            usedInRecipes: ['Готовая лодка', 'Ремкомплект лодки', 'Фонарь тумана', 'Маяк торговца'],
+            criticalWindows: ['Острова 10-12: свет и туман', 'Острова 16-18: обязательная лодка', 'Острова 25-27: поздняя логистика и инструменты'],
             currentInventoryItemIds: ['fishOil'],
-            tags: ['building']
+            tags: ['building', 'utility', 'trade']
         }
     ];
 
@@ -606,11 +606,13 @@
         fishOil: {
             icon: 'FO',
             lootTier: 0,
-            categories: 'component material building',
+            categories: 'component material building utility value',
             extra: {
                 stackable: true,
-                baseValue: 12,
-                description: 'Плотный рыбий жир для лодочных и поздних рецептов.'
+                merchantWeight: 7,
+                merchantQuestWeight: 4,
+                baseValue: 14,
+                description: 'Плотный рыбий жир для лодки, фонарей, поздней утилиты и выгодной торговли.'
             }
         }
     });

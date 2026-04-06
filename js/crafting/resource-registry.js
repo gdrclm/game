@@ -121,6 +121,16 @@
             currentInventoryItemIds: ['raw_grass']
         },
         {
+            id: 'reeds',
+            type: 'raw',
+            label: 'Тростник',
+            source: 'Прибрежные заросли / кромка воды',
+            baseConversion: ['5 шт. -> 1 база лечения', '10 шт. -> 1 верёвка'],
+            mainRole: 'Лечение у воды, верёвка, ранняя маршрутная утилита',
+            requiredIslands: { from: 1, to: 30 },
+            currentInventoryItemIds: ['raw_reeds']
+        },
+        {
             id: 'stone',
             type: 'raw',
             label: 'Камень',
@@ -167,8 +177,8 @@
             source: 'Удочка + точка ловли',
             baseConversion: ['5 шт. -> 1 рыбное мясо', '10 шт. -> 1 рыбий жир'],
             mainRole: 'Еда, масло, поздние рецепты',
-            requiredIslands: { from: 6, to: 24 },
-            currentInventoryItemIds: ['raw_fish']
+            requiredIslands: { from: 6, to: 30 },
+            currentInventoryItemIds: ['raw_fish', 'raw_fish_rare', 'raw_fish_trophy']
         }
     ];
 
@@ -180,11 +190,11 @@
     const resourceSubtypeDefinitions = [
         {
             id: 'lowlandGrass',
-            familyResourceId: 'grass',
-            familyItemId: 'raw_grass',
-            label: 'Низинная трава',
+            familyResourceId: 'reeds',
+            familyItemId: 'raw_reeds',
+            label: 'Тростник',
             sourceLabel: 'тростник',
-            collectedLabel: 'низинную траву',
+            collectedLabel: 'тростник',
             adviceKey: 'reeds',
             legacyItemIds: ['lowlandGrass'],
             terrainTileTypes: ['reeds']
@@ -202,6 +212,39 @@
         }
     ];
     const resourceSubtypeById = Object.fromEntries(resourceSubtypeDefinitions.map((subtype) => [subtype.id, subtype]));
+    const fishCatchDefinitions = [
+        {
+            id: 'commonFish',
+            resourceId: 'fish',
+            itemId: 'raw_fish',
+            label: 'Обычная рыба',
+            collectedLabel: 'обычную рыбу',
+            rarityLabel: 'обычная',
+            requiredIslands: { from: 6, to: 12 },
+            description: 'Ранний базовый улов для еды и первого рыбьего жира.'
+        },
+        {
+            id: 'rareFish',
+            resourceId: 'fish',
+            itemId: 'raw_fish_rare',
+            label: 'Редкая рыба',
+            collectedLabel: 'редкую рыбу',
+            rarityLabel: 'редкая',
+            requiredIslands: { from: 13, to: 24 },
+            description: 'Средний и поздний улов с лучшей ценностью для масла, торговли и длинных маршрутов.'
+        },
+        {
+            id: 'trophyFish',
+            resourceId: 'fish',
+            itemId: 'raw_fish_trophy',
+            label: 'Трофейная рыба',
+            collectedLabel: 'трофейную рыбу',
+            rarityLabel: 'трофейная',
+            requiredIslands: { from: 25, to: 30 },
+            description: 'Эндгейм-улов для поздней логистики, дорогой торговли и топовых решений.'
+        }
+    ];
+    const fishCatchById = Object.fromEntries(fishCatchDefinitions.map((definition) => [definition.id, definition]));
 
     function buildSubtypeTerrainGatherProfile(subtypeId, extra = {}) {
         const subtype = resourceSubtypeById[subtypeId];
@@ -328,10 +371,10 @@
             gatherRisk: cloneValue(lateGatherRiskProfiles.stone)
         },
         reeds: buildSubtypeTerrainGatherProfile('lowlandGrass', {
-            conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц идут в базу лечения или травяную пасту, а десять на верстаке в верёвку.',
+            conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц идут в базу лечения, а десять на верстаке в верёвку.',
             allowAdjacent: false,
             gatherCost: {
-                routeCost: 0.75,
+                routeCost: 0.85,
                 timeSteps: 1
             }
         }),
@@ -344,6 +387,29 @@
             }
         })
     };
+
+    function buildFishingGatherProfile(sourceLabel, overrides = {}) {
+        return {
+            resourceId: 'fish',
+            resourceFamilyId: 'fish',
+            itemId: 'raw_fish',
+            sourceLabel,
+            collectedLabel: 'рыбу',
+            adviceKey: 'fish',
+            conversionHint: 'Собери улов и выбери его в сумке: пять единиц любой рыбы идут в рыбное мясо, а десять — в рыбий жир. На ранних островах ловится обычная рыба, в середине — редкая, в поздней игре — трофейная.',
+            allowAdjacent: true,
+            gatherCost: {
+                routeCost: 1.45,
+                timeSteps: 2
+            },
+            gatherRisk: cloneValue(lateGatherRiskProfiles.fish),
+            requiredInventoryItemId: 'fishingRod',
+            requiredInventoryItemLabel: 'Удочка путника',
+            unlockHint: 'Удочка открывает рыбалку у берега, в тростнике, на спокойной воде и в редких точках.',
+            ...cloneValue(overrides)
+        };
+    }
+
     const resourceNodeDefinitions = [
         {
             id: 'grassBush',
@@ -358,9 +424,9 @@
                 maxHarvests: 2,
                 regenerationTimeAdvances: 1
             },
-            summary: 'Сырьевой куст для ранней травы с лугов и кромки тростника.',
+            summary: 'Сырьевой куст для ранней полевой травы с лугов и безопасных краёв маршрута.',
             requiredIslands: { from: 1, to: 6 },
-            sourceTileTypes: ['grass', 'reeds'],
+            sourceTileTypes: ['grass'],
             preferredTileTypes: ['grass'],
             placementProfile: {
                 biomeLabel: 'meadow/grass',
@@ -373,7 +439,7 @@
                 },
                 neighborRequirements: [
                     {
-                        matchTileTypes: ['grass', 'reeds'],
+                        matchTileTypes: ['grass'],
                         minCount: 3,
                         includeDiagonals: true
                     }
@@ -383,13 +449,62 @@
                 resourceId: 'grass',
                 resourceFamilyId: 'grass',
                 itemId: 'raw_grass',
-                sourceLabel: 'куст травы',
+                sourceLabel: 'луговой куст травы',
                 collectedLabel: 'траву',
                 adviceKey: 'grass',
                 conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц идут в базу лечения или травяную пасту, а десять на верстаке в верёвку.',
                 allowAdjacent: true,
                 gatherCost: {
                     routeCost: 0.75,
+                    timeSteps: 1
+                }
+            }
+        },
+        {
+            id: 'reedPatch',
+            resourceId: 'reeds',
+            label: 'Заросли тростника',
+            family: 'flora',
+            renderKind: 'reedPatch',
+            respawnPolicy: {
+                mode: 'newRun'
+            },
+            durabilityProfile: {
+                maxHarvests: 2,
+                regenerationTimeAdvances: 1
+            },
+            summary: 'Прибрежный тростник: даёт волокно под лечебную основу и верёвку.',
+            requiredIslands: { from: 1, to: 30 },
+            sourceTileTypes: ['reeds'],
+            preferredTileTypes: ['reeds'],
+            placementProfile: {
+                biomeLabel: 'water/reeds',
+                allowedTravelBands: ['normal', 'rough'],
+                clusterProfile: {
+                    minCount: 2,
+                    maxCount: 3,
+                    radius: 1,
+                    includeDiagonals: true
+                },
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['reeds', 'water', 'shore'],
+                        minCount: 2,
+                        includeDiagonals: true
+                    }
+                ]
+            },
+            gatherProfile: {
+                resourceId: 'reeds',
+                resourceFamilyId: 'reeds',
+                itemId: 'raw_reeds',
+                sourceLabel: 'заросли тростника',
+                collectedLabel: 'тростник',
+                adviceKey: 'reeds',
+                conversionHint: 'Собери сырьё и выбери его в сумке: пять единиц идут в базу лечения, а десять на верстаке в верёвку.',
+                allowAdjacent: true,
+                gatherCost: {
+                    routeCost: 0.85,
                     timeSteps: 1
                 }
             }
@@ -554,7 +669,7 @@
         {
             id: 'fishingSpot',
             resourceId: 'fish',
-            label: 'Рыболовная точка',
+            label: 'Береговая рыболовная точка',
             family: 'aquatic',
             renderKind: 'fishingSpot',
             respawnPolicy: {
@@ -564,37 +679,113 @@
                 maxHarvests: 2,
                 regenerationTimeAdvances: 1
             },
-            summary: 'Точка улова у воды: по правилам нужна удочка, а рыба идёт в мясо и жир.',
-            requiredIslands: { from: 6, to: 24 },
-            sourceTileTypes: ['water', 'reeds', 'shore'],
-            preferredTileTypes: ['water', 'reeds'],
+            summary: 'Береговой заброс: удобная рыбалка с кромки берега, когда рядом есть тихая вода.',
+            requiredIslands: { from: 6, to: 30 },
+            sourceTileTypes: ['shore'],
+            preferredTileTypes: ['shore'],
             placementProfile: {
-                biomeLabel: 'water/reeds',
+                biomeLabel: 'shore',
                 neighborRequirements: [
                     {
-                        matchTileTypes: ['water', 'reeds'],
+                        matchTileTypes: ['shore', 'water', 'reeds'],
                         minCount: 2,
                         includeDiagonals: true
                     }
                 ]
             },
-            gatherProfile: {
-                resourceId: 'fish',
-                resourceFamilyId: 'fish',
-                itemId: 'raw_fish',
-                sourceLabel: 'рыболовная точка',
-                collectedLabel: 'рыбу',
-                adviceKey: 'fish',
-                conversionHint: 'Собери улов и выбери его в сумке: пять единиц идут в рыбное мясо, а десять в рыбий жир.',
-                allowAdjacent: true,
+            gatherProfile: buildFishingGatherProfile('береговая точка ловли')
+        },
+        {
+            id: 'fishingReedsSpot',
+            resourceId: 'fish',
+            label: 'Рыболовная точка в тростнике',
+            family: 'aquatic',
+            renderKind: 'fishingSpot',
+            respawnPolicy: {
+                mode: 'newRun'
+            },
+            durabilityProfile: {
+                maxHarvests: 2,
+                regenerationTimeAdvances: 1
+            },
+            summary: 'Тихая точка между тростником: здесь рыба держится ближе к зарослям и укрытию.',
+            requiredIslands: { from: 6, to: 30 },
+            sourceTileTypes: ['reeds'],
+            preferredTileTypes: ['reeds'],
+            placementProfile: {
+                biomeLabel: 'reeds/water',
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['reeds', 'water'],
+                        minCount: 3,
+                        includeDiagonals: true
+                    }
+                ]
+            },
+            gatherProfile: buildFishingGatherProfile('тростниковая точка ловли')
+        },
+        {
+            id: 'fishingCalmSpot',
+            resourceId: 'fish',
+            label: 'Рыболовная точка тихой воды',
+            family: 'aquatic',
+            renderKind: 'fishingSpot',
+            respawnPolicy: {
+                mode: 'newRun'
+            },
+            durabilityProfile: {
+                maxHarvests: 2,
+                regenerationTimeAdvances: 1
+            },
+            summary: 'Спокойная вода без лишнего шума: хороший заброс вдали от берега и троп.',
+            requiredIslands: { from: 6, to: 30 },
+            sourceTileTypes: ['water'],
+            preferredTileTypes: ['water'],
+            placementProfile: {
+                biomeLabel: 'calm-water',
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['water'],
+                        minCount: 5,
+                        includeDiagonals: true
+                    }
+                ]
+            },
+            gatherProfile: buildFishingGatherProfile('тихая вода')
+        },
+        {
+            id: 'fishingRareSpot',
+            resourceId: 'fish',
+            label: 'Редкая рыболовная точка',
+            family: 'aquatic',
+            renderKind: 'fishingSpot',
+            respawnPolicy: {
+                mode: 'newRun'
+            },
+            durabilityProfile: {
+                maxHarvests: 2,
+                regenerationTimeAdvances: 1
+            },
+            summary: 'Редкая точка заброса в глубокой спокойной воде. Появляется не на каждом острове.',
+            requiredIslands: { from: 10, to: 30 },
+            sourceTileTypes: ['water'],
+            preferredTileTypes: ['water'],
+            placementProfile: {
+                biomeLabel: 'rare calm-water',
+                neighborRequirements: [
+                    {
+                        matchTileTypes: ['water'],
+                        minCount: 5,
+                        includeDiagonals: true
+                    }
+                ]
+            },
+            gatherProfile: buildFishingGatherProfile('редкая точка ловли', {
                 gatherCost: {
-                    routeCost: 1.45,
+                    routeCost: 1.55,
                     timeSteps: 2
-                },
-                gatherRisk: cloneValue(lateGatherRiskProfiles.fish),
-                requiredInventoryItemId: 'fishingRod',
-                requiredInventoryItemLabel: 'Удочка путника'
-            }
+                }
+            })
         }
     ];
     const resourceNodeById = Object.fromEntries(resourceNodeDefinitions.map((definition) => [definition.id, definition]));
@@ -697,6 +888,19 @@
             }
         },
         {
+            id: 'raw_reeds',
+            resourceId: 'reeds',
+            label: 'Тростник',
+            icon: 'RT',
+            lootTier: 0,
+            categories: 'resource material',
+            extra: {
+                stackable: true,
+                baseValue: 2,
+                description: 'Прибрежное волокнистое сырьё. Выбери предмет в сумке, чтобы переработать 5 единиц в лечебную основу, а 10 на верстаке в верёвку.'
+            }
+        },
+        {
             id: 'raw_stone',
             resourceId: 'stone',
             label: 'Камень',
@@ -740,14 +944,54 @@
         {
             id: 'raw_fish',
             resourceId: 'fish',
-            label: 'Рыба',
+            label: 'Обычная рыба',
             icon: 'RF',
             lootTier: 0,
             categories: 'resource material food',
             extra: {
                 stackable: true,
                 baseValue: 3,
-                description: 'Базовый улов. Пять единиц идут в рыбное мясо, десять — в рыбий жир.'
+                spoilage: {
+                    spoilsAfterAdvances: 1,
+                    spoiledItemId: 'spoiledFish',
+                    spoilageLabel: 'свежая только до следующей смены времени'
+                },
+                description: 'Ранний базовый улов. Пять единиц любой рыбы идут в рыбное мясо, десять — в рыбий жир для лодки, фонарей, поздней утилиты и торговли. Без переработки быстро портится.'
+            }
+        },
+        {
+            id: 'raw_fish_rare',
+            resourceId: 'fish',
+            label: 'Редкая рыба',
+            icon: 'RR',
+            lootTier: 1,
+            categories: 'resource material food value',
+            extra: {
+                stackable: true,
+                baseValue: 6,
+                merchantWeight: 5,
+                merchantQuestWeight: 2,
+                spoilage: {
+                    spoilsAfterAdvances: 2,
+                    spoiledItemId: 'spoiledFish',
+                    spoilageLabel: 'держится дольше обычной, но всё ещё скоропортящаяся'
+                },
+                description: 'Средний и поздний улов. Идёт в те же рыбные рецепты, но ценится выше обычной рыбы. Без переработки тоже портится, хотя медленнее.'
+            }
+        },
+        {
+            id: 'raw_fish_trophy',
+            resourceId: 'fish',
+            label: 'Трофейная рыба',
+            icon: 'TF',
+            lootTier: 2,
+            categories: 'resource material food value',
+            extra: {
+                stackable: true,
+                baseValue: 10,
+                merchantWeight: 4,
+                merchantQuestWeight: 3,
+                description: 'Поздний трофейный улов. Идёт в общую рыбную переработку, но особенно хорош для дорогой торговли и поздней логистики.'
             }
         }
     ];
@@ -779,6 +1023,26 @@
         return resourceSubtypeDefinitions
             .filter((subtype) => !normalizedFamilyResourceId || subtype.familyResourceId === normalizedFamilyResourceId)
             .map((subtype) => cloneValue(subtype));
+    }
+
+    function getFishCatchDefinition(catchId) {
+        return fishCatchById[catchId] ? cloneValue(fishCatchById[catchId]) : null;
+    }
+
+    function getFishCatchDefinitions() {
+        return fishCatchDefinitions.map((definition) => cloneValue(definition));
+    }
+
+    function resolveFishCatchDefinition(islandIndex = game.state.currentIslandIndex || 1) {
+        const normalizedIslandIndex = Math.max(1, Math.floor(islandIndex || 1));
+        const match = fishCatchDefinitions.find((definition) => {
+            const window = definition.requiredIslands || {};
+            const fromIsland = Number.isFinite(window.from) ? window.from : 1;
+            const toIsland = Number.isFinite(window.to) ? window.to : Infinity;
+            return normalizedIslandIndex >= fromIsland && normalizedIslandIndex <= toIsland;
+        });
+
+        return cloneValue(match || fishCatchDefinitions[0] || null);
     }
 
     function buildCatalogEntries(makeItem) {
@@ -883,6 +1147,9 @@
         getCatalogResourceItemDefinition,
         getResourceSubtypeDefinition,
         getResourceSubtypeDefinitions,
+        getFishCatchDefinition,
+        getFishCatchDefinitions,
+        resolveFishCatchDefinition,
         buildCatalogEntries,
         getLegacyTerrainGatherItemIds,
         getTerrainGatherProfile,

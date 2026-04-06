@@ -246,6 +246,7 @@ function shouldAdvanceTimeOfDayAfterStep() {
 function advanceTimeOfDayAfterMovement(options = {}) {
     const render = window.Game.systems.render || null;
     const courierRuntime = window.Game.systems.courierRuntime || null;
+    const inventoryRuntime = window.Game.systems.inventoryRuntime || null;
     const ui = window.Game.systems.ui || null;
     const {
         messagePrefix = '',
@@ -258,10 +259,13 @@ function advanceTimeOfDayAfterMovement(options = {}) {
     }
 
     const nextTimeOfDay = render.advanceTimeOfDay(1);
-    incrementTimeOfDayAdvancesElapsed(1);
+    const currentAdvance = incrementTimeOfDayAdvancesElapsed(1);
     resetTimeOfDayStepCounter();
     const courierOutcome = courierRuntime && typeof courierRuntime.processDueCourierJobs === 'function'
         ? courierRuntime.processDueCourierJobs()
+        : null;
+    const perishableOutcome = inventoryRuntime && typeof inventoryRuntime.processPerishableItems === 'function'
+        ? inventoryRuntime.processPerishableItems({ currentAdvance })
         : null;
 
     const trimmedPrefix = typeof messagePrefix === 'string' ? messagePrefix.trim() : '';
@@ -272,6 +276,10 @@ function advanceTimeOfDayAfterMovement(options = {}) {
             ? reasonLabel.trim()
             : 'в пути';
         messageParts.push(`Прошло время ${normalizedReasonLabel}. Теперь ${nextTimeOfDay.label.toLowerCase()}.`);
+    }
+
+    if (perishableOutcome && perishableOutcome.message) {
+        messageParts.push(perishableOutcome.message);
     }
 
     if (courierOutcome && Array.isArray(courierOutcome.messages) && courierOutcome.messages.length > 0) {
@@ -289,6 +297,7 @@ function advanceTimeOfDayAfterMovement(options = {}) {
     return {
         nextTimeOfDay,
         courierOutcome,
+        perishableOutcome,
         message: combinedMessage
     };
 }
