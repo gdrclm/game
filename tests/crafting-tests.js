@@ -671,7 +671,7 @@
     });
 
     addTest('2. component-registry.js', 'Каждый компонент доступен по id и содержит ingredients/sourceTags', () => {
-        const requiredIds = ['healingBase', 'herbalPaste', 'rope', 'board', 'boatFrame', 'gravelFill', 'stoneBlock', 'fishMeat', 'fishOil'];
+        const requiredIds = ['healing_base', 'herb_paste', 'fiber_rope', 'wood_plank_basic', 'wood_frame_basic', 'boatFrame', 'gravel_fill', 'stone_block', 'fuel_bundle', 'fish_meat', 'fish_oil'];
 
         requiredIds.forEach((componentId) => {
             const component = componentRegistry.getComponentDefinition(componentId);
@@ -681,15 +681,57 @@
         });
     });
 
+    addTest('2. component-registry.js', 'Каждый промежуточный компонент имеет первоклассный inventory-item прямо в registry', () => {
+        componentRegistry.getComponentDefinitions().forEach((component) => {
+            assert(component.inventoryItem && component.inventoryItem.id, `У компонента ${component.id} нет inventoryItem.id.`);
+            assert(component.inventoryItem && component.inventoryItem.icon, `У компонента ${component.id} нет inventoryItem.icon.`);
+            assert(component.inventoryItem && component.inventoryItem.categories, `У компонента ${component.id} нет inventoryItem.categories.`);
+            assert(componentRegistry.isComponentInventoryItem(component.inventoryItem.id), `Item ${component.inventoryItem.id} не распознан как компонентный.`);
+            assertEqual(componentRegistry.getComponentDefinitionByInventoryItemId(component.inventoryItem.id).id, component.id, `Lookup по item id сломан для ${component.id}.`);
+            assert(itemRegistry.getItemDefinition(component.inventoryItem.id), `Каталог предметов не содержит компонентный item ${component.inventoryItem.id}.`);
+        });
+    });
+
+    addTest('2. component-registry.js', 'Компоненты поздней игры получают канонический qualityLevel и пробрасывают его в item definition', () => {
+        const qualityCases = [
+            ['healing_base', 'ordinary', 'обычный'],
+            ['fiber_rope', 'enhanced', 'усиленный'],
+            ['stone_block', 'stable', 'стабильный'],
+            ['fish_oil', 'rare', 'редкий'],
+            ['boatFrame', 'rare', 'редкий']
+        ];
+
+        qualityCases.forEach(([componentId, expectedQualityLevel, expectedQualityLabel]) => {
+            const component = componentRegistry.getComponentDefinition(componentId);
+            const itemDefinition = component && component.inventoryItem && component.inventoryItem.id
+                ? itemRegistry.getItemDefinition(component.inventoryItem.id)
+                : null;
+
+            assert(component, `Не найден компонент ${componentId}.`);
+            assertEqual(component.qualityLevel, expectedQualityLevel, `У ${componentId} неверный qualityLevel.`);
+            assertEqual(component.qualityLabel, expectedQualityLabel, `У ${componentId} неверный qualityLabel.`);
+            assert(itemDefinition, `У ${componentId} отсутствует item definition.`);
+            assertEqual(itemDefinition.qualityLevel, expectedQualityLevel, `Item definition ${componentId} не получил qualityLevel.`);
+            assertEqual(itemDefinition.qualityLabel, expectedQualityLabel, `Item definition ${componentId} не получил qualityLabel.`);
+        });
+    });
+
     addTest('2. component-registry.js', 'Компонент не может ссылаться на несуществующий raw-resource', () => {
         assertThrows(() => componentRegistry.createValidatedComponentRegistry([
             {
                 id: 'broken-component',
                 label: 'Сломанный компонент',
+                qualityLevel: 'ordinary',
+                bulk: 1,
                 craftMethod: 'hand',
                 sourceResourceIds: ['ghostResource'],
                 resourceInputs: [{ resourceId: 'ghostResource', quantity: 5 }],
-                tags: ['building']
+                tags: ['building'],
+                inventoryItem: {
+                    id: 'brokenComponent',
+                    icon: 'BC',
+                    categories: 'component material'
+                }
             }
         ], {
             resourceRegistry,
@@ -697,14 +739,108 @@
         }), /unknown raw resource "ghostResource"/i);
     });
 
+    addTest('2. component-registry.js', 'Компонент не принимает неизвестный qualityLevel', () => {
+        assertThrows(() => componentRegistry.createValidatedComponentRegistry([
+            {
+                id: 'broken-quality-component',
+                label: 'Сломанный quality-компонент',
+                qualityLevel: 'mythic',
+                bulk: 1,
+                craftMethod: 'hand',
+                sourceResourceIds: ['grass'],
+                resourceInputs: [{ resourceId: 'grass', quantity: 5 }],
+                tags: ['healing'],
+                inventoryItem: {
+                    id: 'brokenQualityComponent',
+                    icon: 'BQ',
+                    categories: 'component material'
+                }
+            }
+        ], {
+            resourceRegistry,
+            devMode: true
+        }), /qualityLevel/i);
+    });
+
+    addTest('38. bulk pressure', 'Строительные компоненты и мостовые сборки получают каноничный bulk', () => {
+        const componentCases = [
+            ['fiber_rope', 1],
+            ['wood_plank_basic', 2],
+            ['wood_frame_basic', 4],
+            ['boatFrame', 6],
+            ['gravel_fill', 2],
+            ['stone_block', 3]
+        ];
+
+        componentCases.forEach(([componentId, expectedBulk]) => {
+            const component = componentRegistry.getComponentDefinition(componentId);
+            const itemDefinition = itemRegistry.getItemDefinition(componentId);
+
+            assert(component, `Компонент ${componentId} не найден.`);
+            assert(itemDefinition, `Item definition ${componentId} не найден.`);
+            assertEqual(component.bulk, expectedBulk, `У ${componentId} неверный bulk.`);
+            assertEqual(itemDefinition.bulk, expectedBulk, `Item definition ${componentId} не получил bulk.`);
+        });
+
+        const portableBridge = itemRegistry.getItemDefinition('portableBridge');
+        assert(portableBridge, 'portableBridge должен существовать в каталоге.');
+        assertEqual(portableBridge.bulk, 6, 'portableBridge должен иметь тяжёлый bulk.');
+    });
+
+    addTest('38. bulk pressure', 'Сумка может упереться в bulk даже при свободных слотах', () => {
+        resetHarness();
+        game.state.unlockedInventorySlots = 4;
+        const occupiedSlotsBefore = inventoryRuntime.getInventory()
+            .slice(0, inventoryRuntime.getUnlockedInventorySlots())
+            .filter(Boolean)
+            .length;
+
+        const firstOutcome = inventoryRuntime.addInventoryItem('boatFrame', 2);
+        assert(firstOutcome && firstOutcome.added, 'Первые лодочные рамы должны добавиться.');
+        assertEqual(inventoryRuntime.getInventoryBulkCapacity(), 16, 'Стартовая bulk-вместимость должна масштабироваться от слотов.');
+        assertEqual(inventoryRuntime.getInventoryBulkUsage(), 12, 'Две рамы лодки должны заметно нагрузить сумку.');
+        assertEqual(
+            inventoryRuntime.getInventory().slice(0, inventoryRuntime.getUnlockedInventorySlots()).filter(Boolean).length,
+            occupiedSlotsBefore + 1,
+            'Лодочные рамы должны добавиться одним визуальным стеком и не съесть несколько слотов.'
+        );
+
+        const failedOutcome = inventoryRuntime.addInventoryItem('portableBridge', 1);
+        assert(failedOutcome && !failedOutcome.added, 'Переносной мост не должен влезать по bulk.');
+        assertEqual(failedOutcome.reason, 'full', 'Отказ должен проходить через обычный inventory-full канал.');
+        assertEqual(failedOutcome.capacityType, 'bulk', 'Отказ должен быть именно по bulk, а не по слотам.');
+        assertEqual(
+            inventoryRuntime.getInventory().slice(0, inventoryRuntime.getUnlockedInventorySlots()).filter(Boolean).length,
+            occupiedSlotsBefore + 1,
+            'После отказа по bulk количество занятых визуальных слотов не должно меняться.'
+        );
+    });
+
+    addTest('38. bulk pressure', 'Compression и craft runtime не обходят bulk-лимит сумки', () => {
+        resetHarness();
+        game.state.unlockedInventorySlots = 4;
+
+        inventoryRuntime.addInventoryItem('boatFrame', 2);
+        inventoryRuntime.addInventoryItem('fish_oil', 2);
+        inventoryRuntime.addInventoryItem('raw_wood', 5);
+
+        const plankEvaluation = compressionRuntime.evaluateCompressionForSourceItem('raw_wood')
+            .find((entry) => entry && entry.recipe && entry.recipe.result && entry.recipe.result.id === 'wood_plank_basic');
+
+        assert(plankEvaluation, 'Должна существовать compression-проверка на wood_plank_basic.');
+        assert(!plankEvaluation.success, 'Compression не должен проходить при перегрузе по bulk.');
+        assertEqual(plankEvaluation.reason, 'inventory-full', 'Compression должен отказывать через inventory-full.');
+        assertEqual(plankEvaluation.capacityType, 'bulk', 'Compression должен видеть именно bulk-перегруз.');
+    });
+
     addTest('2. component-registry.js', 'Компоненты корректно фильтруются по тегам healing, repair, building', () => {
         const healingIds = componentRegistry.getComponentsByTag('healing').map((component) => component.id);
         const repairIds = componentRegistry.getComponentsByTag('repair').map((component) => component.id);
         const buildingIds = componentRegistry.getComponentsByTag('building').map((component) => component.id);
 
-        assert(healingIds.includes('healingBase') && healingIds.includes('herbalPaste'), 'healing-тег фильтруется неверно.');
-        assert(repairIds.includes('gravelFill') && repairIds.includes('rope'), 'repair-тег фильтруется неверно.');
-        assert(buildingIds.includes('board') && buildingIds.includes('boatFrame') && buildingIds.includes('stoneBlock'), 'building-тег фильтруется неверно.');
+        assert(healingIds.includes('healing_base') && healingIds.includes('herb_paste'), 'healing-тег фильтруется неверно.');
+        assert(repairIds.includes('gravel_fill') && repairIds.includes('fiber_rope'), 'repair-тег фильтруется неверно.');
+        assert(buildingIds.includes('wood_plank_basic') && buildingIds.includes('boatFrame') && buildingIds.includes('stone_block'), 'building-тег фильтруется неверно.');
     });
 
     addTest('3. recipe-registry.js', 'Любой рецепт находится по recipeId', () => {
@@ -724,7 +860,7 @@
                 ingredients: [
                     { kind: 'component', id: 'ghostComponent', label: 'Призрак', quantity: 1 }
                 ],
-                result: { kind: 'component', id: 'rope', label: 'Верёвка', quantity: 1 },
+                result: { kind: 'component', id: 'fiber_rope', label: 'Верёвка', quantity: 1 },
                 tags: ['test'],
                 islandNeedProfile: { windows: [] }
             }
@@ -743,12 +879,76 @@
         assert(tierTwoRecipes.length > 0 && tierTwoRecipes.every((recipe) => recipe.tier === recipeRegistry.RECIPE_TIERS.survivalAndEnergy), 'Фильтр по tier работает неверно.');
     });
 
+    addTest('35. компонентное правило рецептов', 'Практический рецепт из raw-ресурса без явного исключения не загружается', () => {
+        assertThrows(() => recipeRegistry.createValidatedRecipeRegistry([
+            {
+                recipeId: 'broken-practical-raw-recipe',
+                label: 'Сломанный практический raw-рецепт',
+                station: 'camp',
+                stationLabel: 'Лагерь',
+                tier: recipeRegistry.RECIPE_TIERS.survivalAndEnergy,
+                ingredients: [
+                    { kind: 'resource', id: 'fish', label: 'Рыба', quantity: 5 }
+                ],
+                result: { kind: 'item', id: 'ration', label: 'Сухпаёк', quantity: 1 },
+                tags: ['survival', 'food', 'camp'],
+                islandNeedProfile: { windows: [] }
+            }
+        ], {
+            resourceRegistry,
+            componentRegistry,
+            devMode: true
+        }), /practical recipes must consume components/i);
+    });
+
+    addTest('35. компонентное правило рецептов', 'Практические рецепты работают через компоненты, а raw остаётся только у явного emergency-shortcut', () => {
+        const practicalRecipes = recipeRegistry.getRecipeDefinitions()
+            .filter((recipe) => recipeRegistry.isPracticalRecipeTier(recipe.tier));
+        const practicalRawRecipes = practicalRecipes
+            .filter((recipe) => recipeRegistry.getRawResourceIngredients(recipe).length > 0);
+
+        assert(practicalRawRecipes.length > 0, 'Должен существовать хотя бы один осознанный raw-shortcut для проверки правила.');
+        assert(practicalRawRecipes.every((recipe) => recipeRegistry.allowsPracticalRawShortcut(recipe)), 'Любой практический raw-рецепт должен быть явно помечен как emergency raw-shortcut.');
+        assert(practicalRawRecipes.some((recipe) => recipe.recipeId === 'raw-fish-ration'), 'raw-fish-ration должен оставаться явным исключением из компонентного правила.');
+
+        const heartyRation = recipeRegistry.getRecipeDefinition('hearty-ration');
+        const strongBroth = recipeRegistry.getRecipeDefinition('strong-broth');
+        const portableBridge = recipeRegistry.getRecipeDefinition('portable-bridge');
+
+        assert(recipeRegistry.getRawResourceIngredients(heartyRation).length === 0, 'Сытный паёк должен работать через компоненты, а не через raw-ресурс.');
+        assert(recipeRegistry.getRawResourceIngredients(strongBroth).length === 0, 'Крепкий бульон должен работать через компоненты, а не через raw-ресурс.');
+        assert(recipeRegistry.getRawResourceIngredients(portableBridge).length === 0, 'Переносной мост должен работать через компоненты, а не через raw-ресурс.');
+    });
+
+    addTest('36. generated crafting outputs', 'Craft-native output items приходят в каталог через component-registry, а не как компоненты', () => {
+        const outputIds = ['healingBrew', 'energyTonic', 'fishBroth', 'portableBridge', 'soilResource', 'merchantBeacon'];
+
+        outputIds.forEach((itemId) => {
+            assert(componentRegistry.isGeneratedCraftingOutputItem(itemId), `Предмет ${itemId} должен быть отмечен как generated crafting output.`);
+            assert(!componentRegistry.isComponentInventoryItem(itemId), `Предмет ${itemId} не должен считаться промежуточным компонентом.`);
+            assert(componentRegistry.getCatalogCraftingOutputItemDefinition(itemId), `Для ${itemId} должно существовать generated output catalog definition.`);
+            assert(itemRegistry.getItemDefinition(itemId), `Item registry должен видеть generated output ${itemId}.`);
+        });
+    });
+
+    addTest('36. generated crafting outputs', 'Generated crafting outputs сохраняют эффекты и ценность после удаления ручных блоков из item-catalog', () => {
+        const fishBrothEffect = itemRegistry.getConsumableEffect('fishBroth');
+        const portableBridgeDefinition = itemRegistry.getItemDefinition('portableBridge');
+        const merchantBeaconDefinition = itemRegistry.getItemDefinition('merchantBeacon');
+        const soilResourceDefinition = itemRegistry.getItemDefinition('soilResource');
+
+        assert(fishBrothEffect && (fishBrothEffect.hunger || 0) > 0, 'fishBroth должен сохранять consumable-эффект из generated output registry.');
+        assert(portableBridgeDefinition && portableBridgeDefinition.activeEffect && portableBridgeDefinition.activeEffect.kind === 'bridgeBuilder', 'portableBridge должен сохранять bridgeBuilder-эффект.');
+        assert(merchantBeaconDefinition && merchantBeaconDefinition.activeEffect && merchantBeaconDefinition.activeEffect.kind === 'revealMerchant', 'merchantBeacon должен сохранять revealMerchant-эффект.');
+        assert(soilResourceDefinition && soilResourceDefinition.merchantQuestWeight === 2, 'soilResource должен сохранять торговую ценность и quest-вес.');
+    });
+
     addTest('4. crafting-runtime.js', 'При наличии всех ингредиентов рецепт успешно крафтится', () => {
         const outcome = craftingRuntime.craftRecipeAgainstStock('portable-bridge', {
             stockEntries: [
-                craftingRuntime.buildStockEntry('component', 'board', 'Доска', 2),
-                craftingRuntime.buildStockEntry('component', 'rope', 'Верёвка', 1),
-                craftingRuntime.buildStockEntry('component', 'stoneBlock', 'Каменный блок', 1)
+                craftingRuntime.buildStockEntry('component', 'wood_plank_basic', 'Доска', 2),
+                craftingRuntime.buildStockEntry('component', 'fiber_rope', 'Верёвка', 1),
+                craftingRuntime.buildStockEntry('component', 'stone_block', 'Каменный блок', 1)
             ],
             availableStations: ['bench']
         });
@@ -760,8 +960,8 @@
     addTest('4. crafting-runtime.js', 'При нехватке хотя бы одного ингредиента результат не создаётся', () => {
         const outcome = craftingRuntime.craftRecipeAgainstStock('portable-bridge', {
             stockEntries: [
-                craftingRuntime.buildStockEntry('component', 'board', 'Доска', 2),
-                craftingRuntime.buildStockEntry('component', 'stoneBlock', 'Каменный блок', 1)
+                craftingRuntime.buildStockEntry('component', 'wood_plank_basic', 'Доска', 2),
+                craftingRuntime.buildStockEntry('component', 'stone_block', 'Каменный блок', 1)
             ],
             availableStations: ['bench']
         });
@@ -776,14 +976,14 @@
         inventoryRuntime.addInventoryItem('raw_grass', 10);
 
         const beforeRawGrass = inventoryRuntime.countInventoryItem('raw_grass');
-        const beforeRope = inventoryRuntime.countInventoryItem('rope');
+        const beforeRope = inventoryRuntime.countInventoryItem('fiber_rope');
         const outcome = craftingRuntime.craftRecipeAgainstInventory('grass-to-rope', {
             availableStations: ['bench']
         });
 
         assert(outcome.success, 'Крафт через игровой инвентарь не завершился.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_grass'), beforeRawGrass - 10, 'Ингредиенты списались неверно.');
-        assertEqual(inventoryRuntime.countInventoryItem('rope'), beforeRope + 1, 'Результат добавился неверно.');
+        assertEqual(inventoryRuntime.countInventoryItem('fiber_rope'), beforeRope + 1, 'Результат добавился неверно.');
     });
 
     addTest('5. station-runtime.js', 'Рецепт недоступен на неверной станции', () => {
@@ -799,9 +999,9 @@
     addTest('5. station-runtime.js', 'Рецепт доступен на правильной станции', () => {
         const outcome = craftingRuntime.evaluateRecipeAgainstStock('portable-bridge', {
             stockEntries: [
-                craftingRuntime.buildStockEntry('component', 'board', 'Доска', 2),
-                craftingRuntime.buildStockEntry('component', 'rope', 'Верёвка', 1),
-                craftingRuntime.buildStockEntry('component', 'stoneBlock', 'Каменный блок', 1)
+                craftingRuntime.buildStockEntry('component', 'wood_plank_basic', 'Доска', 2),
+                craftingRuntime.buildStockEntry('component', 'fiber_rope', 'Верёвка', 1),
+                craftingRuntime.buildStockEntry('component', 'stone_block', 'Каменный блок', 1)
             ],
             availableStations: ['bench']
         });
@@ -917,6 +1117,41 @@
         assertDeepEqual(twiceMigrated, onceMigrated, 'Повторная миграция изменила уже мигрированный сейв.');
     });
 
+    addTest('34. каноничные компоненты', 'Старые component item ids в сейве мигрируют в каноничные без потери количества', () => {
+        const migratedSnapshot = saveLoad.migrateSnapshot({
+            saveVersion: 6,
+            player: {
+                inventory: [
+                    { id: 'rope', icon: 'VR', label: 'Верёвка', quantity: 2 },
+                    { id: 'fiber_rope', icon: 'VR', label: 'Верёвка', quantity: 1 },
+                    { id: 'fishOil', icon: 'FO', label: 'Рыбий жир', quantity: 1 },
+                    { id: 'board', icon: 'BD', label: 'Доска', quantity: 3 },
+                    null
+                ],
+                selectedInventorySlot: 0
+            },
+            craftingState: stateSchema.createDomainState().craftingState,
+            world: {
+                groundItemsByKey: {
+                    '0,0': [
+                        { id: 'fuelBundle', icon: 'TB', label: 'Топливная связка', quantity: 1 },
+                        { id: 'fuel_bundle', icon: 'TB', label: 'Топливная связка', quantity: 2 }
+                    ]
+                }
+            },
+            narrative: {},
+            ui: {}
+        });
+
+        assertEqual(migratedSnapshot.saveVersion, stateSchema.SAVE_VERSION, 'Сейв должен мигрировать до актуальной версии.');
+        assertEqual(migratedSnapshot.player.inventory[0].id, 'fiber_rope', 'rope должен мигрировать в fiber_rope.');
+        assertEqual(migratedSnapshot.player.inventory[0].quantity, 3, 'Количество rope и fiber_rope должно объединяться.');
+        assertEqual(migratedSnapshot.player.inventory[2].id, 'fish_oil', 'fishOil должен мигрировать в fish_oil.');
+        assertEqual(migratedSnapshot.player.inventory[3].id, 'wood_plank_basic', 'board должен мигрировать в wood_plank_basic.');
+        assertEqual(migratedSnapshot.world.groundItemsByKey['0,0'][0].id, 'fuel_bundle', 'fuelBundle на земле должен мигрировать в fuel_bundle.');
+        assertEqual(migratedSnapshot.world.groundItemsByKey['0,0'][0].quantity, 3, 'Старый и новый fuel_bundle на земле должны объединяться.');
+    });
+
     addTest('8. event bus для крафта', 'craft:completed эмитится после успешного крафта', () => {
         resetHarness();
         let eventPayload = null;
@@ -926,9 +1161,9 @@
 
         craftingRuntime.craftRecipeAgainstStock('portable-bridge', {
             stockEntries: [
-                craftingRuntime.buildStockEntry('component', 'board', 'Доска', 2),
-                craftingRuntime.buildStockEntry('component', 'rope', 'Верёвка', 1),
-                craftingRuntime.buildStockEntry('component', 'stoneBlock', 'Каменный блок', 1)
+                craftingRuntime.buildStockEntry('component', 'wood_plank_basic', 'Доска', 2),
+                craftingRuntime.buildStockEntry('component', 'fiber_rope', 'Верёвка', 1),
+                craftingRuntime.buildStockEntry('component', 'stone_block', 'Каменный блок', 1)
             ],
             availableStations: ['bench']
         });
@@ -961,9 +1196,9 @@
 
         craftingRuntime.craftRecipeAgainstStock('portable-bridge', {
             stockEntries: [
-                craftingRuntime.buildStockEntry('component', 'board', 'Доска', 2),
-                craftingRuntime.buildStockEntry('component', 'rope', 'Верёвка', 1),
-                craftingRuntime.buildStockEntry('component', 'stoneBlock', 'Каменный блок', 1)
+                craftingRuntime.buildStockEntry('component', 'wood_plank_basic', 'Доска', 2),
+                craftingRuntime.buildStockEntry('component', 'fiber_rope', 'Верёвка', 1),
+                craftingRuntime.buildStockEntry('component', 'stone_block', 'Каменный блок', 1)
             ],
             availableStations: ['bench']
         });
@@ -981,8 +1216,8 @@
         actionUi.handleUseAction();
 
         assertEqual(inventoryRuntime.countInventoryItem('raw_grass'), 1, 'Сбор травы должен давать raw_grass.');
-        assertEqual(inventoryRuntime.countInventoryItem('healingBase'), 0, 'Готовый компонент не должен появляться сразу при сборе травы.');
-        assertEqual(inventoryRuntime.countInventoryItem('rope'), 0, 'Верёвка не должна выпадать напрямую при сборе травы.');
+        assertEqual(inventoryRuntime.countInventoryItem('healing_base'), 0, 'Готовый компонент не должен появляться сразу при сборе травы.');
+        assertEqual(inventoryRuntime.countInventoryItem('fiber_rope'), 0, 'Верёвка не должна выпадать напрямую при сборе травы.');
     });
 
     addTest('9. raw_* ресурсы', 'Сбор дерева даёт raw_wood, а не доски', () => {
@@ -995,7 +1230,7 @@
         actionUi.handleUseAction();
 
         assertEqual(inventoryRuntime.countInventoryItem('raw_wood'), 1, 'Сбор дерева должен давать raw_wood.');
-        assertEqual(inventoryRuntime.countInventoryItem('board'), 0, 'Доска не должна появляться напрямую при сборе дерева.');
+        assertEqual(inventoryRuntime.countInventoryItem('wood_plank_basic'), 0, 'Доска не должна появляться напрямую при сборе дерева.');
     });
 
     addTest('9. raw_* ресурсы', 'Сбор тростника даёт raw_reeds, а не траву или готовый компонент', () => {
@@ -1009,7 +1244,7 @@
 
         assertEqual(inventoryRuntime.countInventoryItem('raw_reeds'), 1, 'Сбор тростника должен давать raw_reeds.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_grass'), 0, 'Тростник не должен подменяться в raw_grass.');
-        assertEqual(inventoryRuntime.countInventoryItem('healingBase'), 0, 'Готовый лечебный компонент не должен выпадать сразу при сборе тростника.');
+        assertEqual(inventoryRuntime.countInventoryItem('healing_base'), 0, 'Готовый лечебный компонент не должен выпадать сразу при сборе тростника.');
     });
 
     addTest('9. raw_* ресурсы', 'Старые места кода не подменяют raw-resource на старые item ids', () => {
@@ -1098,7 +1333,7 @@
 
         assert(outcome.success, 'Сжатие 5 raw_stone должно завершиться успешно.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_stone'), 0, 'После сжатия не должно оставаться raw_stone.');
-        assertEqual(inventoryRuntime.countInventoryItem('stoneBlock'), 1, 'Из 5 raw_stone должен получаться 1 stoneBlock.');
+        assertEqual(inventoryRuntime.countInventoryItem('stone_block'), 1, 'Из 5 raw_stone должен получаться 1 stone_block.');
     });
 
     addTest('11. compression pipeline', '4 единицы не позволяют сделать конверсию', () => {
@@ -1112,7 +1347,7 @@
         assertEqual(outcome.success, false, '4 raw_rubble не должны сжиматься успешно.');
         assertEqual(outcome.reason, 'missing-ingredients', 'Для 4 raw_rubble ожидалась нехватка ингредиентов.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_rubble'), 4, 'Сырьё не должно расходоваться при неуспешной конверсии.');
-        assertEqual(inventoryRuntime.countInventoryItem('gravelFill'), 0, 'Компонент не должен появляться из 4 единиц сырья.');
+        assertEqual(inventoryRuntime.countInventoryItem('gravel_fill'), 0, 'Компонент не должен появляться из 4 единиц сырья.');
     });
 
     addTest('11. compression pipeline', '10 единиц дают 2 компонента без остаточной ошибки', () => {
@@ -1127,7 +1362,7 @@
         });
 
         assert(firstOutcome.success && secondOutcome.success, 'Два последовательных сжатия 10 raw_stone должны быть успешными.');
-        assertEqual(inventoryRuntime.countInventoryItem('stoneBlock'), 2, 'Из 10 raw_stone должно получаться 2 stoneBlock.');
+        assertEqual(inventoryRuntime.countInventoryItem('stone_block'), 2, 'Из 10 raw_stone должно получаться 2 stone_block.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_stone'), 0, 'После двух сжатий не должно оставаться сырья.');
     });
 
@@ -1157,7 +1392,7 @@
         assertEqual(recipeIds.includes('grass-to-rope'), false, 'Верёвка не должна попадать в hand-compression для raw_grass.');
     });
 
-    addTest('11. compression pipeline', 'raw_grass сжимается в healingBase через явный recipeId', () => {
+    addTest('11. compression pipeline', 'raw_grass сжимается в healing_base через явный recipeId', () => {
         resetHarness();
         inventoryRuntime.addInventoryItem('raw_grass', 5);
 
@@ -1166,12 +1401,12 @@
             availableStations: ['hand']
         });
 
-        assert(outcome.success, 'Сжатие raw_grass в healingBase не завершилось успешно.');
+        assert(outcome.success, 'Сжатие raw_grass в healing_base не завершилось успешно.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_grass'), 0, 'Трава не была израсходована полностью.');
-        assertEqual(inventoryRuntime.countInventoryItem('healingBase'), 1, 'healingBase не появился после сжатия.');
+        assertEqual(inventoryRuntime.countInventoryItem('healing_base'), 1, 'healing_base не появился после сжатия.');
     });
 
-    addTest('11. compression pipeline', 'raw_reeds сжимается в healingBase через явный recipeId', () => {
+    addTest('11. compression pipeline', 'raw_reeds сжимается в healing_base через явный recipeId', () => {
         resetHarness();
         inventoryRuntime.addInventoryItem('raw_reeds', 5);
 
@@ -1180,9 +1415,9 @@
             availableStations: ['hand']
         });
 
-        assert(outcome.success, 'Сжатие raw_reeds в healingBase не завершилось успешно.');
+        assert(outcome.success, 'Сжатие raw_reeds в healing_base не завершилось успешно.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_reeds'), 0, 'Тростник не был израсходован полностью.');
-        assertEqual(inventoryRuntime.countInventoryItem('healingBase'), 1, 'healingBase не появился после сжатия тростника.');
+        assertEqual(inventoryRuntime.countInventoryItem('healing_base'), 1, 'healing_base не появился после сжатия тростника.');
     });
 
     addTest('11. compression pipeline', 'grass-to-rope требует bench и не доступен только на hand', () => {
@@ -1219,7 +1454,7 @@
 
         assert(benchOutcome.success, 'На bench верёвка из тростника должна крафтиться успешно.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_reeds'), 0, 'Тростник должен быть полностью израсходован на верёвку.');
-        assertEqual(inventoryRuntime.countInventoryItem('rope'), 1, 'После крафта из тростника должна появиться верёвка.');
+        assertEqual(inventoryRuntime.countInventoryItem('fiber_rope'), 1, 'После крафта из тростника должна появиться верёвка.');
     });
 
     addTest('11. compression pipeline', 'soilClod сжимается через единый pipeline и даёт soilResource', () => {
@@ -2017,14 +2252,14 @@
         assert(recipe, 'Рецепт boil-water должен существовать.');
         assertEqual(recipe.station, 'camp', 'Варка воды должна выполняться только на лагере.');
         assert(Array.isArray(recipe.ingredients) && recipe.ingredients.some((ingredient) => ingredient.id === 'waterFlaskDirty'), 'Рецепт должен требовать сырую воду во фляге.');
-        assert(Array.isArray(recipe.ingredients) && recipe.ingredients.some((ingredient) => ingredient.id === 'fuelBundle'), 'Рецепт должен требовать топливную связку.');
+        assert(Array.isArray(recipe.ingredients) && recipe.ingredients.some((ingredient) => ingredient.id === 'fuel_bundle'), 'Рецепт должен требовать топливную связку.');
         assert(recipe.result && recipe.result.id === 'waterFlaskFull', 'Результатом кипячения должна быть чистая вода во фляге.');
     });
 
     addTest('22. boil_water на camp', 'На лагере грязная вода кипятится в чистую и сжигает fuel bundle', () => {
         game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_dirty', 1);
-        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('fuel_bundle', 1);
 
         const evaluation = craftingRuntime.evaluateRecipeAgainstInventory('boil-water');
         const outcome = craftingRuntime.craftRecipeAgainstInventory('boil-water');
@@ -2032,7 +2267,7 @@
         assert(evaluation.success, 'На лагере с сырой водой и топливом рецепт должен быть доступен.');
         assert(outcome && outcome.success, 'Варка воды на лагере должна завершаться успешно.');
         assertEqual(inventoryRuntime.countInventoryItem('flask_water_dirty'), 0, 'Сырая вода должна быть израсходована.');
-        assertEqual(inventoryRuntime.countInventoryItem('fuelBundle'), 0, 'Топливная связка должна сгорать при кипячении.');
+        assertEqual(inventoryRuntime.countInventoryItem('fuel_bundle'), 0, 'Топливная связка должна сгорать при кипячении.');
         assertEqual(inventoryRuntime.countInventoryItem('flask_water_full'), 1, 'После варки должна появляться кипячёная вода.');
     });
 
@@ -2048,7 +2283,7 @@
         const noFuelEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('boil-water');
         assertEqual(noFuelEvaluation.success, false, 'Без топлива рецепт не должен быть доступен даже в лагере.');
         assertEqual(noFuelEvaluation.reason, 'missing-ingredients', 'Без топлива должна возвращаться ошибка missing-ingredients.');
-        assert(noFuelEvaluation.missingIngredients.some((ingredient) => ingredient.id === 'fuelBundle'), 'В списке недостающих ингредиентов должна быть топливная связка.');
+        assert(noFuelEvaluation.missingIngredients.some((ingredient) => ingredient.id === 'fuel_bundle'), 'В списке недостающих ингредиентов должна быть топливная связка.');
     });
 
     addTest('23. full_flask в рецептах', 'Часть лагерных рецептов использует именно полную флягу', () => {
@@ -2067,8 +2302,8 @@
     addTest('23. full_flask в рецептах', 'Крафт с полной флягой возвращает пустую флягу после рецепта', () => {
         game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_full', 1);
-        inventoryRuntime.addInventoryItem('fishMeat', 1);
-        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('fish_meat', 1);
+        inventoryRuntime.addInventoryItem('fuel_bundle', 1);
 
         const outcome = craftingRuntime.craftRecipeAgainstInventory('hearty-ration');
 
@@ -2083,8 +2318,8 @@
     addTest('23. full_flask в рецептах', 'Сырая вода не подменяет полную флягу в рецептах, которым нужна чистая вода', () => {
         game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_dirty', 1);
-        inventoryRuntime.addInventoryItem('fishMeat', 1);
-        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('fish_meat', 1);
+        inventoryRuntime.addInventoryItem('fuel_bundle', 1);
 
         const evaluation = craftingRuntime.evaluateRecipeAgainstInventory('hearty-ration');
 
@@ -2100,8 +2335,8 @@
             targetTileType: 'shore'
         });
         inventoryRuntime.addInventoryItem('flask_empty', 1);
-        inventoryRuntime.addInventoryItem('fuelBundle', 1);
-        inventoryRuntime.addInventoryItem('healingBase', 1);
+        inventoryRuntime.addInventoryItem('fuel_bundle', 1);
+        inventoryRuntime.addInventoryItem('healing_base', 1);
 
         const containerIds = ['flask_empty', 'flask_water_dirty', 'flask_water_full', 'flask_water_alchemy'];
         const emptyFlaskIndex = inventoryRuntime.getInventory().findIndex((item) => item && item.id === 'flask_empty');
@@ -2130,12 +2365,12 @@
         const rawState = game.systems.containerRegistry.getContainerStateDefinition('waterFlaskDirty');
         const boiledState = game.systems.containerRegistry.getContainerStateDefinition('waterFlaskFull');
         const alchemyState = game.systems.containerRegistry.getContainerStateDefinition('waterFlaskAlchemy');
-        const healingBase = componentRegistry.getComponentDefinition('healingBase');
+        const healingBase = componentRegistry.getComponentDefinition('healing_base');
 
         assert(rawState && rawState.itemId === 'flask_water_dirty', 'Сырая вода должна существовать как отдельное состояние фляги.');
         assert(boiledState && boiledState.itemId === 'flask_water_full', 'Кипячёная вода должна существовать как отдельное состояние фляги.');
         assert(alchemyState && alchemyState.itemId === 'flask_water_alchemy', 'Алхимическая вода должна существовать как отдельное состояние фляги.');
-        assert(healingBase && healingBase.id === 'healingBase', 'Лечебная база должна оставаться отдельным компонентом.');
+        assert(healingBase && healingBase.id === 'healing_base', 'Лечебная база должна оставаться отдельным компонентом.');
     });
 
     addTest('24. уровни воды', 'Кипячёная вода отдельно переводится в алхимическую без возврата пустой фляги', () => {
@@ -2174,7 +2409,7 @@
     addTest('24. уровни воды', 'Алхимический рецепт с особой водой возвращает пустую флягу', () => {
         game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('flask_water_alchemy', 1);
-        inventoryRuntime.addInventoryItem('healingBase', 1);
+        inventoryRuntime.addInventoryItem('healing_base', 1);
 
         const outcome = craftingRuntime.craftRecipeAgainstInventory('healing-brew');
 
@@ -2343,7 +2578,7 @@
         assert(['regenerating', 'depleted'].includes(secondState.nodeState), 'После исчерпания fishing spot должен перейти в конечное недоступное состояние.');
     });
 
-    addTest('28. реальные входы/выходы рыбы', 'raw_fish напрямую превращается в fishMeat и fishOil на лагере', () => {
+    addTest('28. реальные входы/выходы рыбы', 'raw_fish напрямую превращается в fish_meat и fish_oil на лагере', () => {
         resetHarness();
         game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('raw_fish', 15);
@@ -2358,15 +2593,15 @@
         assert(oilEvaluation.success, 'Рецепт fish-to-fish-oil должен быть доступен по raw_fish.');
         assert(oilOutcome && oilOutcome.success, 'Крафт fish-to-fish-oil должен завершаться успешно.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_fish'), 0, 'После двух рецептов весь raw_fish должен быть израсходован.');
-        assertEqual(inventoryRuntime.countInventoryItem('fishMeat'), 1, 'Из 5 raw_fish должно получаться 1 fishMeat.');
-        assertEqual(inventoryRuntime.countInventoryItem('fishOil'), 1, 'Из 10 raw_fish должно получаться 1 fishOil.');
+        assertEqual(inventoryRuntime.countInventoryItem('fish_meat'), 1, 'Из 5 raw_fish должно получаться 1 fish_meat.');
+        assertEqual(inventoryRuntime.countInventoryItem('fish_oil'), 1, 'Из 10 raw_fish должно получаться 1 fish_oil.');
     });
 
     addTest('28. реальные входы/выходы рыбы', 'raw_fish + fuel_bundle даёт ration как прямой лагерный shortcut', () => {
         resetHarness();
         game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('raw_fish', 5);
-        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('fuel_bundle', 1);
         const rationCountBefore = inventoryRuntime.countInventoryItem('ration');
 
         const evaluation = craftingRuntime.evaluateRecipeAgainstInventory('raw-fish-ration');
@@ -2375,7 +2610,7 @@
         assert(evaluation.success, 'Рецепт raw-fish-ration должен быть доступен на лагере.');
         assert(outcome && outcome.success, 'Прямой сухпаёк из raw_fish должен крафтиться успешно.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_fish'), 0, 'raw_fish должен полностью расходоваться на ration.');
-        assertEqual(inventoryRuntime.countInventoryItem('fuelBundle'), 0, 'fuelBundle должен сгорать при крафте ration.');
+        assertEqual(inventoryRuntime.countInventoryItem('fuel_bundle'), 0, 'fuel_bundle должен сгорать при крафте ration.');
         assertEqual(inventoryRuntime.countInventoryItem('ration'), rationCountBefore + 1, 'Игрок должен получить ещё один ration.');
     });
 
@@ -2383,7 +2618,7 @@
         resetHarness();
         game.state.activeInteraction = buildStationInteraction('camp');
         inventoryRuntime.addInventoryItem('raw_fish', 5);
-        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('fuel_bundle', 1);
         inventoryRuntime.addInventoryItem('flask_water_full', 1);
 
         const meatOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-to-fish-meat');
@@ -2391,7 +2626,7 @@
         const brothOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-broth');
 
         assert(meatOutcome && meatOutcome.success, 'Рыба должна сначала пройти через fish-to-fish-meat.');
-        assert(brothEvaluation.success, 'После переработки fishMeat должен участвовать в food recipe через crafting runtime.');
+        assert(brothEvaluation.success, 'После переработки fish_meat должен участвовать в food recipe через crafting runtime.');
         assert(brothOutcome && brothOutcome.success, 'Рыбный бульон должен крафтиться через crafting runtime, а не обходным путём.');
         assertEqual(inventoryRuntime.countInventoryItem('fishBroth'), 1, 'После food recipe игрок должен получить fishBroth.');
     });
@@ -2434,11 +2669,11 @@
         const boatIngredientIds = (boatRecipe && Array.isArray(boatRecipe.ingredients) ? boatRecipe.ingredients : []).map((ingredient) => ingredient.id);
         const repairIngredientIds = (boatRepairRecipe && Array.isArray(boatRepairRecipe.ingredients) ? boatRepairRecipe.ingredients : []).map((ingredient) => ingredient.id);
 
-        assert(boatIngredientIds.includes('fishOil'), 'Готовая лодка должна требовать fishOil.');
-        assert(repairIngredientIds.includes('fishOil'), 'Ремкомплект лодки должен требовать fishOil.');
+        assert(boatIngredientIds.includes('fish_oil'), 'Готовая лодка должна требовать fish_oil.');
+        assert(repairIngredientIds.includes('fish_oil'), 'Ремкомплект лодки должен требовать fish_oil.');
     });
 
-    addTest('29. fish_oil как лодка / лампы / поздние рецепты / торговля', 'Фонарь тумана и Маяк торговца крафтятся через fishOil на мастерской', () => {
+    addTest('29. fish_oil как лодка / лампы / поздние рецепты / торговля', 'Фонарь тумана и Маяк торговца крафтятся через fish_oil на мастерской', () => {
         resetHarness();
         game.state.unlockedInventorySlots = 8;
         game.state.activeInteraction = buildStationInteraction('workbench', {
@@ -2447,10 +2682,10 @@
                 stationIds: ['bench', 'workbench']
             }
         });
-        inventoryRuntime.addInventoryItem('board', 1);
-        inventoryRuntime.addInventoryItem('stoneBlock', 1);
-        inventoryRuntime.addInventoryItem('rope', 2);
-        inventoryRuntime.addInventoryItem('fishOil', 2);
+        inventoryRuntime.addInventoryItem('wood_plank_basic', 1);
+        inventoryRuntime.addInventoryItem('stone_block', 1);
+        inventoryRuntime.addInventoryItem('fiber_rope', 2);
+        inventoryRuntime.addInventoryItem('fish_oil', 2);
 
         const lanternEvaluation = craftingRuntime.evaluateRecipeAgainstInventory('fog-lantern');
         const lanternOutcome = craftingRuntime.craftRecipeAgainstInventory('fog-lantern');
@@ -2458,30 +2693,30 @@
         const beaconOutcome = craftingRuntime.craftRecipeAgainstInventory('merchant-beacon');
         const beaconRecipe = recipeRegistry.getRecipeDefinition('merchant-beacon');
 
-        assert(lanternEvaluation.success, 'Фонарь тумана должен собираться через fishOil на мастерской.');
+        assert(lanternEvaluation.success, 'Фонарь тумана должен собираться через fish_oil на мастерской.');
         assert(lanternOutcome && lanternOutcome.success, 'Крафт фонаря тумана должен завершаться успешно.');
-        assert(beaconEvaluation.success, 'Маяк торговца должен собираться через fishOil на мастерской.');
+        assert(beaconEvaluation.success, 'Маяк торговца должен собираться через fish_oil на мастерской.');
         assert(beaconOutcome && beaconOutcome.success, 'Крафт маяка торговца должен завершаться успешно.');
         assertEqual(inventoryRuntime.countInventoryItem('fogLantern'), 1, 'После крафта должен появляться fogLantern.');
         assertEqual(inventoryRuntime.countInventoryItem('merchantBeacon'), 1, 'После крафта должен появляться merchantBeacon.');
-        assert(beaconRecipe && Array.isArray(beaconRecipe.tags) && beaconRecipe.tags.includes('late'), 'Маяк торговца должен быть помечен как поздний fishOil-рецепт.');
+        assert(beaconRecipe && Array.isArray(beaconRecipe.tags) && beaconRecipe.tags.includes('late'), 'Маяк торговца должен быть помечен как поздний fish_oil-рецепт.');
     });
 
     addTest('29. fish_oil как лодка / лампы / поздние рецепты / торговля', 'Рыбий жир получил торговую ценность и вес в merchant-экономике', () => {
         resetHarness();
         game.state.currentIslandIndex = 18;
         const pricing = game.systems.pricing;
-        const fishOilDefinition = itemRegistry.getItemDefinition('fishOil');
+        const fishOilDefinition = itemRegistry.getItemDefinition('fish_oil');
         const rawFishDefinition = itemRegistry.getItemDefinition('raw_fish');
-        const fishOilSellPrice = pricing.getMerchantSellPrice('fishOil', 18);
+        const fishOilSellPrice = pricing.getMerchantSellPrice('fish_oil', 18);
         const rawFishSellPrice = pricing.getMerchantSellPrice('raw_fish', 18);
 
-        assert(fishOilDefinition, 'Предмет fishOil должен существовать в каталоге.');
+        assert(fishOilDefinition, 'Предмет fish_oil должен существовать в каталоге.');
         assert(rawFishDefinition, 'Предмет raw_fish должен существовать в каталоге.');
-        assert((fishOilDefinition.categories || []).includes('value'), 'fishOil должен считаться торговой ценностью.');
-        assert(fishOilDefinition.merchantWeight > 0, 'fishOil должен попадать в merchant stock.');
-        assert(fishOilDefinition.merchantQuestWeight > 0, 'fishOil должен попадать в merchant quests.');
-        assert(fishOilSellPrice > rawFishSellPrice, 'Продавать fishOil должно быть выгоднее, чем raw_fish.');
+        assert((fishOilDefinition.categories || []).includes('value'), 'fish_oil должен считаться торговой ценностью.');
+        assert(fishOilDefinition.merchantWeight > 0, 'fish_oil должен попадать в merchant stock.');
+        assert(fishOilDefinition.merchantQuestWeight > 0, 'fish_oil должен попадать в merchant quests.');
+        assert(fishOilSellPrice > rawFishSellPrice, 'Продавать fish_oil должно быть выгоднее, чем raw_fish.');
     });
 
     addTest('30. tier windows рыбы', 'Островные окна разделяют обычную, редкую и трофейную рыбу', () => {
@@ -2538,13 +2773,13 @@
         const oilOutcome = craftingRuntime.craftRecipeAgainstInventory('fish-to-fish-oil');
 
         assert(meatEvaluation.success, 'Редкая рыба должна входить в общий рецепт fish-to-fish-meat.');
-        assert(meatOutcome && meatOutcome.success, 'Из редкой рыбы должен крафтиться fishMeat.');
+        assert(meatOutcome && meatOutcome.success, 'Из редкой рыбы должен крафтиться fish_meat.');
         assert(oilEvaluation.success, 'Трофейная рыба должна входить в общий рецепт fish-to-fish-oil.');
-        assert(oilOutcome && oilOutcome.success, 'Из трофейной рыбы должен крафтиться fishOil.');
+        assert(oilOutcome && oilOutcome.success, 'Из трофейной рыбы должен крафтиться fish_oil.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_fish_rare'), 0, 'Редкая рыба должна полностью расходоваться в мясе.');
         assertEqual(inventoryRuntime.countInventoryItem('raw_fish_trophy'), 0, 'Трофейная рыба должна полностью расходоваться в жире.');
-        assertEqual(inventoryRuntime.countInventoryItem('fishMeat'), 1, 'Из редкой рыбы должен появляться fishMeat.');
-        assertEqual(inventoryRuntime.countInventoryItem('fishOil'), 1, 'Из трофейной рыбы должен появляться fishOil.');
+        assertEqual(inventoryRuntime.countInventoryItem('fish_meat'), 1, 'Из редкой рыбы должен появляться fish_meat.');
+        assertEqual(inventoryRuntime.countInventoryItem('fish_oil'), 1, 'Из трофейной рыбы должен появляться fish_oil.');
     });
 
     addTest('30. tier windows рыбы', 'Таблица типов рыбы obey island windows по всей шкале островов', () => {
@@ -2628,7 +2863,7 @@
 
     addTest('31. spoilage рыбы', 'Переработанные рыбные продукты не подменяются системой spoilage', () => {
         resetHarness();
-        inventoryRuntime.addInventoryItem('fishMeat', 1);
+        inventoryRuntime.addInventoryItem('fish_meat', 1);
         const initialRationCount = inventoryRuntime.countInventoryItem('ration');
 
         for (let step = 0; step < 2; step++) {
@@ -2640,7 +2875,7 @@
             });
         }
 
-        assertEqual(inventoryRuntime.countInventoryItem('fishMeat'), 1, 'fishMeat не должен портиться через новый raw-fish spoilage слой.');
+        assertEqual(inventoryRuntime.countInventoryItem('fish_meat'), 1, 'fish_meat не должен портиться через новый raw-fish spoilage слой.');
         assertEqual(inventoryRuntime.countInventoryItem('ration'), initialRationCount, 'ration не должен портиться через новый raw-fish spoilage слой.');
         assertEqual(inventoryRuntime.countInventoryItem('spoiledFish'), 0, 'Новый слой порчи не должен самопроизвольно создавать spoiledFish из готовых продуктов.');
     });
@@ -2670,8 +2905,8 @@
     addTest('32. аварийная еда из рыбы', 'Рыбный бульон крафтится на лагере и возвращает пустую флягу', () => {
         resetHarness();
         game.state.activeInteraction = buildStationInteraction('camp');
-        inventoryRuntime.addInventoryItem('fishMeat', 1);
-        inventoryRuntime.addInventoryItem('fuelBundle', 1);
+        inventoryRuntime.addInventoryItem('fish_meat', 1);
+        inventoryRuntime.addInventoryItem('fuel_bundle', 1);
         inventoryRuntime.addInventoryItem('flask_water_full', 1);
         const emptyFlaskBefore = inventoryRuntime.countInventoryItem('flask_empty');
 
@@ -2687,7 +2922,7 @@
     addTest('32. аварийная еда из рыбы', 'Солёная рыба крафтится из рыбного мяса и соли выживания', () => {
         resetHarness();
         game.state.activeInteraction = buildStationInteraction('camp');
-        inventoryRuntime.addInventoryItem('fishMeat', 1);
+        inventoryRuntime.addInventoryItem('fish_meat', 1);
         inventoryRuntime.addInventoryItem('survivalSalt', 1);
 
         const evaluation = craftingRuntime.evaluateRecipeAgainstInventory('salted-fish');
@@ -2695,7 +2930,7 @@
 
         assert(evaluation.success, 'Рецепт salted-fish должен быть доступен на лагере.');
         assert(outcome && outcome.success, 'Рецепт salted-fish должен крафтиться успешно.');
-        assertEqual(inventoryRuntime.countInventoryItem('fishMeat'), 0, 'На salted-fish должно уходить рыбное мясо.');
+        assertEqual(inventoryRuntime.countInventoryItem('fish_meat'), 0, 'На salted-fish должно уходить рыбное мясо.');
         assertEqual(inventoryRuntime.countInventoryItem('survivalSalt'), 0, 'На salted-fish должна уходить Соль выживания.');
         assertEqual(inventoryRuntime.countInventoryItem('saltedFish'), 1, 'Игрок должен получить saltedFish.');
     });

@@ -639,6 +639,27 @@
         return clamp(game.state.unlockedInventorySlots || 4, 0, 8);
     }
 
+    function getInventoryBulkUsage() {
+        const inventoryRuntime = getInventoryRuntime();
+        return inventoryRuntime && typeof inventoryRuntime.getInventoryBulkUsage === 'function'
+            ? inventoryRuntime.getInventoryBulkUsage()
+            : 0;
+    }
+
+    function getInventoryBulkCapacity() {
+        const inventoryRuntime = getInventoryRuntime();
+        return inventoryRuntime && typeof inventoryRuntime.getInventoryBulkCapacity === 'function'
+            ? inventoryRuntime.getInventoryBulkCapacity()
+            : 0;
+    }
+
+    function getItemBulk(itemOrId, quantity = null) {
+        const inventoryRuntime = getInventoryRuntime();
+        return inventoryRuntime && typeof inventoryRuntime.getItemBulk === 'function'
+            ? inventoryRuntime.getItemBulk(itemOrId, quantity)
+            : 0;
+    }
+
     function getSelectedInventoryItem() {
         const inventoryRuntime = getInventoryRuntime();
         if (inventoryRuntime && typeof inventoryRuntime.getSelectedInventoryItem === 'function') {
@@ -1283,9 +1304,6 @@
         if (encounter) {
             if (encounter.kind === 'merchant') {
                 return `${encounter.label}: ${encounter.summary} Нажми "Говорить", чтобы открыть меню торговли.`;
-                return isHouseTradeResolved(activeInteraction)
-                    ? `${encounter.label}: торговля уже завершена.`
-                    : `${encounter.label}: ${encounter.summary} Разговор тратит ${encounter.tradeCost} золота.`;
             }
 
             if (encounter.kind === 'shelter') {
@@ -1303,9 +1321,6 @@
             }
 
             return 'Обычный мост: первый проход состарит его, второй разрушит.';
-            return durability <= 1
-                ? 'Опасный мост: после прохода назад он рухнет в реку.'
-                : 'Надёжная переправа: здесь мост не исчезает после одного прохода.';
         }
 
         return 'Дальние острова ускоряют расход ресурсов и снижают эффективность восстановления.';
@@ -1389,429 +1404,38 @@
 
     function buildInventorySlot(item, index) {
         return getInventoryUiModule().buildInventorySlot(item, index);
-        const normalizedItem = normalizeInventoryItem(item);
-        const slot = document.createElement('button');
-        const unlockedSlots = getUnlockedInventorySlots();
-        const isUnlocked = index < unlockedSlots;
-        const isSelected = game.state.selectedInventorySlot === index;
-
-        slot.type = 'button';
-        slot.className = 'inventory-slot';
-        slot.setAttribute('data-slot-index', index.toString());
-
-        if (normalizedItem && normalizedItem.id) {
-            slot.setAttribute('data-item-id', normalizedItem.id);
-        }
-
-        if (!isUnlocked) {
-            slot.classList.add('inventory-slot--inactive');
-            slot.disabled = true;
-        } else if (normalizedItem) {
-            slot.classList.add('inventory-slot--interactive');
-        } else {
-            slot.classList.add('inventory-slot--active-empty');
-        }
-
-        if (isSelected) {
-            slot.classList.add('inventory-slot--selected');
-        }
-
-        const icon = document.createElement('span');
-        icon.className = 'inventory-slot__icon';
-        icon.textContent = normalizedItem ? normalizedItem.icon : '';
-
-        const label = document.createElement('span');
-        label.className = 'inventory-slot__label';
-        if (normalizedItem) {
-            label.textContent = `${normalizedItem.label}${normalizedItem.quantity > 1 ? ` x${normalizedItem.quantity}` : ''}`;
-        }
-        label.textContent = item ? item.label : (isUnlocked ? 'Пусто' : 'Слот');
-
-        if (normalizedItem) {
-            label.textContent = `${normalizedItem.label}${normalizedItem.quantity > 1 ? ` x${normalizedItem.quantity}` : ''}`;
-        }
-        slot.append(icon, label);
-        return slot;
     }
 
     function renderInventory() {
         return getInventoryUiModule().renderInventory();
-        if (!elements.inventoryGrid) {
-            return;
-        }
-
-        const inventory = [...getInventory()];
-        while (inventory.length < 8) {
-            inventory.push(null);
-        }
-
-        const fragment = document.createDocumentFragment();
-        inventory.slice(0, 8).forEach((item, index) => {
-            fragment.append(buildInventorySlot(item, index));
-        });
-
-        elements.inventoryGrid.replaceChildren(fragment);
     }
 
     function updateStats() {
         return getStatusUiModule().updateStats();
-        setStat(elements.statHungerValue, elements.statHungerBar, getStatValue('hunger'));
-        setStat(elements.statEnergyValue, elements.statEnergyBar, getStatValue('energy'));
-        setStat(elements.statSleepValue, elements.statSleepBar, getStatValue('sleep'));
-        setStat(elements.statColdValue, elements.statColdBar, getStatValue('cold'));
-        setStat(elements.statFocusValue, elements.statFocusBar, getStatValue('focus'));
-    }
-
-    function updateLocationSummaries(displayPosition, tileInfo, activeHouse, activeInteraction) {
-        const encounter = getHouseEncounter(activeInteraction);
-        if (elements.locationSummary) {
-            if (encounter) {
-                elements.locationSummary.textContent = `Рядом: ${encounter.label}`;
-            } else {
-            elements.locationSummary.textContent = activeHouse
-                ? `Локация: ${activeHouse.expedition ? (activeHouse.expedition.locationLabel || activeHouse.expedition.label) : activeHouse.id}`
-                : `Локация: ${getTileLabel(tileInfo ? tileInfo.tileType : 'grass')}`;
-            }
-        }
-
-        if (elements.routeSummary) {
-            const position = roundPosition(displayPosition);
-            elements.routeSummary.textContent = game.state.route.length > 0
-                ? `Маршрут: ${game.state.route.length} клеток`
-                : `Координаты: ${position.x}, ${position.y}`;
-        }
-    }
-
-    function updateProgressSummaries(tileInfo) {
-        return getStatusUiModule().updateProgressSummaries(tileInfo);
-        const progression = getCurrentProgression(tileInfo);
-        const finalIslandIndex = game.systems.expedition.finalIslandIndex;
-        const timeOfDayLabel = getTimeOfDayLabel();
-
-        if (elements.progressSummary) {
-            elements.progressSummary.textContent = progression
-                ? `Остров ${progression.islandIndex} из ${finalIslandIndex} · ${progression.chunkCount} чанков · ${progression.label}`
-                : `Остров 1 из ${finalIslandIndex}`;
-        }
-
-        if (elements.progressSummary) {
-            elements.progressSummary.textContent = progression
-                ? `Остров ${progression.islandIndex} из ${finalIslandIndex} · ${progression.chunkCount} чанков · ${timeOfDayLabel} · ${progression.label}`
-                : `Остров 1 из ${finalIslandIndex} · ${timeOfDayLabel}`;
-        }
-
-        if (elements.economySummary) {
-            elements.economySummary.textContent = progression
-                ? `Золото: ${getGold()} · Вне дома x${progression.movementCostMultiplier.toFixed(2)} · Эффективность ${Math.round(progression.recoveryMultiplier * 100)}%`
-                : `Золото: ${getGold()} · Цена шага x1.00`;
-        }
-    }
-
-    function updateCharacterCard(displayPosition, tileInfo, activeHouse, activeInteraction) {
-        const profile = game.state.playerProfile || {};
-        const roundedPosition = roundPosition(displayPosition);
-        const tileLabel = getTileLabel(tileInfo ? tileInfo.tileType : 'grass');
-        const encounter = getHouseEncounter(activeInteraction);
-        let stateLabel = 'Ожидает команду';
-
-        if (game.state.hasWon) {
-            stateLabel = 'Экспедиция завершена';
-        } else if (game.state.isGameOver) {
-            stateLabel = 'Состояние критическое';
-        } else if (game.state.isPaused) {
-            stateLabel = 'Игра на паузе';
-        } else if (game.state.isMoving) {
-            stateLabel = 'Идёт по маршруту';
-        } else if (encounter) {
-            stateLabel = `Рядом: ${encounter.label}`;
-        } else if (activeHouse && activeHouse.expedition) {
-            stateLabel = `В доме: ${activeHouse.expedition.locationLabel || activeHouse.expedition.label}`;
-        }
-
-        if (elements.selectedCharacterName) {
-            elements.selectedCharacterName.textContent = profile.name || 'Путешественник';
-        }
-
-        if (elements.selectedCharacterRole) {
-            elements.selectedCharacterRole.textContent = profile.role || 'Исследователь архипелага';
-        }
-
-        if (elements.selectedCharacterState) {
-            elements.selectedCharacterState.textContent = stateLabel;
-        }
-
-        if (elements.selectedCharacterTile) {
-            elements.selectedCharacterTile.textContent = `Коорд: ${roundedPosition.x}, ${roundedPosition.y} · ${tileLabel}`;
-        }
     }
 
     function updateLocationSummaries(displayPosition, tileInfo, activeHouse, activeInteraction) {
         return getStatusUiModule().updateLocationSummaries(displayPosition, tileInfo, activeHouse, activeInteraction);
-        const encounter = getHouseEncounter(activeInteraction);
-
-        if (elements.locationSummary) {
-            if (encounter) {
-                elements.locationSummary.textContent = `Рядом: ${encounter.label}`;
-            } else {
-                elements.locationSummary.textContent = activeHouse
-                    ? `Локация: ${activeHouse.expedition ? (activeHouse.expedition.locationLabel || activeHouse.expedition.label) : activeHouse.id}`
-                    : `Локация: ${getTileLabel(tileInfo ? tileInfo.tileType : 'grass')}`;
-            }
-        }
-
-        if (elements.routeSummary) {
-            const position = roundPosition(displayPosition);
-            const routeBreakdown = getRouteBandBreakdown();
-            const routeReasons = getRouteReasonBreakdown();
-            const warningParts = [];
-
-            if ((routeBreakdown.rough || 0) > 0) {
-                warningParts.push(`тяжёлых ${routeBreakdown.rough}`);
-            }
-
-            if ((routeBreakdown.hazard || 0) > 0) {
-                warningParts.push(`опасных ${routeBreakdown.hazard}`);
-            }
-
-            const reasonSummary = Object.entries(routeReasons)
-                .sort((left, right) => right[1] - left[1])
-                .slice(0, 2)
-                .map(([label, count]) => `${label} ${count}`)
-                .join(', ');
-
-            if (game.state.route.length > 0) {
-                const previewSuffix = game.state.routePreviewLength > game.state.route.length
-                    ? ` из ${game.state.routePreviewLength}`
-                    : '';
-                const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
-                    ? ` (всего ${formatRouteCost(game.state.routePreviewTotalCost)})`
-                    : '';
-                const warningSuffix = warningParts.length > 0
-                    ? ` · ${warningParts.join(', ')}`
-                    : '';
-                const reasonSuffix = reasonSummary
-                    ? ` · ${reasonSummary}`
-                    : '';
-
-                elements.routeSummary.textContent = `Маршрут: ${game.state.route.length}${previewSuffix} клеток · цена ${formatRouteCost(game.state.routeTotalCost)}${fullCostSuffix}${warningSuffix}${reasonSuffix}`;
-                return;
-            }
-
-            const travelLabel = tileInfo ? tileInfo.travelLabel || getTileLabel(tileInfo.tileType) : getTileLabel('grass');
-            const bandLabel = tileInfo ? getTravelBandLabel(tileInfo.travelBand) : getTravelBandLabel('normal');
-            const tileCost = tileInfo ? formatRouteCost(tileInfo.travelWeight) : '1.0';
-            elements.routeSummary.textContent = `Координаты: ${position.x}, ${position.y} · ${travelLabel} · ${bandLabel} · x${tileCost}`;
-        }
     }
 
     function updateProgressSummaries(tileInfo) {
         return getStatusUiModule().updateProgressSummaries(tileInfo);
-        const progression = getCurrentProgression(tileInfo);
-        const finalIslandIndex = game.systems.expedition.finalIslandIndex;
-
-        if (elements.progressSummary) {
-            elements.progressSummary.textContent = progression
-                ? `Остров ${progression.islandIndex} из ${finalIslandIndex} · ${progression.chunkCount} чанков · ${progression.label}`
-                : `Остров 1 из ${finalIslandIndex}`;
-        }
-
-        if (elements.economySummary) {
-            elements.economySummary.textContent = progression
-                ? `Золото: ${getGold()} · Вне дома x${progression.movementCostMultiplier.toFixed(2)} · Клетка x${formatRouteCost(tileInfo ? tileInfo.travelFactor : 1)} · Эффективность ${Math.round(progression.recoveryMultiplier * 100)}%`
-                : `Золото: ${getGold()} · Цена шага x1.00`;
-        }
     }
 
     function updateCharacterCard(displayPosition, tileInfo, activeHouse, activeInteraction) {
         return getStatusUiModule().updateCharacterCard(displayPosition, tileInfo, activeHouse, activeInteraction);
-        const profile = game.state.playerProfile || {};
-        const roundedPosition = roundPosition(displayPosition);
-        const tileLabel = getTileLabel(tileInfo ? tileInfo.tileType : 'grass');
-        const encounter = getHouseEncounter(activeInteraction);
-        let stateLabel = 'Ожидает команду';
-
-        if (game.state.hasWon) {
-            stateLabel = 'Экспедиция завершена';
-        } else if (game.state.isGameOver) {
-            stateLabel = 'Состояние критическое';
-        } else if (game.state.isPaused) {
-            stateLabel = 'Игра на паузе';
-        } else if (game.state.isMoving) {
-            stateLabel = 'Идёт по маршруту';
-        } else if (encounter) {
-            stateLabel = `Рядом: ${encounter.label}`;
-        } else if (activeHouse && activeHouse.expedition) {
-            stateLabel = `В доме: ${activeHouse.expedition.locationLabel || activeHouse.expedition.label}`;
-        }
-
-        if (elements.selectedCharacterName) {
-            elements.selectedCharacterName.textContent = profile.name || 'Путешественник';
-        }
-
-        if (elements.selectedCharacterRole) {
-            elements.selectedCharacterRole.textContent = profile.role || 'Исследователь архипелага';
-        }
-
-        if (elements.selectedCharacterState) {
-            elements.selectedCharacterState.textContent = stateLabel;
-        }
-
-        if (elements.selectedCharacterTile) {
-            const bandLabel = tileInfo ? getTravelBandLabel(tileInfo.travelBand) : getTravelBandLabel('normal');
-            const weightLabel = tileInfo ? formatRouteCost(tileInfo.travelWeight) : '1.0';
-            const travelLabel = tileInfo ? tileInfo.travelLabel || tileLabel : tileLabel;
-            elements.selectedCharacterTile.textContent = `Коорд: ${roundedPosition.x}, ${roundedPosition.y} · ${travelLabel} · ${bandLabel} · x${weightLabel}`;
-        }
-    }
-
-    function drawFallbackPortrait(context, size) {
-        context.fillStyle = '#2b2b2b';
-        context.beginPath();
-        context.arc(size / 2, size / 2 - 2, 16, 0, Math.PI * 2);
-        context.fill();
-        context.fillRect(size / 2 - 15, size / 2 + 10, 30, 24);
     }
 
     function drawPortrait() {
         return getInventoryUiModule().drawPortrait();
-        const portraitCanvas = elements.selectedCharacterPortrait;
-        if (!portraitCanvas) {
-            return;
-        }
-
-        const context = portraitCanvas.getContext('2d');
-        const { width, height } = portraitCanvas;
-        const sprite = game.assets.playerSprite;
-        const spriteFrames = game.config.playerSprite.frames;
-        const direction = game.state.playerFacing || 'south';
-        const frame = spriteFrames[direction] || spriteFrames.south;
-
-        context.clearRect(0, 0, width, height);
-        context.fillStyle = '#efe4b9';
-        context.fillRect(0, 0, width, height);
-        context.fillStyle = '#d0c08b';
-        context.fillRect(0, height - 18, width, 18);
-        context.imageSmoothingEnabled = false;
-
-        if (!sprite || !sprite.complete || !sprite.naturalWidth || !frame) {
-            drawFallbackPortrait(context, width);
-            return;
-        }
-
-        const scale = Math.min((height * 0.8) / frame.sourceHeight, (width * 0.78) / frame.sourceWidth);
-        const drawWidth = frame.sourceWidth * scale;
-        const drawHeight = frame.sourceHeight * scale;
-        const drawX = (width - drawWidth) / 2;
-        const drawY = height - drawHeight - 2;
-
-        context.save();
-        if (frame.flipX) {
-            context.translate(drawX + drawWidth, drawY);
-            context.scale(-1, 1);
-            context.drawImage(
-                sprite,
-                frame.sourceX,
-                frame.sourceY,
-                frame.sourceWidth,
-                frame.sourceHeight,
-                0,
-                0,
-                drawWidth,
-                drawHeight
-            );
-        } else {
-            context.drawImage(
-                sprite,
-                frame.sourceX,
-                frame.sourceY,
-                frame.sourceWidth,
-                frame.sourceHeight,
-                drawX,
-                drawY,
-                drawWidth,
-                drawHeight
-            );
-        }
-        context.restore();
     }
 
     function syncStatusOverlay() {
         return getStatusUiModule().syncStatusOverlay();
-        const showOverlay = Boolean(game.state.isPaused || game.state.hasWon);
-        const isDefeat = Boolean(!game.state.hasWon && isAllStatsDepleted());
-
-        if (elements.pauseOverlay) {
-            elements.pauseOverlay.classList.toggle('is-visible', showOverlay);
-            elements.pauseOverlay.setAttribute('aria-hidden', showOverlay ? 'false' : 'true');
-        }
-
-        if (elements.statusOverlayKicker) {
-            elements.statusOverlayKicker.textContent = game.state.hasWon
-                ? 'Экспедиция'
-                : (isDefeat ? '' : (game.state.isGameOver ? 'Статус' : 'Пауза'));
-        }
-
-        if (elements.statusOverlayTitle) {
-            elements.statusOverlayTitle.textContent = game.state.hasWon
-                ? 'Победа'
-                : (isDefeat ? 'Ты умер' : (game.state.isGameOver ? 'Пауза' : 'Пауза'));
-        }
-
-        if (elements.statusOverlayMessage) {
-            elements.statusOverlayMessage.textContent = game.state.hasWon
-                ? (game.state.victoryMessage || 'Главный сундук найден. Экспедиция завершена.')
-                : (
-                    isDefeat
-                        ? ''
-                        : (
-                            game.state.isGameOver
-                                ? 'Все характеристики упали до нуля. Обнови страницу, чтобы начать заново.'
-                                : ''
-                        )
-                );
-        }
-
-        if (elements.pauseButton) {
-            const pauseLabel = game.state.isPaused ? 'Продолжить' : 'Пауза';
-            elements.pauseButton.textContent = pauseLabel;
-            elements.pauseButton.setAttribute('aria-label', pauseLabel);
-            elements.pauseButton.setAttribute('title', pauseLabel);
-            elements.pauseButton.disabled = Boolean(game.state.isGameOver);
-        }
-
-        if (elements.pauseResumeButton) {
-            const canResume = Boolean(game.state.isPaused && !game.state.isGameOver && !game.state.hasWon && !isDefeat);
-            elements.pauseResumeButton.hidden = !canResume;
-            elements.pauseResumeButton.disabled = !canResume;
-        }
-
-        document.body.classList.toggle('is-paused', Boolean(game.state.isPaused));
-        document.body.classList.toggle('is-game-over', Boolean(game.state.isGameOver));
-        document.body.classList.toggle('is-defeat', isDefeat);
     }
 
     function syncConditionOverlay() {
         return getStatusUiModule().syncConditionOverlay();
-        if (!elements.sceneViewport) {
-            return;
-        }
-
-        const state = getConditionScreenState();
-
-        elements.sceneViewport.style.setProperty('--scene-canvas-filter', state.canvasFilter);
-        elements.sceneViewport.style.setProperty('--condition-red-opacity', state.redOpacity);
-        elements.sceneViewport.style.setProperty('--condition-dark-opacity', state.darkOpacity);
-        elements.sceneViewport.style.setProperty('--condition-glitch-opacity', state.glitchOpacity);
-
-        if (elements.conditionOverlay) {
-            const isOverlayActive = state.mode === 'critical' || state.mode === 'death';
-            elements.conditionOverlay.classList.toggle('is-active', isOverlayActive);
-            elements.conditionOverlay.setAttribute('aria-hidden', isOverlayActive ? 'false' : 'true');
-        }
-
-        if (elements.conditionDeathLabel) {
-            elements.conditionDeathLabel.hidden = state.mode !== 'death';
-        }
     }
 
     function setActionButtonState(action, enabled, highlighted = false, visible = null) {
@@ -2451,7 +2075,9 @@
 
             if (!outcome.success) {
                 setActionMessage(outcome.reason === 'full'
-                    ? 'Рюкзак полон, подобрать предметы не удалось.'
+                    ? (outcome.capacityType === 'bulk'
+                        ? 'Груз слишком тяжёлый: в сумке не хватает объёма.'
+                        : 'Рюкзак полон, подобрать предметы не удалось.')
                     : 'Под ногами ничего не лежит.');
                 renderAfterStateChange();
                 return;
@@ -2716,41 +2342,10 @@
 
     function selectInventorySlot(index) {
         return getInventoryUiModule().selectInventorySlot(index);
-        if (index < 0 || index >= getUnlockedInventorySlots()) {
-            return;
-        }
-
-        game.state.selectedInventorySlot = game.state.selectedInventorySlot === index ? null : index;
-        const selectedItem = getSelectedInventoryItem();
-
-        if (selectedItem) {
-            setActionMessage(`Выбран предмет: ${selectedItem.label}.`);
-        } else if (game.state.selectedInventorySlot === null) {
-            setActionMessage(getDefaultActionHint(game.state.activeInteraction, game.state.activeTileInfo));
-        } else {
-            setActionMessage('Выбран пустой слот.');
-        }
-
-        renderAfterStateChange();
     }
 
     function handleInventoryClick(event) {
         return getInventoryUiModule().handleInventoryClick(event);
-        if (game.state.isGameOver) {
-            return;
-        }
-
-        const slot = event.target.closest('.inventory-slot');
-        if (!slot || slot.disabled) {
-            return;
-        }
-
-        const index = Number(slot.getAttribute('data-slot-index'));
-        if (!Number.isFinite(index)) {
-            return;
-        }
-
-        selectInventorySlot(index);
     }
 
     function performSleep() {
@@ -3373,160 +2968,14 @@
 
     function togglePause(forceValue) {
         return getStatusUiModule().togglePause(forceValue);
-        if (game.state.isGameOver) {
-            return false;
-        }
-
-        const nextValue = typeof forceValue === 'boolean' ? forceValue : !game.state.isPaused;
-        game.state.isPaused = nextValue;
-        syncStatusOverlay();
-
-        if (game.systems.render) {
-            game.systems.render.render();
-        }
-
-        return nextValue;
-    }
-
-    function updateProgressSummaries(tileInfo) {
-        return getStatusUiModule().updateProgressSummaries(tileInfo);
-        const progression = getCurrentProgression(tileInfo);
-        const finalIslandIndex = game.systems.expedition.finalIslandIndex;
-        const timeOfDayLabel = getTimeOfDayLabel();
-
-        if (elements.progressSummary) {
-            elements.progressSummary.textContent = progression
-                ? `Остров ${progression.islandIndex} из ${finalIslandIndex} · ${progression.chunkCount} чанков · ${timeOfDayLabel} · ${progression.label}`
-                : `Остров 1 из ${finalIslandIndex} · ${timeOfDayLabel}`;
-        }
-
-        if (elements.economySummary) {
-            elements.economySummary.textContent = progression
-                ? `Золото: ${getGold()} · Вне дома x${progression.movementCostMultiplier.toFixed(2)} · Клетка x${formatRouteCost(tileInfo ? tileInfo.travelFactor : 1)} · Эффективность ${Math.round(progression.recoveryMultiplier * 100)}%`
-                : `Золото: ${getGold()} · Цена шага x1.00`;
-        }
-    }
-
-    function openMerchantPanel(source) {
-        const merchantUi = getMerchantUiModule();
-        if (merchantUi && typeof merchantUi.openMerchantPanel === 'function') {
-            return merchantUi.openMerchantPanel(source);
-        }
-        const encounter = getHouseEncounter(source);
-
-        if (!source || !encounter || encounter.kind !== 'merchant') {
-            setActionMessage('Рядом нет торговца.');
-            renderAfterStateChange();
-            return;
-        }
-
-        ui.openMerchantHouseId = source.houseId;
-        setActionMessage(`${encounter.label}: открыто меню торговли.`);
-        renderAfterStateChange();
-    }
-
-    function performSleep() {
-        return performSleepLegacy();
-    }
-
-    function performSleepLegacy() {
-        if (game.state.isMoving) {
-            setActionMessage('Сначала нужно завершить движение.');
-            renderAfterStateChange();
-            return;
-        }
-
-        const activeInteraction = getActiveInteraction();
-        const encounter = getHouseEncounter(activeInteraction);
-        const previousMessage = ui.lastActionMessage || '';
-        let applied;
-
-        if (encounter && encounter.kind === 'shelter') {
-            applied = mergeAppliedRewards(
-                applyDirectRecoveryStats({
-                    sleep: 50,
-                    energy: 50
-                }),
-                applyScaledRewardStats({
-                    focus: 12,
-                    cold: 16
-                }, game.state.activeTileInfo, { energySource: 'sleep' })
-            );
-
-            if (!game.state.isGameOver) {
-                setActionMessage(`Привал у укрытия дал: ${describeAppliedRewards(applied)}.`);
-            }
-        } else if (game.state.activeHouse) {
-            applied = mergeAppliedRewards(
-                applyDirectRecoveryStats({
-                    sleep: 100,
-                    energy: 100
-                }),
-                applyScaledRewardStats({
-                    focus: 20,
-                    cold: 24
-                }, game.state.activeTileInfo, { energySource: 'sleep' })
-            );
-
-            if (!game.state.isGameOver) {
-                setActionMessage(`Отдых в доме дал: ${describeAppliedRewards(applied)}.`);
-            }
-        } else {
-            applied = applyDirectRecoveryStats({
-                sleep: 50,
-                energy: 50
-            });
-            applyStatDeltas({
-                focus: -12,
-                cold: -12
-            });
-
-            if (!game.state.isGameOver) {
-                setActionMessage(`Сон под открытым небом дал: ${describeAppliedRewards(applied)}. Но стало холоднее и тяжелее собраться.`);
-            }
-        }
-
-        const nextTimeOfDay = game.systems.render && typeof game.systems.render.advanceTimeOfDay === 'function'
-            ? game.systems.render.advanceTimeOfDay(1)
-            : null;
-
-        if (!game.state.isGameOver && nextTimeOfDay && ui.lastActionMessage && ui.lastActionMessage !== previousMessage) {
-            setActionMessage(`${ui.lastActionMessage} Теперь ${nextTimeOfDay.label.toLowerCase()}.`);
-        }
-
-        renderAfterStateChange();
     }
 
     function applyMovementStepCosts() {
         return getStatusUiModule().applyMovementStepCosts();
-        const tileInfo = game.state.activeTileInfo;
-        const focusMultiplier = getFocusMultiplier();
-        const criticalDrainMultiplier = getCriticalDepletionMultiplier();
-        const energyDrain = Math.max(0.45, game.systems.expedition.scaleTraversalDrain(focusMultiplier, tileInfo) * criticalDrainMultiplier);
-        const hungerDrain = Math.max(0.45, game.systems.expedition.scaleTraversalDrain(focusMultiplier, tileInfo) * criticalDrainMultiplier);
-        const coldDelta = game.state.activeHouse
-            ? scaleRecovery(3)
-            : -Math.max(0.2, game.systems.expedition.scaleTraversalDrain(1 / coldDrainDivider, tileInfo) * criticalDrainMultiplier);
-
-        applyStatDeltas({
-            energy: -energyDrain,
-            hunger: -hungerDrain,
-            cold: coldDelta
-        });
     }
 
     function applyPathCompletionCosts() {
         return getStatusUiModule().applyPathCompletionCosts();
-        const focusMultiplier = getFocusMultiplier();
-
-        applyStatDeltas({
-            sleep: -scaleDrain(focusMultiplier),
-            focus: -Math.max(1, Math.round(scaleDrain(1) * 0.75))
-        });
-
-        if (!game.state.isGameOver) {
-            setActionMessage('Путь завершён. Сон и фокус немного снизились.');
-        }
     }
 
     const uiBridge = game.systems.uiBridge = game.systems.uiBridge || {};
@@ -3555,8 +3004,11 @@
         getGold,
         getHouseEncounter,
         getInventory,
+        getInventoryBulkCapacity,
+        getInventoryBulkUsage,
         getGroundItemDescription,
         getItemDefinition,
+        getItemBulk,
         getItemDescription,
         getOpeningHungerDrainMultiplier,
         getRouteBandBreakdown,

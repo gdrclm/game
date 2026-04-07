@@ -1115,7 +1115,29 @@
         const definition = getItemDefinition(itemId);
 
         if (!definition) {
-            return false;
+            return {
+                added: false,
+                reason: 'unknown-item'
+            };
+        }
+
+        const inventoryRuntime = getInventoryRuntime();
+        const normalizedQuantity = normalizeEntryQuantity(quantity);
+        const bulkCapacity = inventoryRuntime && typeof inventoryRuntime.getInventoryBulkCapacity === 'function'
+            ? inventoryRuntime.getInventoryBulkCapacity(snapshot.length)
+            : 0;
+        const bulkUsage = inventoryRuntime && typeof inventoryRuntime.getInventoryBulkUsage === 'function'
+            ? inventoryRuntime.getInventoryBulkUsage(snapshot, { slotCount: snapshot.length })
+            : 0;
+        const addedBulk = inventoryRuntime && typeof inventoryRuntime.getItemBulk === 'function'
+            ? inventoryRuntime.getItemBulk(itemId, normalizedQuantity)
+            : 0;
+
+        if (bulkCapacity > 0 && addedBulk > 0 && bulkUsage + addedBulk > bulkCapacity) {
+            return {
+                added: false,
+                reason: 'bulk-full'
+            };
         }
 
         if (isItemStackable(itemId)) {
@@ -1124,19 +1146,25 @@
             if (existingIndex >= 0) {
                 snapshot[existingIndex] = {
                     ...snapshot[existingIndex],
-                    quantity: Math.max(1, (snapshot[existingIndex].quantity || 1) + quantity)
+                    quantity: Math.max(1, (snapshot[existingIndex].quantity || 1) + normalizedQuantity)
                 };
-                return true;
+                return {
+                    added: true,
+                    reason: 'stacked'
+                };
             }
         }
 
-        let remaining = normalizeEntryQuantity(quantity);
+        let remaining = normalizedQuantity;
 
         while (remaining > 0) {
             const emptyIndex = snapshot.findIndex((item) => !item);
 
             if (emptyIndex === -1) {
-                return false;
+                return {
+                    added: false,
+                    reason: 'slot-full'
+                };
             }
 
             const stackQuantity = isItemStackable(itemId) ? remaining : 1;
@@ -1151,7 +1179,10 @@
             remaining -= stackQuantity;
         }
 
-        return true;
+        return {
+            added: true,
+            reason: 'new'
+        };
     }
 
     function buildGameplayMissingIngredient(ingredient, snapshotBeforePlanning) {
@@ -1316,14 +1347,30 @@
 
         const additions = buildGameplayAdditions(recipe);
         const projectedSnapshot = workingSnapshot.map((item) => item ? cloneValue(item) : null);
-        const canFitOutputs = additions.every((addition) => addItemQuantityToSnapshot(projectedSnapshot, addition.itemId, addition.quantity));
+        let fitFailure = null;
+        additions.forEach((addition) => {
+            if (fitFailure) {
+                return;
+            }
 
-        if (!canFitOutputs) {
+            const addOutcome = addItemQuantityToSnapshot(projectedSnapshot, addition.itemId, addition.quantity);
+            if (!addOutcome || !addOutcome.added) {
+                fitFailure = addOutcome || {
+                    added: false,
+                    reason: 'slot-full'
+                };
+            }
+        });
+
+        if (fitFailure) {
             return {
                 success: false,
                 reason: 'inventory-full',
+                capacityType: fitFailure.reason === 'bulk-full' ? 'bulk' : 'slots',
                 recipe,
-                message: `После крафта "${recipe.label}" в сумке не хватит места для результата или контейнеров.`
+                message: fitFailure.reason === 'bulk-full'
+                    ? `После крафта "${recipe.label}" сумка окажется перегружена по объёму.`
+                    : `После крафта "${recipe.label}" в сумке не хватит места для результата или контейнеров.`
             };
         }
 

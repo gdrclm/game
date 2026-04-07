@@ -1,6 +1,7 @@
 (() => {
     const game = window.Game;
     const inventoryRuntime = game.systems.inventoryRuntime = game.systems.inventoryRuntime || {};
+    const BULK_CAPACITY_PER_SLOT = 4;
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
@@ -39,6 +40,55 @@
         return registry && typeof registry.getItemDefinition === 'function'
             ? registry.getItemDefinition(itemId)
             : null;
+    }
+
+    function normalizeBulkValue(bulk) {
+        return Math.max(0, Math.floor(Number.isFinite(bulk) ? bulk : 0));
+    }
+
+    function getItemBulk(itemOrId, quantity = null) {
+        const itemId = typeof itemOrId === 'string'
+            ? itemOrId
+            : (itemOrId && typeof itemOrId.id === 'string' ? itemOrId.id : '');
+        const definition = itemId ? getItemDefinition(itemId) : null;
+        const normalizedQuantity = Number.isFinite(quantity)
+            ? Math.max(1, Math.floor(quantity))
+            : Math.max(1, Math.floor(itemOrId && Number.isFinite(itemOrId.quantity) ? itemOrId.quantity : 1));
+
+        return normalizeBulkValue(definition && definition.bulk) * normalizedQuantity;
+    }
+
+    function getInventoryBulkCapacity(slotCount = getUnlockedInventorySlots()) {
+        return Math.max(0, Math.floor(slotCount)) * BULK_CAPACITY_PER_SLOT;
+    }
+
+    function getInventoryBulkUsage(inventoryItems = getInventory(), options = {}) {
+        const slotCount = Number.isFinite(options.slotCount)
+            ? Math.max(0, Math.floor(options.slotCount))
+            : getUnlockedInventorySlots();
+        const normalizedInventory = Array.isArray(inventoryItems) ? inventoryItems : [];
+        let totalBulk = 0;
+
+        for (let index = 0; index < slotCount; index++) {
+            const item = normalizedInventory[index];
+            if (!item || !item.id) {
+                continue;
+            }
+
+            totalBulk += getItemBulk(item);
+        }
+
+        return totalBulk;
+    }
+
+    function hasInventoryBulkCapacityForAddition(itemId, quantity = 1, options = {}) {
+        const inventoryItems = Array.isArray(options.inventoryItems) ? options.inventoryItems : getInventory();
+        const slotCount = Number.isFinite(options.slotCount)
+            ? Math.max(0, Math.floor(options.slotCount))
+            : getUnlockedInventorySlots();
+        const projectedBulkUsage = getInventoryBulkUsage(inventoryItems, { slotCount }) + getItemBulk(itemId, quantity);
+
+        return projectedBulkUsage <= getInventoryBulkCapacity(slotCount);
     }
 
     function getItemConversionRecipe(itemId) {
@@ -243,6 +293,16 @@
             };
         }
 
+        if (!hasInventoryBulkCapacityForAddition(itemId, quantity)) {
+            return {
+                added: false,
+                reason: 'full',
+                capacityType: 'bulk',
+                item: null,
+                conversions: []
+            };
+        }
+
         const inventory = getInventory();
         const nextItem = registry && typeof registry.createInventoryItem === 'function'
             ? registry.createInventoryItem(itemId, quantity, options)
@@ -397,6 +457,16 @@
         const inventory = getInventory();
         const currentQuantity = Math.max(1, currentItem.quantity || 1);
         const transformQuantity = Math.max(1, Math.min(currentQuantity, quantity));
+        const bulkDelta = getItemBulk(nextItemId, transformQuantity) - getItemBulk(currentItem, transformQuantity);
+        if (bulkDelta > 0 && getInventoryBulkUsage() + bulkDelta > getInventoryBulkCapacity()) {
+            return {
+                success: false,
+                reason: 'full',
+                capacityType: 'bulk',
+                item: null,
+                targetIndex: null
+            };
+        }
         const isTargetStackable = registry && typeof registry.isItemStackable === 'function'
             ? registry.isItemStackable(nextItemId)
             : false;
@@ -479,10 +549,14 @@
         }, 0);
     }
 
-    function canAddInventoryItem(itemId) {
+    function canAddInventoryItem(itemId, quantity = 1) {
         const definition = getItemDefinition(itemId);
 
         if (!definition) {
+            return false;
+        }
+
+        if (!hasInventoryBulkCapacityForAddition(itemId, quantity)) {
             return false;
         }
 
@@ -578,6 +652,7 @@
 
         const picked = [];
         const remaining = [];
+        let blockedCapacityType = '';
 
         groundItem.items.forEach((item) => {
             const outcome = addInventoryItem(item.id, item.quantity || 1);
@@ -587,6 +662,9 @@
                 return;
             }
 
+            if (!blockedCapacityType && outcome && outcome.capacityType) {
+                blockedCapacityType = outcome.capacityType;
+            }
             remaining.push(normalizeInventoryItem(item));
         });
 
@@ -603,6 +681,7 @@
             reason: picked.length > 0
                 ? (remaining.length > 0 ? 'partial' : 'picked')
                 : 'full',
+            capacityType: blockedCapacityType || '',
             picked,
             remaining
         };
@@ -702,6 +781,9 @@
         getUnlockedInventorySlots,
         getSelectedInventoryItem,
         getItemDefinition,
+        getItemBulk,
+        getInventoryBulkUsage,
+        getInventoryBulkCapacity,
         normalizeInventoryItem,
         getItemSpoilageState,
         addInventoryItem,

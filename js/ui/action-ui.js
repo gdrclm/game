@@ -1986,7 +1986,9 @@
 
             if (!outcome.success) {
                 bridge.setActionMessage(outcome.reason === 'full'
-                    ? 'Рюкзак полон, подобрать предметы не удалось.'
+                    ? (outcome.capacityType === 'bulk'
+                        ? 'Груз слишком тяжёлый: в сумке не хватает объёма.'
+                        : 'Рюкзак полон, подобрать предметы не удалось.')
                     : 'Под ногами ничего не лежит.');
                 bridge.renderAfterStateChange();
                 return;

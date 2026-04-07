@@ -24,6 +24,9 @@
     };
 
     function makeItem(id, label, icon, lootTier, categories, extra = {}) {
+        const normalizedBulk = Number.isFinite(extra.bulk)
+            ? Math.max(0, Math.floor(extra.bulk))
+            : 0;
         return {
             id,
             label,
@@ -37,7 +40,8 @@
             merchantWeight: 0,
             merchantQuestWeight: 0,
             baseValue: 0,
-            ...extra
+            ...extra,
+            bulk: normalizedBulk
         };
     }
 
@@ -47,7 +51,7 @@
             : [];
     }
 
-    function getCraftingComponentCatalogEntries() {
+    function getCraftingGeneratedCatalogEntries() {
         return componentRegistry && typeof componentRegistry.buildCatalogEntries === 'function'
             ? componentRegistry.buildCatalogEntries(makeItem)
             : [];
@@ -105,23 +109,6 @@
             consumable: { energy: 15, focus: 6 },
             activeEffect: { kind: 'nextChestBuff', extraRolls: 1 }
         }),
-        makeItem('healingBrew', 'Отвар лечения', 'OL', 2, 'consumable survival', {
-            stackable: true,
-            chestWeight: 0,
-            merchantWeight: 0,
-            baseValue: 12,
-            description: 'Лагерный лечебный отвар. Возвращает силы и помогает мягче пройти тяжёлый участок.',
-            consumable: { energy: 25, cold: 12, focus: 10 },
-            activeEffect: { kind: 'clearTravelPenalty' }
-        }),
-        makeItem('energyTonic', 'Энергетик', 'ET', 2, 'consumable survival', {
-            stackable: true,
-            chestWeight: 0,
-            merchantWeight: 0,
-            baseValue: 12,
-            description: 'Быстрый лагерный тоник для темпа и длинных серий ходов.',
-            consumable: { energy: 30, focus: 12 }
-        }),
         makeItem('herbalDecoction', 'Травяной отвар', 'TO', 2, 'consumable survival', {
             stackable: true,
             chestWeight: 6,
@@ -148,14 +135,6 @@
             description: 'Резервный паёк для критического момента.',
             consumable: { hunger: 100, energy: 15 }
         }),
-        makeItem('heartyRation', 'Сытный паёк', 'HP', 2, 'consumable survival food', {
-            stackable: true,
-            chestWeight: 0,
-            merchantWeight: 0,
-            baseValue: 15,
-            description: 'Плотный лагерный паёк с водой и горячей обработкой. Хорошо держит темп длинного маршрута.',
-            consumable: { hunger: 100, energy: 40, focus: 8 }
-        }),
         makeItem('fieldKit', 'Полевой набор', 'PN', 3, 'consumable survival movement', {
             chestWeight: 4,
             merchantWeight: 5,
@@ -164,30 +143,6 @@
             consumable: { energy: 30, focus: 10 },
             activeEffect: { kind: 'travelBuff', freeSteps: 5 }
         }),
-        makeItem('strongBroth', 'Крепкий бульон', 'KB', 3, 'consumable survival food', {
-            stackable: true,
-            chestWeight: 0,
-            merchantWeight: 0,
-            baseValue: 18,
-            description: 'Густой лагерный бульон для тяжёлых отрезков. Сильно поддерживает восстановление.',
-            consumable: { hunger: 100, energy: 45, focus: 15, cold: 16 }
-        }),
-        makeItem('fishBroth', 'Рыбный бульон', 'RB', 2, 'consumable survival food', {
-            stackable: true,
-            chestWeight: 0,
-            merchantWeight: 0,
-            baseValue: 12,
-            description: 'Простой лагерный бульон из рыбы и кипячёной воды. Быстро закрывает аварийный голод на маршруте.',
-            consumable: { hunger: 80, energy: 22, focus: 5, cold: 8 }
-        }),
-        makeItem('saltedFish', 'Солёная рыба', 'SR', 2, 'consumable survival food', {
-            stackable: true,
-            chestWeight: 0,
-            merchantWeight: 0,
-            baseValue: 11,
-            description: 'Засоленный походный улов. Восстанавливает меньше, чем горячая еда, но спасает слот от порчи сырой рыбы.',
-            consumable: { hunger: 65, energy: 12, focus: 4 }
-        }),
         makeItem('roadDust', 'Пыль дороги', 'PD', 2, 'consumable movement', {
             stackable: true,
             chestWeight: 5,
@@ -195,15 +150,6 @@
             baseValue: 11,
             description: 'Снижает цену движения на несколько шагов.',
             activeEffect: { kind: 'travelBuff', discountMultiplier: 0.8, durationSteps: 12 }
-        }),
-        makeItem('secondWind', 'Второе дыхание', 'VD', 3, 'consumable survival movement', {
-            stackable: true,
-            chestWeight: 0,
-            merchantWeight: 0,
-            baseValue: 18,
-            description: 'Даёт всплеск темпа и удешевляет тяжёлое движение на несколько шагов.',
-            consumable: { energy: 18, focus: 12 },
-            activeEffect: { kind: 'travelBuff', discountMultiplier: 0.7, durationSteps: 8 }
         }),
         makeItem('napkinMap', 'Карта на салфетке', 'KS', 2, 'consumable utility info', {
             stackable: true,
@@ -279,13 +225,6 @@
             consumable: { energy: 20, focus: 4 },
             activeEffect: { kind: 'travelBuff', freeSteps: 1 }
         }),
-        makeItem('portableBridge', 'Переносной мост', 'PM', 2, 'tool utility movement', {
-            chestWeight: 5,
-            merchantWeight: 6,
-            baseValue: 18,
-            description: 'Позволяет уложить одну клетку моста.',
-            activeEffect: { kind: 'bridgeBuilder', charges: 1 }
-        }),
         makeItem('reinforcedBridge', 'Усиленный мост', 'UM', 3, 'tool utility movement', {
             chestWeight: 4,
             merchantWeight: 5,
@@ -347,20 +286,6 @@
             baseValue: 38,
             description: 'Переносит на ближайшую безопасную клетку.',
             activeEffect: { kind: 'teleportToSafe' }
-        }),
-        makeItem('fogLantern', 'Фонарь тумана', 'FT', 3, 'tool utility info', {
-            chestWeight: 3,
-            merchantWeight: 4,
-            baseValue: 24,
-            description: 'Масляный фонарь на рыбьем жире. Открывает карту вокруг героя на текущем острове.',
-            activeEffect: { kind: 'revealMap', mode: 'currentViewBoost' }
-        }),
-        makeItem('merchantBeacon', 'Маяк торговца', 'MT', 3, 'tool utility info', {
-            chestWeight: 2,
-            merchantWeight: 4,
-            baseValue: 22,
-            description: 'Сигнальный маяк на рыбьем жире. Показывает координаты торговца текущего острова.',
-            activeEffect: { kind: 'revealMerchant' }
         }),
         makeItem('bypassCompass', 'Компас обхода', 'KO', 4, 'tool utility movement', {
             chestWeight: 2,
@@ -864,17 +789,11 @@
             merchantQuestWeight: 0
         }),
         ...getBaseResourceCatalogEntries(),
-        ...getCraftingComponentCatalogEntries(),
+        ...getCraftingGeneratedCatalogEntries(),
         makeItem('soilClod', 'Комья земли', 'KZ', 0, 'resource material', {
             stackable: true,
             baseValue: 2,
             description: 'Сырьё из плохих секторов. Пять комьев можно сжать руками в земляной ресурс.'
-        }),
-        makeItem('soilResource', 'Земляной ресурс', 'ZR', 0, 'resource material value', {
-            stackable: true,
-            baseValue: 7,
-            merchantQuestWeight: 2,
-            description: 'Плотный земляной ресурс.'
         }),
         makeItem('ferryBoard', 'Доска переправы', 'DP', 2, 'tool utility movement', {
             chestWeight: 3,

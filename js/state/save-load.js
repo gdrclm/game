@@ -11,6 +11,7 @@
     const RESOURCE_NODE_RESPAWN_POLICY_SAVE_VERSION = 4;
     const WATER_FLASK_CONTAINER_SAVE_VERSION = 5;
     const REEDS_RESOURCE_SPLIT_SAVE_VERSION = 6;
+    const CANONICAL_COMPONENT_ITEM_IDS_SAVE_VERSION = 7;
     const LEGACY_RAW_RESOURCE_ITEM_MIGRATIONS = Object.freeze({
         lowlandGrass: {
             itemId: 'raw_reeds',
@@ -33,6 +34,18 @@
         stoneResource: { itemId: 'raw_stone', label: 'Камень', icon: 'KS', quantityMultiplier: 5, resourceFamilyId: 'stone' },
         waterFlask: { itemId: 'flask_water_full', label: 'Фляга кипячёной воды', icon: 'FW', quantityMultiplier: 1, resourceFamilyId: 'water' }
     });
+    const LEGACY_COMPONENT_ITEM_MIGRATIONS = Object.freeze({
+        healingBase: { itemId: 'healing_base', label: 'Травяная база лечения', icon: 'HB' },
+        herbalPaste: { itemId: 'herb_paste', label: 'Травяная паста', icon: 'TP' },
+        rope: { itemId: 'fiber_rope', label: 'Верёвка', icon: 'VR' },
+        stoneBlock: { itemId: 'stone_block', label: 'Каменный блок', icon: 'KB' },
+        gravelFill: { itemId: 'gravel_fill', label: 'Гравийная засыпка', icon: 'GZ' },
+        board: { itemId: 'wood_plank_basic', label: 'Доска', icon: 'BD' },
+        frame: { itemId: 'wood_frame_basic', label: 'Каркас', icon: 'FR' },
+        fishMeat: { itemId: 'fish_meat', label: 'Рыбное мясо', icon: 'FM' },
+        fishOil: { itemId: 'fish_oil', label: 'Рыбий жир', icon: 'FO' },
+        fuelBundle: { itemId: 'fuel_bundle', label: 'Топливная связка', icon: 'TB' }
+    });
     const RAW_STACKABLE_ITEM_IDS = new Set([
         'raw_grass',
         'raw_reeds',
@@ -44,6 +57,18 @@
         'flask_water_dirty',
         'flask_water_full',
         'flask_water_alchemy'
+    ]);
+    const CANONICAL_COMPONENT_STACKABLE_ITEM_IDS = new Set([
+        'healing_base',
+        'herb_paste',
+        'fiber_rope',
+        'stone_block',
+        'gravel_fill',
+        'wood_plank_basic',
+        'wood_frame_basic',
+        'fish_meat',
+        'fish_oil',
+        'fuel_bundle'
     ]);
 
     function isPlainObject(value) {
@@ -73,6 +98,24 @@
             resourceFamilyId: migration.resourceFamilyId || item.resourceFamilyId || '',
             resourceSubtypeId: migration.resourceSubtypeId || item.resourceSubtypeId || '',
             resourceSubtypeLabel: migration.resourceSubtypeLabel || item.resourceSubtypeLabel || ''
+        };
+    }
+
+    function migrateLegacyCanonicalComponentItem(item) {
+        if (!isPlainObject(item) || typeof item.id !== 'string') {
+            return cloneValue(item);
+        }
+
+        const migration = LEGACY_COMPONENT_ITEM_MIGRATIONS[item.id];
+        if (!migration) {
+            return cloneValue(item);
+        }
+
+        return {
+            ...cloneValue(item),
+            id: migration.itemId,
+            icon: migration.icon,
+            label: migration.label
         };
     }
 
@@ -138,6 +181,54 @@
         }
 
         return migratedItem;
+    }
+
+    function mergeCanonicalComponentInventoryItems(items = []) {
+        const migratedItems = (Array.isArray(items) ? items : []).map((item) => item ? migrateLegacyCanonicalComponentItem(item) : item);
+        const firstIndexById = Object.create(null);
+
+        migratedItems.forEach((item, index) => {
+            if (!item || !CANONICAL_COMPONENT_STACKABLE_ITEM_IDS.has(item.id)) {
+                return;
+            }
+
+            if (!Number.isInteger(firstIndexById[item.id])) {
+                firstIndexById[item.id] = index;
+                return;
+            }
+
+            const targetItem = migratedItems[firstIndexById[item.id]];
+            targetItem.quantity = Math.max(1, targetItem.quantity || 1) + Math.max(1, item.quantity || 1);
+            migratedItems[index] = null;
+        });
+
+        return migratedItems;
+    }
+
+    function migrateCanonicalComponentGroundItemList(items = []) {
+        const mergedItems = [];
+        const indexById = Object.create(null);
+
+        (Array.isArray(items) ? items : []).forEach((item) => {
+            const migratedItem = migrateLegacyCanonicalComponentItem(item);
+
+            if (!migratedItem || typeof migratedItem.id !== 'string') {
+                return;
+            }
+
+            if (CANONICAL_COMPONENT_STACKABLE_ITEM_IDS.has(migratedItem.id) && Number.isInteger(indexById[migratedItem.id])) {
+                mergedItems[indexById[migratedItem.id]].quantity += Math.max(1, migratedItem.quantity || 1);
+                return;
+            }
+
+            if (CANONICAL_COMPONENT_STACKABLE_ITEM_IDS.has(migratedItem.id)) {
+                indexById[migratedItem.id] = mergedItems.length;
+            }
+
+            mergedItems.push(migratedItem);
+        });
+
+        return mergedItems;
     }
 
     function mergeMigratedStackableItems(items = []) {
@@ -559,6 +650,35 @@
         };
     }
 
+    function migrateSnapshotToVersion7(snapshot) {
+        const player = isPlainObject(snapshot.player) ? cloneValue(snapshot.player) : {};
+        const world = isPlainObject(snapshot.world) ? cloneValue(snapshot.world) : {};
+
+        if (Array.isArray(player.inventory)) {
+            player.inventory = mergeCanonicalComponentInventoryItems(player.inventory);
+
+            if (typeof player.selectedInventorySlot === 'number' && !player.inventory[player.selectedInventorySlot]) {
+                player.selectedInventorySlot = null;
+            }
+        }
+
+        if (isPlainObject(world.groundItemsByKey)) {
+            world.groundItemsByKey = Object.fromEntries(Object.entries(world.groundItemsByKey).map(([worldKey, items]) => [
+                worldKey,
+                migrateCanonicalComponentGroundItemList(items)
+            ]));
+        }
+
+        return {
+            saveVersion: CANONICAL_COMPONENT_ITEM_IDS_SAVE_VERSION,
+            player,
+            craftingState: buildMigratedCraftingState(snapshot),
+            world,
+            narrative: isPlainObject(snapshot.narrative) ? cloneValue(snapshot.narrative) : {},
+            ui: isPlainObject(snapshot.ui) ? cloneValue(snapshot.ui) : {}
+        };
+    }
+
     function normalizeSnapshot(snapshot) {
         const normalizedDomains = stateSchema.normalizeDomains({
             meta: {
@@ -634,6 +754,12 @@
 
             if (version === WATER_FLASK_CONTAINER_SAVE_VERSION) {
                 snapshot = migrateSnapshotToVersion6(snapshot);
+                version = snapshot.saveVersion;
+                continue;
+            }
+
+            if (version === REEDS_RESOURCE_SPLIT_SAVE_VERSION) {
+                snapshot = migrateSnapshotToVersion7(snapshot);
                 version = snapshot.saveVersion;
                 continue;
             }

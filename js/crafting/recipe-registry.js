@@ -19,6 +19,7 @@
         survivalAndEnergy: 2,
         buildWaterAndRepair: 3
     };
+    const PRACTICAL_RAW_RESOURCE_EXCEPTION_TAG = 'raw-shortcut';
 
     function isDevMode(options = {}) {
         if (typeof options.devMode === 'boolean') {
@@ -97,6 +98,24 @@
         return [...new Set((Array.isArray(tags) ? tags : [])
             .filter((tag) => typeof tag === 'string' && tag.trim())
             .map((tag) => tag.trim()))];
+    }
+
+    function isPracticalRecipeTier(tier) {
+        return Number.isFinite(tier) && tier > RECIPE_TIERS.baseConversion;
+    }
+
+    function getRawResourceIngredients(recipe) {
+        return (Array.isArray(recipe && recipe.ingredients) ? recipe.ingredients : [])
+            .filter((ingredient) => ingredient && ingredient.kind === 'resource');
+    }
+
+    function allowsPracticalRawShortcut(recipe) {
+        return Boolean(
+            recipe
+            && Array.isArray(recipe.tags)
+            && recipe.tags.includes(PRACTICAL_RAW_RESOURCE_EXCEPTION_TAG)
+            && recipe.tags.includes('emergency')
+        );
     }
 
     function buildKnownResourceIdSet(options = {}) {
@@ -225,6 +244,15 @@
         });
         validateRecipeReference(normalizedDefinition, normalizedDefinition.result, knownResourceIds, knownComponentIds, 'result');
 
+        const rawResourceIngredients = getRawResourceIngredients(normalizedDefinition);
+        if (rawResourceIngredients.length > 0 && isPracticalRecipeTier(normalizedDefinition.tier) && !allowsPracticalRawShortcut(normalizedDefinition)) {
+            throw new Error(
+                `[recipe-registry] Recipe "${normalizedDefinition.recipeId}" uses raw resources in a practical tier. `
+                + `Practical recipes must consume components unless explicitly tagged `
+                + `"${PRACTICAL_RAW_RESOURCE_EXCEPTION_TAG}" and "emergency".`
+            );
+        }
+
         return normalizedDefinition;
     }
 
@@ -293,7 +321,7 @@
                 createIngredient('itemState', 'waterFlaskDirty', 'Фляга сырой воды', 1, {
                     gameplayItemId: 'flask_water_dirty'
                 }),
-                createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
+                createIngredient('component', 'fuel_bundle', 'Топливная связка', 1)
             ],
             result: createResult('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, {
                 gameplayItemId: 'flask_water_full'
@@ -334,7 +362,7 @@
             ingredients: [
                 createIngredient('resource', 'grass', 'Трава', 5)
             ],
-            result: createResult('component', 'healingBase', 'Травяная база лечения', 1, {
+            result: createResult('component', 'healing_base', 'Травяная база лечения', 1, {
                 aliases: ['База лечения']
             }),
             tags: ['base-conversion', 'component', 'grass', 'healing'],
@@ -353,7 +381,7 @@
             ingredients: [
                 createIngredient('resource', 'reeds', 'Тростник', 5)
             ],
-            result: createResult('component', 'healingBase', 'Травяная база лечения', 1, {
+            result: createResult('component', 'healing_base', 'Травяная база лечения', 1, {
                 aliases: ['База лечения']
             }),
             tags: ['base-conversion', 'component', 'reeds', 'healing'],
@@ -372,7 +400,7 @@
             ingredients: [
                 createIngredient('resource', 'grass', 'Трава', 5)
             ],
-            result: createResult('component', 'herbalPaste', 'Травяная паста', 1),
+            result: createResult('component', 'herb_paste', 'Травяная паста', 1),
             tags: ['base-conversion', 'component', 'grass', 'energy'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 1, to: 12, priority: 'recommended', note: 'Поддерживает ранний темп и настои.' },
@@ -389,9 +417,9 @@
             ingredients: [
                 createIngredient('resource', 'grass', 'Трава', 10)
             ],
-            result: createResult('component', 'rope', 'Верёвка', 1, {
+            result: createResult('component', 'fiber_rope', 'Верёвка', 1, {
                 aliases: ['Верёвка из волокна'],
-                gameplayItemId: 'rope'
+                gameplayItemId: 'fiber_rope'
             }),
             tags: ['base-conversion', 'component', 'grass', 'movement', 'construction'],
             islandNeedProfile: createIslandNeedProfile([
@@ -410,9 +438,9 @@
             ingredients: [
                 createIngredient('resource', 'reeds', 'Тростник', 10)
             ],
-            result: createResult('component', 'rope', 'Верёвка', 1, {
+            result: createResult('component', 'fiber_rope', 'Верёвка', 1, {
                 aliases: ['Верёвка из тростника'],
-                gameplayItemId: 'rope'
+                gameplayItemId: 'fiber_rope'
             }),
             tags: ['base-conversion', 'component', 'reeds', 'movement', 'construction'],
             islandNeedProfile: createIslandNeedProfile([
@@ -431,7 +459,7 @@
             ingredients: [
                 createIngredient('resource', 'stone', 'Камень', 5)
             ],
-            result: createResult('component', 'stoneBlock', 'Каменный блок', 1),
+            result: createResult('component', 'stone_block', 'Каменный блок', 1),
             tags: ['base-conversion', 'component', 'stone', 'construction'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 4, to: 15, priority: 'critical', note: 'Нужен для мостов и укрепления в середине игры.' },
@@ -448,7 +476,7 @@
             ingredients: [
                 createIngredient('resource', 'rubble', 'Щебень', 5)
             ],
-            result: createResult('component', 'gravelFill', 'Гравийная засыпка', 1, {
+            result: createResult('component', 'gravel_fill', 'Гравийная засыпка', 1, {
                 aliases: ['Заполнитель']
             }),
             tags: ['base-conversion', 'component', 'rubble', 'repair'],
@@ -484,7 +512,7 @@
             ingredients: [
                 createIngredient('resource', 'wood', 'Дерево', 5)
             ],
-            result: createResult('component', 'board', 'Доска', 1),
+            result: createResult('component', 'wood_plank_basic', 'Доска', 1),
             tags: ['base-conversion', 'component', 'wood', 'construction'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 2, to: 18, priority: 'critical', note: 'Главный строительный пакет ранней и водной фаз.' },
@@ -501,7 +529,7 @@
             ingredients: [
                 createIngredient('resource', 'wood', 'Дерево', 10)
             ],
-            result: createResult('component', 'frame', 'Каркас', 1),
+            result: createResult('component', 'wood_frame_basic', 'Каркас', 1),
             tags: ['base-conversion', 'component', 'wood', 'heavy-assembly'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 13, to: 18, priority: 'critical', note: 'Нужен для лодочного цикла до водной фазы.' },
@@ -518,7 +546,7 @@
             ingredients: [
                 createIngredient('resource', 'wood', 'Дерево', 5)
             ],
-            result: createResult('component', 'fuelBundle', 'Топливная связка', 1),
+            result: createResult('component', 'fuel_bundle', 'Топливная связка', 1),
             tags: ['base-conversion', 'component', 'wood', 'camp', 'fuel'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 1, to: 18, priority: 'recommended', note: 'Поддерживает воду, пайки и базовую алхимию.' },
@@ -535,8 +563,8 @@
             ingredients: [
                 createIngredient('resource', 'fish', 'Рыба', 5)
             ],
-            result: createResult('component', 'fishMeat', 'Рыбное мясо', 1, {
-                gameplayItemId: 'fishMeat'
+            result: createResult('component', 'fish_meat', 'Рыбное мясо', 1, {
+                gameplayItemId: 'fish_meat'
             }),
             tags: ['base-conversion', 'component', 'fish', 'food', 'camp'],
             islandNeedProfile: createIslandNeedProfile([
@@ -553,8 +581,8 @@
             ingredients: [
                 createIngredient('resource', 'fish', 'Рыба', 10)
             ],
-            result: createResult('component', 'fishOil', 'Рыбий жир', 1, {
-                gameplayItemId: 'fishOil'
+            result: createResult('component', 'fish_oil', 'Рыбий жир', 1, {
+                gameplayItemId: 'fish_oil'
             }),
             tags: ['base-conversion', 'component', 'fish', 'oil', 'camp'],
             islandNeedProfile: createIslandNeedProfile([
@@ -571,7 +599,7 @@
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
                 createIngredient('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, { gameplayItemId: 'flask_water_alchemy' }),
-                createIngredient('component', 'healingBase', 'Травяная база лечения', 1)
+                createIngredient('component', 'healing_base', 'Травяная база лечения', 1)
             ],
             result: createResult('item', 'healingBrew', 'Отвар лечения', 1),
             tags: ['survival', 'healing', 'camp', 'consumable'],
@@ -588,7 +616,7 @@
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
                 createIngredient('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, { gameplayItemId: 'flask_water_alchemy' }),
-                createIngredient('component', 'herbalPaste', 'Травяная паста', 1)
+                createIngredient('component', 'herb_paste', 'Травяная паста', 1)
             ],
             result: createResult('item', 'energyTonic', 'Энергетик', 1),
             tags: ['survival', 'energy', 'camp', 'consumable'],
@@ -604,8 +632,8 @@
             stationLabel: 'Лагерь',
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
-                createIngredient('component', 'fishMeat', 'Рыбное мясо', 1),
-                createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
+                createIngredient('component', 'fish_meat', 'Рыбное мясо', 1),
+                createIngredient('component', 'fuel_bundle', 'Топливная связка', 1)
             ],
             result: createResult('item', 'ration', 'Сухпаёк', 1, {
                 gameplayItemId: 'ration'
@@ -624,16 +652,16 @@
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
                 createIngredient('resource', 'fish', 'Рыба', 5),
-                createIngredient('item', 'fuelBundle', 'Топливная связка', 1)
+                createIngredient('component', 'fuel_bundle', 'Топливная связка', 1)
             ],
             result: createResult('item', 'ration', 'Сухпаёк', 1, {
                 gameplayItemId: 'ration'
             }),
-            tags: ['survival', 'food', 'camp', 'ration', 'shortcut', 'emergency', 'fish'],
+            tags: ['survival', 'food', 'camp', 'ration', 'shortcut', 'emergency', 'fish', 'raw-shortcut'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 7, to: 21, priority: 'recommended', note: 'Прямой походный сухпаёк из свежего улова, когда игроку важнее темп, чем промежуточный компонент.' }
             ]),
-            notes: 'Gameplay-shortcut поверх документов: GDD допускает сухпаёк как крафт из еды, а craft-доки сохраняют полную ветку через рыбное мясо для остальных лагерных рецептов.'
+            notes: 'Осознанное emergency-исключение поверх документов: GDD допускает сухпаёк как крафт из еды, но craft-доки сохраняют основное правило, что практические рецепты должны идти через промежуточные компоненты.'
         },
         {
             recipeId: 'fish-broth',
@@ -642,9 +670,9 @@
             stationLabel: 'Лагерь',
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
-                createIngredient('component', 'fishMeat', 'Рыбное мясо', 1),
+                createIngredient('component', 'fish_meat', 'Рыбное мясо', 1),
                 createIngredient('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, { gameplayItemId: 'flask_water_full' }),
-                createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
+                createIngredient('component', 'fuel_bundle', 'Топливная связка', 1)
             ],
             result: createResult('item', 'fishBroth', 'Рыбный бульон', 1, {
                 gameplayItemId: 'fishBroth'
@@ -662,9 +690,9 @@
             stationLabel: 'Лагерь',
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
-                createIngredient('component', 'fishMeat', 'Рыбное мясо', 1),
+                createIngredient('component', 'fish_meat', 'Рыбное мясо', 1),
                 createIngredient('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, { gameplayItemId: 'flask_water_full' }),
-                createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
+                createIngredient('component', 'fuel_bundle', 'Топливная связка', 1)
             ],
             result: createResult('item', 'heartyRation', 'Сытный паёк', 1),
             tags: ['survival', 'food', 'camp', 'ration'],
@@ -680,7 +708,7 @@
             stationLabel: 'Лагерь',
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
-                createIngredient('component', 'fishMeat', 'Рыбное мясо', 1),
+                createIngredient('component', 'fish_meat', 'Рыбное мясо', 1),
                 createIngredient('item', 'survivalSalt', 'Соль выживания', 1)
             ],
             result: createResult('item', 'saltedFish', 'Солёная рыба', 1, {
@@ -699,10 +727,10 @@
             stationLabel: 'Лагерь',
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
-                createIngredient('component', 'fishMeat', 'Рыбное мясо', 2),
+                createIngredient('component', 'fish_meat', 'Рыбное мясо', 2),
                 createIngredient('itemState', 'waterFlaskFull', 'Фляга кипячёной воды', 1, { gameplayItemId: 'flask_water_full' }),
-                createIngredient('component', 'herbalPaste', 'Травяная паста', 1),
-                createIngredient('component', 'fuelBundle', 'Топливная связка', 1)
+                createIngredient('component', 'herb_paste', 'Травяная паста', 1),
+                createIngredient('component', 'fuel_bundle', 'Топливная связка', 1)
             ],
             result: createResult('item', 'strongBroth', 'Крепкий бульон', 1),
             tags: ['survival', 'food', 'healing', 'camp', 'advanced'],
@@ -718,8 +746,8 @@
             stationLabel: 'Лагерь',
             tier: RECIPE_TIERS.survivalAndEnergy,
             ingredients: [
-                createIngredient('component', 'healingBase', 'Травяная база лечения', 1),
-                createIngredient('component', 'herbalPaste', 'Травяная паста', 1),
+                createIngredient('component', 'healing_base', 'Травяная база лечения', 1),
+                createIngredient('component', 'herb_paste', 'Травяная паста', 1),
                 createIngredient('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, { gameplayItemId: 'flask_water_alchemy' })
             ],
             result: createResult('item', 'secondWind', 'Второе дыхание', 1),
@@ -738,9 +766,9 @@
             stationOptions: ['bench', 'workbench'],
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
-                createIngredient('component', 'board', 'Доска', 2),
-                createIngredient('component', 'rope', 'Верёвка', 1, { gameplayItemId: 'rope' }),
-                createIngredient('component', 'stoneBlock', 'Каменный блок', 1)
+                createIngredient('component', 'wood_plank_basic', 'Доска', 2),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' }),
+                createIngredient('component', 'stone_block', 'Каменный блок', 1)
             ],
             result: createResult('item', 'portableBridge', 'Переносной мост', 1, {
                 gameplayItemId: 'portableBridge'
@@ -759,11 +787,11 @@
             stationLabel: 'Мастерская',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
-                createIngredient('component', 'board', 'Доска', 1),
-                createIngredient('component', 'gravelFill', 'Гравийная засыпка', 1, {
+                createIngredient('component', 'wood_plank_basic', 'Доска', 1),
+                createIngredient('component', 'gravel_fill', 'Гравийная засыпка', 1, {
                     aliases: ['Заполнитель']
                 }),
-                createIngredient('component', 'rope', 'Верёвка', 1, { gameplayItemId: 'rope' })
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
             ],
             result: createResult('item', 'bridgeRepairKit', 'Ремкомплект моста', 1),
             tags: ['construction', 'repair', 'bridge', 'utility'],
@@ -780,9 +808,9 @@
             stationLabel: 'Мастерская',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
-                createIngredient('component', 'frame', 'Каркас', 1),
-                createIngredient('component', 'board', 'Доска', 2),
-                createIngredient('component', 'rope', 'Верёвка', 2, { gameplayItemId: 'rope' })
+                createIngredient('component', 'wood_frame_basic', 'Каркас', 1),
+                createIngredient('component', 'wood_plank_basic', 'Доска', 2),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 2, { gameplayItemId: 'fiber_rope' })
             ],
             result: createResult('component', 'boatFrame', 'Рама лодки', 1, {
                 aliases: ['Каркас лодки', 'Лодочный каркас']
@@ -803,8 +831,8 @@
                 createIngredient('component', 'boatFrame', 'Рама лодки', 1, {
                     aliases: ['Каркас лодки']
                 }),
-                createIngredient('component', 'fishOil', 'Рыбий жир', 1),
-                createIngredient('component', 'rope', 'Верёвка', 1, { gameplayItemId: 'rope' })
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
             ],
             result: createResult('structure', 'boat', 'Готовая лодка', 1),
             tags: ['construction', 'boat', 'water-access', 'structure'],
@@ -820,9 +848,9 @@
             stationLabel: 'Мастерская',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
-                createIngredient('component', 'board', 'Доска', 1),
-                createIngredient('component', 'fishOil', 'Рыбий жир', 1),
-                createIngredient('component', 'rope', 'Верёвка', 1, { gameplayItemId: 'rope' })
+                createIngredient('component', 'wood_plank_basic', 'Доска', 1),
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
             ],
             result: createResult('item', 'boatRepairKit', 'Ремкомплект лодки', 1),
             tags: ['construction', 'repair', 'boat', 'utility'],
@@ -838,9 +866,9 @@
             stationLabel: 'Мастерская',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
-                createIngredient('component', 'board', 'Доска', 1),
-                createIngredient('component', 'fishOil', 'Рыбий жир', 1),
-                createIngredient('component', 'rope', 'Верёвка', 1, { gameplayItemId: 'rope' })
+                createIngredient('component', 'wood_plank_basic', 'Доска', 1),
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
             ],
             result: createResult('item', 'fogLantern', 'Фонарь тумана', 1, {
                 gameplayItemId: 'fogLantern'
@@ -858,9 +886,9 @@
             stationLabel: 'Мастерская',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
-                createIngredient('component', 'stoneBlock', 'Каменный блок', 1),
-                createIngredient('component', 'fishOil', 'Рыбий жир', 1),
-                createIngredient('component', 'rope', 'Верёвка', 1, { gameplayItemId: 'rope' })
+                createIngredient('component', 'stone_block', 'Каменный блок', 1),
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
             ],
             result: createResult('item', 'merchantBeacon', 'Маяк торговца', 1, {
                 gameplayItemId: 'merchantBeacon'
@@ -878,8 +906,8 @@
             stationLabel: 'Кузница',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
-                createIngredient('component', 'stoneBlock', 'Каменный блок', 2),
-                createIngredient('component', 'frame', 'Каркас', 1),
+                createIngredient('component', 'stone_block', 'Каменный блок', 2),
+                createIngredient('component', 'wood_frame_basic', 'Каркас', 1),
                 createIngredient('material', 'metal', 'Металл', 1)
             ],
             result: createResult('item', 'islandDrill', 'Островная дрель', 1),
@@ -947,16 +975,20 @@
     }
 
     Object.assign(recipeRegistry, {
+        PRACTICAL_RAW_RESOURCE_EXCEPTION_TAG,
         RECIPE_TIERS,
+        allowsPracticalRawShortcut,
         recipes,
         createValidatedRecipeRegistry,
         getRecipeDefinition,
         getRecipeDefinitions,
+        getRawResourceIngredients,
         getRecipesByStation,
         getRecipesByTier,
         getRecipesByTag,
         getRecipesForIsland,
         getRecipesByResultId,
+        isPracticalRecipeTier,
         normalizeRecipeDefinition,
         validateRecipeDefinition
     });

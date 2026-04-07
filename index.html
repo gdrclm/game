@@ -139,7 +139,6 @@
                         Камни блокируют путь, а мосты помогают пересекать воду.
                     </p>
                 </div>
-                <!-- <div id="debugPanel" class="overlay-card overlay-card--debug" aria-live="polite"></div> -->
                 <div id="conditionOverlay" class="condition-overlay" aria-hidden="true">
                     <div id="conditionDeathLabel" class="condition-overlay__death" hidden>ты умер</div>
                 </div>
@@ -179,6 +178,44 @@
                             <button id="mobileModalClose" class="mobile-modal__close" type="button" aria-label="Закрыть панель">Закрыть</button>
                         </div>
                         <div id="mobileModalBody" class="mobile-modal__body"></div>
+                    </section>
+                </div>
+                <div id="inventoryDetailOverlay" class="inventory-detail-overlay" hidden aria-hidden="true">
+                    <button id="inventoryDetailBackdrop" class="inventory-detail-overlay__backdrop" type="button" aria-label="Закрыть карточку предмета"></button>
+                    <section id="inventoryDetailSheet" class="inventory-detail-overlay__sheet" role="dialog" aria-modal="true" aria-labelledby="inventoryDetailTitle">
+                        <div class="inventory-detail-overlay__header">
+                            <div>
+                                <p id="inventoryDetailMeta" class="hud-kicker">Выбран предмет</p>
+                                <h2 id="inventoryDetailTitle" class="hud-title hud-title--compact">Предмет</h2>
+                            </div>
+                            <button id="inventoryDetailClose" class="inventory-detail-overlay__close" type="button" aria-label="Закрыть карточку предмета">Закрыть</button>
+                        </div>
+                        <div class="inventory-selection-panel inventory-detail-overlay__panel">
+                            <div class="inventory-selection-panel__summary">
+                                <div class="inventory-selection-panel__text">
+                                    <div id="inventoryDetailFacts" class="inventory-selection-panel__facts"></div>
+                                    <p id="inventoryDetailDescription" class="panel-copy inventory-selection-panel__description"></p>
+                                </div>
+                                <div class="inventory-selection-panel__icon-shell" aria-hidden="true">
+                                    <span id="inventoryDetailIcon" class="inventory-selection-panel__icon">?</span>
+                                    <span id="inventoryDetailQuantity" class="inventory-selection-panel__quantity" hidden>x1</span>
+                                </div>
+                            </div>
+                            <section id="inventoryDetailStationPanel" class="inventory-selection-panel__station">
+                                <p class="inventory-selection-panel__station-kicker">Текущая станция</p>
+                                <div class="inventory-selection-panel__station-body">
+                                    <p id="inventoryDetailStationTitle" class="inventory-selection-panel__station-title">Руки</p>
+                                    <p id="inventoryDetailStationSummary" class="inventory-selection-panel__station-summary"></p>
+                                </div>
+                            </section>
+                            <section id="inventoryDetailCraftPanel" class="inventory-selection-panel__craft" hidden>
+                                <div class="inventory-selection-panel__craft-header">
+                                    <p id="inventoryDetailCraftLabel" class="inventory-selection-panel__craft-label">Рецепты по станциям</p>
+                                    <p id="inventoryDetailCraftHint" class="inventory-selection-panel__craft-hint"></p>
+                                </div>
+                                <div id="inventoryDetailCraftActions" class="inventory-selection-panel__craft-actions"></div>
+                            </section>
+                        </div>
                     </section>
                 </div>
                 <aside id="merchantPanel" class="merchant-panel" hidden aria-live="polite">

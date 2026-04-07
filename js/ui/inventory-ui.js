@@ -31,6 +31,12 @@
         legendary: 'легендарный',
         cursed: 'проклятый'
     };
+    const COMPONENT_QUALITY_LABELS = {
+        ordinary: 'обычный',
+        enhanced: 'усиленный',
+        rare: 'редкий',
+        stable: 'стабильный'
+    };
 
     if (!bridge) {
         return;
@@ -217,7 +223,23 @@
             inventorySelectionCraftPanel: document.getElementById('inventorySelectionCraftPanel'),
             inventorySelectionCraftLabel: document.getElementById('inventorySelectionCraftLabel'),
             inventorySelectionCraftHint: document.getElementById('inventorySelectionCraftHint'),
-            inventorySelectionCraftActions: document.getElementById('inventorySelectionCraftActions')
+            inventorySelectionCraftActions: document.getElementById('inventorySelectionCraftActions'),
+            inventoryDetailOverlay: document.getElementById('inventoryDetailOverlay'),
+            inventoryDetailBackdrop: document.getElementById('inventoryDetailBackdrop'),
+            inventoryDetailClose: document.getElementById('inventoryDetailClose'),
+            inventoryDetailMeta: document.getElementById('inventoryDetailMeta'),
+            inventoryDetailTitle: document.getElementById('inventoryDetailTitle'),
+            inventoryDetailFacts: document.getElementById('inventoryDetailFacts'),
+            inventoryDetailDescription: document.getElementById('inventoryDetailDescription'),
+            inventoryDetailIcon: document.getElementById('inventoryDetailIcon'),
+            inventoryDetailQuantity: document.getElementById('inventoryDetailQuantity'),
+            inventoryDetailStationPanel: document.getElementById('inventoryDetailStationPanel'),
+            inventoryDetailStationTitle: document.getElementById('inventoryDetailStationTitle'),
+            inventoryDetailStationSummary: document.getElementById('inventoryDetailStationSummary'),
+            inventoryDetailCraftPanel: document.getElementById('inventoryDetailCraftPanel'),
+            inventoryDetailCraftLabel: document.getElementById('inventoryDetailCraftLabel'),
+            inventoryDetailCraftHint: document.getElementById('inventoryDetailCraftHint'),
+            inventoryDetailCraftActions: document.getElementById('inventoryDetailCraftActions')
         };
     }
 
@@ -234,7 +256,10 @@
             inventoryPanelToggle,
             inventorySelectionUseButton,
             inventorySelectionDropButton,
-            inventorySelectionCraftActions
+            inventorySelectionCraftActions,
+            inventoryDetailBackdrop,
+            inventoryDetailClose,
+            inventoryDetailCraftActions
         } = getPanelElements();
 
         if (inventoryPanelToggle) {
@@ -255,8 +280,12 @@
             });
         }
 
-        if (inventorySelectionCraftActions) {
-            inventorySelectionCraftActions.addEventListener('click', (event) => {
+        [inventorySelectionCraftActions, inventoryDetailCraftActions].forEach((craftActions) => {
+            if (!craftActions) {
+                return;
+            }
+
+            craftActions.addEventListener('click', (event) => {
                 const compressionButton = event.target.closest('[data-compression-recipe-id]');
                 if (compressionButton && !compressionButton.disabled) {
                     triggerCompressionRecipe(compressionButton.getAttribute('data-compression-recipe-id'));
@@ -270,7 +299,30 @@
 
                 triggerCraftingRecipe(craftingButton.getAttribute('data-crafting-recipe-id'));
             });
-        }
+        });
+
+        [inventoryDetailBackdrop, inventoryDetailClose].forEach((button) => {
+            if (!button) {
+                return;
+            }
+
+            button.addEventListener('click', () => {
+                clearInventorySelection();
+            });
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') {
+                return;
+            }
+
+            const { inventoryDetailOverlay } = getPanelElements();
+            if (!inventoryDetailOverlay || inventoryDetailOverlay.hidden) {
+                return;
+            }
+
+            clearInventorySelection();
+        });
 
         panelEventsBound = true;
     }
@@ -278,6 +330,34 @@
     function isMobileInventoryModalActive() {
         return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches
             && document.body.dataset.mobilePanel === 'inventory';
+    }
+
+    function isDesktopInventoryDetailActive() {
+        return !window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
+    }
+
+    function setInventoryDetailOverlayVisible(overlay, visible) {
+        document.body.classList.toggle('is-inventory-detail-open', Boolean(visible));
+
+        if (!overlay) {
+            return;
+        }
+
+        overlay.hidden = !visible;
+        overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    }
+
+    function clearInventorySelection() {
+        const currentGame = bridge.getGame();
+        if (!currentGame || currentGame.state.selectedInventorySlot === null) {
+            setInventoryDetailOverlayVisible(getPanelElements().inventoryDetailOverlay, false);
+            return;
+        }
+
+        currentGame.state.selectedInventorySlot = null;
+        lastMobileSelectionSignature = null;
+        bridge.setActionMessage(bridge.getDefaultActionHint(currentGame.state.activeInteraction, currentGame.state.activeTileInfo));
+        bridge.renderAfterStateChange();
     }
 
     function ensureMobileSelectionPanelVisible(selectionPanel) {
@@ -319,10 +399,23 @@
         return game.systems.stationRuntime || null;
     }
 
+    function getComponentRegistry() {
+        return game.systems.componentRegistry || null;
+    }
+
     function syncInventoryPanelState() {
         const { inventoryPanelToggle, inventoryPanelToggleIcon, inventoryCardBody, inventoryPanelStation } = getPanelElements();
         const collapsed = isInventoryPanelCollapsed();
         const stationContext = getActiveStationContext();
+        const bulkUsage = typeof bridge.getInventoryBulkUsage === 'function'
+            ? bridge.getInventoryBulkUsage()
+            : 0;
+        const bulkCapacity = typeof bridge.getInventoryBulkCapacity === 'function'
+            ? bridge.getInventoryBulkCapacity()
+            : 0;
+        const bulkSummary = bulkCapacity > 0
+            ? ` · Нагрузка: ${bulkUsage}/${bulkCapacity}`
+            : '';
 
         if (inventoryPanelToggle) {
             inventoryPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
@@ -337,7 +430,7 @@
         }
 
         if (inventoryPanelStation) {
-            inventoryPanelStation.textContent = `Станция: ${stationContext.activeSourceLabel || stationContext.activeStationLabel || 'Руки'}`;
+            inventoryPanelStation.textContent = `Станция: ${stationContext.activeSourceLabel || stationContext.activeStationLabel || 'Руки'}${bulkSummary}`;
         }
     }
 
@@ -402,6 +495,30 @@
     function getItemRarityLabel(definition) {
         const rarityKey = definition && definition.rarity ? definition.rarity : 'common';
         return ITEM_RARITY_LABELS[rarityKey] || rarityKey;
+    }
+
+    function getItemQualityLabel(item, definition) {
+        const directQualityKey = definition && typeof definition.qualityLevel === 'string'
+            ? definition.qualityLevel
+            : '';
+        const directQualityLabel = definition && typeof definition.qualityLabel === 'string'
+            ? definition.qualityLabel
+            : '';
+
+        if (directQualityKey) {
+            return `качество: ${directQualityLabel || COMPONENT_QUALITY_LABELS[directQualityKey] || directQualityKey}`;
+        }
+
+        const componentRegistry = getComponentRegistry();
+        const componentDefinition = componentRegistry && typeof componentRegistry.getComponentDefinitionByInventoryItemId === 'function'
+            ? componentRegistry.getComponentDefinitionByInventoryItemId(item && item.id ? item.id : (definition && definition.id))
+            : null;
+
+        if (!componentDefinition || !componentDefinition.qualityLevel) {
+            return '';
+        }
+
+        return `качество: ${componentDefinition.qualityLabel || COMPONENT_QUALITY_LABELS[componentDefinition.qualityLevel] || componentDefinition.qualityLevel}`;
     }
 
     function formatPercentDelta(multiplier) {
@@ -644,6 +761,16 @@
             : '';
     }
 
+    function buildBulkParameterSummary(item, definition) {
+        const bulk = typeof bridge.getItemBulk === 'function'
+            ? bridge.getItemBulk(item || (definition && definition.id) || '')
+            : (definition && Number.isFinite(definition.bulk) ? definition.bulk : 0);
+
+        return bulk > 0
+            ? `объём: ${bulk}`
+            : '';
+    }
+
     function buildSelectedItemFacts(item, definition, description) {
         const containerRegistry = getContainerRegistry();
         const containerState = containerRegistry && typeof containerRegistry.getContainerStateByItemId === 'function'
@@ -654,10 +781,14 @@
             : 'T0';
         const containerParameterSummary = buildContainerStateParameterSummary(containerState);
         const spoilageParameterSummary = buildSpoilageParameterSummary(item);
+        const bulkParameterSummary = buildBulkParameterSummary(item, definition);
+        const qualityLabel = getItemQualityLabel(item, definition);
         const parameterParts = [
             tierLabel,
             getItemRarityLabel(definition),
+            qualityLabel,
             ...getItemCategoryLabels(definition).slice(0, 3),
+            bulkParameterSummary,
             containerParameterSummary,
             spoilageParameterSummary
         ].filter(Boolean);
@@ -671,7 +802,8 @@
         return [
             {
                 label: 'Параметры',
-                value: parameterParts.join(' · ') || 'без особых свойств'
+                value: parameterParts.join(' · ') || 'без особых свойств',
+                tags: parameterParts.length > 0 ? parameterParts : ['без особых свойств']
             },
             {
                 label: 'Эффекты',
@@ -684,7 +816,10 @@
         ];
     }
 
-    function buildFactNode(label, value) {
+    function buildFactNode(fact) {
+        const label = fact && fact.label ? fact.label : '';
+        const value = fact && fact.value ? fact.value : '';
+        const tags = Array.isArray(fact && fact.tags) ? fact.tags.filter(Boolean) : [];
         const row = document.createElement('div');
         row.className = 'inventory-selection-panel__fact';
 
@@ -692,12 +827,151 @@
         labelNode.className = 'inventory-selection-panel__fact-label';
         labelNode.textContent = label;
 
-        const valueNode = document.createElement('span');
-        valueNode.className = 'inventory-selection-panel__fact-value';
-        valueNode.textContent = value;
+        let valueNode;
+
+        if (tags.length > 0) {
+            valueNode = document.createElement('div');
+            valueNode.className = 'inventory-selection-panel__fact-value inventory-selection-panel__fact-value--tags';
+            valueNode.replaceChildren(...tags.map((tag) => {
+                const chip = document.createElement('span');
+                chip.className = 'inventory-selection-panel__fact-tag';
+                chip.textContent = tag;
+                return chip;
+            }));
+        } else {
+            valueNode = document.createElement('span');
+            valueNode.className = 'inventory-selection-panel__fact-value';
+            valueNode.textContent = value;
+        }
 
         row.append(labelNode, valueNode);
         return row;
+    }
+
+    function getInlineSelectionRefs(refs) {
+        return {
+            root: refs.inventorySelectionPanel,
+            meta: refs.inventorySelectionMeta,
+            title: refs.inventorySelectionTitle,
+            facts: refs.inventorySelectionFacts,
+            description: refs.inventorySelectionDescription,
+            icon: refs.inventorySelectionIcon,
+            quantity: refs.inventorySelectionQuantity,
+            actions: refs.inventorySelectionActions,
+            useButton: refs.inventorySelectionUseButton,
+            dropButton: refs.inventorySelectionDropButton,
+            stationPanel: refs.inventorySelectionStationPanel,
+            stationTitle: refs.inventorySelectionStationTitle,
+            stationSummary: refs.inventorySelectionStationSummary,
+            craftPanel: refs.inventorySelectionCraftPanel,
+            craftLabel: refs.inventorySelectionCraftLabel,
+            craftHint: refs.inventorySelectionCraftHint,
+            craftActions: refs.inventorySelectionCraftActions
+        };
+    }
+
+    function getOverlaySelectionRefs(refs) {
+        return {
+            root: refs.inventoryDetailOverlay,
+            meta: refs.inventoryDetailMeta,
+            title: refs.inventoryDetailTitle,
+            facts: refs.inventoryDetailFacts,
+            description: refs.inventoryDetailDescription,
+            icon: refs.inventoryDetailIcon,
+            quantity: refs.inventoryDetailQuantity,
+            actions: null,
+            useButton: null,
+            dropButton: null,
+            stationPanel: refs.inventoryDetailStationPanel,
+            stationTitle: refs.inventoryDetailStationTitle,
+            stationSummary: refs.inventoryDetailStationSummary,
+            craftPanel: refs.inventoryDetailCraftPanel,
+            craftLabel: refs.inventoryDetailCraftLabel,
+            craftHint: refs.inventoryDetailCraftHint,
+            craftActions: refs.inventoryDetailCraftActions
+        };
+    }
+
+    function applySelectionContent(refs, payload) {
+        if (!refs || !refs.root) {
+            return;
+        }
+
+        if (refs.meta) {
+            refs.meta.textContent = payload.meta;
+        }
+
+        if (refs.title) {
+            refs.title.textContent = payload.title;
+        }
+
+        if (refs.facts) {
+            refs.facts.replaceChildren(...payload.factEntries.map((fact) => buildFactNode(fact)));
+        }
+
+        if (refs.description) {
+            refs.description.hidden = true;
+            refs.description.textContent = '';
+        }
+
+        if (refs.icon) {
+            refs.icon.textContent = payload.icon;
+        }
+
+        if (refs.quantity) {
+            refs.quantity.hidden = !payload.showQuantity;
+            refs.quantity.textContent = payload.quantityLabel;
+        }
+
+        if (refs.actions) {
+            refs.actions.hidden = !payload.showActions;
+        }
+
+        if (refs.useButton) {
+            refs.useButton.hidden = !payload.canUse;
+            refs.useButton.disabled = !payload.canUse;
+        }
+
+        if (refs.dropButton) {
+            refs.dropButton.disabled = !payload.canDrop;
+        }
+
+        const actionsContainer = refs.actions || (refs.useButton && refs.useButton.parentElement);
+        if (actionsContainer) {
+            const visibleButtons = Array.from(actionsContainer.querySelectorAll('.inventory-selection-panel__action'))
+                .filter((button) => !button.hidden);
+            actionsContainer.classList.toggle('inventory-selection-panel__actions--single', visibleButtons.length <= 1);
+        }
+
+        if (refs.stationPanel) {
+            refs.stationPanel.hidden = false;
+        }
+
+        if (refs.stationTitle) {
+            refs.stationTitle.textContent = payload.stationTitle;
+        }
+
+        if (refs.stationSummary) {
+            refs.stationSummary.textContent = payload.stationSummary;
+        }
+
+        if (refs.craftPanel) {
+            refs.craftPanel.hidden = !payload.hasCraftOptions;
+        }
+
+        if (refs.craftLabel) {
+            refs.craftLabel.textContent = 'Рецепты по станциям';
+        }
+
+        if (refs.craftHint) {
+            refs.craftHint.textContent = payload.hasCraftOptions
+                ? 'Список ниже разбит по станциям, чтобы было видно, что собирается руками, в лагере, на верстаке и в мастерской.'
+                : '';
+        }
+
+        if (refs.craftActions) {
+            refs.craftActions.replaceChildren(...payload.craftGroupEntries.map((group) => buildCraftStationGroup(group)));
+        }
     }
 
     function getActiveStationContext() {
@@ -774,7 +1048,9 @@
             disabled = true;
             break;
         case 'inventory-full':
-            statusLabel = 'В сумке нет места';
+            statusLabel = evaluation.capacityType === 'bulk'
+                ? 'Не хватает объёма'
+                : 'В сумке нет места';
             disabled = true;
             break;
         default:
@@ -1046,15 +1322,20 @@
 
     function syncSelectionPanel() {
         const refs = getPanelElements();
+        const inlineSelectionRefs = getInlineSelectionRefs(refs);
+        const overlaySelectionRefs = getOverlaySelectionRefs(refs);
         const selectedItem = bridge.getSelectedInventoryItem();
 
-        if (!refs.inventorySelectionPanel) {
+        if (!inlineSelectionRefs.root && !overlaySelectionRefs.root) {
             return;
         }
 
         if (!selectedItem || !selectedItem.id) {
             lastMobileSelectionSignature = null;
-            refs.inventorySelectionPanel.hidden = true;
+            if (inlineSelectionRefs.root) {
+                inlineSelectionRefs.root.hidden = true;
+            }
+            setInventoryDetailOverlayVisible(refs.inventoryDetailOverlay, false);
             return;
         }
 
@@ -1067,7 +1348,7 @@
             : '';
         const description = bridge.getItemDescription(selectedItem.id)
             || `Предмет "${selectedItem.label}" пока без отдельного описания.`;
-        const facts = buildSelectedItemFacts(selectedItem, definition, description).map(({ label, value }) => buildFactNode(label, value));
+        const factEntries = buildSelectedItemFacts(selectedItem, definition, description);
         const useSourceButton = getActionSourceButton('use');
         const dropSourceButton = getActionSourceButton('drop');
         const compressionOptions = getCompressionOptions(selectedItem);
@@ -1076,96 +1357,40 @@
         const showInventorySelectionActions = isMobileInventoryModalActive();
         const stationContext = getActiveStationContext();
         const groupedCraftOptions = groupCraftOptionsByStation(craftOptions, stationContext);
+        const availableLabels = Array.isArray(stationContext.availableStationLabels) && stationContext.availableStationLabels.length > 0
+            ? stationContext.availableStationLabels.join(', ')
+            : 'Руки';
+        const selectionPayload = {
+            meta: `${selectedSlotLabel}${quantityLabel}`,
+            title: selectedItem.label,
+            factEntries,
+            icon: selectedItem.icon || (definition && definition.icon) || '?',
+            showQuantity: selectedItem.quantity > 1,
+            quantityLabel: `x${selectedItem.quantity}`,
+            showActions: showInventorySelectionActions,
+            canUse: Boolean(useSourceButton && !useSourceButton.disabled),
+            canDrop: Boolean(dropSourceButton && !dropSourceButton.disabled),
+            stationTitle: stationContext.activeSourceLabel || stationContext.activeStationLabel || 'Руки',
+            stationSummary: `${stationContext.activeSourceSummary} Доступно сейчас: ${availableLabels}.`,
+            hasCraftOptions: craftOptions.length > 0,
+            craftGroupEntries: groupedCraftOptions
+        };
+        const showInlinePanel = isMobileInventoryModalActive();
+        const showOverlay = isDesktopInventoryDetailActive();
 
-        refs.inventorySelectionPanel.hidden = false;
+        applySelectionContent(inlineSelectionRefs, selectionPayload);
+        applySelectionContent(overlaySelectionRefs, selectionPayload);
 
-        if (refs.inventorySelectionMeta) {
-            refs.inventorySelectionMeta.textContent = `${selectedSlotLabel}${quantityLabel}`;
+        if (inlineSelectionRefs.root) {
+            inlineSelectionRefs.root.hidden = !showInlinePanel;
         }
 
-        if (refs.inventorySelectionTitle) {
-            refs.inventorySelectionTitle.textContent = selectedItem.label;
-        }
-
-        if (refs.inventorySelectionFacts) {
-            refs.inventorySelectionFacts.replaceChildren(...facts);
-        }
-
-        if (refs.inventorySelectionDescription) {
-            refs.inventorySelectionDescription.hidden = true;
-            refs.inventorySelectionDescription.textContent = '';
-        }
-
-        if (refs.inventorySelectionIcon) {
-            refs.inventorySelectionIcon.textContent = selectedItem.icon || (definition && definition.icon) || '?';
-        }
-
-        if (refs.inventorySelectionQuantity) {
-            refs.inventorySelectionQuantity.hidden = !(selectedItem.quantity > 1);
-            refs.inventorySelectionQuantity.textContent = `x${selectedItem.quantity}`;
-        }
-
-        if (refs.inventorySelectionActions) {
-            refs.inventorySelectionActions.hidden = !showInventorySelectionActions;
-        }
-
-        if (refs.inventorySelectionUseButton) {
-            const canUse = Boolean(useSourceButton && !useSourceButton.disabled);
-            refs.inventorySelectionUseButton.hidden = !canUse;
-            refs.inventorySelectionUseButton.disabled = !canUse;
-        }
-
-        if (refs.inventorySelectionDropButton) {
-            refs.inventorySelectionDropButton.disabled = !(dropSourceButton && !dropSourceButton.disabled);
-        }
-
-        const actionsContainer = refs.inventorySelectionActions
-            || (refs.inventorySelectionUseButton && refs.inventorySelectionUseButton.parentElement);
-        if (actionsContainer) {
-            const visibleButtons = Array.from(actionsContainer.querySelectorAll('.inventory-selection-panel__action'))
-                .filter((button) => !button.hidden);
-            actionsContainer.classList.toggle('inventory-selection-panel__actions--single', visibleButtons.length <= 1);
-        }
-
-        if (refs.inventorySelectionStationPanel) {
-            refs.inventorySelectionStationPanel.hidden = false;
-        }
-
-        if (refs.inventorySelectionStationTitle) {
-            refs.inventorySelectionStationTitle.textContent = stationContext.activeSourceLabel || stationContext.activeStationLabel || 'Руки';
-        }
-
-        if (refs.inventorySelectionStationSummary) {
-            const availableLabels = Array.isArray(stationContext.availableStationLabels) && stationContext.availableStationLabels.length > 0
-                ? stationContext.availableStationLabels.join(', ')
-                : 'Руки';
-            refs.inventorySelectionStationSummary.textContent = `${stationContext.activeSourceSummary} Доступно сейчас: ${availableLabels}.`;
-        }
-
-        if (refs.inventorySelectionCraftPanel) {
-            refs.inventorySelectionCraftPanel.hidden = craftOptions.length === 0;
-        }
-
-        if (refs.inventorySelectionCraftLabel) {
-            refs.inventorySelectionCraftLabel.textContent = 'Рецепты по станциям';
-        }
-
-        if (refs.inventorySelectionCraftHint) {
-            refs.inventorySelectionCraftHint.textContent = craftOptions.length > 0
-                ? 'Список ниже разбит по станциям, чтобы было видно, что собирается руками, в лагере, на верстаке и в мастерской.'
-                : '';
-        }
-
-        if (refs.inventorySelectionCraftActions) {
-            refs.inventorySelectionCraftActions.replaceChildren(
-                ...groupedCraftOptions.map((group) => buildCraftStationGroup(group))
-            );
-        }
+        setInventoryDetailOverlayVisible(refs.inventoryDetailOverlay, showOverlay);
 
         const selectionSignature = `${selectedItem.id}:${Number.isFinite(game.state.selectedInventorySlot) ? game.state.selectedInventorySlot : -1}`;
-        if (selectionSignature !== lastMobileSelectionSignature) {
+        if (showInlinePanel && selectionSignature !== lastMobileSelectionSignature) {
             lastMobileSelectionSignature = selectionSignature;
-            ensureMobileSelectionPanelVisible(refs.inventorySelectionPanel);
+            ensureMobileSelectionPanelVisible(inlineSelectionRefs.root);
         }
     }
 
