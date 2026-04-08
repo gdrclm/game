@@ -7,6 +7,26 @@
         rare: 'редкий',
         stable: 'стабильный'
     });
+    const COMPONENT_CRAFTING_TAGS = Object.freeze({
+        healing: 'healing',
+        building: 'building',
+        repair: 'repair',
+        water: 'water',
+        route: 'route',
+        survival: 'survival',
+        merchant: 'merchant',
+        bagquest: 'bagQuest'
+    });
+    const KNOWN_MERCHANT_INTERESTS = Object.freeze({
+        merchant: 'merchant',
+        fisherman: 'fisherman',
+        bridgewright: 'bridgewright',
+        junkdealer: 'junkDealer',
+        storyteller: 'storyteller',
+        exchanger: 'exchanger',
+        quartermaster: 'quartermaster',
+        collector: 'collector'
+    });
 
     function getStationRuntime() {
         return game.systems.stationRuntime || null;
@@ -74,6 +94,37 @@
     function normalizeBulkValue(bulk, fallback = 0) {
         const numericBulk = Number.isFinite(bulk) ? bulk : fallback;
         return Math.max(0, Math.floor(numericBulk));
+    }
+
+    function normalizeComponentTags(tags) {
+        const tagList = Array.isArray(tags)
+            ? tags
+            : (typeof tags === 'string' ? tags.split(/\s+/g) : []);
+
+        return [...new Set(tagList
+            .map((tag) => COMPONENT_CRAFTING_TAGS[normalizeLookupValue(tag)] || '')
+            .filter(Boolean))];
+    }
+
+    function getUnknownComponentTags(tags) {
+        const tagList = Array.isArray(tags)
+            ? tags
+            : (typeof tags === 'string' ? tags.split(/\s+/g) : []);
+
+        return [...new Set(tagList
+            .map((tag) => String(tag || '').trim())
+            .filter(Boolean)
+            .filter((tag) => !COMPONENT_CRAFTING_TAGS[normalizeLookupValue(tag)]))];
+    }
+
+    function normalizeMerchantInterest(merchantInterest) {
+        const interestList = Array.isArray(merchantInterest)
+            ? merchantInterest
+            : (typeof merchantInterest === 'string' ? merchantInterest.split(/\s+/g) : []);
+
+        return [...new Set(interestList
+            .map((role) => KNOWN_MERCHANT_INTERESTS[normalizeLookupValue(role)] || '')
+            .filter(Boolean))];
     }
 
     function getComponentQualityLabel(qualityLevel) {
@@ -172,12 +223,14 @@
 
     function normalizeComponentDefinition(definition = {}) {
         const id = typeof definition.id === 'string' ? definition.id.trim() : '';
-        const tags = [...new Set((Array.isArray(definition.tags) ? definition.tags : [])
-            .map((tag) => normalizeLookupValue(tag))
-            .filter(Boolean))];
+        const tags = normalizeComponentTags(definition.tags);
         const ingredients = buildNormalizedIngredients(definition);
         const inventoryItem = normalizeComponentInventoryItem(definition);
         const qualityLevel = normalizeComponentQualityLevel(definition.qualityLevel);
+        const merchantInterest = normalizeMerchantInterest(
+            definition.merchantInterest
+            || (inventoryItem && inventoryItem.extra ? inventoryItem.extra.merchantInterest : [])
+        );
         const bulk = normalizeBulkValue(
             definition.bulk,
             inventoryItem && inventoryItem.extra ? inventoryItem.extra.bulk : 0
@@ -230,6 +283,7 @@
                 })),
             qualityLevel,
             qualityLabel: getComponentQualityLabel(qualityLevel),
+            merchantInterest,
             bulk,
             currentInventoryItemIds,
             inventoryItem: {
@@ -237,6 +291,7 @@
                 id: currentInventoryItemIds[0] || inventoryItem.id,
                 extra: {
                     ...(inventoryItem.extra && typeof inventoryItem.extra === 'object' ? inventoryItem.extra : {}),
+                    merchantInterest: cloneValue(merchantInterest),
                     bulk
                 }
             },
@@ -338,6 +393,10 @@
             missingFields.push('qualityLevel');
         }
 
+        if (!Array.isArray(normalizedDefinition.merchantInterest) || normalizedDefinition.merchantInterest.length === 0) {
+            missingFields.push('merchantInterest');
+        }
+
         if (!hasExplicitBulk(definition)) {
             missingFields.push('bulk');
         }
@@ -360,6 +419,12 @@
         }
 
         const knownResourceIds = buildKnownResourceIdSet(options);
+        const unknownTags = getUnknownComponentTags(definition.tags);
+
+        if (unknownTags.length > 0) {
+            throw new Error(`[component-registry] Component "${normalizedDefinition.id}" contains unknown crafting tags: ${unknownTags.join(', ')}.`);
+        }
+
         normalizedDefinition.sourceResourceIds.forEach((resourceId) => {
             if (!knownResourceIds.has(normalizeLookupValue(resourceId))) {
                 throw new Error(`[component-registry] Component "${normalizedDefinition.id}" references unknown raw resource "${resourceId}".`);
@@ -534,7 +599,8 @@
             usedInRecipes: ['Отвар лечения', 'Второе дыхание'],
             criticalWindows: ['Острова 1-12: стабилизация и лечение', 'Острова 19-30: запас под тяжёлые забеги'],
             currentInventoryItemIds: ['healing_base'],
-            tags: ['healing'],
+            tags: ['healing', 'survival', 'bagQuest'],
+            merchantInterest: ['merchant', 'quartermaster'],
             inventoryItem: {
                 id: 'healing_base',
                 icon: 'HB',
@@ -542,6 +608,8 @@
                 categories: 'component material survival',
                 extra: {
                     stackable: true,
+                    merchantWeight: 2,
+                    merchantQuestWeight: 2,
                     baseValue: 7,
                     description: 'Сжатая лечебная основа из пяти единиц травы.'
                 }
@@ -565,7 +633,8 @@
             usedInRecipes: ['Энергетик', 'Крепкий бульон', 'Второе дыхание'],
             criticalWindows: ['Острова 1-12: ранний темп', 'Острова 16+: усиленные рецепты и длинные маршруты'],
             currentInventoryItemIds: ['herb_paste'],
-            tags: ['healing'],
+            tags: ['healing', 'survival', 'route'],
+            merchantInterest: ['merchant', 'quartermaster'],
             inventoryItem: {
                 id: 'herb_paste',
                 icon: 'TP',
@@ -573,6 +642,8 @@
                 categories: 'component material survival',
                 extra: {
                     stackable: true,
+                    merchantWeight: 2,
+                    merchantQuestWeight: 1,
                     baseValue: 7,
                     description: 'Концентрированная травяная паста для настоев и восстановления.'
                 }
@@ -596,7 +667,8 @@
             usedInRecipes: ['Переносной мост', 'Ремкомплект моста', 'Рама лодки', 'Готовая лодка', 'Ремкомплект лодки'],
             criticalWindows: ['Острова 4-6: первый маршрутный барьер', 'Острова 13-18: лодка и ремонт', 'Острова 25-27: эндгейм-логистика'],
             currentInventoryItemIds: ['fiber_rope'],
-            tags: ['building', 'repair'],
+            tags: ['building', 'repair', 'route', 'merchant', 'bagQuest'],
+            merchantInterest: ['bridgewright', 'quartermaster', 'junkDealer'],
             inventoryItem: {
                 id: 'fiber_rope',
                 icon: 'VR',
@@ -630,7 +702,8 @@
             usedInRecipes: ['Переносной мост', 'Ремкомплект моста', 'Рама лодки', 'Ремкомплект лодки'],
             criticalWindows: ['Острова 2-6: ранние переправы', 'Острова 13-18: лодка и ремонт', 'Острова 25-27: тяжёлая утилита'],
             currentInventoryItemIds: ['wood_plank_basic'],
-            tags: ['building', 'repair'],
+            tags: ['building', 'repair', 'route', 'merchant', 'bagQuest'],
+            merchantInterest: ['bridgewright', 'quartermaster'],
             inventoryItem: {
                 id: 'wood_plank_basic',
                 icon: 'BD',
@@ -638,6 +711,8 @@
                 categories: 'component material building',
                 extra: {
                     stackable: true,
+                    merchantWeight: 5,
+                    merchantQuestWeight: 4,
                     baseValue: 9,
                     description: 'Сжатая деревянная заготовка для мостов, ремонта и лодочных узлов.'
                 }
@@ -661,7 +736,8 @@
             usedInRecipes: ['Рама лодки', 'Островная дрель'],
             criticalWindows: ['Острова 13-18: лодочный цикл', 'Острова 25-27: эндгейм-сборки'],
             currentInventoryItemIds: ['wood_frame_basic'],
-            tags: ['building'],
+            tags: ['building', 'route', 'merchant'],
+            merchantInterest: ['bridgewright', 'collector'],
             inventoryItem: {
                 id: 'wood_frame_basic',
                 icon: 'FR',
@@ -669,6 +745,8 @@
                 categories: 'component material building',
                 extra: {
                     stackable: true,
+                    merchantWeight: 4,
+                    merchantQuestWeight: 3,
                     baseValue: 15,
                     description: 'Крупный силовой каркас для лодочных и тяжёлых сборок.'
                 }
@@ -697,7 +775,8 @@
             usedInRecipes: ['Готовая лодка'],
             criticalWindows: ['Острова 13-15: подготовка лодочного цикла', 'Острова 16-18: обязательный доступ к воде'],
             currentInventoryItemIds: ['boatFrame'],
-            tags: ['building'],
+            tags: ['building', 'route', 'water', 'merchant'],
+            merchantInterest: ['bridgewright', 'collector'],
             inventoryItem: {
                 id: 'boatFrame',
                 icon: 'BF',
@@ -705,6 +784,8 @@
                 categories: 'component material building',
                 extra: {
                     stackable: true,
+                    merchantWeight: 3,
+                    merchantQuestWeight: 2,
                     baseValue: 24,
                     description: 'Собранная рама лодки, готовая к финальной сборке.'
                 }
@@ -720,15 +801,16 @@
             bulk: 2,
             craftMethod: 'hand',
             craftMethodLabel: 'Руки',
-            sourceResourceIds: ['rubble'],
+            sourceResourceIds: ['rubble', 'stone'],
             resourceInputs: [{ resourceId: 'rubble', quantity: 5 }],
             sourceSummary: 'Стабилизирующий заполнитель для ремонта повреждённых конструкций.',
-            baseConversion: ['5 щебня -> 1 гравийная засыпка'],
+            baseConversion: ['5 щебня -> 1 гравийная засыпка', '2 камня + 3 щебня -> 1 ремонтный наполнитель'],
             mainRole: 'Дешёвый стройкомпонент для восстановления мостов и стабилизации переходов.',
             usedInRecipes: ['Ремкомплект моста'],
             criticalWindows: ['Острова 7-15: ремонт и долгие маршруты', 'Острова 19-24: поддержание логистики'],
             currentInventoryItemIds: ['gravel_fill'],
-            tags: ['repair', 'building'],
+            tags: ['repair', 'building', 'route'],
+            merchantInterest: ['bridgewright', 'junkDealer'],
             inventoryItem: {
                 id: 'gravel_fill',
                 icon: 'GZ',
@@ -736,6 +818,8 @@
                 categories: 'component material repair',
                 extra: {
                     stackable: true,
+                    merchantWeight: 4,
+                    merchantQuestWeight: 3,
                     baseValue: 8,
                     description: 'Уплотнённая гравийная засыпка для ремонта и стабилизации.'
                 }
@@ -759,7 +843,8 @@
             usedInRecipes: ['Переносной мост', 'Островная дрель'],
             criticalWindows: ['Острова 4-15: мосты и укрепление', 'Острова 25-27: поздняя тяжёлая утилита'],
             currentInventoryItemIds: ['stone_block'],
-            tags: ['building'],
+            tags: ['building', 'route', 'merchant'],
+            merchantInterest: ['bridgewright', 'junkDealer'],
             inventoryItem: {
                 id: 'stone_block',
                 icon: 'KB',
@@ -767,6 +852,8 @@
                 categories: 'component material building',
                 extra: {
                     stackable: true,
+                    merchantWeight: 4,
+                    merchantQuestWeight: 3,
                     baseValue: 10,
                     description: 'Тяжёлый каменный блок для мостов, укреплений и тяжёлой утилиты.'
                 }
@@ -790,7 +877,8 @@
             usedInRecipes: ['Сухпаёк', 'Сытный паёк', 'Крепкий бульон'],
             criticalWindows: ['Острова 1-18: лагерная кухня', 'Острова 19-30: усиленные лагерные рецепты'],
             currentInventoryItemIds: ['fuel_bundle'],
-            tags: ['camp'],
+            tags: ['water', 'survival', 'bagQuest'],
+            merchantInterest: ['merchant', 'fisherman', 'quartermaster'],
             inventoryItem: {
                 id: 'fuel_bundle',
                 icon: 'TB',
@@ -798,6 +886,8 @@
                 categories: 'component material survival',
                 extra: {
                     stackable: true,
+                    merchantWeight: 3,
+                    merchantQuestWeight: 2,
                     baseValue: 7,
                     description: 'Плотная топливная связка для лагерной кухни и варки.'
                 }
@@ -821,7 +911,8 @@
             usedInRecipes: ['Сухпаёк', 'Сытный паёк', 'Крепкий бульон'],
             criticalWindows: ['Острова 7-12: базовая еда', 'Острова 16+: усиленные лагерные рецепты'],
             currentInventoryItemIds: ['fish_meat'],
-            tags: ['food'],
+            tags: ['survival'],
+            merchantInterest: ['fisherman', 'quartermaster'],
             inventoryItem: {
                 id: 'fish_meat',
                 icon: 'FM',
@@ -829,6 +920,8 @@
                 categories: 'component material food',
                 extra: {
                     stackable: true,
+                    merchantWeight: 3,
+                    merchantQuestWeight: 2,
                     baseValue: 8,
                     description: 'Подготовленное рыбное мясо для лагерных рецептов.'
                 }
@@ -852,7 +945,8 @@
             usedInRecipes: ['Готовая лодка', 'Ремкомплект лодки', 'Фонарь тумана', 'Маяк торговца'],
             criticalWindows: ['Острова 10-12: свет и туман', 'Острова 16-18: обязательная лодка', 'Острова 25-27: поздняя логистика и инструменты'],
             currentInventoryItemIds: ['fish_oil'],
-            tags: ['building', 'utility', 'trade'],
+            tags: ['building', 'water', 'route', 'merchant'],
+            merchantInterest: ['fisherman', 'bridgewright', 'collector'],
             inventoryItem: {
                 id: 'fish_oil',
                 icon: 'FO',
@@ -1019,22 +1113,295 @@
             }
         },
         {
-            id: 'portableBridge',
-            label: 'Переносной мост',
-            bulk: 6,
+            id: 'bridge_kit',
+            label: 'Мост-комплект',
+            aliases: ['Bridge Kit', 'bridgeKit'],
+            bulk: 7,
             sourceRecipeIds: ['portable-bridge'],
             tags: ['crafted', 'tool', 'movement', 'bridge'],
+            inventoryItem: {
+                id: 'bridge_kit',
+                icon: 'BK',
+                lootTier: 2,
+                categories: 'tool utility movement',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 0,
+                    baseValue: 18,
+                    description: 'Грубый мостовой комплект. Его можно использовать сразу или собрать из него более компактный переносной мост.',
+                    bridgeFamily: 'portable',
+                    bridgeUpgradeStage: 0,
+                    bridgeReady: false,
+                    upgradeFromItemIds: [],
+                    activeEffect: { kind: 'bridgeBuilder', charges: 1 }
+                }
+            }
+        },
+        {
+            id: 'portableBridge',
+            label: 'Переносной мост',
+            aliases: ['Portable Bridge', 'portable_bridge'],
+            bulk: 6,
+            sourceRecipeIds: ['portable-bridge-assembly'],
+            tags: ['crafted', 'tool', 'movement', 'bridge', 'route'],
             inventoryItem: {
                 id: 'portableBridge',
                 icon: 'PM',
                 lootTier: 2,
-                categories: 'tool utility movement',
+                categories: 'tool utility movement bridge',
                 extra: {
                     chestWeight: 5,
                     merchantWeight: 6,
                     baseValue: 18,
-                    description: 'Позволяет уложить одну клетку моста.',
+                    description: 'Готовая переносная переправа. Более удобная и компактная форма мост-комплекта.',
+                    bridgeFamily: 'portable',
+                    bridgeUpgradeStage: 1,
+                    bridgeReady: true,
+                    upgradeFromItemIds: ['bridge_kit'],
                     activeEffect: { kind: 'bridgeBuilder', charges: 1 }
+                }
+            }
+        },
+        {
+            id: 'reinforcedBridge',
+            label: 'Усиленный мост',
+            aliases: ['Reinforced Bridge', 'reinforced_bridge'],
+            bulk: 7,
+            sourceRecipeIds: ['reinforced-bridge-upgrade'],
+            tags: ['crafted', 'tool', 'movement', 'bridge', 'route', 'advanced'],
+            inventoryItem: {
+                id: 'reinforcedBridge',
+                icon: 'UM',
+                lootTier: 3,
+                categories: 'tool utility movement bridge',
+                extra: {
+                    chestWeight: 4,
+                    merchantWeight: 5,
+                    baseValue: 24,
+                    description: 'Усиленная версия переносного моста. Даёт две клетки переправы и держит поздние маршруты увереннее.',
+                    bridgeFamily: 'portable',
+                    bridgeUpgradeStage: 2,
+                    bridgeReady: true,
+                    upgradeFromItemIds: ['portableBridge'],
+                    activeEffect: { kind: 'bridgeBuilder', charges: 2 }
+                }
+            }
+        },
+        {
+            id: 'fieldBridge',
+            label: 'Полевой мостик',
+            aliases: ['Field Bridge', 'field_bridge'],
+            bulk: 5,
+            sourceRecipeIds: ['field-bridge-upgrade'],
+            tags: ['crafted', 'tool', 'movement', 'bridge', 'route', 'advanced'],
+            inventoryItem: {
+                id: 'fieldBridge',
+                icon: 'PB',
+                lootTier: 4,
+                categories: 'tool utility movement bridge',
+                extra: {
+                    chestWeight: 2,
+                    merchantWeight: 3,
+                    baseValue: 30,
+                    description: 'Облегчённый маршрутный апгрейд моста. Даёт две клетки переправы, но носится чуть легче тяжёлых вариантов.',
+                    bridgeFamily: 'portable',
+                    bridgeUpgradeStage: 3,
+                    bridgeReady: true,
+                    upgradeFromItemIds: ['portableBridge'],
+                    activeEffect: { kind: 'bridgeBuilder', charges: 2 }
+                }
+            }
+        },
+        {
+            id: 'absoluteBridge',
+            label: 'Абсолютный мост',
+            aliases: ['Absolute Bridge', 'absolute_bridge'],
+            bulk: 8,
+            sourceRecipeIds: ['absolute-bridge-upgrade'],
+            tags: ['crafted', 'tool', 'movement', 'bridge', 'route', 'advanced', 'legendary'],
+            inventoryItem: {
+                id: 'absoluteBridge',
+                icon: 'AM',
+                lootTier: 6,
+                categories: 'legendary tool movement bridge',
+                extra: {
+                    chestWeight: 1,
+                    merchantWeight: 0,
+                    baseValue: 70,
+                    rarity: 'legendary',
+                    description: 'Крайняя сборка мостовой ветки. Даёт мощную длинную переправу для финальной логистики.',
+                    bridgeFamily: 'portable',
+                    bridgeUpgradeStage: 4,
+                    bridgeReady: true,
+                    upgradeFromItemIds: ['reinforcedBridge', 'fieldBridge'],
+                    activeEffect: { kind: 'bridgeBuilder', charges: 4 }
+                }
+            }
+        },
+        {
+            id: 'repair_kit_bridge',
+            label: 'Ремкомплект моста',
+            aliases: ['Bridge Repair Kit', 'bridgeRepairKit'],
+            bulk: 4,
+            sourceRecipeIds: ['bridge-repair-kit'],
+            tags: ['crafted', 'tool', 'repair', 'bridge', 'utility'],
+            inventoryItem: {
+                id: 'repair_kit_bridge',
+                icon: 'RM',
+                lootTier: 2,
+                categories: 'tool utility repair bridge',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 0,
+                    baseValue: 17,
+                    description: 'Утилитарный комплект для ремонта повреждённых мостов и переправ.',
+                    activeEffect: { kind: 'repairStructure', structureKind: 'bridge' }
+                }
+            }
+        },
+        {
+            id: 'boat_ready',
+            label: 'Готовая лодка',
+            aliases: ['Boat Ready', 'boatReady'],
+            bulk: 7,
+            sourceRecipeIds: ['boat'],
+            tags: ['crafted', 'tool', 'movement', 'boat', 'water'],
+            inventoryItem: {
+                id: 'boat_ready',
+                icon: 'BL',
+                lootTier: 3,
+                categories: 'tool utility movement water',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 0,
+                    baseValue: 26,
+                    description: 'Собранная лодка для водной фазы и богатых маршрутов.'
+                }
+            }
+        },
+        {
+            id: 'repair_kit_boat',
+            label: 'Ремкомплект лодки',
+            aliases: ['Boat Repair Kit', 'boatRepairKit'],
+            bulk: 4,
+            sourceRecipeIds: ['boat-repair-kit'],
+            tags: ['crafted', 'tool', 'repair', 'boat', 'water', 'utility'],
+            inventoryItem: {
+                id: 'repair_kit_boat',
+                icon: 'RL',
+                lootTier: 2,
+                categories: 'tool utility repair water',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 0,
+                    baseValue: 19,
+                    description: 'Утилитарный набор для поддержания лодки в рабочем состоянии.',
+                    activeEffect: { kind: 'repairStructure', structureKind: 'boat' }
+                }
+            }
+        },
+        {
+            id: 'trade_papers',
+            label: 'Торговые бумаги',
+            aliases: ['Trade Papers', 'tradePapers'],
+            bulk: 1,
+            sourceRecipeIds: ['wood-plank-to-trade-papers'],
+            tags: ['crafted', 'value', 'trade', 'economy'],
+            inventoryItem: {
+                id: 'trade_papers',
+                icon: 'TP',
+                lootTier: 2,
+                categories: 'value trade utility',
+                extra: {
+                    stackable: true,
+                    chestWeight: 0,
+                    merchantWeight: 0,
+                    merchantQuestWeight: 2,
+                    baseValue: 9,
+                    description: 'Дешёвая торговая ценность от писаря. Хороша для продажи и мелких обменов, но не заменяет редкий лут.'
+                }
+            }
+        },
+        {
+            id: 'market_seal',
+            label: 'Рыночная печать',
+            aliases: ['Market Seal', 'marketSeal'],
+            bulk: 1,
+            sourceRecipeIds: ['stone-block-to-market-seal'],
+            tags: ['crafted', 'value', 'trade', 'economy'],
+            inventoryItem: {
+                id: 'market_seal',
+                icon: 'RP',
+                lootTier: 2,
+                categories: 'value trade',
+                extra: {
+                    stackable: true,
+                    chestWeight: 0,
+                    merchantWeight: 0,
+                    merchantQuestWeight: 2,
+                    baseValue: 10,
+                    description: 'Недорогая ценность из каменного пакета. Удобно нести к торговцу, если сбор уже пережал маршрут.'
+                }
+            }
+        },
+        {
+            id: 'roadChalk',
+            label: 'Мел дорожника',
+            bulk: 1,
+            sourceRecipeIds: ['road-chalk'],
+            tags: ['crafted', 'tool', 'info', 'route'],
+            inventoryItem: {
+                id: 'roadChalk',
+                icon: 'MD',
+                lootTier: 2,
+                categories: 'tool utility info',
+                extra: {
+                    chestWeight: 2,
+                    merchantWeight: 4,
+                    baseValue: 14,
+                    description: 'Собранный маршрутный мел. Даёт подсказку по самому дешёвому пути.',
+                    activeEffect: { kind: 'cheapestRouteHint' }
+                }
+            }
+        },
+        {
+            id: 'pathMarker',
+            label: 'Маркер пути',
+            bulk: 1,
+            sourceRecipeIds: ['path-marker'],
+            tags: ['crafted', 'tool', 'info', 'route'],
+            inventoryItem: {
+                id: 'pathMarker',
+                icon: 'MP',
+                lootTier: 3,
+                categories: 'consumable utility movement',
+                extra: {
+                    stackable: true,
+                    chestWeight: 3,
+                    merchantWeight: 4,
+                    baseValue: 17,
+                    description: 'Собранный маршрутный маркер. Показывает самый дешёвый путь к выбранной цели.',
+                    activeEffect: { kind: 'cheapestRouteHint' }
+                }
+            }
+        },
+        {
+            id: 'safeHouseSeal',
+            label: 'Печать безопасного дома',
+            bulk: 2,
+            sourceRecipeIds: ['safe-house-seal'],
+            tags: ['crafted', 'tool', 'survival', 'protection'],
+            inventoryItem: {
+                id: 'safeHouseSeal',
+                icon: 'PD',
+                lootTier: 4,
+                categories: 'tool utility survival',
+                extra: {
+                    chestWeight: 2,
+                    merchantWeight: 3,
+                    baseValue: 30,
+                    description: 'Собранная защитная печать. Один раз спасает от штрафа пустого или опасного дома.',
+                    activeEffect: { kind: 'trapWard', charges: 1 }
                 }
             }
         },
@@ -1237,10 +1604,41 @@
                 craftingOutputId: definition.craftingOutputId,
                 qualityLevel: definition.componentId ? (componentById[definition.componentId] && componentById[definition.componentId].qualityLevel) || '' : '',
                 qualityLabel: definition.componentId ? (componentById[definition.componentId] && componentById[definition.componentId].qualityLabel) || '' : '',
+                craftingTags: definition.componentId ? cloneValue((componentById[definition.componentId] && componentById[definition.componentId].tags) || []) : [],
+                merchantInterest: definition.componentId ? cloneValue((componentById[definition.componentId] && componentById[definition.componentId].merchantInterest) || []) : [],
                 sourceRecipeIds: cloneValue(definition.sourceRecipeIds),
                 ...cloneValue(definition.extra)
             }
         ));
+    }
+
+    function getComponentsByMerchantInterest(merchantRole) {
+        const normalizedMerchantRole = normalizeLookupValue(merchantRole);
+        return intermediateComponents
+            .filter((component) => Array.isArray(component.merchantInterest)
+                && component.merchantInterest.some((role) => normalizeLookupValue(role) === normalizedMerchantRole))
+            .map((component) => cloneValue(component));
+    }
+
+    function getMerchantInterestForInventoryItemId(itemId) {
+        const componentDefinition = getComponentDefinitionByInventoryItemId(itemId);
+        return componentDefinition && Array.isArray(componentDefinition.merchantInterest)
+            ? cloneValue(componentDefinition.merchantInterest)
+            : [];
+    }
+
+    function matchesMerchantInterest(itemIdOrComponentId, merchantRole) {
+        const normalizedMerchantRole = normalizeLookupValue(merchantRole);
+        if (!normalizedMerchantRole) {
+            return false;
+        }
+
+        const componentDefinition = getComponentDefinition(itemIdOrComponentId)
+            || getComponentDefinitionByInventoryItemId(itemIdOrComponentId);
+
+        return Boolean(componentDefinition
+            && Array.isArray(componentDefinition.merchantInterest)
+            && componentDefinition.merchantInterest.some((role) => normalizeLookupValue(role) === normalizedMerchantRole));
     }
 
     Object.assign(componentRegistry, {
@@ -1256,20 +1654,27 @@
         getComponentDefinition,
         getComponentDefinitionByInventoryItemId,
         getComponentDefinitions,
+        getComponentsByMerchantInterest,
         getComponentQualityLabel,
         getComponentsByCraftMethod,
+        getMerchantInterestForInventoryItemId,
         getComponentsBySourceResource,
         getComponentsByTag,
         getGeneratedCraftingOutputDefinition,
         getGeneratedCraftingOutputDefinitions,
         isComponentInventoryItem,
         isGeneratedCraftingOutputItem,
+        getUnknownComponentTags,
+        matchesMerchantInterest,
+        normalizeComponentTags,
         normalizeComponentQualityLevel,
         normalizeComponentDefinition,
         normalizeGeneratedCraftingOutputDefinition,
         normalizeCraftMethod,
         validateComponentDefinition,
         validateGeneratedCraftingOutputDefinition,
-        COMPONENT_QUALITY_LEVELS
+        COMPONENT_QUALITY_LEVELS,
+        COMPONENT_CRAFTING_TAGS,
+        KNOWN_MERCHANT_INTERESTS
     });
 })();

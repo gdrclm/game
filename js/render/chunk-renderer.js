@@ -128,22 +128,66 @@ function buildChunkRenderCache(chunk) {
     const context = canvas.getContext('2d');
     const baseWorldX = chunk.x * chunkSize;
     const baseWorldY = chunk.y * chunkSize;
+    const tileTypeCache = new Map();
+
+    function getBaseTileTypeAt(worldX, worldY) {
+        const key = `${worldX},${worldY}`;
+
+        if (tileTypeCache.has(key)) {
+            return tileTypeCache.get(key);
+        }
+
+        const localX = worldX - baseWorldX;
+        const localY = worldY - baseWorldY;
+        let tileType = 'unloaded';
+
+        if (localX >= 0 && localX < chunkSize && localY >= 0 && localY < chunkSize) {
+            tileType = chunk.data[localY][localX];
+        } else if (game.systems.world && typeof game.systems.world.getTileInfo === 'function') {
+            const tileInfo = game.systems.world.getTileInfo(worldX, worldY, { generateIfMissing: false });
+            tileType = tileInfo && tileInfo.baseTileType ? tileInfo.baseTileType : 'unloaded';
+        }
+
+        tileTypeCache.set(key, tileType);
+        return tileType;
+    }
+
+    function buildTileRenderContext(worldX, worldY, tileType) {
+        return {
+            tileType,
+            progression: chunk.progression || null,
+            neighbors: {
+                north: getBaseTileTypeAt(worldX, worldY - 1),
+                east: getBaseTileTypeAt(worldX + 1, worldY),
+                south: getBaseTileTypeAt(worldX, worldY + 1),
+                west: getBaseTileTypeAt(worldX - 1, worldY),
+                northwest: getBaseTileTypeAt(worldX - 1, worldY - 1),
+                northeast: getBaseTileTypeAt(worldX + 1, worldY - 1),
+                southeast: getBaseTileTypeAt(worldX + 1, worldY + 1),
+                southwest: getBaseTileTypeAt(worldX - 1, worldY + 1)
+            }
+        };
+    }
 
     for (let y = 0; y < chunkSize; y++) {
         for (let x = 0; x < chunkSize; x++) {
             const localScreenX = originX + (x - y) * tileWidth / 2;
             const localScreenY = originY + (x + y) * tileHeight / 2;
+            const worldX = baseWorldX + x;
+            const worldY = baseWorldY + y;
+            const tileType = chunk.data[y][x];
             game.systems.content.drawTileAtContext(
                 context,
                 localScreenX,
                 localScreenY,
-                chunk.data[y][x],
-                baseWorldX + x,
-                baseWorldY + y,
-                chunk.progression || null
+                tileType,
+                worldX,
+                worldY,
+                chunk.progression || null,
+                buildTileRenderContext(worldX, worldY, tileType)
             );
 
-            const overlay = getIslandOverlayColor(chunk, chunk.data[y][x]);
+            const overlay = getIslandOverlayColor(chunk, tileType);
             if (overlay) {
                 context.save();
                 context.translate(localScreenX, localScreenY);
@@ -155,10 +199,10 @@ function buildChunkRenderCache(chunk) {
                 ? chunk.travelZones[y][x]
                 : 'none';
 
-            if (travelZoneKey === 'none' && chunk.data[y][x] === 'bridge' && chunk.progression) {
+            if (travelZoneKey === 'none' && tileType === 'bridge' && chunk.progression) {
                 const bridgeInfo = {
-                    x: baseWorldX + x,
-                    y: baseWorldY + y,
+                    x: worldX,
+                    y: worldY,
                     tileType: 'bridge',
                     baseTileType: 'bridge',
                     progression: chunk.progression,
@@ -179,7 +223,7 @@ function buildChunkRenderCache(chunk) {
                 context.restore();
             }
 
-            if (isTerrainHarvested(baseWorldX + x, baseWorldY + y)) {
+            if (isTerrainHarvested(worldX, worldY)) {
                 context.save();
                 context.translate(localScreenX, localScreenY);
                 drawOverlayDiamond(context, tileWidth, tileHeight, 'rgba(0, 0, 0, 0.3)');

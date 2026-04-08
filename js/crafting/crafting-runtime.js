@@ -24,6 +24,10 @@
             : (typeof station === 'string' ? station.trim().toLowerCase() : '');
     }
 
+    function normalizeLookupValue(value) {
+        return typeof value === 'string' ? value.trim().toLowerCase() : '';
+    }
+
     function buildEntryKey(kind, id) {
         return `${kind}:${id}`;
     }
@@ -375,8 +379,30 @@
     }
 
     function countStockEntry(entries, targetEntry) {
-        const targetKey = targetEntry && targetEntry.key ? targetEntry.key : buildEntryKey(targetEntry.kind, targetEntry.id);
         const stockEntries = normalizeCraftStockEntries(entries);
+        const matchingComponentIds = getMatchingComponentIds(targetEntry);
+        const usesFilteredComponentSelector = Boolean(
+            targetEntry
+            && targetEntry.kind === 'component'
+            && (
+                targetEntry.qualityLevel
+                || (Array.isArray(targetEntry.componentTags) && targetEntry.componentTags.length > 0)
+            )
+        );
+
+        if (targetEntry && targetEntry.kind === 'component' && matchingComponentIds.length > 0 && (matchingComponentIds.length > 1 || usesFilteredComponentSelector)) {
+            return stockEntries.reduce((sum, entry) => (
+                entry && entry.kind === 'component' && matchingComponentIds.includes(entry.id)
+                    ? sum + Math.max(0, entry.quantity || 0)
+                    : sum
+            ), 0);
+        }
+
+        if (usesFilteredComponentSelector && matchingComponentIds.length === 0) {
+            return 0;
+        }
+
+        const targetKey = targetEntry && targetEntry.key ? targetEntry.key : buildEntryKey(targetEntry.kind, targetEntry.id);
         const match = stockEntries.find((entry) => entry.key === targetKey);
         return match ? Math.max(0, match.quantity || 0) : 0;
     }
@@ -385,9 +411,26 @@
         let remaining = normalizeEntryQuantity(quantity);
         const stockEntries = normalizeCraftStockEntries(entries);
         const removedEntries = [];
+        const matchingComponentIds = getMatchingComponentIds(targetEntry);
+        const usesFilteredComponentSelector = Boolean(
+            targetEntry
+            && targetEntry.kind === 'component'
+            && (
+                targetEntry.qualityLevel
+                || (Array.isArray(targetEntry.componentTags) && targetEntry.componentTags.length > 0)
+            )
+        );
 
         stockEntries.forEach((entry) => {
-            if (remaining <= 0 || entry.key !== targetEntry.key) {
+            let matchesTarget = entry.key === targetEntry.key;
+
+            if (targetEntry && targetEntry.kind === 'component' && usesFilteredComponentSelector) {
+                matchesTarget = entry && entry.kind === 'component' && matchingComponentIds.includes(entry.id);
+            } else if (targetEntry && targetEntry.kind === 'component' && matchingComponentIds.length > 1) {
+                matchesTarget = entry && entry.kind === 'component' && matchingComponentIds.includes(entry.id);
+            }
+
+            if (remaining <= 0 || !matchesTarget) {
                 return;
             }
 
@@ -396,7 +439,7 @@
             remaining -= removedQuantity;
 
             removedEntries.push({
-                ...cloneValue(targetEntry),
+                ...cloneValue(entry),
                 quantity: removedQuantity
             });
         });
@@ -593,17 +636,62 @@
         }).filter(Boolean);
     }
 
-    function getComponentGameplayBindings(componentId) {
+    function getMatchingComponentDefinitions(selector) {
         const componentRegistry = getComponentRegistry();
-        const definition = componentRegistry && typeof componentRegistry.getComponentDefinition === 'function'
-            ? componentRegistry.getComponentDefinition(componentId)
-            : null;
-        const rawBindings = Array.isArray(definition && definition.currentInventoryItemIds)
-            ? definition.currentInventoryItemIds
+        const componentDefinitions = componentRegistry && typeof componentRegistry.getComponentDefinitions === 'function'
+            ? componentRegistry.getComponentDefinitions()
             : [];
+        const selectorObject = selector && typeof selector === 'object'
+            ? selector
+            : { id: selector };
+        const requestedId = typeof selectorObject.id === 'string' && selectorObject.id.trim()
+            ? selectorObject.id.trim()
+            : '';
+        const requestedQualityLevel = componentRegistry && typeof componentRegistry.normalizeComponentQualityLevel === 'function'
+            ? componentRegistry.normalizeComponentQualityLevel(selectorObject.qualityLevel)
+            : normalizeLookupValue(selectorObject.qualityLevel);
+        const requestedTags = componentRegistry && typeof componentRegistry.normalizeComponentTags === 'function'
+            ? componentRegistry.normalizeComponentTags(selectorObject.componentTags)
+            : (Array.isArray(selectorObject.componentTags) ? selectorObject.componentTags : []);
+
+        let candidates = requestedId
+            ? componentDefinitions.filter((definition) => definition && definition.id === requestedId)
+            : componentDefinitions.slice();
+
+        if (!requestedId && requestedTags.length === 0 && !requestedQualityLevel) {
+            return [];
+        }
+
+        if (requestedTags.length > 0) {
+            candidates = candidates.filter((definition) => {
+                const definitionTags = Array.isArray(definition && definition.tags) ? definition.tags : [];
+                return requestedTags.every((tag) => definitionTags.includes(tag));
+            });
+        }
+
+        if (requestedQualityLevel) {
+            candidates = candidates.filter((definition) => definition && definition.qualityLevel === requestedQualityLevel);
+        }
+
+        return candidates;
+    }
+
+    function getMatchingComponentIds(selector) {
+        return getMatchingComponentDefinitions(selector)
+            .map((definition) => definition && definition.id)
+            .filter(Boolean);
+    }
+
+    function getComponentGameplayBindings(componentSelector) {
+        const componentRegistry = getComponentRegistry();
+        const matchingDefinitions = getMatchingComponentDefinitions(componentSelector);
         const seenBindings = new Set();
 
-        return rawBindings.map((itemId) => {
+        return matchingDefinitions.flatMap((definition) => (
+            Array.isArray(definition && definition.currentInventoryItemIds)
+                ? definition.currentInventoryItemIds
+                : []
+        )).map((itemId) => {
             const binding = buildDirectGameplayBinding(itemId, 1);
             const bindingKey = binding ? binding.itemId : '';
 
@@ -662,7 +750,7 @@
         }
 
         if (entry.kind === 'component') {
-            const bindings = getComponentGameplayBindings(entry.id);
+            const bindings = getComponentGameplayBindings(entry);
             return bindings.length > 0
                 ? { supported: true, bindings, reason: null }
                 : { supported: false, bindings: [], reason: 'component-unmapped' };
@@ -803,9 +891,11 @@
 
     function getCompiledRecipes() {
         const recipeRegistry = getRecipeRegistry();
-        const recipeDefinitions = recipeRegistry && typeof recipeRegistry.getRecipeDefinitions === 'function'
-            ? recipeRegistry.getRecipeDefinitions()
-            : [];
+        const recipeDefinitions = recipeRegistry && typeof recipeRegistry.getActiveRecipeDefinitions === 'function'
+            ? recipeRegistry.getActiveRecipeDefinitions()
+            : (recipeRegistry && typeof recipeRegistry.getRecipeDefinitions === 'function'
+                ? recipeRegistry.getRecipeDefinitions()
+                : []);
 
         return recipeDefinitions
             .map((recipe) => buildCompiledRecipe(recipe.recipeId))

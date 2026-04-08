@@ -765,14 +765,15 @@
         return null;
     }
 
-    function getGatherableTerrainTarget() {
+    function getGatherableTerrainTarget(options = {}) {
+        const allowSelectedItem = Boolean(options.allowSelectedItem);
         const selectedTarget = getTerrainTargetForTile(getSelectedWorldTileInfo());
 
         if (selectedTarget && isTerrainTargetWithinGatherReach(selectedTarget)) {
             return selectedTarget;
         }
 
-        return getTerrainTarget();
+        return getTerrainTarget({ allowSelectedItem });
     }
 
     function getInspectableTerrainTarget() {
@@ -859,21 +860,47 @@
         }
     }
 
-    function collectTerrainResourceAtTarget(target) {
+    function collectTerrainResourceAtTarget(target, options = {}) {
         const inventoryRuntime = getInventoryRuntime();
         const itemEffects = getItemEffects();
         const registry = game.systems.itemRegistry || game.systems.loot || null;
+        const requiredResourceFamilyId = typeof options.requiredResourceFamilyId === 'string'
+            ? options.requiredResourceFamilyId.trim()
+            : '';
+        const mismatchMessage = typeof options.mismatchMessage === 'string' && options.mismatchMessage.trim()
+            ? options.mismatchMessage.trim()
+            : 'Рядом нет подходящего ресурса.';
 
         if (!inventoryRuntime || !target) {
             return false;
         }
 
-        if (!isTerrainTargetGatherAvailable(target)) {
-            bridge.setActionMessage(target.profile && target.profile.requirementMessage
-                ? target.profile.requirementMessage
-                : 'Сейчас этот ресурс собрать нельзя.');
+        if (
+            requiredResourceFamilyId
+            && (!target.profile || target.profile.resourceFamilyId !== requiredResourceFamilyId)
+        ) {
+            bridge.setActionMessage(mismatchMessage);
             bridge.renderAfterStateChange();
-            return true;
+            return {
+                handled: true,
+                success: false,
+                message: mismatchMessage,
+                effectDrops: []
+            };
+        }
+
+        if (!isTerrainTargetGatherAvailable(target)) {
+            const message = target.profile && target.profile.requirementMessage
+                ? target.profile.requirementMessage
+                : 'Сейчас этот ресурс собрать нельзя.';
+            bridge.setActionMessage(message);
+            bridge.renderAfterStateChange();
+            return {
+                handled: true,
+                success: false,
+                message,
+                effectDrops: []
+            };
         }
 
         const outcome = inventoryRuntime.addInventoryItem(target.profile.itemId, 1, {
@@ -883,9 +910,15 @@
         });
 
         if (!outcome.added) {
-            bridge.setActionMessage('Рюкзак полон. Сначала освободи слот, чтобы собрать материал.');
+            const message = 'Рюкзак полон. Сначала освободи слот, чтобы собрать материал.';
+            bridge.setActionMessage(message);
             bridge.renderAfterStateChange();
-            return true;
+            return {
+                handled: true,
+                success: false,
+                message,
+                effectDrops: []
+            };
         }
 
         markTerrainHarvested(target.tileInfo, target.profile);
@@ -1015,24 +1048,53 @@
             });
         }
 
+        const message = `Собрано: ${target.profile.collectedLabel} с участка "${target.profile.sourceLabel}".${gatherCostSummary}${conversionSummary}${nodeStateSummary}${timeAdvanceSummary}${gatherRiskSummary}`;
+
         if (game.state.isGameOver) {
             bridge.renderAfterStateChange();
-            return true;
+            return {
+                handled: true,
+                success: true,
+                message,
+                effectDrops: drops
+            };
         }
 
-        bridge.setActionMessage(`Собрано: ${target.profile.collectedLabel} с участка "${target.profile.sourceLabel}".${gatherCostSummary}${conversionSummary}${nodeStateSummary}${timeAdvanceSummary}${gatherRiskSummary}`);
+        bridge.setActionMessage(message);
         bridge.renderAfterStateChange();
-        return true;
+        return {
+            handled: true,
+            success: true,
+            message,
+            effectDrops: drops
+        };
     }
 
-    function collectTerrainResource() {
+    function collectTerrainResource(options = {}) {
+        const selectedTileTarget = getTerrainTargetForTile(getSelectedWorldTileInfo(), { includeUnavailable: true });
         const selectedTarget = getTerrainTargetForTile(getSelectedWorldTileInfo(), { includeUnavailable: true });
+        const requiredResourceFamilyId = typeof options.requiredResourceFamilyId === 'string'
+            ? options.requiredResourceFamilyId.trim()
+            : '';
+        const allowSelectedItem = Boolean(options.allowSelectedItem);
 
         if (selectedTarget && !selectedTarget.isHarvested && isTerrainTargetWithinGatherReach(selectedTarget)) {
-            return collectTerrainResourceAtTarget(selectedTarget);
+            return collectTerrainResourceAtTarget(selectedTarget, options);
         }
 
-        return collectTerrainResourceAtTarget(getTerrainTarget({ includeUnavailable: true }));
+        const fallbackTarget = getTerrainTarget({ includeUnavailable: true, allowSelectedItem });
+
+        if (
+            requiredResourceFamilyId
+            && selectedTileTarget
+            && isTerrainTargetWithinGatherReach(selectedTileTarget)
+            && selectedTileTarget.profile
+            && selectedTileTarget.profile.resourceFamilyId === requiredResourceFamilyId
+        ) {
+            return collectTerrainResourceAtTarget(selectedTileTarget, options);
+        }
+
+        return collectTerrainResourceAtTarget(fallbackTarget, options);
     }
 
     function tryCollectClickedRock(tileInfo) {
@@ -1891,9 +1953,20 @@
         if (tileInfo && tileInfo.tileType === 'bridge') {
             const expedition = game.systems.expedition;
             const durability = expedition ? expedition.getBridgeDurability(tileInfo) : 2;
+            const maxDurability = expedition && typeof expedition.getBridgeMaxDurability === 'function'
+                ? expedition.getBridgeMaxDurability(tileInfo)
+                : 2;
+            const placedBridgeRecord = expedition && typeof expedition.getPlacedBridgeRecord === 'function'
+                ? expedition.getPlacedBridgeRecord(tileInfo.x, tileInfo.y)
+                : null;
+            const bridgeLabel = placedBridgeRecord && placedBridgeRecord.label
+                ? placedBridgeRecord.label
+                : 'мост';
 
             return durability <= 1
                 ? 'Старый мост: после следующего прохода он развалится.'
+                : maxDurability > 2
+                    ? `${bridgeLabel}: осталось ${durability} из ${maxDurability} проходов.`
                 : 'Обычный мост: первый проход состарит его, второй разрушит.';
         }
 
@@ -2323,6 +2396,8 @@
         describeSelectedWorldTarget,
         getDefaultActionHint,
         getActionAvailability,
+        getGatherableTerrainTarget,
+        collectTerrainResource,
         setActionButtonState,
         updateActionButtons,
         handleWalkAction,

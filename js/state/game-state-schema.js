@@ -1,6 +1,6 @@
 (() => {
     const stateSchema = window.Game.systems.stateSchema = window.Game.systems.stateSchema || {};
-    const SAVE_VERSION = 7;
+    const SAVE_VERSION = 9;
 
     function isPlainObject(value) {
         return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -128,6 +128,7 @@
                 courierJobsById: {},
                 courierResultLog: [],
                 placedBridgeKeys: {},
+                placedBridgeStateByKey: {},
                 collapsedBridgeKeys: {},
                 weakenedBridgeKeys: {},
                 harvestedTerrainKeys: {},
@@ -254,6 +255,10 @@
                 placedBridgeKeys: mergeWithDefaults(
                     defaults.world.placedBridgeKeys,
                     state.placedBridgeKeys || state.placedBridgeTiles
+                ),
+                placedBridgeStateByKey: mergeWithDefaults(
+                    defaults.world.placedBridgeStateByKey,
+                    state.placedBridgeStateByKey
                 ),
                 collapsedBridgeKeys: mergeWithDefaults(
                     defaults.world.collapsedBridgeKeys,
@@ -399,6 +404,7 @@
             courierJobsById: normalized.world.courierJobsById,
             courierResultLog: normalized.world.courierResultLog,
             placedBridgeKeys: normalized.world.placedBridgeKeys,
+            placedBridgeStateByKey: normalized.world.placedBridgeStateByKey,
             collapsedBridgeKeys: normalized.world.collapsedBridgeKeys,
             weakenedBridgeKeys: normalized.world.weakenedBridgeKeys,
             harvestedTerrainKeys: normalized.world.harvestedTerrainKeys,

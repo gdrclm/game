@@ -91,13 +91,6 @@
         return projectedBulkUsage <= getInventoryBulkCapacity(slotCount);
     }
 
-    function getItemConversionRecipe(itemId) {
-        const registry = getItemRegistry();
-        return registry && typeof registry.getItemConversionRecipe === 'function'
-            ? registry.getItemConversionRecipe(itemId)
-            : null;
-    }
-
     function getCurrentTimeOfDayAdvanceCount() {
         const rawValue = game.state && typeof game.state.timeOfDayAdvancesElapsed === 'number'
             ? game.state.timeOfDayAdvancesElapsed
@@ -573,10 +566,6 @@
         return inventory.some((item, index) => index < getUnlockedInventorySlots() && !item);
     }
 
-    function applyAutoConversions(itemId) {
-        return [];
-    }
-
     function consumeInventoryItemById(itemId, quantity = 1) {
         let remaining = Math.max(1, quantity);
         const removed = [];
@@ -791,8 +780,6 @@
         transformInventoryItemAtIndex,
         countInventoryItem,
         canAddInventoryItem,
-        getItemConversionRecipe,
-        applyAutoConversions,
         consumeInventoryItemById,
         consumeSelectedInventoryItem,
         markInventoryItemUsed,

@@ -625,6 +625,20 @@
             return 'снимает часть дорожных штрафов';
         case 'bridgeBuilder':
             return `строит мост: ${Math.max(1, effect.charges || 1)} кл.`;
+        case 'fillContainer':
+            return 'наполняет контейнер у подходящего источника';
+        case 'startFishing':
+            return 'запускает рыбалку у точки ловли';
+        case 'startGather':
+            return 'запускает сбор ближайшего ресурса';
+        case 'openCraftPanel':
+            return 'открывает сумку и панель крафта';
+        case 'repairStructure':
+            return effect.structureKind === 'bridge'
+                ? 'ремонтирует повреждённый мост'
+                : (effect.structureKind === 'boat'
+                    ? 'ремонтирует лодочную конструкцию'
+                    : 'ремонтирует ближайшую конструкцию');
         default:
             return effect.label || effect.kind || '';
         }

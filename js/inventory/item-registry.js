@@ -133,8 +133,16 @@
             ...(Array.isArray(definition.categories) ? definition.categories : []),
             ...buildQuestCategories(definition)
         ]);
+        const craftingTags = new Set(Array.isArray(definition.craftingTags) ? definition.craftingTags : []);
         if (Array.isArray(requirement.questCategories) && requirement.questCategories.length > 0) {
             const intersects = requirement.questCategories.some((category) => catalogCategories.has(category));
+            if (!intersects) {
+                return false;
+            }
+        }
+
+        if (Array.isArray(requirement.craftingTags) && requirement.craftingTags.length > 0) {
+            const intersects = requirement.craftingTags.some((tag) => craftingTags.has(tag));
             if (!intersects) {
                 return false;
             }
@@ -333,11 +341,6 @@
     function getConsumableEffect(itemId) {
         const definition = getItemDefinition(itemId);
         return definition && definition.consumable ? { ...definition.consumable } : null;
-    }
-
-    function getItemConversionRecipe(itemId) {
-        const definition = getItemDefinition(itemId);
-        return definition && definition.conversion ? { ...definition.conversion } : null;
     }
 
     function isItemStackable(itemId) {
@@ -554,6 +557,9 @@
         const includeTierZero = Boolean(options.includeTierZero);
         const requiredCategories = Array.isArray(options.requiredCategories) ? options.requiredCategories : [];
         const preferredCategories = Array.isArray(options.preferredCategories) ? options.preferredCategories : [];
+        const preferredItemIds = Array.isArray(options.preferredItemIds) && options.preferredItemIds.length > 0
+            ? new Set(options.preferredItemIds)
+            : null;
         const preferredRequirements = Array.isArray(options.preferredRequirements) ? options.preferredRequirements.filter(Boolean) : [];
         const forbiddenCategories = Array.isArray(options.forbiddenCategories) ? options.forbiddenCategories : [];
         const excludedItemIds = new Set(Array.isArray(options.excludeItemIds) ? options.excludeItemIds : []);
@@ -622,6 +628,10 @@
                 if (preferredCategories.length > 0) {
                     const matchCount = preferredCategories.filter((category) => catalogCategories.has(category)).length;
                     weight *= matchCount > 0 ? 1 + Math.min(0.9, matchCount * 0.28) : 0.8;
+                }
+
+                if (preferredItemIds && preferredItemIds.has(definition.id)) {
+                    weight *= 1.9;
                 }
 
                 if (preferredRequirements.length > 0) {
@@ -716,7 +726,6 @@
         createInventoryItem,
         describeItem,
         getConsumableEffect,
-        getItemConversionRecipe,
         isItemStackable,
         getItemBaseValue,
         buildInventoryModifierSnapshot,

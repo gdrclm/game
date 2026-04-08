@@ -2,6 +2,7 @@
     const game = window.Game;
     const itemEffects = game.systems.itemEffects = game.systems.itemEffects || {};
     const bridge = game.systems.uiBridge;
+    const LEGACY_BRIDGE_MAX_DURABILITY = 2;
 
     if (!bridge) {
         return;
@@ -33,6 +34,14 @@
 
     function getMapRuntime() {
         return game.systems.mapRuntime || null;
+    }
+
+    function getActionUi() {
+        return game.systems.actionUi || null;
+    }
+
+    function getInventoryUi() {
+        return game.systems.inventoryUi || null;
     }
 
     function getExpedition() {
@@ -159,6 +168,42 @@
     function getActiveEffectForUse(item) {
         const definition = item && item.id ? getItemDefinition(item.id) : null;
         return definition && definition.activeEffect ? cloneEffect(definition.activeEffect) : null;
+    }
+
+    function getRecipeOnlyUseBlockMessage(item, options = {}) {
+        const definition = item && item.id ? getItemDefinition(item.id) : null;
+
+        if (!definition) {
+            return '';
+        }
+
+        const sourceRecipeIds = Array.isArray(definition.sourceRecipeIds)
+            ? definition.sourceRecipeIds.filter((recipeId) => typeof recipeId === 'string' && recipeId.trim())
+            : [];
+        const isRecipeBacked = sourceRecipeIds.length > 0 || Boolean(definition.componentId || definition.craftingOutputId);
+        const hasConsumableEffect = Boolean(options.consumableEffect);
+        const hasActiveEffect = Boolean(options.activeEffect);
+        const hasContainerState = Boolean(options.containerState || getContainerStateForItem(item));
+
+        if (!isRecipeBacked || hasConsumableEffect || hasActiveEffect || hasContainerState) {
+            return '';
+        }
+
+        const categories = Array.isArray(definition.categories) ? definition.categories : [];
+        if (categories.includes('value')) {
+            return `"${definition.label}" нужен для обмена или рецептов. Его нельзя использовать напрямую.`;
+        }
+
+        if (
+            categories.includes('component')
+            || categories.includes('material')
+            || categories.includes('resource')
+            || categories.includes('tool')
+        ) {
+            return `"${definition.label}" — это заготовка для крафта. Сначала используй её в подходящем рецепте.`;
+        }
+
+        return `"${definition.label}" — рецептный предмет без собственного активного эффекта. Его нельзя использовать напрямую.`;
     }
 
     function applyInventoryConsumableEffect(effect, tileInfo = game.state.activeTileInfo) {
@@ -384,6 +429,281 @@
         return null;
     }
 
+    function findInventoryItemById(itemId) {
+        const inventoryRuntime = getInventoryRuntime();
+        const inventory = inventoryRuntime && typeof inventoryRuntime.getInventory === 'function'
+            ? inventoryRuntime.getInventory()
+            : [];
+        const index = Array.isArray(inventory)
+            ? inventory.findIndex((entry) => entry && entry.id === itemId)
+            : -1;
+
+        return index >= 0
+            ? {
+                index,
+                item: inventory[index]
+            }
+            : null;
+    }
+
+    function getRepairableBridgeTarget() {
+        const world = getWorld();
+        const expedition = getExpedition();
+        const bridgeRuntime = game.systems.bridgeRuntime || expedition || null;
+
+        if (!world || typeof world.getTileInfo !== 'function') {
+            return null;
+        }
+
+        const playerPos = game.state.playerPos || { x: 0, y: 0 };
+        const selectedTile = game.state.selectedWorldTile || null;
+        const positions = [];
+
+        if (selectedTile) {
+            const selectedDistance = Math.abs(Math.round(selectedTile.x) - Math.round(playerPos.x)) + Math.abs(Math.round(selectedTile.y) - Math.round(playerPos.y));
+            if (selectedDistance <= 1) {
+                positions.push({ x: Math.round(selectedTile.x), y: Math.round(selectedTile.y) });
+            }
+        }
+
+        positions.push(
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x) + 1, y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x) - 1, y: Math.round(playerPos.y) },
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) + 1 },
+            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) - 1 }
+        );
+
+        const seen = new Set();
+        for (const position of positions) {
+            const key = `${position.x},${position.y}`;
+            if (seen.has(key)) {
+                continue;
+            }
+            seen.add(key);
+
+            const tileInfo = world.getTileInfo(position.x, position.y, { generateIfMissing: false });
+            if (!tileInfo || tileInfo.tileType !== 'bridge') {
+                continue;
+            }
+
+            const chunkZoneKey = tileInfo.chunk && tileInfo.chunk.travelZones && tileInfo.chunk.travelZones[tileInfo.localY]
+                ? tileInfo.chunk.travelZones[tileInfo.localY][tileInfo.localX]
+                : '';
+            const fallbackDurability = (tileInfo.travelZoneKey === 'oldBridge'
+                || tileInfo.travelZoneKey === 'collapseSpan'
+                || chunkZoneKey === 'oldBridge'
+                || chunkZoneKey === 'collapseSpan')
+                ? 1
+                : 2;
+            const runtimeDurability = expedition && typeof expedition.getBridgeDurability === 'function'
+                ? expedition.getBridgeDurability(tileInfo)
+                : fallbackDurability;
+            const durability = Number.isFinite(runtimeDurability)
+                ? Math.max(0, runtimeDurability)
+                : fallbackDurability;
+            const maxDurability = bridgeRuntime && typeof bridgeRuntime.getBridgeMaxDurability === 'function'
+                ? bridgeRuntime.getBridgeMaxDurability(tileInfo)
+                : LEGACY_BRIDGE_MAX_DURABILITY;
+            if (durability > 0 && durability < Math.max(1, maxDurability)) {
+                return tileInfo;
+            }
+        }
+
+        return null;
+    }
+
+    function repairBridgeAtTarget(tileInfo) {
+        const expedition = getExpedition();
+        const bridgeRuntime = game.systems.bridgeRuntime || expedition || null;
+
+        if (!tileInfo || tileInfo.tileType !== 'bridge') {
+            return {
+                success: false,
+                message: 'Рядом нет повреждённого моста для ремонта.',
+                effectDrops: []
+            };
+        }
+
+        const chunkZoneKey = tileInfo.chunk && tileInfo.chunk.travelZones && tileInfo.chunk.travelZones[tileInfo.localY]
+            ? tileInfo.chunk.travelZones[tileInfo.localY][tileInfo.localX]
+            : '';
+        const fallbackDurability = (tileInfo.travelZoneKey === 'oldBridge'
+            || tileInfo.travelZoneKey === 'collapseSpan'
+            || chunkZoneKey === 'oldBridge'
+            || chunkZoneKey === 'collapseSpan')
+            ? 1
+            : 2;
+        const runtimeDurability = expedition && typeof expedition.getBridgeDurability === 'function'
+            ? expedition.getBridgeDurability(tileInfo)
+            : fallbackDurability;
+        const currentDurability = Number.isFinite(runtimeDurability)
+            ? Math.max(0, runtimeDurability)
+            : fallbackDurability;
+        const maxDurability = bridgeRuntime && typeof bridgeRuntime.getBridgeMaxDurability === 'function'
+            ? bridgeRuntime.getBridgeMaxDurability(tileInfo)
+            : LEGACY_BRIDGE_MAX_DURABILITY;
+        if (currentDurability >= Math.max(1, maxDurability)) {
+            return {
+                success: false,
+                message: 'Этот мост уже в рабочем состоянии.',
+                effectDrops: []
+            };
+        }
+
+        const bridgeKey = `${tileInfo.x},${tileInfo.y}`;
+        if (bridgeRuntime && typeof bridgeRuntime.repairBridgeAt === 'function') {
+            const repaired = bridgeRuntime.repairBridgeAt(tileInfo.x, tileInfo.y);
+
+            if (!repaired) {
+                return {
+                    success: false,
+                    message: 'Этот мост не удалось восстановить.',
+                    effectDrops: []
+                };
+            }
+
+            const world = getWorld();
+            if (world && typeof world.updatePlayerContext === 'function') {
+                world.updatePlayerContext(game.state.playerPos);
+            }
+
+            return {
+                success: true,
+                message: `Мост у клетки ${tileInfo.x},${tileInfo.y} восстановлен до ${maxDurability} из ${maxDurability} проходов.`,
+                effectDrops: []
+            };
+        }
+
+        if (bridgeRuntime && typeof bridgeRuntime.getWeakenedBridgeState === 'function') {
+            const weakenedState = bridgeRuntime.getWeakenedBridgeState();
+            delete weakenedState[bridgeKey];
+        }
+
+        tileInfo.travelZoneKey = 'none';
+        if (tileInfo.chunk && tileInfo.chunk.travelZones && tileInfo.chunk.travelZones[tileInfo.localY]) {
+            tileInfo.chunk.travelZones[tileInfo.localY][tileInfo.localX] = 'none';
+            tileInfo.chunk.renderCache = null;
+        }
+
+        const world = getWorld();
+        if (world && typeof world.updatePlayerContext === 'function') {
+            world.updatePlayerContext(game.state.playerPos);
+        }
+
+        return {
+            success: true,
+            message: `Мост у клетки ${tileInfo.x},${tileInfo.y} укреплён и снова держит полный проход.`,
+            effectDrops: []
+        };
+    }
+
+    function inferRepairStructureKind(item, activeEffect) {
+        if (activeEffect && typeof activeEffect.structureKind === 'string' && activeEffect.structureKind.trim()) {
+            return activeEffect.structureKind.trim();
+        }
+
+        const definition = item && item.id ? getItemDefinition(item.id) : null;
+        const categories = definition && Array.isArray(definition.categories)
+            ? definition.categories
+            : (definition && typeof definition.categories === 'string'
+                ? definition.categories.split(/\s+/g).filter(Boolean)
+                : []);
+
+        if (categories.includes('bridge')) {
+            return 'bridge';
+        }
+
+        if (categories.includes('boat') || categories.includes('water')) {
+            return 'boat';
+        }
+
+        return '';
+    }
+
+    function getBridgePlacementProfile(item, activeEffect = {}) {
+        const bridgeRuntime = game.systems.bridgeRuntime || game.systems.expedition || null;
+        const itemId = item && typeof item.id === 'string' && item.id
+            ? item.id
+            : (typeof activeEffect.sourceItemId === 'string' ? activeEffect.sourceItemId : '');
+        const definition = itemId ? getItemDefinition(itemId) : null;
+        const extra = definition && definition.extra && typeof definition.extra === 'object'
+            ? definition.extra
+            : {};
+        const overrides = {
+            sourceItemId: itemId || activeEffect.sourceItemId,
+            label: item && item.label
+                ? item.label
+                : (definition && definition.label) || activeEffect.label || '',
+            bridgeFamily: activeEffect.bridgeFamily || extra.bridgeFamily || '',
+            bridgeUpgradeStage: Number.isFinite(activeEffect.bridgeUpgradeStage)
+                ? activeEffect.bridgeUpgradeStage
+                : extra.bridgeUpgradeStage,
+            bridgeReady: typeof activeEffect.bridgeReady === 'boolean'
+                ? activeEffect.bridgeReady
+                : extra.bridgeReady,
+            maxDurability: Number.isFinite(activeEffect.bridgeMaxDurability)
+                ? activeEffect.bridgeMaxDurability
+                : extra.bridgeMaxDurability
+        };
+
+        if (bridgeRuntime && typeof bridgeRuntime.buildBridgePlacementProfile === 'function') {
+            return bridgeRuntime.buildBridgePlacementProfile(itemId, overrides);
+        }
+
+        return {
+            sourceItemId: overrides.sourceItemId || 'portableBridge',
+            label: overrides.label || 'Переносной мост',
+            bridgeFamily: overrides.bridgeFamily || 'portable',
+            bridgeUpgradeStage: Number.isFinite(overrides.bridgeUpgradeStage) ? overrides.bridgeUpgradeStage : 1,
+            bridgeReady: typeof overrides.bridgeReady === 'boolean' ? overrides.bridgeReady : true,
+            maxDurability: Number.isFinite(overrides.maxDurability) ? Math.max(1, Math.floor(overrides.maxDurability)) : 2
+        };
+    }
+
+    function canActivateEffectFromItem(item, activeEffect) {
+        if (!activeEffect || !activeEffect.kind) {
+            return false;
+        }
+
+        if (activeEffect.kind === 'fillContainer') {
+            if (activeEffect.containerItemId) {
+                const targetEntry = findInventoryItemById(activeEffect.containerItemId);
+                return Boolean(targetEntry && getContainerUseContext(targetEntry.item));
+            }
+
+            return Boolean(getContainerUseContext(item));
+        }
+
+        if (activeEffect.kind === 'startFishing') {
+            const actionUi = getActionUi();
+            const target = actionUi && typeof actionUi.getGatherableTerrainTarget === 'function'
+                ? actionUi.getGatherableTerrainTarget({ allowSelectedItem: true })
+                : null;
+            return Boolean(target && target.profile && target.profile.resourceFamilyId === 'fish' && target.profile.canGather);
+        }
+
+        if (activeEffect.kind === 'startGather') {
+            const actionUi = getActionUi();
+            const target = actionUi && typeof actionUi.getGatherableTerrainTarget === 'function'
+                ? actionUi.getGatherableTerrainTarget({ allowSelectedItem: true })
+                : null;
+            return Boolean(target && target.profile && target.profile.canGather);
+        }
+
+        if (activeEffect.kind === 'openCraftPanel') {
+            return Boolean(getInventoryUi() && typeof getInventoryUi().toggleInventoryPanel === 'function');
+        }
+
+        if (activeEffect.kind === 'repairStructure') {
+            return inferRepairStructureKind(item, activeEffect) === 'bridge'
+                ? Boolean(getRepairableBridgeTarget())
+                : false;
+        }
+
+        return true;
+    }
+
     function buildContainerTransformFailureMessage(targetLabel, reason) {
         if (reason === 'full') {
             return `В сумке нет места, чтобы получить "${targetLabel}". Освободи слот или собери такой же предмет в существующую стопку.`;
@@ -582,12 +902,26 @@
     }
 
     function canUseInventoryItem(item) {
+        const containerState = getContainerStateForItem(item);
+        const containerContext = containerState ? getContainerUseContext(item) : null;
+        const consumableEffect = getConsumableEffectForUse(item);
+        const activeEffect = getActiveEffectForUse(item);
+        const recipeOnlyUseBlockMessage = getRecipeOnlyUseBlockMessage(item, {
+            containerState,
+            consumableEffect,
+            activeEffect
+        });
+
+        if (recipeOnlyUseBlockMessage) {
+            return false;
+        }
+
         return Boolean(
             item
             && (
-                getContainerUseContext(item)
-                || getConsumableEffectForUse(item)
-                || getActiveEffectForUse(item)
+                containerContext
+                || consumableEffect
+                || canActivateEffectFromItem(item, activeEffect)
             )
         );
     }
@@ -640,12 +974,15 @@
         return null;
     }
 
-    function buildBridgeAtTarget(targetTile) {
+    function buildBridgeAtTarget(targetTile, bridgeProfile = null) {
         if (!targetTile) {
             return false;
         }
 
-        if (!game.systems.expedition || !game.systems.expedition.placeBridgeAt(targetTile.x, targetTile.y)) {
+        if (
+            !game.systems.expedition
+            || !game.systems.expedition.placeBridgeAt(targetTile.x, targetTile.y, bridgeProfile || {})
+        ) {
             return false;
         }
 
@@ -668,6 +1005,11 @@
             foodRecoveryMultiplier: Number.isFinite(record.foodRecoveryMultiplier) ? record.foodRecoveryMultiplier : null,
             ignoreTravelZones: normalizeIgnoredTravelZones(record.ignoreTravelZones),
             charges: Number.isFinite(record.charges) ? record.charges : 0,
+            sourceItemId: typeof record.sourceItemId === 'string' ? record.sourceItemId : '',
+            bridgeFamily: typeof record.bridgeFamily === 'string' ? record.bridgeFamily : '',
+            bridgeUpgradeStage: Number.isFinite(record.bridgeUpgradeStage) ? record.bridgeUpgradeStage : 0,
+            bridgeReady: Boolean(record.bridgeReady),
+            bridgeMaxDurability: Number.isFinite(record.bridgeMaxDurability) ? record.bridgeMaxDurability : null,
             preventEmpty: Boolean(record.preventEmpty),
             duplicateBestDrop: Boolean(record.duplicateBestDrop),
             extraRolls: Number.isFinite(record.extraRolls) ? record.extraRolls : 0
@@ -777,11 +1119,19 @@
             }
 
             effect.charges -= 1;
+            const consumedProfile = {
+                sourceItemId: effect.sourceItemId || '',
+                label: effect.label || '',
+                bridgeFamily: effect.bridgeFamily || '',
+                bridgeUpgradeStage: Number.isFinite(effect.bridgeUpgradeStage) ? effect.bridgeUpgradeStage : 0,
+                bridgeReady: Boolean(effect.bridgeReady),
+                maxDurability: Number.isFinite(effect.bridgeMaxDurability) ? effect.bridgeMaxDurability : null
+            };
             pruneExpiredEffects();
-            return true;
+            return consumedProfile;
         }
 
-        return false;
+        return null;
     }
 
     function canUseBridgeCharge() {
@@ -799,7 +1149,9 @@
             };
         }
 
-        if (!consumeBridgeBuilderCharge() || !buildBridgeAtTarget(targetTile)) {
+        const bridgeProfile = consumeBridgeBuilderCharge();
+
+        if (!bridgeProfile || !buildBridgeAtTarget(targetTile, bridgeProfile)) {
             return {
                 success: false,
                 message: 'Не удалось израсходовать мостовой заряд.',
@@ -1230,8 +1582,9 @@
             const totalCharges = Math.max(1, activeEffect.charges || 1);
             const targetTile = getBuildableBridgeTarget();
             let spentImmediately = 0;
+            const bridgePlacementProfile = getBridgePlacementProfile(item, activeEffect);
 
-            if (targetTile && buildBridgeAtTarget(targetTile)) {
+            if (targetTile && buildBridgeAtTarget(targetTile, bridgePlacementProfile)) {
                 spentImmediately = 1;
             }
 
@@ -1239,15 +1592,20 @@
                 addActiveEffect({
                     kind: 'bridgeBuilder',
                     label: activeEffect.label || item.label,
-                    charges: totalCharges - spentImmediately
+                    charges: totalCharges - spentImmediately,
+                    sourceItemId: bridgePlacementProfile.sourceItemId,
+                    bridgeFamily: bridgePlacementProfile.bridgeFamily,
+                    bridgeUpgradeStage: bridgePlacementProfile.bridgeUpgradeStage,
+                    bridgeReady: bridgePlacementProfile.bridgeReady,
+                    bridgeMaxDurability: bridgePlacementProfile.maxDurability
                 });
             }
 
             return {
                 success: true,
                 message: spentImmediately > 0
-                    ? `Мостовой набор использован. Построено 1 клетка моста, в запасе осталось ${getBridgeBuilderCharges()} зарядов.`
-                    : `Мостовой набор подготовлен. В запасе ${getBridgeBuilderCharges() + spentImmediately} зарядов для укладки мостов.`,
+                    ? `Мостовой набор использован. Построено 1 звено "${bridgePlacementProfile.label}", прочность новой переправы ${bridgePlacementProfile.maxDurability}. В запасе осталось ${getBridgeBuilderCharges()} зарядов.`
+                    : `Мостовой набор "${bridgePlacementProfile.label}" подготовлен. В запасе ${getBridgeBuilderCharges() + spentImmediately} зарядов для укладки мостов.`,
                 effectDrops: [],
                 consumeItem: true
             };
@@ -1302,6 +1660,153 @@
             };
         }
 
+        if (activeEffect.kind === 'fillContainer') {
+            let containerOutcome = null;
+
+            if (activeEffect.containerItemId) {
+                const targetEntry = findInventoryItemById(activeEffect.containerItemId);
+                if (targetEntry && Number.isFinite(targetEntry.index)) {
+                    const previousSelectedSlot = game.state.selectedInventorySlot;
+                    game.state.selectedInventorySlot = targetEntry.index;
+                    containerOutcome = useContainerItem(targetEntry.item);
+                    const shouldRestorePreviousSelection = !containerOutcome || !containerOutcome.success;
+
+                    if (shouldRestorePreviousSelection) {
+                        game.state.selectedInventorySlot = previousSelectedSlot;
+                    } else if (game.state.selectedInventorySlot === null && previousSelectedSlot !== targetEntry.index) {
+                        game.state.selectedInventorySlot = previousSelectedSlot;
+                    }
+                }
+            } else {
+                containerOutcome = useContainerItem(item);
+            }
+
+            return containerOutcome
+                ? {
+                    ...containerOutcome,
+                    consumeItem: false
+                }
+                : {
+                    success: false,
+                    message: 'Рядом нет места, где этот контейнер можно наполнить или использовать.',
+                    effectDrops: [],
+                    consumeItem: false
+                };
+        }
+
+        if (activeEffect.kind === 'startFishing') {
+            const actionUi = getActionUi();
+            const outcome = actionUi && typeof actionUi.collectTerrainResource === 'function'
+                ? actionUi.collectTerrainResource({
+                    requiredResourceFamilyId: 'fish',
+                    allowSelectedItem: true,
+                    mismatchMessage: 'Рядом нет доступной точки ловли.'
+                })
+                : null;
+
+            return outcome && outcome.handled
+                ? {
+                    success: Boolean(outcome.success),
+                    message: outcome.message || bridge.lastActionMessage || 'Рыбалка завершена.',
+                    effectDrops: [],
+                    consumeItem: false
+                }
+                : {
+                    success: false,
+                    message: 'Рядом нет доступной точки ловли.',
+                    effectDrops: [],
+                    consumeItem: false
+                };
+        }
+
+        if (activeEffect.kind === 'startGather') {
+            const actionUi = getActionUi();
+            const outcome = actionUi && typeof actionUi.collectTerrainResource === 'function'
+                ? actionUi.collectTerrainResource({
+                    allowSelectedItem: true,
+                    mismatchMessage: 'Рядом нет доступного ресурса для сбора.'
+                })
+                : null;
+
+            return outcome && outcome.handled
+                ? {
+                    success: Boolean(outcome.success),
+                    message: outcome.message || bridge.lastActionMessage || 'Сбор завершён.',
+                    effectDrops: [],
+                    consumeItem: false
+                }
+                : {
+                    success: false,
+                    message: 'Рядом нет доступного ресурса для сбора.',
+                    effectDrops: [],
+                    consumeItem: false
+                };
+        }
+
+        if (activeEffect.kind === 'openCraftPanel') {
+            const inventoryUi = getInventoryUi();
+            let opened = false;
+
+            if (inventoryUi && typeof inventoryUi.toggleInventoryPanel === 'function') {
+                try {
+                    inventoryUi.toggleInventoryPanel(false);
+                    opened = true;
+                } catch (error) {
+                    opened = false;
+                }
+            }
+
+            if (!opened && game && game.state) {
+                game.state.isInventoryPanelCollapsed = false;
+                opened = true;
+            }
+
+            if (!opened) {
+                return {
+                    success: false,
+                    message: 'Панель крафта сейчас недоступна.',
+                    effectDrops: [],
+                    consumeItem: false
+                };
+            }
+
+            bridge.renderAfterStateChange();
+            return {
+                success: true,
+                message: 'Сумка и панель крафта открыты. Выбери предмет, чтобы увидеть доступные рецепты по текущей станции.',
+                effectDrops: [],
+                consumeItem: false
+            };
+        }
+
+        if (activeEffect.kind === 'repairStructure') {
+            const structureKind = inferRepairStructureKind(item, activeEffect);
+
+            if (structureKind === 'bridge') {
+                const repairOutcome = repairBridgeAtTarget(getRepairableBridgeTarget());
+                return {
+                    ...repairOutcome,
+                    consumeItem: repairOutcome.success
+                };
+            }
+
+            if (structureKind === 'boat') {
+                return {
+                    success: false,
+                    message: 'Ремонт лодки уже выделен как отдельный предмет, но world-runtime для него пока не подключён.',
+                    effectDrops: [],
+                    consumeItem: false
+                };
+            }
+
+            return {
+                success: false,
+                message: 'Рядом нет подходящей конструкции для ремонта.',
+                effectDrops: [],
+                consumeItem: false
+            };
+        }
+
         return {
             success: false,
             message: '',
@@ -1328,6 +1833,16 @@
 
         const consumableEffect = getConsumableEffectForUse(item);
         const activeEffect = getActiveEffectForUse(item);
+        const recipeOnlyUseBlockMessage = getRecipeOnlyUseBlockMessage(item, { consumableEffect, activeEffect });
+
+        if (recipeOnlyUseBlockMessage) {
+            return {
+                success: false,
+                message: recipeOnlyUseBlockMessage,
+                effectDrops: []
+            };
+        }
+
         const applied = consumableEffect ? applyInventoryConsumableEffect(consumableEffect) : {};
         const activationResult = activeEffect ? activateEffectFromItem(item, activeEffect) : null;
         const shouldConsume = Boolean(consumableEffect) || Boolean(activationResult && activationResult.consumeItem);

@@ -34,9 +34,20 @@
         return game.systems.itemEffects || null;
     }
 
+    function getComponentRegistry() {
+        return game.systems.componentRegistry || null;
+    }
+
     function getUiBridge() {
         return game.systems.uiBridge || null;
     }
+
+    const COMPONENT_INTEREST_SELL_MULTIPLIERS = Object.freeze({
+        ordinary: 1.08,
+        enhanced: 1.18,
+        stable: 1.18,
+        rare: 1.28
+    });
 
     function getItemLabel(itemId, fallback = '') {
         const definition = getItemDefinition(itemId);
@@ -164,9 +175,23 @@
         return merchantRoleProfiles[merchantRole] || merchantRoleProfiles.merchant;
     }
 
+    function getMerchantPreferredComponentItemIds(merchantRole = 'merchant') {
+        const componentRegistry = getComponentRegistry();
+        const componentDefinitions = componentRegistry && typeof componentRegistry.getComponentsByMerchantInterest === 'function'
+            ? componentRegistry.getComponentsByMerchantInterest(merchantRole)
+            : [];
+
+        return componentDefinitions
+            .map((component) => component && component.inventoryItem ? component.inventoryItem.id : '')
+            .filter(Boolean);
+    }
+
     function getMerchantAdviceTemplate(merchantRole = 'merchant') {
+        const bridgeKitLabel = getItemLabel('bridge_kit', 'Мост-комплект');
         const portableBridgeLabel = getItemLabel('portableBridge', 'Переносной мост');
         const reinforcedBridgeLabel = getItemLabel('reinforcedBridge', 'Усиленный мост');
+        const fieldBridgeLabel = getItemLabel('fieldBridge', 'Полевой мостик');
+        const absoluteBridgeLabel = getItemLabel('absoluteBridge', 'Абсолютный мост');
         const ferryBoardLabel = getItemLabel('ferryBoard', 'Доска переправы');
         const roughBridgeLabel = getItemLabel('roughBridge', 'Грубый мостик');
         const signalWhistleLabel = getItemLabel('signalWhistle', 'Сигнальный свисток');
@@ -200,7 +225,7 @@
                 title: 'Где брать мосты',
                 hook: 'Про переправы, старые версии мостов и честный ответ про крафт.',
                 basePrice: 8,
-                text: `Прямого крафта для "${portableBridgeLabel}" в текущей системе нет. Ищи "${portableBridgeLabel}", "${reinforcedBridgeLabel}", "${ferryBoardLabel}" и "${roughBridgeLabel}" у мостовиков, у торговцев с товарами движения и у некоторых местных NPC; помни, что обычный мост стареет после первого прохода и рушится после второго.`
+                text: `На верстаке сначала собирается "${bridgeKitLabel}", а затем из него можно довести предмет до "${portableBridgeLabel}". Дальше мостовая ветка уже апгрейдится: "${reinforcedBridgeLabel}" и "${fieldBridgeLabel}" собираются поверх базового моста, а поздний "${absoluteBridgeLabel}" — это уже отдельная тяжёлая сборка. Старые ready-made версии всё ещё можно найти у мостовиков, у торговцев движения и у некоторых NPC; помни, что обычный мост стареет после первого прохода и рушится после второго.`
             },
             junkDealer: {
                 id: 'junkDealer:risky-loot',
@@ -475,6 +500,7 @@
         const islandTier = Math.max(1, getTierByIsland(islandIndex));
         const bagUpgradeRuntime = getBagUpgradeRuntime();
         const roleProfile = getMerchantRoleProfile(options.merchantRole);
+        const preferredItemIds = getMerchantPreferredComponentItemIds(options.merchantRole);
         const activeQuestBias = bagUpgradeRuntime && typeof bagUpgradeRuntime.getActiveBagQuestGenerationBias === 'function'
             ? bagUpgradeRuntime.getActiveBagQuestGenerationBias(islandIndex)
             : null;
@@ -495,6 +521,7 @@
         return {
             includeTierZero: weightKey === 'merchantQuestWeight',
             preferredCategories,
+            preferredItemIds,
             preferredRequirements: activeQuestBias && Array.isArray(activeQuestBias.preferredRequirements)
                 ? activeQuestBias.preferredRequirements
                 : [],
@@ -740,6 +767,90 @@
         return encounter;
     }
 
+    function getMerchantComponentSellMultiplier(componentDefinition) {
+        if (!componentDefinition || !componentDefinition.qualityLevel) {
+            return 1;
+        }
+
+        return COMPONENT_INTEREST_SELL_MULTIPLIERS[componentDefinition.qualityLevel] || 1.12;
+    }
+
+    function getMerchantSellOffer(encounterOrSource, itemId, options = {}) {
+        const encounter = encounterOrSource && encounterOrSource.kind === 'merchant'
+            ? encounterOrSource
+            : prepareMerchantEncounter(encounterOrSource);
+        const pricing = getPricingSystem();
+        const componentRegistry = getComponentRegistry();
+        const islandIndex = encounter && Number.isFinite(encounter.islandIndex)
+            ? encounter.islandIndex
+            : (game.state.currentIslandIndex || 1);
+        const basePrice = pricing && typeof pricing.getMerchantSellPrice === 'function'
+            ? pricing.getMerchantSellPrice(itemId, islandIndex)
+            : 1;
+        const componentDefinition = componentRegistry && typeof componentRegistry.getComponentDefinitionByInventoryItemId === 'function'
+            ? componentRegistry.getComponentDefinitionByInventoryItemId(itemId)
+            : null;
+
+        if (!encounter) {
+            return {
+                accepted: false,
+                price: 0,
+                itemId,
+                isComponent: Boolean(componentDefinition),
+                matchedInterest: false,
+                componentDefinition,
+                message: 'Рядом нет торговца.'
+            };
+        }
+
+        if (!componentDefinition) {
+            return {
+                accepted: true,
+                price: basePrice,
+                itemId,
+                isComponent: false,
+                matchedInterest: false,
+                componentDefinition: null,
+                merchantRole: encounter.merchantRole || 'merchant',
+                message: ''
+            };
+        }
+
+        const componentInterest = Array.isArray(componentDefinition.merchantInterest)
+            ? componentDefinition.merchantInterest
+            : [];
+        const merchantRole = encounter.merchantRole || 'merchant';
+        const matchedInterest = componentInterest.includes(merchantRole);
+
+        if (!matchedInterest) {
+            return {
+                accepted: false,
+                price: 0,
+                itemId,
+                isComponent: true,
+                matchedInterest: false,
+                componentDefinition,
+                merchantRole,
+                message: 'Этого торговца такая заготовка не интересует.'
+            };
+        }
+
+        const sellMultiplier = getMerchantComponentSellMultiplier(componentDefinition);
+        const sellPrice = Math.max(basePrice, Math.round(basePrice * sellMultiplier));
+
+        return {
+            accepted: true,
+            price: sellPrice,
+            itemId,
+            isComponent: true,
+            matchedInterest: true,
+            componentDefinition,
+            merchantRole,
+            sellMultiplier,
+            message: 'Торговца интересует эта заготовка.'
+        };
+    }
+
     function completeMerchantQuest(source) {
         const encounter = prepareMerchantEncounter(source);
         const questRuntime = getQuestRuntime();
@@ -907,7 +1018,6 @@
     function sellInventoryItemToMerchant(source, inventoryIndex) {
         const encounter = prepareMerchantEncounter(source);
         const inventoryRuntime = getInventoryRuntime();
-        const pricing = getPricingSystem();
         const uiBridge = getUiBridge();
         const itemEffects = getItemEffects();
         const item = inventoryRuntime
@@ -921,9 +1031,15 @@
             };
         }
 
-        const sellPrice = pricing && typeof pricing.getMerchantSellPrice === 'function'
-            ? pricing.getMerchantSellPrice(item.id, encounter.islandIndex || game.state.currentIslandIndex)
-            : 1;
+        const sellOffer = getMerchantSellOffer(encounter, item.id);
+        if (!sellOffer || !sellOffer.accepted) {
+            return {
+                success: false,
+                message: sellOffer && sellOffer.message ? sellOffer.message : 'Продать этот предмет сейчас нельзя.'
+            };
+        }
+
+        const sellPrice = Math.max(1, Math.round(sellOffer.price || 1));
         const removedItem = inventoryRuntime.removeInventoryItemAtIndex(inventoryIndex, 1);
 
         if (!removedItem) {
@@ -945,6 +1061,7 @@
             success: true,
             price: sellPrice,
             item,
+            sellOffer,
             effectDrops: itemEffects
                 ? [itemEffects.buildGoldEffectDrop(sellPrice)].filter(Boolean)
                 : [],
@@ -963,6 +1080,8 @@
         applySavedMerchantState,
         persistMerchantState,
         prepareMerchantEncounter,
+        getMerchantPreferredComponentItemIds,
+        getMerchantSellOffer,
         completeMerchantQuest,
         buyMerchantStock,
         sellInventoryItemToMerchant,

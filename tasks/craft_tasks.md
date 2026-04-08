@@ -66,36 +66,40 @@
 40.Добавить crafting tags для компонентов: healing, building, repair, water, route, survival, merchant, bagQuest.
 Блок F. Рецепты практического крафта
 41–50
-Собрать минимальный production набор рецептов первой волны: вода, пища, мост, лодка, ремонт моста, ремонт лодки, верёвка, дешёвое лечение, ускоряющий настой.
-Ввести рецепт 5 трава -> healing_base, чтобы твоя текущая задумка “5 травы = ингредиент для зелья” стала базовым правилом системы.
-Ввести рецепт 10 трава -> fiber_rope и завязать на него часть bridge/boat craft.
-Ввести рецепт 5 дерево -> доска, 10 дерево -> рама, 5 дерево -> топливо.
-Ввести рецепт 5 камень -> каменный блок, 5 щебень -> засыпка, камень + щебень -> ремонтный наполнитель.
-Ввести рецепт bridge_kit как отдельный craft output, а не просто loot-item из магазина/сундука.
-Ввести рецепт boat_frame -> boat_ready, чтобы лодка была полноценной производственной веткой.
-Ввести рецепт repair_kit_bridge и repair_kit_boat как самостоятельные утилитарные предметы.
-Добавить рецепты “экономического крафта”: дешевая ценность из 5×ресурсов, если это важное правило твоей игры.
-Добавить системное разделение рецептов по станциям, чтобы игрок не крафтил мост, лодку и алхимию в одном и том же месте без ограничений.
+
+
+Обязательно проверь В соответствии с файлами craft_design.md^ craft_rules.md и GDD.mdd
+
+41.Собрать минимальный production набор рецептов первой волны: вода, пища, мост, лодка, ремонт моста, ремонт лодки, верёвка, дешёвое лечение, ускоряющий настой.
+42.Ввести рецепт 5 трава -> healing_base, чтобы твоя текущая задумка “5 травы = ингредиент для зелья” стала базовым правилом системы.
+43.Ввести рецепт 10 трава -> fiber_rope и завязать на него часть bridge/boat craft.
+44.Ввести рецепт 5 дерево -> доска, 10 дерево -> рама, 5 дерево -> топливо.
+45.Ввести рецепт 5 камень -> каменный блок, 5 щебень -> засыпка, камень + щебень -> ремонтный наполнитель.
+46.Ввести рецепт bridge_kit как отдельный craft output, а не просто loot-item из магазина/сундука.
+47.Ввести рецепт boat_frame -> boat_ready, чтобы лодка была полноценной производственной веткой.
+48.Ввести рецепт repair_kit_bridge и repair_kit_boat как самостоятельные утилитарные предметы.
+49.Добавить рецепты “экономического крафта”: дешевая ценность из 5×ресурсов, если это важное правило твоей игры.
+50.Добавить системное разделение рецептов по станциям, чтобы игрок не крафтил мост, лодку и алхимию в одном и том же месте без ограничений.
 Блок G. Интеграция с текущими item effects
 51–58
-Перевести portableBridge, reinforcedBridge, fieldBridge, absoluteBridge на новую логику: часть — craft outputs, часть — advanced upgrades, а не только лут/активный эффект. Сейчас bridge-builder уже реализован в item effects.
-Перевести safeHouseSeal, fogLantern, merchantBeacon, pathMarker, roadChalk на рецептную модель: часть должна собираться из компонентов, а не выпадать только из chest tables.
-Переделать waterFlask так, чтобы item-effects не просто лечил статы, а корректно возвращал empty flask после use/craft cycle.
-Добавить в item-effects.js новые kinds: fillContainer, startFishing, startGather, openCraftPanel, repairStructure.
-Добавить в item-effects.js защиту от использования recipe-only items как consumable, если у них нет active effect.
-Перенести простые конверсии ресурсов из item catalog в craft runtime, чтобы item catalog перестал быть местом, где спрятана логика производства.
-Для bridge-builder сделать связку: recipe output -> inventory item -> world placement -> world degradation -> repair recipe.
-Для лодки сделать аналогичную цепь: recipe output -> water traversal -> damage state -> repair path.
+51.Перевести portableBridge, reinforcedBridge, fieldBridge, absoluteBridge на новую логику: часть — craft outputs, часть — advanced upgrades, а не только лут/активный эффект. Сейчас bridge-builder уже реализован в item effects.
+52.Перевести safeHouseSeal, fogLantern, merchantBeacon, pathMarker, roadChalk на рецептную модель: часть должна собираться из компонентов, а не выпадать только из chest tables.
+53.Переделать waterFlask так, чтобы item-effects не просто лечил статы, а корректно возвращал empty flask после use/craft cycle.
+54.Добавить в item-effects.js новые kinds: fillContainer, startFishing, startGather, openCraftPanel, repairStructure.
+55.Добавить в item-effects.js защиту от использования recipe-only items как consumable, если у них нет active effect.
+56.Перенести простые конверсии ресурсов из item catalog в craft runtime, чтобы item catalog перестал быть местом, где спрятана логика производства.
+57.Для bridge-builder сделать связку: recipe output -> inventory item -> world placement -> world degradation -> repair recipe.
+58.Для лодки сделать аналогичную цепь: recipe output -> water traversal -> damage state -> repair path.
 Блок H. Лут и сундуки под новую экономику
 59–66
-Переписать loot-system.js так, чтобы сундуки выдавали не только готовые предметы, но и компоненты, recipes, station unlocks, repair parts и resource tools. Сейчас система уже умеет rich/hidden/cursed/elite/final chest types.
-Ввести в chest tables новый класс награды recipe_unlock.
-Ввести в chest tables новый класс награды component_bundle.
-Ввести в chest tables новый класс награды structure_part для мостов/лодок/ремонта.
-Сделать так, чтобы hidden и cursed сундуки чаще давали не еду, а именно крафтовые shortcut-предметы и рискованные компоненты.
-Привязать jackpot/final сундуки к легендарным craft-only веткам, а не только к легендарным готовым предметам.
-Добавить bias генерации под активные craft goals: если у игрока открыт рецепт лодки, игра чуть чаще кидает нужный компонент, но не бесплатно.
-Развести баланс так, чтобы raw-сбор и сундуки не дублировали друг друга один-в-один: сбор = база, сундуки = ускорение/редкость/shortcut.
+59.Переписать loot-system.js так, чтобы сундуки выдавали не только готовые предметы, но и компоненты, recipes, station unlocks, repair parts и resource tools. Сейчас система уже умеет rich/hidden/cursed/elite/final chest types.
+60.Ввести в chest tables новый класс награды recipe_unlock.
+61.Ввести в chest tables новый класс награды component_bundle.
+62.Ввести в chest tables новый класс награды structure_part для мостов/лодок/ремонта.
+63.Сделать так, чтобы hidden и cursed сундуки чаще давали не еду, а именно крафтовые shortcut-предметы и рискованные компоненты.
+64.Привязать jackpot/final сундуки к легендарным craft-only веткам, а не только к легендарным готовым предметам.
+65.Добавить bias генерации под активные craft goals: если у игрока открыт рецепт лодки, игра чуть чаще кидает нужный компонент, но не бесплатно.
+66.Развести баланс так, чтобы raw-сбор и сундуки не дублировали друг друга один-в-один: сбор = база, сундуки = ускорение/редкость/shortcut.
 Блок I. Торговцы, ремесленники, станции
 67–74
 Добавить отдельный тип NPC craft_merchant и station_keeper, а не смешивать их с обычным merchant/artisan потоком.

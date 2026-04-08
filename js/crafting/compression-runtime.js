@@ -101,9 +101,11 @@
 
     function getCompressionRecipes(options = {}) {
         const recipeRegistry = getRecipeRegistry();
-        const recipes = recipeRegistry && typeof recipeRegistry.getRecipeDefinitions === 'function'
-            ? recipeRegistry.getRecipeDefinitions()
-            : [];
+        const recipes = recipeRegistry && typeof recipeRegistry.getActiveRecipeDefinitions === 'function'
+            ? recipeRegistry.getActiveRecipeDefinitions()
+            : (recipeRegistry && typeof recipeRegistry.getRecipeDefinitions === 'function'
+                ? recipeRegistry.getRecipeDefinitions()
+                : []);
         const normalizedStation = normalizeStationId(options.station || '');
 
         return recipes

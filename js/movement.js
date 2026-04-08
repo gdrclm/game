@@ -302,6 +302,10 @@ function advanceTimeOfDayAfterMovement(options = {}) {
     };
 }
 
+function advanceTimeOfDay(options = {}) {
+    return advanceTimeOfDayAfterMovement(options);
+}
+
 function consumeActionTempo(options = {}) {
     const {
         virtualSteps = 1,
@@ -534,9 +538,11 @@ function moveToNextPoint() {
 
     const bridgeTransition = expedition.handleTileTransition(previousTileInfo, currentTileInfo);
     if (window.Game.systems.ui) {
-        if (bridgeTransition === 'weakened') {
+        if (bridgeTransition && bridgeTransition.status === 'worn') {
+            window.Game.systems.ui.setActionMessage(`Мост за спиной износился: осталось ${bridgeTransition.durabilityRemaining} из ${bridgeTransition.maxDurability} проходов.`);
+        } else if (bridgeTransition && bridgeTransition.status === 'weakened') {
             window.Game.systems.ui.setActionMessage('Обычный мост за спиной просел и стал старым.');
-        } else if (bridgeTransition === 'collapsed') {
+        } else if (bridgeTransition && bridgeTransition.status === 'collapsed') {
             window.Game.systems.ui.setActionMessage('Старый мост за спиной рухнул в воду.');
         }
     }
@@ -716,5 +722,6 @@ function unloadDistantChunks() {
 window.Game.systems.movement = {
     startMovement,
     endMovement,
-    consumeActionTempo
+    consumeActionTempo,
+    advanceTimeOfDay
 };

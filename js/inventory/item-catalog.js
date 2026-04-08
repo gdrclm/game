@@ -208,14 +208,6 @@
             description: 'Даёт точную наводку на торговца текущего острова.',
             activeEffect: { kind: 'revealMerchant' }
         }),
-        makeItem('pathMarker', 'Маркер пути', 'MP', 3, 'consumable utility movement', {
-            stackable: true,
-            chestWeight: 3,
-            merchantWeight: 4,
-            baseValue: 17,
-            description: 'Показывает самый дешёвый маршрут к выбранной цели.',
-            activeEffect: { kind: 'cheapestRouteHint' }
-        }),
         makeItem('dryRoot', 'Сухой корень', 'SK', 2, 'consumable survival', {
             stackable: true,
             chestWeight: 4,
@@ -224,13 +216,6 @@
             description: 'Даёт силы и маленькую страховку на следующий тяжёлый шаг.',
             consumable: { energy: 20, focus: 4 },
             activeEffect: { kind: 'travelBuff', freeSteps: 1 }
-        }),
-        makeItem('reinforcedBridge', 'Усиленный мост', 'UM', 3, 'tool utility movement', {
-            chestWeight: 4,
-            merchantWeight: 5,
-            baseValue: 24,
-            description: 'Позволяет уложить две клетки моста.',
-            activeEffect: { kind: 'bridgeBuilder', charges: 2 }
         }),
         makeItem('hookRope', 'Крюк-верёвка', 'KV', 2, 'tool movement utility', {
             chestWeight: 4,
@@ -245,7 +230,8 @@
             baseValue: 18,
             description: 'Походный инструмент рыбака. Пока удочка лежит в сумке, у рыболовных точек становится доступен сбор рыбы.',
             resourceUnlocks: ['fish'],
-            resourceNodeUnlocks: ['fishingSpot', 'fishingReedsSpot', 'fishingCalmSpot', 'fishingRareSpot']
+            resourceNodeUnlocks: ['fishingSpot', 'fishingReedsSpot', 'fishingCalmSpot', 'fishingRareSpot'],
+            activeEffect: { kind: 'startFishing' }
         }),
         makeItem('smallPickaxe', 'Кирка разведчика', 'KR', 2, 'tool utility', {
             chestWeight: 3,
@@ -300,13 +286,6 @@
             baseValue: 28,
             description: 'Опасный инструмент поздней игры.'
         }),
-        makeItem('fieldBridge', 'Полевой мостик', 'PB', 4, 'tool utility movement', {
-            chestWeight: 2,
-            merchantWeight: 3,
-            baseValue: 30,
-            description: 'Укладывает сразу две клетки моста.',
-            activeEffect: { kind: 'bridgeBuilder', charges: 2 }
-        }),
         makeItem('crossingCable', 'Трос переправы', 'TP', 4, 'tool utility movement', {
             chestWeight: 2,
             merchantWeight: 3,
@@ -321,13 +300,6 @@
             description: 'Сильно облегчает тяжёлые проходы на несколько шагов.',
             activeEffect: { kind: 'travelBuff', discountMultiplier: 0.7, durationSteps: 8 }
         }),
-        makeItem('roadChalk', 'Мел дорожника', 'MD', 2, 'tool utility info', {
-            chestWeight: 2,
-            merchantWeight: 4,
-            baseValue: 14,
-            description: 'Даёт подсказку по самому дешёвому пути.',
-            activeEffect: { kind: 'cheapestRouteHint' }
-        }),
         makeItem('foldingRam', 'Складной таран', 'ST', 4, 'tool utility risk', {
             chestWeight: 1,
             merchantWeight: 2,
@@ -339,13 +311,6 @@
             merchantWeight: 2,
             baseValue: 42,
             description: 'Редкий мастерский инструмент для позднего обмена и сильных сборок.'
-        }),
-        makeItem('safeHouseSeal', 'Печать безопасного дома', 'PD', 4, 'tool utility survival', {
-            chestWeight: 2,
-            merchantWeight: 3,
-            baseValue: 30,
-            description: 'Позволяет один раз проигнорировать штраф пустого или опасного дома.',
-            activeEffect: { kind: 'trapWard', charges: 1 }
         }),
         makeItem('travelBoots', 'Сапоги странника', 'SS', 2, 'artifact movement', {
             chestWeight: 3,
@@ -711,13 +676,6 @@
             rarity: 'legendary',
             description: 'Легендарный источник сил. Почти полностью возвращает форму.',
             consumable: { hunger: 100, energy: 50, focus: 40, sleep: 35, cold: 35 }
-        }),
-        makeItem('absoluteBridge', 'Абсолютный мост', 'AM', 6, 'legendary tool movement', {
-            chestWeight: 1,
-            baseValue: 70,
-            rarity: 'legendary',
-            description: 'Создаёт мощную переправу сразу на несколько клеток.',
-            activeEffect: { kind: 'bridgeBuilder', charges: 4 }
         }),
         makeItem('omniscienceMap', 'Карта всеведения', 'KV', 6, 'legendary utility info', {
             chestWeight: 1,

@@ -15,6 +15,7 @@ const gameConfig = {
     cameraZoomMin: 0.7,
     cameraZoomMax: 1.4,
     cameraZoomStep: 0.1,
+    craftingRecipeProfile: 'wave1Minimal',
     playerSprite: {
         targetHeight: 64,
         frames: {

@@ -19,7 +19,21 @@
         survivalAndEnergy: 2,
         buildWaterAndRepair: 3
     };
+    const RECIPE_CRAFT_TRACKS = Object.freeze({
+        compression: 'compression',
+        survival: 'survival',
+        route: 'route',
+        construction: 'construction',
+        heavy: 'heavy',
+        economy: 'economy',
+        ritual: 'ritual'
+    });
     const PRACTICAL_RAW_RESOURCE_EXCEPTION_TAG = 'raw-shortcut';
+    const RECIPE_PROFILE_IDS = {
+        allRecipes: 'allRecipes',
+        wave1Minimal: 'wave1Minimal'
+    };
+    const DEFAULT_ACTIVE_RECIPE_PROFILE_ID = RECIPE_PROFILE_IDS.wave1Minimal;
 
     function isDevMode(options = {}) {
         if (typeof options.devMode === 'boolean') {
@@ -100,6 +114,66 @@
             .map((tag) => tag.trim()))];
     }
 
+    function normalizeIngredientComponentTags(componentTags) {
+        const componentRegistry = getComponentRegistry();
+        return componentRegistry && typeof componentRegistry.normalizeComponentTags === 'function'
+            ? componentRegistry.normalizeComponentTags(componentTags)
+            : normalizeTagList(componentTags);
+    }
+
+    function normalizeIngredientQualityLevel(qualityLevel) {
+        const componentRegistry = getComponentRegistry();
+        return componentRegistry && typeof componentRegistry.normalizeComponentQualityLevel === 'function'
+            ? componentRegistry.normalizeComponentQualityLevel(qualityLevel)
+            : (typeof qualityLevel === 'string' && qualityLevel.trim() ? qualityLevel.trim() : '');
+    }
+
+    function normalizeCraftTrack(craftTrack) {
+        return typeof craftTrack === 'string' ? craftTrack.trim().toLowerCase() : '';
+    }
+
+    function inferRecipeCraftTrack(normalizedDefinition = {}) {
+        const explicitCraftTrack = normalizeCraftTrack(normalizedDefinition.craftTrack);
+        if (explicitCraftTrack) {
+            return explicitCraftTrack;
+        }
+
+        const stationRuntime = getStationRuntime();
+        const primaryStationId = Array.isArray(normalizedDefinition.stationOptions) && normalizedDefinition.stationOptions.length > 0
+            ? normalizedDefinition.stationOptions[0]
+            : normalizedDefinition.station;
+
+        if (stationRuntime && typeof stationRuntime.getStationCraftTracks === 'function') {
+            const stationTracks = stationRuntime.getStationCraftTracks(primaryStationId);
+
+            if (stationTracks.includes(RECIPE_CRAFT_TRACKS.construction)) {
+                return RECIPE_CRAFT_TRACKS.construction;
+            }
+
+            if (stationTracks.length > 0) {
+                return normalizeCraftTrack(stationTracks[0]);
+            }
+        }
+
+        switch (normalizeStationId(primaryStationId)) {
+        case 'camp':
+            return RECIPE_CRAFT_TRACKS.survival;
+        case 'bench':
+            return RECIPE_CRAFT_TRACKS.route;
+        case 'workbench':
+            return RECIPE_CRAFT_TRACKS.construction;
+        case 'smithy':
+            return RECIPE_CRAFT_TRACKS.heavy;
+        case 'scribe':
+            return RECIPE_CRAFT_TRACKS.economy;
+        case 'altar':
+            return RECIPE_CRAFT_TRACKS.ritual;
+        case 'hand':
+        default:
+            return RECIPE_CRAFT_TRACKS.compression;
+        }
+    }
+
     function isPracticalRecipeTier(tier) {
         return Number.isFinite(tier) && tier > RECIPE_TIERS.baseConversion;
     }
@@ -169,9 +243,25 @@
             station,
             stationLabel: typeof definition.stationLabel === 'string' ? definition.stationLabel.trim() : '',
             stationOptions,
+            craftTrack: inferRecipeCraftTrack({
+                ...definition,
+                station,
+                stationOptions
+            }),
             tags: normalizeTagList(definition.tags),
             ingredients: (Array.isArray(definition.ingredients) ? definition.ingredients : [])
-                .map((ingredient) => cloneValue(ingredient))
+                .map((ingredient) => {
+                    const normalizedIngredient = cloneValue(ingredient);
+
+                    if (normalizedIngredient && normalizedIngredient.kind === 'component') {
+                        normalizedIngredient.componentTags = normalizeIngredientComponentTags(normalizedIngredient.componentTags);
+                        if (typeof normalizedIngredient.qualityLevel !== 'undefined') {
+                            normalizedIngredient.qualityLevel = normalizeIngredientQualityLevel(normalizedIngredient.qualityLevel);
+                        }
+                    }
+
+                    return normalizedIngredient;
+                })
                 .filter((ingredient) => ingredient && typeof ingredient.id === 'string' && ingredient.id.trim()),
             result: definition.result ? cloneValue(definition.result) : null
         };
@@ -207,6 +297,10 @@
             missingFields.push('station');
         }
 
+        if (!normalizedDefinition.craftTrack) {
+            missingFields.push('craftTrack');
+        }
+
         if (!Number.isFinite(normalizedDefinition.tier)) {
             missingFields.push('tier');
         }
@@ -237,9 +331,40 @@
             throw new Error(`[recipe-registry] Recipe "${normalizedDefinition.recipeId}" uses an unknown station.`);
         }
 
+        if (stationRuntime && typeof stationRuntime.stationSupportsCraftTrack === 'function') {
+            const incompatibleStations = normalizedDefinition.stationOptions.filter((stationOption) => (
+                !stationRuntime.stationSupportsCraftTrack(stationOption, normalizedDefinition.craftTrack)
+            ));
+
+            if (incompatibleStations.length > 0) {
+                throw new Error(
+                    `[recipe-registry] Recipe "${normalizedDefinition.recipeId}" uses craftTrack "${normalizedDefinition.craftTrack}" `
+                    + `with incompatible station(s): ${incompatibleStations.join(', ')}.`
+                );
+            }
+        }
+
         const knownResourceIds = buildKnownResourceIdSet(options);
         const knownComponentIds = buildKnownComponentIdSet(options);
-        normalizedDefinition.ingredients.forEach((ingredient) => {
+        const sourceIngredients = Array.isArray(definition.ingredients) ? definition.ingredients : [];
+        normalizedDefinition.ingredients.forEach((ingredient, index) => {
+            const sourceIngredient = sourceIngredients[index] || {};
+
+            if (ingredient.kind === 'component') {
+                const componentRegistry = getComponentRegistry();
+                const unknownTags = componentRegistry && typeof componentRegistry.getUnknownComponentTags === 'function'
+                    ? componentRegistry.getUnknownComponentTags(sourceIngredient.componentTags)
+                    : [];
+
+                if (unknownTags.length > 0) {
+                    throw new Error(`[recipe-registry] Recipe "${normalizedDefinition.recipeId}" uses unknown component tags: ${unknownTags.join(', ')}.`);
+                }
+
+                if (typeof sourceIngredient.qualityLevel !== 'undefined' && !ingredient.qualityLevel) {
+                    throw new Error(`[recipe-registry] Recipe "${normalizedDefinition.recipeId}" uses an unknown component qualityLevel.`);
+                }
+            }
+
             validateRecipeReference(normalizedDefinition, ingredient, knownResourceIds, knownComponentIds, 'ingredient');
         });
         validateRecipeReference(normalizedDefinition, normalizedDefinition.result, knownResourceIds, knownComponentIds, 'result');
@@ -284,6 +409,55 @@
             definitions: normalizedDefinitions.map((definition) => cloneValue(definition)),
             byId: Object.fromEntries(Object.entries(recipeById).map(([recipeId, definition]) => [
                 recipeId,
+                cloneValue(definition)
+            ]))
+        };
+    }
+
+    function createValidatedRecipeProfiles(profileDefinitions, options = {}) {
+        const knownRecipeIds = new Set(Object.keys(options.recipeById || {}));
+        const definitions = [];
+        const byId = Object.create(null);
+
+        (Array.isArray(profileDefinitions) ? profileDefinitions : []).forEach((definition, index) => {
+            const normalizedProfileId = typeof definition.profileId === 'string' ? definition.profileId.trim() : '';
+            const normalizedLabel = typeof definition.label === 'string' ? definition.label.trim() : '';
+            const profileRecipeIds = [...new Set((Array.isArray(definition.recipeIds) ? definition.recipeIds : [])
+                .filter((recipeId) => typeof recipeId === 'string' && recipeId.trim())
+                .map((recipeId) => recipeId.trim()))];
+
+            if (!normalizedProfileId) {
+                throw new Error(`[recipe-registry] Recipe profile #${index + 1} is missing profileId.`);
+            }
+
+            if (!normalizedLabel) {
+                throw new Error(`[recipe-registry] Recipe profile "${normalizedProfileId}" is missing label.`);
+            }
+
+            if (byId[normalizedProfileId]) {
+                throw new Error(`[recipe-registry] Duplicate recipe profile "${normalizedProfileId}" detected.`);
+            }
+
+            const unknownRecipeIds = profileRecipeIds.filter((recipeId) => !knownRecipeIds.has(recipeId));
+            if (unknownRecipeIds.length > 0) {
+                throw new Error(`[recipe-registry] Recipe profile "${normalizedProfileId}" references unknown recipes: ${unknownRecipeIds.join(', ')}.`);
+            }
+
+            const normalizedDefinition = {
+                profileId: normalizedProfileId,
+                label: normalizedLabel,
+                description: typeof definition.description === 'string' ? definition.description.trim() : '',
+                recipeIds: profileRecipeIds
+            };
+
+            byId[normalizedProfileId] = normalizedDefinition;
+            definitions.push(normalizedDefinition);
+        });
+
+        return {
+            definitions: definitions.map((definition) => cloneValue(definition)),
+            byId: Object.fromEntries(Object.entries(byId).map(([profileId, definition]) => [
+                profileId,
                 cloneValue(definition)
             ]))
         };
@@ -484,6 +658,25 @@
                 { from: 7, to: 24, priority: 'critical', note: 'Опорный компонент для ремонта мостов и логистики.' }
             ]),
             notes: 'Уплотнённый ремонтный заполнитель из щебня.'
+        },
+        {
+            recipeId: 'stone-rubble-to-gravel-fill',
+            label: 'Ремонтный наполнитель',
+            station: 'hand',
+            stationLabel: 'Руки',
+            tier: RECIPE_TIERS.baseConversion,
+            ingredients: [
+                createIngredient('resource', 'stone', 'Камень', 2),
+                createIngredient('resource', 'rubble', 'Щебень', 3)
+            ],
+            result: createResult('component', 'gravel_fill', 'Гравийная засыпка', 1, {
+                aliases: ['Заполнитель', 'Ремонтный наполнитель']
+            }),
+            tags: ['base-conversion', 'component', 'stone', 'rubble', 'repair', 'mixed-input'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 7, to: 24, priority: 'recommended', note: 'Альтернативный ремонтный путь, если игрок собрал смесь камня и щебня, но ещё не добрал полный пакет одного ресурса.' }
+            ]),
+            notes: 'Расширение поверх craft-доков: смешанный базовый рецепт ремонта сохраняет правило 5 сырья -> 1 repair-компонент, но позволяет собрать заполнитель из комбинированного каменно-щебневого пакета.'
         },
         {
             recipeId: 'soil-clod-to-soil-resource',
@@ -770,15 +963,98 @@
                 createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' }),
                 createIngredient('component', 'stone_block', 'Каменный блок', 1)
             ],
-            result: createResult('item', 'portableBridge', 'Переносной мост', 1, {
-                gameplayItemId: 'portableBridge'
+            result: createResult('item', 'bridge_kit', 'Мост-комплект', 1, {
+                gameplayItemId: 'bridge_kit'
             }),
             tags: ['construction', 'movement', 'bridge', 'utility'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 4, to: 6, priority: 'critical', note: 'Главное окно первого маршрутного барьера.' },
                 { from: 7, to: 15, priority: 'recommended', note: 'Полезен как запас под разломы и обходы.' }
             ]),
-            notes: 'Ключевой ранний предмет доступа к карте.'
+            notes: 'Ключевой ранний craft output для доступа к карте. Готовый переносной мост при этом может отдельно встречаться в луте и торговле как ready-made версия.'
+        },
+        {
+            recipeId: 'portable-bridge-assembly',
+            label: 'Собрать переносной мост',
+            station: 'bench',
+            stationLabel: 'Верстак / мастерская',
+            stationOptions: ['bench', 'workbench'],
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('item', 'bridge_kit', 'Мост-комплект', 1)
+            ],
+            result: createResult('item', 'portableBridge', 'Переносной мост', 1, {
+                gameplayItemId: 'portableBridge'
+            }),
+            tags: ['construction', 'movement', 'bridge', 'utility', 'ready-item'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 4, to: 9, priority: 'critical', note: 'Готовая компактная переправа под первые разломы и воду.' },
+                { from: 10, to: 15, priority: 'recommended', note: 'Удобнее переносить, чем сырой мост-комплект.' }
+            ]),
+            notes: 'Переводит грубый мост-комплект в готовый переносной мост без изменения его базовой функции.'
+        },
+        {
+            recipeId: 'reinforced-bridge-upgrade',
+            label: 'Усилить переносной мост',
+            station: 'workbench',
+            stationLabel: 'Мастерская',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('item', 'portableBridge', 'Переносной мост', 1),
+                createIngredient('component', 'stone_block', 'Каменный блок', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
+            ],
+            result: createResult('item', 'reinforcedBridge', 'Усиленный мост', 1, {
+                gameplayItemId: 'reinforcedBridge'
+            }),
+            tags: ['construction', 'movement', 'bridge', 'utility', 'advanced-upgrade'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 7, to: 15, priority: 'recommended', note: 'Надёжная двухклеточная переправа для середины маршрута.' },
+                { from: 16, to: 21, priority: 'recommended', note: 'Позволяет не срываться на поздних узких проходах.' }
+            ]),
+            notes: 'Системный апгрейд базового переносного моста через каменный и верёвочный пакет.'
+        },
+        {
+            recipeId: 'field-bridge-upgrade',
+            label: 'Собрать полевой мостик',
+            station: 'bench',
+            stationLabel: 'Верстак / мастерская',
+            stationOptions: ['bench', 'workbench'],
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('item', 'portableBridge', 'Переносной мост', 1),
+                createIngredient('component', 'wood_plank_basic', 'Доска', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
+            ],
+            result: createResult('item', 'fieldBridge', 'Полевой мостик', 1, {
+                gameplayItemId: 'fieldBridge'
+            }),
+            tags: ['construction', 'movement', 'bridge', 'utility', 'advanced-upgrade'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 10, to: 18, priority: 'recommended', note: 'Нужен, когда хочется держать мостовой запас легче и мобильнее.' },
+                { from: 19, to: 24, priority: 'optional', note: 'Полезен как маршрутный запасной вариант.' }
+            ]),
+            notes: 'Полевая облегчённая переработка базового моста в более удобный походный вариант.'
+        },
+        {
+            recipeId: 'absolute-bridge-upgrade',
+            label: 'Собрать абсолютный мост',
+            station: 'workbench',
+            stationLabel: 'Мастерская',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('item', 'reinforcedBridge', 'Усиленный мост', 1),
+                createIngredient('item', 'fieldBridge', 'Полевой мостик', 1),
+                createIngredient('component', 'stone_block', 'Каменный блок', 1)
+            ],
+            result: createResult('item', 'absoluteBridge', 'Абсолютный мост', 1, {
+                gameplayItemId: 'absoluteBridge'
+            }),
+            tags: ['construction', 'movement', 'bridge', 'utility', 'advanced-upgrade', 'legendary'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 25, to: 30, priority: 'recommended', note: 'Эндгейм-мост для маршрутов, где цена одной ошибки уже критична.' }
+            ]),
+            notes: 'Поздний апгрейд мостовой ветки, который сжимает несколько переправ в один мощный предмет.'
         },
         {
             recipeId: 'bridge-repair-kit',
@@ -793,7 +1069,9 @@
                 }),
                 createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
             ],
-            result: createResult('item', 'bridgeRepairKit', 'Ремкомплект моста', 1),
+            result: createResult('item', 'repair_kit_bridge', 'Ремкомплект моста', 1, {
+                gameplayItemId: 'repair_kit_bridge'
+            }),
             tags: ['construction', 'repair', 'bridge', 'utility'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 7, to: 15, priority: 'critical', note: 'Нужен с 7 острова для повреждённых мостов.' },
@@ -834,12 +1112,14 @@
                 createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
                 createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
             ],
-            result: createResult('structure', 'boat', 'Готовая лодка', 1),
-            tags: ['construction', 'boat', 'water-access', 'structure'],
+            result: createResult('item', 'boat_ready', 'Готовая лодка', 1, {
+                gameplayItemId: 'boat_ready'
+            }),
+            tags: ['construction', 'boat', 'water-access', 'utility'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 16, to: 18, priority: 'critical', note: 'Жёстко нужна к водной фазе.' }
             ]),
-            notes: 'Главный предмет доступа к водным веткам и богатым маршрутам.'
+            notes: 'Финальный production-шаг лодочной ветки: рама, рыбий жир и верёвка собираются в готовую лодку как отдельный craft output.'
         },
         {
             recipeId: 'boat-repair-kit',
@@ -852,12 +1132,112 @@
                 createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
                 createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
             ],
-            result: createResult('item', 'boatRepairKit', 'Ремкомплект лодки', 1),
+            result: createResult('item', 'repair_kit_boat', 'Ремкомплект лодки', 1, {
+                gameplayItemId: 'repair_kit_boat'
+            }),
             tags: ['construction', 'repair', 'boat', 'utility'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 16, to: 30, priority: 'critical', note: 'После 16 острова нужен как постоянная страховка.' }
             ]),
             notes: 'Ремонтный комплект для поддержания лодки в рабочем состоянии.'
+        },
+        {
+            recipeId: 'wood-plank-to-trade-papers',
+            label: 'Торговые бумаги',
+            station: 'scribe',
+            stationLabel: 'Писарь',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'wood_plank_basic', 'Доска', 1)
+            ],
+            result: createResult('item', 'trade_papers', 'Торговые бумаги', 1, {
+                gameplayItemId: 'trade_papers'
+            }),
+            tags: ['economy', 'trade', 'value', 'scribe'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 8, to: 18, priority: 'recommended', note: 'Дешёвая конверсия лишней древесины в переносимую ценность после открытия писаря.' },
+                { from: 19, to: 24, priority: 'situational', note: 'Работает как безопасный нижний слой экономического крафта, не подменяя поздний лут.' }
+            ]),
+            notes: 'Контролируемый экономический крафт: один пакет древесины, уже сжатый из 5 дерева, превращается в дешёвые торговые бумаги. Это поддерживает экономику, не нарушая запрет на прямой крафт дорогих ценностей из raw-ресурсов.'
+        },
+        {
+            recipeId: 'stone-block-to-market-seal',
+            label: 'Рыночная печать',
+            station: 'scribe',
+            stationLabel: 'Писарь',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'stone_block', 'Каменный блок', 1)
+            ],
+            result: createResult('item', 'market_seal', 'Рыночная печать', 1, {
+                gameplayItemId: 'market_seal'
+            }),
+            tags: ['economy', 'trade', 'value', 'scribe'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 8, to: 18, priority: 'recommended', note: 'Второй дешёвый выход для обмена, если лишний камень уже сжат в блок.' },
+                { from: 19, to: 24, priority: 'situational', note: 'Помогает унести ценность, не конвертируя базовый камень напрямую в дорогой лут.' }
+            ]),
+            notes: 'Низкотирная экономическая ветка через писаря: каменный блок как эквивалент 5 камня превращается в дешёвую продаваемую ценность.'
+        },
+        {
+            recipeId: 'road-chalk',
+            label: 'Мел дорожника',
+            station: 'bench',
+            stationLabel: 'Верстак',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'stone_block', 'Каменный блок', 1)
+            ],
+            result: createResult('item', 'roadChalk', 'Мел дорожника', 1, {
+                gameplayItemId: 'roadChalk'
+            }),
+            tags: ['utility', 'info', 'route', 'bench'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 7, to: 12, priority: 'recommended', note: 'Простой маршрутный инструмент для первых дорогих развилок.' },
+                { from: 13, to: 18, priority: 'situational', note: 'Полезен как дешёвая подсказка, если не хочется тратить более сильную утилиту.' }
+            ]),
+            notes: 'Базовый информационный инструмент из каменного пакета. Даёт маршрутную подсказку без поздних материалов.'
+        },
+        {
+            recipeId: 'path-marker',
+            label: 'Маркер пути',
+            station: 'bench',
+            stationLabel: 'Верстак',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('item', 'roadChalk', 'Мел дорожника', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' })
+            ],
+            result: createResult('item', 'pathMarker', 'Маркер пути', 1, {
+                gameplayItemId: 'pathMarker'
+            }),
+            tags: ['utility', 'info', 'route', 'bench'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 7, to: 15, priority: 'recommended', note: 'Сильнее обычного мела и уже реально экономит дорогие шаги.' },
+                { from: 16, to: 21, priority: 'situational', note: 'Остаётся рабочим способом быстро прочитать маршрут в длинной логистике.' }
+            ]),
+            notes: 'Усиленная маршрутная утилита, которая собирается не из сырья напрямую, а из базового мела и верёвки.'
+        },
+        {
+            recipeId: 'safe-house-seal',
+            label: 'Печать безопасного дома',
+            station: 'workbench',
+            stationLabel: 'Мастерская',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'wood_plank_basic', 'Доска', 1),
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
+                createIngredient('component', 'healing_base', 'Травяная база лечения', 1)
+            ],
+            result: createResult('item', 'safeHouseSeal', 'Печать безопасного дома', 1, {
+                gameplayItemId: 'safeHouseSeal'
+            }),
+            tags: ['utility', 'survival', 'protection', 'workbench'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 16, to: 18, priority: 'critical', note: 'Окно, где безопасный дом уже влияет на выживание сильнее обычной еды.' },
+                { from: 19, to: 24, priority: 'recommended', note: 'Поддерживает стабильность, когда цена ошибки в логистике уже велика.' }
+            ]),
+            notes: 'Поздняя защитная утилита из дерева, рыбьего жира и лечебной базы: больше не живёт только как лут.'
         },
         {
             recipeId: 'fog-lantern',
@@ -925,6 +1305,109 @@
     const recipes = builtRecipeRegistry.definitions;
     const recipeById = builtRecipeRegistry.byId;
 
+    const recipeProfileDefinitions = [
+        {
+            profileId: RECIPE_PROFILE_IDS.allRecipes,
+            label: 'Полный каталог',
+            description: 'Все рецепты, включая позднюю утилиту и расширенные food-ветки.',
+            recipeIds: recipes.map((recipe) => recipe.recipeId)
+        },
+        {
+            profileId: RECIPE_PROFILE_IDS.wave1Minimal,
+            label: 'Первая волна',
+            description: 'Минимальный production-набор по craft docs: вода, пища, мост, лодка, ремонт, верёвка, дешёвое лечение и ускоряющий настой.',
+            recipeIds: [
+                'fill-water-flask',
+                'boil-water',
+                'prepare-alchemy-water',
+                'grass-to-healing-base',
+                'reeds-to-healing-base',
+                'grass-to-herbal-paste',
+                'grass-to-rope',
+                'reeds-to-rope',
+                'stone-to-stone-block',
+                'rubble-to-gravel-fill',
+                'stone-rubble-to-gravel-fill',
+                'wood-to-board',
+                'wood-to-frame',
+                'wood-to-fuel-bundle',
+                'fish-to-fish-meat',
+                'fish-to-fish-oil',
+                'healing-brew',
+                'dried-ration',
+                'second-wind',
+                'portable-bridge',
+                'portable-bridge-assembly',
+                'bridge-repair-kit',
+                'boat-frame',
+                'boat',
+                'boat-repair-kit'
+            ]
+        }
+    ];
+    const builtRecipeProfiles = createValidatedRecipeProfiles(recipeProfileDefinitions, {
+        recipeById
+    });
+    const recipeProfiles = builtRecipeProfiles.definitions;
+    const recipeProfileById = builtRecipeProfiles.byId;
+
+    function getConfiguredRecipeProfileId() {
+        const configuredProfileId = game
+            && game.config
+            && typeof game.config.craftingRecipeProfile === 'string'
+            ? game.config.craftingRecipeProfile.trim()
+            : '';
+
+        return recipeProfileById[configuredProfileId]
+            ? configuredProfileId
+            : DEFAULT_ACTIVE_RECIPE_PROFILE_ID;
+    }
+
+    function getRecipeProfile(profileId) {
+        const resolvedProfileId = typeof profileId === 'string' && profileId.trim()
+            ? profileId.trim()
+            : getConfiguredRecipeProfileId();
+        const profileDefinition = recipeProfileById[resolvedProfileId]
+            || recipeProfileById[DEFAULT_ACTIVE_RECIPE_PROFILE_ID]
+            || recipeProfileById[RECIPE_PROFILE_IDS.allRecipes];
+
+        return profileDefinition ? cloneValue(profileDefinition) : null;
+    }
+
+    function getRecipeProfiles() {
+        return recipeProfiles.map((profile) => cloneValue(profile));
+    }
+
+    function getRecipeDefinitionsForProfile(profileId) {
+        const profileDefinition = getRecipeProfile(profileId);
+
+        if (!profileDefinition) {
+            return [];
+        }
+
+        return profileDefinition.recipeIds
+            .map((recipeId) => recipeById[recipeId] ? cloneValue(recipeById[recipeId]) : null)
+            .filter(Boolean);
+    }
+
+    function getActiveRecipeProfileId() {
+        return getConfiguredRecipeProfileId();
+    }
+
+    function getActiveRecipeDefinitions() {
+        return getRecipeDefinitionsForProfile(getActiveRecipeProfileId());
+    }
+
+    function isRecipeActive(recipeId, profileId) {
+        const normalizedRecipeId = typeof recipeId === 'string' ? recipeId.trim() : '';
+        if (!normalizedRecipeId) {
+            return false;
+        }
+
+        const profileDefinition = getRecipeProfile(profileId);
+        return Boolean(profileDefinition && profileDefinition.recipeIds.includes(normalizedRecipeId));
+    }
+
     function getRecipeDefinition(recipeId) {
         return recipeById[recipeId] ? cloneValue(recipeById[recipeId]) : null;
     }
@@ -954,6 +1437,52 @@
             .map((recipe) => cloneValue(recipe));
     }
 
+    function getRecipesByComponentTag(tag, options = {}) {
+        const normalizedTag = normalizeIngredientComponentTags([tag])[0];
+        const componentRegistry = getComponentRegistry();
+
+        if (!normalizedTag || !componentRegistry || typeof componentRegistry.getComponentDefinition !== 'function') {
+            return [];
+        }
+
+        const scope = options.scope === 'result'
+            ? 'result'
+            : (options.scope === 'ingredient' ? 'ingredient' : 'any');
+
+        return recipes
+            .filter((recipe) => {
+                const ingredientMatch = (Array.isArray(recipe.ingredients) ? recipe.ingredients : []).some((ingredient) => {
+                    if (!ingredient || ingredient.kind !== 'component') {
+                        return false;
+                    }
+
+                    const componentDefinition = componentRegistry.getComponentDefinition(ingredient.id);
+                    return Boolean(componentDefinition
+                        && Array.isArray(componentDefinition.tags)
+                        && componentDefinition.tags.includes(normalizedTag));
+                });
+                const resultMatch = recipe.result && recipe.result.kind === 'component'
+                    ? (() => {
+                        const componentDefinition = componentRegistry.getComponentDefinition(recipe.result.id);
+                        return Boolean(componentDefinition
+                            && Array.isArray(componentDefinition.tags)
+                            && componentDefinition.tags.includes(normalizedTag));
+                    })()
+                    : false;
+
+                if (scope === 'ingredient') {
+                    return ingredientMatch;
+                }
+
+                if (scope === 'result') {
+                    return resultMatch;
+                }
+
+                return ingredientMatch || resultMatch;
+            })
+            .map((recipe) => cloneValue(recipe));
+    }
+
     function getRecipesForIsland(islandNumber) {
         return recipes
             .filter((recipe) => {
@@ -976,18 +1505,29 @@
 
     Object.assign(recipeRegistry, {
         PRACTICAL_RAW_RESOURCE_EXCEPTION_TAG,
+        RECIPE_CRAFT_TRACKS,
         RECIPE_TIERS,
+        RECIPE_PROFILE_IDS,
         allowsPracticalRawShortcut,
+        createValidatedRecipeProfiles,
         recipes,
+        recipeProfiles,
         createValidatedRecipeRegistry,
+        getActiveRecipeDefinitions,
+        getActiveRecipeProfileId,
+        getRecipeDefinitionsForProfile,
         getRecipeDefinition,
         getRecipeDefinitions,
+        getRecipeProfile,
+        getRecipeProfiles,
         getRawResourceIngredients,
         getRecipesByStation,
         getRecipesByTier,
         getRecipesByTag,
+        getRecipesByComponentTag,
         getRecipesForIsland,
         getRecipesByResultId,
+        isRecipeActive,
         isPracticalRecipeTier,
         normalizeRecipeDefinition,
         validateRecipeDefinition

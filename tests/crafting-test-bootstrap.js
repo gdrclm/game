@@ -359,6 +359,9 @@
 
     game.systems.content = game.systems.content || {};
     Object.assign(game.systems.content, {
+        isPassableTile(tileType = '') {
+            return tileType !== 'water' && tileType !== 'void' && tileType !== 'rock';
+        },
         isGroundTile(tileType = '') {
             return tileType !== 'void';
         },

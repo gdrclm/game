@@ -593,7 +593,7 @@
         `;
     }
 
-    function buildSellSection(encounter, selectedItemId, inventoryRuntime, pricing) {
+    function buildSellSection(encounter, selectedItemId, inventoryRuntime, pricing, shopRuntime) {
         const sellRows = inventoryRuntime.getInventory()
             .slice(0, inventoryRuntime.getUnlockedInventorySlots())
             .map((item, index) => {
@@ -603,9 +603,19 @@
                     return '';
                 }
 
-                const sellPrice = pricing && typeof pricing.getMerchantSellPrice === 'function'
-                    ? pricing.getMerchantSellPrice(normalizedItem.id, encounter.islandIndex || game.state.currentIslandIndex)
-                    : 1;
+                const sellOffer = shopRuntime && typeof shopRuntime.getMerchantSellOffer === 'function'
+                    ? shopRuntime.getMerchantSellOffer(encounter, normalizedItem.id)
+                    : null;
+                const sellPrice = sellOffer && sellOffer.accepted
+                    ? sellOffer.price
+                    : (pricing && typeof pricing.getMerchantSellPrice === 'function'
+                        ? pricing.getMerchantSellPrice(normalizedItem.id, encounter.islandIndex || game.state.currentIslandIndex)
+                        : 1);
+                const sellNote = sellOffer && sellOffer.isComponent
+                    ? (sellOffer.accepted
+                        ? `В рюкзаке: ${formatQuantityLabel(Math.max(1, normalizedItem.quantity || 1))} · Интерес к заготовке · Цена продажи: ${sellPrice}`
+                        : `В рюкзаке: ${formatQuantityLabel(Math.max(1, normalizedItem.quantity || 1))} · ${sellOffer.message || 'Этого торговца такая заготовка не интересует.'}`)
+                    : `В рюкзаке: ${formatQuantityLabel(Math.max(1, normalizedItem.quantity || 1))} · Цена продажи: ${sellPrice}`;
 
                 return `
                     <div class="merchant-row">
@@ -613,10 +623,10 @@
                             <button class="merchant-link${selectedItemId === normalizedItem.id ? ' merchant-link--selected' : ''}" type="button" data-merchant-action="describe" data-item-id="${normalizedItem.id}">
                                 ${escapeHtml(normalizedItem.label)}
                             </button>
-                            <div class="merchant-row__note">В рюкзаке: ${formatQuantityLabel(Math.max(1, normalizedItem.quantity || 1))} · Цена продажи: ${sellPrice}</div>
+                            <div class="merchant-row__note">${escapeHtml(sellNote)}</div>
                         </div>
                         <div class="merchant-row__actions">
-                            <button class="hud-button" type="button" data-merchant-action="sell" data-inventory-index="${index}">Продать</button>
+                            <button class="hud-button" type="button" data-merchant-action="sell" data-inventory-index="${index}" ${sellOffer && !sellOffer.accepted ? 'disabled' : ''}>Продать</button>
                         </div>
                     </div>
                 `;
@@ -717,7 +727,7 @@
             ${buildMerchantQuestSection(quest, selectedItemId, inventoryRuntime)}
             ${buildCourierSection(source)}
             ${buildStockSection(liveEncounter, selectedItemId)}
-            ${buildSellSection(liveEncounter, selectedItemId, inventoryRuntime, pricing)}
+            ${buildSellSection(liveEncounter, selectedItemId, inventoryRuntime, pricing, shopRuntime)}
         `;
     }
 

@@ -96,6 +96,19 @@ function formatColorChannels(channels) {
     return `rgba(${Math.round(channels[0])}, ${Math.round(channels[1])}, ${Math.round(channels[2])}, ${channels[3].toFixed(3)})`;
 }
 
+function amplifyColorChannels(channels, alphaMultiplier = 1) {
+    if (!Array.isArray(channels) || channels.length < 4) {
+        return [0, 0, 0, 0];
+    }
+
+    return [
+        channels[0],
+        channels[1],
+        channels[2],
+        clamp(channels[3] * alphaMultiplier, 0, 1)
+    ];
+}
+
 function hasVisibleColor(channels) {
     return Array.isArray(channels) && Number.isFinite(channels[3]) && channels[3] > 0.001;
 }
@@ -255,27 +268,31 @@ function drawIslandBackdrop(progression, timestamp = getNow()) {
 function drawTimeOfDayOverlay(timestamp = getNow()) {
     const game = window.Game;
     const timeOfDay = getRenderedTimeOfDayPalette(timestamp);
+    const worldTint = amplifyColorChannels(timeOfDay.worldTint, 1.22);
+    const fogTopTint = amplifyColorChannels(timeOfDay.fogTopTint, 1.18);
+    const fogBottomTint = amplifyColorChannels(timeOfDay.fogBottomTint, 1.18);
+    const darknessTint = amplifyColorChannels(timeOfDay.darknessTint, 1.24);
 
-    if (hasVisibleColor(timeOfDay.worldTint)) {
-        game.ctx.fillStyle = formatColorChannels(timeOfDay.worldTint);
+    if (hasVisibleColor(worldTint)) {
+        game.ctx.fillStyle = formatColorChannels(worldTint);
         game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
     }
 
-    if (hasVisibleColor(timeOfDay.fogTopTint) || hasVisibleColor(timeOfDay.fogBottomTint)) {
+    if (hasVisibleColor(fogTopTint) || hasVisibleColor(fogBottomTint)) {
         const fogGradient = game.ctx.createLinearGradient(0, 0, 0, game.canvas.height);
 
-        fogGradient.addColorStop(0, formatColorChannels(timeOfDay.fogTopTint));
+        fogGradient.addColorStop(0, formatColorChannels(fogTopTint));
         fogGradient.addColorStop(
             0.45,
-            formatColorChannels(hasVisibleColor(timeOfDay.fogTopTint) ? timeOfDay.fogTopTint : timeOfDay.fogBottomTint)
+            formatColorChannels(hasVisibleColor(fogTopTint) ? fogTopTint : fogBottomTint)
         );
-        fogGradient.addColorStop(1, formatColorChannels(timeOfDay.fogBottomTint));
+        fogGradient.addColorStop(1, formatColorChannels(fogBottomTint));
         game.ctx.fillStyle = fogGradient;
         game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
     }
 
-    if (hasVisibleColor(timeOfDay.darknessTint)) {
-        game.ctx.fillStyle = formatColorChannels(timeOfDay.darknessTint);
+    if (hasVisibleColor(darknessTint)) {
+        game.ctx.fillStyle = formatColorChannels(darknessTint);
         game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
     }
 }

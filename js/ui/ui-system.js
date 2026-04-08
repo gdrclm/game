@@ -1316,8 +1316,22 @@
         if (tileInfo && tileInfo.tileType === 'bridge') {
             const expedition = game.systems.expedition;
             const durability = expedition ? expedition.getBridgeDurability(tileInfo) : 2;
+            const maxDurability = expedition && typeof expedition.getBridgeMaxDurability === 'function'
+                ? expedition.getBridgeMaxDurability(tileInfo)
+                : 2;
+            const placedBridgeRecord = expedition && typeof expedition.getPlacedBridgeRecord === 'function'
+                ? expedition.getPlacedBridgeRecord(tileInfo.x, tileInfo.y)
+                : null;
+            const bridgeLabel = placedBridgeRecord && placedBridgeRecord.label
+                ? placedBridgeRecord.label
+                : 'мост';
+
             if (durability <= 1) {
                 return 'Старый мост: после следующего прохода он развалится.';
+            }
+
+            if (maxDurability > 2) {
+                return `${bridgeLabel}: осталось ${durability} из ${maxDurability} проходов.`;
             }
 
             return 'Обычный мост: первый проход состарит его, второй разрушит.';
@@ -2355,10 +2369,11 @@
             return;
         }
 
-        const previousMessage = ui.lastActionMessage || '';
+        const movementRuntime = game.systems.movement || null;
         const activeInteraction = getActiveInteraction();
         const encounter = getHouseEncounter(activeInteraction);
         let applied;
+        let sleepReasonLabel = 'после сна';
 
         if (encounter && encounter.kind === 'shelter') {
             applied = mergeAppliedRewards(
@@ -2371,6 +2386,7 @@
                     cold: 16
                 }, game.state.activeTileInfo, { energySource: 'sleep' })
             );
+            sleepReasonLabel = 'после привала';
 
             if (!game.state.isGameOver) {
                 setActionMessage(`Привал у укрытия дал: ${describeAppliedRewards(applied)}.`);
@@ -2386,6 +2402,7 @@
                     cold: 24
                 }, game.state.activeTileInfo, { energySource: 'sleep' })
             );
+            sleepReasonLabel = 'после отдыха';
 
             if (!game.state.isGameOver) {
                 setActionMessage(`Отдых в доме дал: ${describeAppliedRewards(applied)}.`);
@@ -2399,10 +2416,22 @@
                 focus: -12,
                 cold: -12
             });
+            sleepReasonLabel = 'после сна под открытым небом';
 
             if (!game.state.isGameOver) {
                 setActionMessage(`Сон под открытым небом дал: ${describeAppliedRewards(applied)}. Но стало холоднее и тяжелее собраться.`);
             }
+        }
+
+        if (
+            !game.state.isGameOver
+            && movementRuntime
+            && typeof movementRuntime.advanceTimeOfDay === 'function'
+        ) {
+            movementRuntime.advanceTimeOfDay({
+                messagePrefix: typeof ui.lastActionMessage === 'string' ? ui.lastActionMessage : '',
+                reasonLabel: sleepReasonLabel
+            });
         }
 
         renderAfterStateChange();

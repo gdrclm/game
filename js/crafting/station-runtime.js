@@ -16,12 +16,33 @@
         return value;
     }
 
+    const STATION_CRAFT_TRACKS = Object.freeze({
+        compression: 'compression',
+        survival: 'survival',
+        route: 'route',
+        construction: 'construction',
+        heavy: 'heavy',
+        economy: 'economy',
+        ritual: 'ritual'
+    });
+
+    const STATION_CRAFT_TRACK_LABELS = Object.freeze({
+        compression: 'Сжатие сырья',
+        survival: 'Выживание и алхимия',
+        route: 'Маршрутная утилита',
+        construction: 'Строительство и ремонт',
+        heavy: 'Тяжёлое ремесло',
+        economy: 'Экономика и контракты',
+        ritual: 'Ритуалы'
+    });
+
     const stationDefinitions = [
         {
             id: 'hand',
             label: 'Руки',
             aliases: ['hands'],
             unlockedFromIsland: 1,
+            craftTracks: [STATION_CRAFT_TRACKS.compression],
             role: 'Сжатие и упаковка сырья.',
             outputs: ['5 сырья -> 1 компонент', 'Наполнение фляги', 'Простые сборки'],
             status: 'active',
@@ -32,6 +53,7 @@
             label: 'Лагерь',
             aliases: [],
             unlockedFromIsland: 1,
+            craftTracks: [STATION_CRAFT_TRACKS.survival],
             role: 'Пища, вода и простая алхимия.',
             outputs: ['Пайки', 'Отвары', 'Зелья', 'Варка воды'],
             status: 'active',
@@ -42,6 +64,7 @@
             label: 'Верстак',
             aliases: [],
             unlockedFromIsland: 3,
+            craftTracks: [STATION_CRAFT_TRACKS.route],
             role: 'Утилита и полевой инструмент.',
             outputs: ['Верёвки', 'Крюки', 'Базовый мост', 'Лодочный каркас'],
             status: 'active',
@@ -52,6 +75,7 @@
             label: 'Мастерская',
             aliases: ['workshop'],
             unlockedFromIsland: 6,
+            craftTracks: [STATION_CRAFT_TRACKS.route, STATION_CRAFT_TRACKS.construction],
             role: 'Строительство и ремонт.',
             outputs: ['Переносной мост', 'Лодка', 'Ремонтные наборы'],
             status: 'active',
@@ -62,6 +86,7 @@
             label: 'Кузница',
             aliases: ['forge'],
             unlockedFromIsland: 10,
+            craftTracks: [STATION_CRAFT_TRACKS.heavy],
             role: 'Тяжёлые инструменты и топовые предметы.',
             outputs: ['Кирки', 'Дрели', 'Ключи', 'Поздние артефакты'],
             status: 'active',
@@ -72,16 +97,18 @@
             label: 'Писарь',
             aliases: [],
             unlockedFromIsland: 8,
+            craftTracks: [STATION_CRAFT_TRACKS.economy],
             role: 'Навигация, метки и контрактная логистика.',
-            outputs: ['Маршрутные чернила', 'Пропуска', 'Карты', 'Торговые бумаги'],
+            outputs: ['Маршрутные чернила', 'Пропуска', 'Карты', 'Торговые бумаги', 'Рыночные печати'],
             status: 'active',
-            notes: 'Есть в craft-доках, но пока не используется текущими рецептами.'
+            notes: 'Станция для маршрутной и дешёвой экономической переработки.'
         },
         {
             id: 'altar',
             label: 'Алтарь',
             aliases: [],
             unlockedFromIsland: null,
+            craftTracks: [STATION_CRAFT_TRACKS.ritual],
             role: 'Ритуальные и особые поздние сборки.',
             outputs: ['Ритуальные предметы', 'Особые преобразования'],
             status: 'reserved',
@@ -145,6 +172,32 @@
     function getStationLabel(stationIdOrAlias, fallback = '') {
         const station = getStationDefinition(stationIdOrAlias);
         return station && station.label ? station.label : (fallback || stationIdOrAlias || '');
+    }
+
+    function normalizeCraftTrack(craftTrack) {
+        return typeof craftTrack === 'string' ? craftTrack.trim().toLowerCase() : '';
+    }
+
+    function getCraftTrackLabel(craftTrack, fallback = '') {
+        const normalizedCraftTrack = normalizeCraftTrack(craftTrack);
+        return STATION_CRAFT_TRACK_LABELS[normalizedCraftTrack] || fallback || craftTrack || '';
+    }
+
+    function getStationCraftTracks(stationIdOrAlias) {
+        const station = getStationDefinition(stationIdOrAlias);
+        return Array.isArray(station && station.craftTracks)
+            ? cloneValue(station.craftTracks)
+            : [];
+    }
+
+    function stationSupportsCraftTrack(stationIdOrAlias, craftTrack) {
+        const normalizedCraftTrack = normalizeCraftTrack(craftTrack);
+        if (!normalizedCraftTrack) {
+            return false;
+        }
+
+        return getStationCraftTracks(stationIdOrAlias)
+            .some((supportedTrack) => normalizeCraftTrack(supportedTrack) === normalizedCraftTrack);
     }
 
     function getCurrentActiveHouse(options = {}) {
@@ -307,7 +360,12 @@
         getStationDefinitions,
         getStationLabel,
         buildStationSourceContext,
+        getCraftTrackLabel,
         getActiveStationContext,
+        getStationCraftTracks,
         resolveAvailableStations
+        ,
+        stationSupportsCraftTrack,
+        STATION_CRAFT_TRACKS
     });
 })();

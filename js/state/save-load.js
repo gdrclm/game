@@ -12,6 +12,8 @@
     const WATER_FLASK_CONTAINER_SAVE_VERSION = 5;
     const REEDS_RESOURCE_SPLIT_SAVE_VERSION = 6;
     const CANONICAL_COMPONENT_ITEM_IDS_SAVE_VERSION = 7;
+    const CANONICAL_CRAFT_OUTPUT_ITEM_IDS_SAVE_VERSION = 8;
+    const BRIDGE_BUILDER_LINK_SAVE_VERSION = 9;
     const LEGACY_RAW_RESOURCE_ITEM_MIGRATIONS = Object.freeze({
         lowlandGrass: {
             itemId: 'raw_reeds',
@@ -45,6 +47,10 @@
         fishMeat: { itemId: 'fish_meat', label: 'Рыбное мясо', icon: 'FM' },
         fishOil: { itemId: 'fish_oil', label: 'Рыбий жир', icon: 'FO' },
         fuelBundle: { itemId: 'fuel_bundle', label: 'Топливная связка', icon: 'TB' }
+    });
+    const LEGACY_CRAFT_OUTPUT_ITEM_MIGRATIONS = Object.freeze({
+        bridgeRepairKit: { itemId: 'repair_kit_bridge', label: 'Ремкомплект моста', icon: 'RM' },
+        boatRepairKit: { itemId: 'repair_kit_boat', label: 'Ремкомплект лодки', icon: 'RL' }
     });
     const RAW_STACKABLE_ITEM_IDS = new Set([
         'raw_grass',
@@ -107,6 +113,24 @@
         }
 
         const migration = LEGACY_COMPONENT_ITEM_MIGRATIONS[item.id];
+        if (!migration) {
+            return cloneValue(item);
+        }
+
+        return {
+            ...cloneValue(item),
+            id: migration.itemId,
+            icon: migration.icon,
+            label: migration.label
+        };
+    }
+
+    function migrateLegacyCraftOutputItem(item) {
+        if (!isPlainObject(item) || typeof item.id !== 'string') {
+            return cloneValue(item);
+        }
+
+        const migration = LEGACY_CRAFT_OUTPUT_ITEM_MIGRATIONS[item.id];
         if (!migration) {
             return cloneValue(item);
         }
@@ -320,6 +344,32 @@
                 ? cloneValue(source.resourceNodeIslandState)
                 : cloneValue(defaults.resourceNodeIslandState)
         };
+    }
+
+    function buildMigratedPlacedBridgeStateByKey(world = {}) {
+        const result = isPlainObject(world.placedBridgeStateByKey)
+            ? cloneValue(world.placedBridgeStateByKey)
+            : {};
+        const placedBridgeKeys = isPlainObject(world.placedBridgeKeys) ? world.placedBridgeKeys : {};
+        const weakenedBridgeKeys = isPlainObject(world.weakenedBridgeKeys) ? world.weakenedBridgeKeys : {};
+
+        Object.keys(placedBridgeKeys).forEach((worldKey) => {
+            if (!placedBridgeKeys[worldKey] || result[worldKey]) {
+                return;
+            }
+
+            result[worldKey] = {
+                sourceItemId: 'portableBridge',
+                label: 'Переносной мост',
+                bridgeFamily: 'portable',
+                bridgeUpgradeStage: 1,
+                bridgeReady: true,
+                maxDurability: 2,
+                currentDurability: weakenedBridgeKeys[worldKey] ? 1 : 2
+            };
+        });
+
+        return result;
     }
 
     function buildSaveSnapshot(state = window.Game.state) {
@@ -679,6 +729,55 @@
         };
     }
 
+    function migrateSnapshotToVersion8(snapshot) {
+        const player = isPlainObject(snapshot.player) ? cloneValue(snapshot.player) : {};
+        const world = isPlainObject(snapshot.world) ? cloneValue(snapshot.world) : {};
+
+        if (Array.isArray(player.inventory)) {
+            player.inventory = player.inventory.map((item) => (
+                item ? migrateLegacyCraftOutputItem(item) : item
+            ));
+
+            if (typeof player.selectedInventorySlot === 'number' && !player.inventory[player.selectedInventorySlot]) {
+                player.selectedInventorySlot = null;
+            }
+        }
+
+        if (isPlainObject(world.groundItemsByKey)) {
+            world.groundItemsByKey = Object.fromEntries(Object.entries(world.groundItemsByKey).map(([worldKey, items]) => [
+                worldKey,
+                (Array.isArray(items) ? items : []).map((item) => (
+                    item ? migrateLegacyCraftOutputItem(item) : item
+                ))
+            ]));
+        }
+
+        return {
+            saveVersion: CANONICAL_CRAFT_OUTPUT_ITEM_IDS_SAVE_VERSION,
+            player,
+            craftingState: buildMigratedCraftingState(snapshot),
+            world,
+            narrative: isPlainObject(snapshot.narrative) ? cloneValue(snapshot.narrative) : {},
+            ui: isPlainObject(snapshot.ui) ? cloneValue(snapshot.ui) : {}
+        };
+    }
+
+    function migrateSnapshotToVersion9(snapshot) {
+        const player = isPlainObject(snapshot.player) ? cloneValue(snapshot.player) : {};
+        const world = isPlainObject(snapshot.world) ? cloneValue(snapshot.world) : {};
+
+        world.placedBridgeStateByKey = buildMigratedPlacedBridgeStateByKey(world);
+
+        return {
+            saveVersion: BRIDGE_BUILDER_LINK_SAVE_VERSION,
+            player,
+            craftingState: buildMigratedCraftingState(snapshot),
+            world,
+            narrative: isPlainObject(snapshot.narrative) ? cloneValue(snapshot.narrative) : {},
+            ui: isPlainObject(snapshot.ui) ? cloneValue(snapshot.ui) : {}
+        };
+    }
+
     function normalizeSnapshot(snapshot) {
         const normalizedDomains = stateSchema.normalizeDomains({
             meta: {
@@ -760,6 +859,18 @@
 
             if (version === REEDS_RESOURCE_SPLIT_SAVE_VERSION) {
                 snapshot = migrateSnapshotToVersion7(snapshot);
+                version = snapshot.saveVersion;
+                continue;
+            }
+
+            if (version === CANONICAL_COMPONENT_ITEM_IDS_SAVE_VERSION) {
+                snapshot = migrateSnapshotToVersion8(snapshot);
+                version = snapshot.saveVersion;
+                continue;
+            }
+
+            if (version === CANONICAL_CRAFT_OUTPUT_ITEM_IDS_SAVE_VERSION) {
+                snapshot = migrateSnapshotToVersion9(snapshot);
                 version = snapshot.saveVersion;
                 continue;
             }
@@ -866,6 +977,9 @@
         migrateSnapshotToVersion4,
         migrateSnapshotToVersion5,
         migrateSnapshotToVersion6,
+        migrateSnapshotToVersion7,
+        migrateSnapshotToVersion8,
+        migrateSnapshotToVersion9,
         migrateSnapshot,
         parseState,
         resetRuntimeState,
