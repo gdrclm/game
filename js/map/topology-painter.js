@@ -274,7 +274,11 @@
         const expedition = game.systems.expedition;
         const delta = getDirectionDelta(direction);
         const neighborChunk = expedition && delta
-            ? expedition.getIslandChunkRecord(chunkRecord.chunkX + delta.dx, chunkRecord.chunkY + delta.dy)
+            ? (
+                typeof expedition.peekIslandChunkRecord === 'function'
+                    ? expedition.peekIslandChunkRecord(chunkRecord.chunkX + delta.dx, chunkRecord.chunkY + delta.dy)
+                    : expedition.getIslandChunkRecord(chunkRecord.chunkX + delta.dx, chunkRecord.chunkY + delta.dy)
+            )
             : null;
         const bias = getSharedEdgeBias(chunkRecord, direction);
         const edgeTouchesRemote = chunkRecord.tags.has('remote')

@@ -44,22 +44,6 @@
             bridgeUpgradeStage: 4,
             bridgeReady: true,
             maxDurability: 4
-        },
-        ferryBoard: {
-            sourceItemId: 'ferryBoard',
-            label: 'Доска переправы',
-            bridgeFamily: 'portable',
-            bridgeUpgradeStage: 0,
-            bridgeReady: true,
-            maxDurability: 2
-        },
-        roughBridge: {
-            sourceItemId: 'roughBridge',
-            label: 'Грубый мостик',
-            bridgeFamily: 'portable',
-            bridgeUpgradeStage: 1,
-            bridgeReady: true,
-            maxDurability: 2
         }
     });
 
@@ -97,6 +81,37 @@
 
     function getBridgeKey(worldX, worldY) {
         return `${worldX},${worldY}`;
+    }
+
+    function invalidatePathCaches() {
+        const pathfinding = game.systems.pathfinding || null;
+
+        if (pathfinding && typeof pathfinding.invalidateCaches === 'function') {
+            pathfinding.invalidateCaches();
+        }
+    }
+
+    function invalidateChunkVisuals(chunk, options = {}) {
+        if (!chunk) {
+            return;
+        }
+
+        const chunkRenderer = game.systems.chunkRenderer || null;
+        const render = game.systems.render || null;
+
+        if (chunkRenderer && typeof chunkRenderer.invalidateChunkRenderCache === 'function') {
+            chunkRenderer.invalidateChunkRenderCache(chunk, options);
+        } else {
+            chunk.renderCache = null;
+        }
+
+        if (render && typeof render.markSceneLayersDirty === 'function') {
+            render.markSceneLayersDirty({
+                world: true,
+                entities: true,
+                overlay: true
+            });
+        }
     }
 
     function cloneRecord(record) {
@@ -219,6 +234,13 @@
 
         if (tileInfo.progression.islandIndex <= 2) {
             return false;
+        }
+
+        if (
+            tileInfo.progression.scenario === 'crossingIsland'
+            || Number.isFinite(tileInfo.progression.crossingPressureLevel) && tileInfo.progression.crossingPressureLevel > 0
+        ) {
+            return true;
         }
 
         const island = progression.getIslandRecord
@@ -366,7 +388,11 @@
         if (tileInfo.chunk.travelZones && tileInfo.chunk.travelZones[tileInfo.localY]) {
             tileInfo.chunk.travelZones[tileInfo.localY][tileInfo.localX] = 'none';
         }
-        tileInfo.chunk.renderCache = null;
+        invalidateChunkVisuals(tileInfo.chunk, {
+            tilesChanged: true,
+            reason: 'bridgeCollapsed'
+        });
+        invalidatePathCaches();
         return true;
     }
 
@@ -403,7 +429,11 @@
                 }
             }
 
-            tileInfo.chunk.renderCache = null;
+            invalidateChunkVisuals(tileInfo.chunk, {
+                overlayChanged: true,
+                reason: 'bridgeWeakened'
+            });
+            invalidatePathCaches();
             return true;
         }
 
@@ -412,7 +442,11 @@
         if (tileInfo.chunk.travelZones && tileInfo.chunk.travelZones[tileInfo.localY]) {
             tileInfo.chunk.travelZones[tileInfo.localY][tileInfo.localX] = 'oldBridge';
         }
-        tileInfo.chunk.renderCache = null;
+        invalidateChunkVisuals(tileInfo.chunk, {
+            overlayChanged: true,
+            reason: 'bridgeWeakened'
+        });
+        invalidatePathCaches();
         return true;
     }
 
@@ -444,7 +478,11 @@
         if (tileInfo.chunk.travelZones && tileInfo.chunk.travelZones[tileInfo.localY]) {
             tileInfo.chunk.travelZones[tileInfo.localY][tileInfo.localX] = 'none';
         }
-        tileInfo.chunk.renderCache = null;
+        invalidateChunkVisuals(tileInfo.chunk, {
+            tilesChanged: true,
+            reason: 'bridgePlaced'
+        });
+        invalidatePathCaches();
         return true;
     }
 
@@ -472,7 +510,11 @@
             tileInfo.chunk.travelZones[tileInfo.localY][tileInfo.localX] = 'none';
         }
 
-        tileInfo.chunk.renderCache = null;
+        invalidateChunkVisuals(tileInfo.chunk, {
+            overlayChanged: true,
+            reason: 'bridgeRepaired'
+        });
+        invalidatePathCaches();
         return true;
     }
 

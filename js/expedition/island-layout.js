@@ -41,6 +41,14 @@
             label: 'Обычный сценарий',
             summary: 'Стандартный остров без особых перекосов.'
         },
+        crossingIsland: {
+            label: 'Остров переправ',
+            summary: 'Маршрут держится на узких водных переходах, и на вход лучше идти уже с мост-комплектом.'
+        },
+        depletedIsland: {
+            label: 'Истощённый остров',
+            summary: 'Лёгкая еда здесь почти не держится, и выживание снова приходится собирать через воду, улов и полевой крафт.'
+        },
         trapIsland: {
             label: 'Остров-ловушка',
             summary: 'Больше рискованных домов, проклятых сундуков и неприятных находок.'
@@ -123,6 +131,459 @@
         return settlementDefinitions[settlementType] || null;
     }
 
+    function getIslandNeedProfileSystem() {
+        return game.systems.islandNeedProfile || null;
+    }
+
+    function createCraftNeedSnapshot(islandIndex) {
+        const islandNeedProfile = getIslandNeedProfileSystem();
+        const needWindow = islandNeedProfile && typeof islandNeedProfile.getIslandNeedWindow === 'function'
+            ? islandNeedProfile.getIslandNeedWindow(islandIndex)
+            : null;
+        const mandatory = needWindow && needWindow.mandatory ? needWindow.mandatory : { resources: [], branches: [] };
+        const recommended = needWindow && needWindow.recommended ? needWindow.recommended : { resources: [], branches: [] };
+        const optional = needWindow && needWindow.optional ? needWindow.optional : { resources: [], branches: [] };
+
+        return {
+            craftNeedWindowId: needWindow && typeof needWindow.windowId === 'string' ? needWindow.windowId : '',
+            craftNeedFocus: needWindow && typeof needWindow.focus === 'string' ? needWindow.focus : '',
+            craftNeedRule: needWindow && typeof needWindow.rule === 'string' ? needWindow.rule : '',
+            craftNeedAvoid: needWindow && typeof needWindow.avoid === 'string' ? needWindow.avoid : '',
+            craftNeedMandatoryResources: Array.isArray(mandatory.resources) ? mandatory.resources.slice() : [],
+            craftNeedMandatoryBranches: Array.isArray(mandatory.branches) ? mandatory.branches.slice() : [],
+            craftNeedRecommendedResources: Array.isArray(recommended.resources) ? recommended.resources.slice() : [],
+            craftNeedRecommendedBranches: Array.isArray(recommended.branches) ? recommended.branches.slice() : [],
+            craftNeedOptionalResources: Array.isArray(optional.resources) ? optional.resources.slice() : [],
+            craftNeedOptionalBranches: Array.isArray(optional.branches) ? optional.branches.slice() : []
+        };
+    }
+
+    function appendUniqueStringList(list = [], additions = []) {
+        const target = Array.isArray(list) ? list : [];
+        const seen = new Set(
+            target
+                .filter((entry) => typeof entry === 'string' && entry.trim())
+                .map((entry) => entry.trim())
+        );
+
+        additions.forEach((entry) => {
+            if (typeof entry !== 'string' || !entry.trim()) {
+                return;
+            }
+
+            const normalizedEntry = entry.trim();
+            if (seen.has(normalizedEntry)) {
+                return;
+            }
+
+            seen.add(normalizedEntry);
+            target.push(normalizedEntry);
+        });
+
+        return target;
+    }
+
+    function getCrossingPressureLevel(islandIndex) {
+        if (islandIndex >= 25) {
+            return 3;
+        }
+
+        if (islandIndex >= 13) {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    function getDepletedSurvivalPressureLevel(islandIndex) {
+        if (islandIndex >= 28) {
+            return 3;
+        }
+
+        if (islandIndex >= 19) {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    function getTradeEconomyPressureLevel(islandIndex) {
+        if (islandIndex >= 25) {
+            return 3;
+        }
+
+        if (islandIndex >= 19) {
+            return 2;
+        }
+
+        if (islandIndex >= 10) {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    function applyCrossingIslandCraftPressure(craftNeedSnapshot, islandIndex) {
+        if (!craftNeedSnapshot || typeof craftNeedSnapshot !== 'object') {
+            return {
+                crossingPressureLevel: 0,
+                requiresBridgeKit: false,
+                mandatoryBridgeKitCount: 0
+            };
+        }
+
+        const crossingPressureLevel = getCrossingPressureLevel(islandIndex);
+        appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryResources, ['raw_wood']);
+        appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryBranches, ['first_bridge']);
+
+        if (crossingPressureLevel >= 2) {
+            appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryResources, ['raw_rubble']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryBranches, ['bridge_repair']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['repair_support']);
+        } else {
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedResources, ['raw_stone']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['bridge_repair']);
+        }
+
+        if (crossingPressureLevel >= 3) {
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedResources, ['water', 'raw_fish']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['endgame_route']);
+        }
+
+        craftNeedSnapshot.craftNeedFocus = craftNeedSnapshot.craftNeedFocus
+            ? `${craftNeedSnapshot.craftNeedFocus}, но с заранее собранной переправой`
+            : 'Переправы и готовый мост-комплект';
+        craftNeedSnapshot.craftNeedRule = craftNeedSnapshot.craftNeedRule
+            ? `${craftNeedSnapshot.craftNeedRule} На этот остров лучше входить уже с мост-комплектом.`
+            : 'На этот остров лучше входить уже с мост-комплектом.';
+        craftNeedSnapshot.craftNeedAvoid = craftNeedSnapshot.craftNeedAvoid
+            ? `${craftNeedSnapshot.craftNeedAvoid} Не рассчитывай, что пролом можно обойти без мостового предмета.`
+            : 'Не рассчитывай, что пролом можно обойти без мостового предмета.';
+
+        return {
+            crossingPressureLevel,
+            requiresBridgeKit: true,
+            mandatoryBridgeKitCount: 1
+        };
+    }
+
+    function applyDepletedIslandCraftPressure(craftNeedSnapshot, islandIndex) {
+        if (!craftNeedSnapshot || typeof craftNeedSnapshot !== 'object') {
+            return {
+                depletedSurvivalPressureLevel: 0,
+                requiresCraftedSurvival: false,
+                foodLootScarcity: false
+            };
+        }
+
+        const depletedSurvivalPressureLevel = getDepletedSurvivalPressureLevel(islandIndex);
+        appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryResources, ['water', 'raw_grass']);
+        appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryBranches, ['cheap_healing', 'survival_food']);
+        appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedResources, ['raw_wood']);
+        appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['water_cycle', 'fuel_prep']);
+
+        if (islandIndex >= 6) {
+            appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryResources, ['raw_fish']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['fish_processing']);
+        }
+
+        if (depletedSurvivalPressureLevel >= 2) {
+            appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryBranches, ['strong_survival']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['repair_support']);
+        }
+
+        if (depletedSurvivalPressureLevel >= 3) {
+            appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryBranches, ['final_survival']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['water_escape']);
+        }
+
+        craftNeedSnapshot.craftNeedFocus = craftNeedSnapshot.craftNeedFocus
+            ? `${craftNeedSnapshot.craftNeedFocus}, но без лёгкой обычной еды`
+            : 'Выживание через сбор и полевой крафт';
+        craftNeedSnapshot.craftNeedRule = craftNeedSnapshot.craftNeedRule
+            ? `${craftNeedSnapshot.craftNeedRule} Здесь лучше рассчитывать на воду, улов и собственные survival-рецепты.`
+            : 'Здесь лучше рассчитывать на воду, улов и собственные survival-рецепты.';
+        craftNeedSnapshot.craftNeedAvoid = craftNeedSnapshot.craftNeedAvoid
+            ? `${craftNeedSnapshot.craftNeedAvoid} Не строй маршрут на паёке из случайного сундука.`
+            : 'Не строй маршрут на паёке из случайного сундука.';
+
+        return {
+            depletedSurvivalPressureLevel,
+            requiresCraftedSurvival: true,
+            foodLootScarcity: true
+        };
+    }
+
+    function applyTradeIslandCraftPressure(craftNeedSnapshot, islandIndex) {
+        if (!craftNeedSnapshot || typeof craftNeedSnapshot !== 'object') {
+            return {
+                tradeEconomyPressureLevel: 0,
+                prefersCraftedValuables: false,
+                tradeCraftBias: false
+            };
+        }
+
+        const tradeEconomyPressureLevel = getTradeEconomyPressureLevel(islandIndex);
+        if (tradeEconomyPressureLevel <= 0) {
+            return {
+                tradeEconomyPressureLevel: 0,
+                prefersCraftedValuables: false,
+                tradeCraftBias: false
+            };
+        }
+
+        appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedResources, ['raw_wood', 'paper']);
+        appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['route_info', 'trade_values']);
+        appendUniqueStringList(craftNeedSnapshot.craftNeedOptionalResources, ['valuables']);
+
+        if (tradeEconomyPressureLevel >= 2) {
+            appendUniqueStringList(craftNeedSnapshot.craftNeedMandatoryBranches, ['trade_values']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedResources, ['raw_stone', 'valuables']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['collector_loadout']);
+        }
+
+        if (tradeEconomyPressureLevel >= 3) {
+            appendUniqueStringList(craftNeedSnapshot.craftNeedRecommendedBranches, ['endgame_route']);
+            appendUniqueStringList(craftNeedSnapshot.craftNeedOptionalBranches, ['collector_loadout']);
+        }
+
+        craftNeedSnapshot.craftNeedFocus = craftNeedSnapshot.craftNeedFocus
+            ? `${craftNeedSnapshot.craftNeedFocus}, но с упором на крафтовую ценность`
+            : 'Ремесленная экономика и крафтовые ценности';
+        craftNeedSnapshot.craftNeedRule = craftNeedSnapshot.craftNeedRule
+            ? `${craftNeedSnapshot.craftNeedRule} Здесь выгоднее переводить заготовки в бумаги, печати и маршрутные вещи, чем просто тащить случайный дорогой лут.`
+            : 'Здесь выгоднее переводить заготовки в бумаги, печати и маршрутные вещи, чем просто тащить случайный дорогой лут.';
+        craftNeedSnapshot.craftNeedAvoid = craftNeedSnapshot.craftNeedAvoid
+            ? `${craftNeedSnapshot.craftNeedAvoid} Не забивай сумку прямым блестящим лутом, если его можно заменить более выгодной сборкой у станка.`
+            : 'Не забивай сумку прямым блестящим лутом, если его можно заменить более выгодной сборкой у станка.';
+
+        return {
+            tradeEconomyPressureLevel,
+            prefersCraftedValuables: true,
+            tradeCraftBias: true
+        };
+    }
+
+    function createBaseResourceNodeDensityProfile(islandIndex, archetype, scenario) {
+        return {
+            islandIndex,
+            archetype,
+            scenario,
+            profileId: 'baseline',
+            label: 'Базовая ресурсная плотность',
+            sources: [],
+            supplyTagBonuses: {
+                supplyWater: 0,
+                supplyFishing: 0,
+                supplyWood: 0,
+                supplyRubble: 0
+            },
+            resourceNodeSpawnBonuses: {
+                grassBush: 0,
+                waterSource: 0,
+                reedPatch: 0,
+                stonePile: 0,
+                rubbleScree: 0,
+                woodTree: 0,
+                fishingSpot: 0,
+                fishingReedsSpot: 0,
+                fishingCalmSpot: 0,
+                fishingRareSpot: 0
+            },
+            fishingSpotCapBonus: 0
+        };
+    }
+
+    function mergeResourceNodeDensityAdjustment(profile, sourceId, label, adjustment = {}) {
+        if (!profile || !adjustment || typeof adjustment !== 'object') {
+            return profile;
+        }
+
+        if (typeof sourceId === 'string' && sourceId.trim()) {
+            profile.sources.push(sourceId.trim());
+        }
+
+        if (typeof label === 'string' && label.trim()) {
+            profile.label = profile.profileId === 'baseline'
+                ? label.trim()
+                : `${profile.label} + ${label.trim()}`;
+        }
+
+        const supplyTagBonuses = adjustment.supplyTagBonuses && typeof adjustment.supplyTagBonuses === 'object'
+            ? adjustment.supplyTagBonuses
+            : {};
+        Object.keys(profile.supplyTagBonuses).forEach((key) => {
+            if (Number.isFinite(supplyTagBonuses[key])) {
+                profile.supplyTagBonuses[key] += Math.floor(supplyTagBonuses[key]);
+            }
+        });
+
+        const resourceNodeSpawnBonuses = adjustment.resourceNodeSpawnBonuses && typeof adjustment.resourceNodeSpawnBonuses === 'object'
+            ? adjustment.resourceNodeSpawnBonuses
+            : {};
+        Object.keys(profile.resourceNodeSpawnBonuses).forEach((key) => {
+            if (Number.isFinite(resourceNodeSpawnBonuses[key])) {
+                profile.resourceNodeSpawnBonuses[key] += Math.floor(resourceNodeSpawnBonuses[key]);
+            }
+        });
+
+        if (Number.isFinite(adjustment.fishingSpotCapBonus)) {
+            profile.fishingSpotCapBonus += Math.floor(adjustment.fishingSpotCapBonus);
+        }
+
+        return profile;
+    }
+
+    function buildResourceNodeDensityProfile(progressionRecordOrOptions = {}) {
+        const islandIndex = Number.isFinite(progressionRecordOrOptions && progressionRecordOrOptions.islandIndex)
+            ? Math.max(1, Math.floor(progressionRecordOrOptions.islandIndex))
+            : 1;
+        const archetype = typeof progressionRecordOrOptions.archetype === 'string' && progressionRecordOrOptions.archetype.trim()
+            ? progressionRecordOrOptions.archetype.trim()
+            : 'normal';
+        const scenario = typeof progressionRecordOrOptions.scenario === 'string' && progressionRecordOrOptions.scenario.trim()
+            ? progressionRecordOrOptions.scenario.trim()
+            : 'normal';
+        const profile = createBaseResourceNodeDensityProfile(islandIndex, archetype, scenario);
+
+        if (scenario === 'tradeIsland') {
+            mergeResourceNodeDensityAdjustment(profile, 'tradeIsland', 'Торговое снабжение', {
+                supplyTagBonuses: {
+                    supplyWater: 1,
+                    supplyWood: islandIndex >= 10 ? 1 : 0
+                },
+                resourceNodeSpawnBonuses: {
+                    waterSource: 1,
+                    reedPatch: 1,
+                    woodTree: islandIndex >= 10 ? 1 : 0,
+                    stonePile: islandIndex >= 19 ? 1 : 0
+                }
+            });
+        } else if (scenario === 'trapIsland') {
+            mergeResourceNodeDensityAdjustment(profile, 'trapIsland', 'Ловушки и осыпи', {
+                supplyTagBonuses: {
+                    supplyRubble: 1
+                },
+                resourceNodeSpawnBonuses: {
+                    stonePile: 1,
+                    rubbleScree: 1
+                }
+            });
+        } else if (scenario === 'jackpotIsland') {
+            mergeResourceNodeDensityAdjustment(profile, 'jackpotIsland', 'Редкие водные шансы', {
+                supplyTagBonuses: {
+                    supplyFishing: islandIndex >= 6 ? 1 : 0
+                },
+                resourceNodeSpawnBonuses: {
+                    fishingCalmSpot: 1,
+                    fishingRareSpot: 1
+                },
+                fishingSpotCapBonus: 1
+            });
+        } else if (scenario === 'noHouseIsland') {
+            mergeResourceNodeDensityAdjustment(profile, 'noHouseIsland', 'Натуральные точки снабжения', {
+                supplyTagBonuses: {
+                    supplyWater: 1,
+                    supplyWood: 1,
+                    supplyFishing: islandIndex >= 6 ? 1 : 0
+                },
+                resourceNodeSpawnBonuses: {
+                    waterSource: 1,
+                    woodTree: 1,
+                    fishingSpot: islandIndex >= 6 ? 1 : 0,
+                    fishingReedsSpot: islandIndex >= 6 ? 1 : 0,
+                    fishingCalmSpot: islandIndex >= 6 ? 1 : 0
+                },
+                fishingSpotCapBonus: islandIndex >= 6 ? 1 : 0
+            });
+        } else if (scenario === 'crossingIsland') {
+            mergeResourceNodeDensityAdjustment(profile, 'crossingIsland', 'Переправы и стройматериалы', {
+                supplyTagBonuses: {
+                    supplyWood: 1,
+                    supplyRubble: islandIndex >= 7 ? 1 : 0
+                },
+                resourceNodeSpawnBonuses: {
+                    woodTree: 1,
+                    stonePile: islandIndex <= 6 ? 1 : 0,
+                    rubbleScree: islandIndex >= 7 ? 1 : 0
+                }
+            });
+        } else if (scenario === 'depletedIsland') {
+            mergeResourceNodeDensityAdjustment(profile, 'depletedIsland', 'Выживание через сбор', {
+                supplyTagBonuses: {
+                    supplyWater: 1,
+                    supplyWood: 1,
+                    supplyFishing: islandIndex >= 6 ? 1 : 0
+                },
+                resourceNodeSpawnBonuses: {
+                    grassBush: 2,
+                    reedPatch: 1,
+                    waterSource: 1,
+                    woodTree: 1,
+                    fishingSpot: islandIndex >= 6 ? 1 : 0,
+                    fishingReedsSpot: islandIndex >= 6 ? 1 : 0
+                },
+                fishingSpotCapBonus: islandIndex >= 6 ? 1 : 0
+            });
+        }
+
+        if (archetype === 'greedy') {
+            mergeResourceNodeDensityAdjustment(profile, 'greedy', 'Жадный минеральный перекос', {
+                supplyTagBonuses: {
+                    supplyRubble: 1
+                },
+                resourceNodeSpawnBonuses: {
+                    stonePile: 1,
+                    rubbleScree: 1
+                }
+            });
+        } else if (archetype === 'emptyGiant') {
+            mergeResourceNodeDensityAdjustment(profile, 'emptyGiant', 'Большой остров снабжения', {
+                supplyTagBonuses: {
+                    supplyWater: 1,
+                    supplyWood: 1
+                },
+                resourceNodeSpawnBonuses: {
+                    waterSource: 1,
+                    woodTree: 1
+                }
+            });
+        } else if (archetype === 'golden') {
+            mergeResourceNodeDensityAdjustment(profile, 'golden', 'Богатые прибрежные узлы', {
+                supplyTagBonuses: {
+                    supplyFishing: islandIndex >= 6 ? 1 : 0
+                },
+                resourceNodeSpawnBonuses: {
+                    waterSource: 1,
+                    fishingRareSpot: islandIndex >= 10 ? 1 : 0
+                },
+                fishingSpotCapBonus: islandIndex >= 10 ? 1 : 0
+            });
+        } else if (archetype === 'finalVault') {
+            mergeResourceNodeDensityAdjustment(profile, 'finalVault', 'Финальное снабжение', {
+                supplyTagBonuses: {
+                    supplyWater: 1,
+                    supplyWood: 1,
+                    supplyFishing: islandIndex >= 6 ? 1 : 0,
+                    supplyRubble: islandIndex >= 7 ? 1 : 0
+                },
+                resourceNodeSpawnBonuses: {
+                    waterSource: 1,
+                    woodTree: 1,
+                    rubbleScree: islandIndex >= 7 ? 1 : 0,
+                    fishingCalmSpot: islandIndex >= 6 ? 1 : 0,
+                    fishingRareSpot: islandIndex >= 10 ? 1 : 0
+                },
+                fishingSpotCapBonus: islandIndex >= 10 ? 1 : 0
+            });
+        }
+
+        profile.profileId = profile.sources.length > 0
+            ? profile.sources.join('+')
+            : profile.profileId;
+        return profile;
+    }
+
     function pickWeightedKey(weightMap, random, fallbackKey = 'fishing') {
         const entries = Object.entries(weightMap)
             .filter(([, weight]) => Number.isFinite(weight) && weight > 0);
@@ -184,6 +645,15 @@
         if (scenario === 'tradeIsland') {
             weights.trade += 3.6;
             weights.rich += 1.4;
+        } else if (scenario === 'crossingIsland') {
+            weights.craft += 2.8;
+            weights.ruined += 1.6;
+            weights.fishing += 0.4;
+        } else if (scenario === 'depletedIsland') {
+            weights.fishing += 2.5;
+            weights.ruined += 2.1;
+            weights.trade = Math.max(0.4, weights.trade - 0.9);
+            weights.rich = Math.max(0.25, weights.rich - 0.85);
         } else if (scenario === 'trapIsland') {
             weights.ruined += 3.2;
         } else if (scenario === 'jackpotIsland') {
@@ -238,6 +708,14 @@
     function chooseScenario(islandIndex, random, archetype) {
         if (islandIndex >= finalIslandIndex || archetype === 'finalVault') {
             return 'normal';
+        }
+
+        if (islandIndex === 3 || islandIndex === 19 || islandIndex === 28) {
+            return 'depletedIsland';
+        }
+
+        if (islandIndex === 5 || islandIndex === 14 || islandIndex === 26) {
+            return 'crossingIsland';
         }
 
         if (islandIndex >= 10 && islandIndex % 10 === 0) {
@@ -433,11 +911,40 @@
         const archetypeDefinition = getArchetypeDefinition(archetype);
         const scenario = chooseScenario(islandIndex, random, archetype);
         const scenarioDefinition = getScenarioDefinition(scenario);
+        const resourceNodeDensityProfile = buildResourceNodeDensityProfile({
+            islandIndex,
+            archetype,
+            scenario
+        });
         const isFinalIsland = islandIndex >= finalIslandIndex;
         const settlementStage = getSettlementStage(islandIndex, isFinalIsland);
         const settlementType = chooseSettlementType(islandIndex, random, archetype, scenario);
         const settlementDefinition = getSettlementDefinition(settlementType);
-        const routeStyle = chooseRouteStyle(islandIndex, contourKind, random);
+        const routeStyle = scenario === 'crossingIsland'
+            ? 'bottleneck'
+            : chooseRouteStyle(islandIndex, contourKind, random);
+        const craftNeedSnapshot = createCraftNeedSnapshot(islandIndex);
+        const crossingBridgePressure = scenario === 'crossingIsland'
+            ? applyCrossingIslandCraftPressure(craftNeedSnapshot, islandIndex)
+            : {
+                crossingPressureLevel: 0,
+                requiresBridgeKit: false,
+                mandatoryBridgeKitCount: 0
+            };
+        const tradeEconomyPressure = scenario === 'tradeIsland'
+            ? applyTradeIslandCraftPressure(craftNeedSnapshot, islandIndex)
+            : {
+                tradeEconomyPressureLevel: 0,
+                prefersCraftedValuables: false,
+                tradeCraftBias: false
+            };
+        const depletedSurvivalPressure = scenario === 'depletedIsland'
+            ? applyDepletedIslandCraftPressure(craftNeedSnapshot, islandIndex)
+            : {
+                depletedSurvivalPressureLevel: 0,
+                requiresCraftedSurvival: false,
+                foodLootScarcity: false
+            };
         const distanceFactor = Math.max(0, islandIndex - 1);
         let drainMultiplier = clamp(1 + distanceFactor * 0.1, 1, 3.9);
         const recoveryMultiplier = clamp(1 - (islandIndex - 1) * 0.012, 0.55, 1);
@@ -461,6 +968,14 @@
         if (scenario === 'tradeIsland') {
             baseHouses += 1;
             islandHouseBudget += 2;
+            if (tradeEconomyPressure.tradeEconomyPressureLevel >= 2) {
+                drainMultiplier = clamp(drainMultiplier + 0.04, 1, 4.05);
+            }
+        } else if (scenario === 'crossingIsland') {
+            drainMultiplier = clamp(drainMultiplier + 0.1 + crossingBridgePressure.crossingPressureLevel * 0.03, 1, 4.1);
+        } else if (scenario === 'depletedIsland') {
+            drainMultiplier = clamp(drainMultiplier + 0.08 + depletedSurvivalPressure.depletedSurvivalPressureLevel * 0.03, 1, 4.15);
+            islandHouseBudget = Math.max(1, islandHouseBudget - 1);
         } else if (scenario === 'jackpotIsland') {
             baseHouses += 1;
             islandHouseBudget += 1;
@@ -525,7 +1040,18 @@
             ),
             islandHouseBudget,
             grassTone: clamp(0.06 + islandIndex * 0.011, 0.06, 0.28),
-            isFinalIsland
+            isFinalIsland,
+            resourceNodeDensityProfile,
+            crossingPressureLevel: crossingBridgePressure.crossingPressureLevel,
+            requiresBridgeKit: crossingBridgePressure.requiresBridgeKit,
+            mandatoryBridgeKitCount: crossingBridgePressure.mandatoryBridgeKitCount,
+            tradeEconomyPressureLevel: tradeEconomyPressure.tradeEconomyPressureLevel,
+            prefersCraftedValuables: tradeEconomyPressure.prefersCraftedValuables,
+            tradeCraftBias: tradeEconomyPressure.tradeCraftBias,
+            depletedSurvivalPressureLevel: depletedSurvivalPressure.depletedSurvivalPressureLevel,
+            requiresCraftedSurvival: depletedSurvivalPressure.requiresCraftedSurvival,
+            foodLootScarcity: depletedSurvivalPressure.foodLootScarcity,
+            ...craftNeedSnapshot
         };
     }
 
@@ -569,7 +1095,7 @@
         return island;
     }
 
-    function chooseBridgePairs(islandIndex, adjacencyPairs, random, previousIsland = null) {
+    function chooseBridgePairs(islandIndex, adjacencyPairs, random, previousIsland = null, progression = null) {
         const uniquePairs = [];
         const seen = new Set();
 
@@ -622,6 +1148,16 @@
 
         if (islandIndex >= 10 && forwardChunkKeys.size > 2 && annotatedPairs.length > 2 && random() < 0.55) {
             targetCount = 3;
+        }
+
+        if (progression && progression.scenario === 'crossingIsland') {
+            if (islandIndex >= 13 && annotatedPairs.length > 1) {
+                targetCount = Math.max(targetCount, 2);
+            }
+
+            if (islandIndex >= 25 && annotatedPairs.length > 2) {
+                targetCount = Math.max(targetCount, 3);
+            }
         }
 
         const primaryPool = forwardPairs.length > 0 ? forwardPairs : annotatedPairs;
@@ -771,6 +1307,116 @@
         });
     }
 
+    function scoreSupplyChunk(chunk, supplyKind) {
+        if (!chunk) {
+            return -Infinity;
+        }
+
+        const isEntry = chunk.tags.has('entry');
+        const isRemote = chunk.tags.has('remote');
+        const isTip = chunk.tags.has('tip');
+        const isVault = chunk.tags.has('vault');
+        const isCorner = chunk.tags.has('corner');
+        const isJunction = chunk.tags.has('junction');
+        const isLeaf = chunk.tags.has('leaf');
+        const distance = Number.isFinite(chunk.distanceFromEntry) ? chunk.distanceFromEntry : 0;
+        let score = distance * 1.4;
+
+        switch (supplyKind) {
+        case 'supplyWater':
+            score += isEntry ? 8 : 0;
+            score += isJunction ? 4 : 0;
+            score += isCorner ? 1.5 : 0;
+            score -= isRemote ? 3.5 : 0;
+            score -= isVault ? 4 : 0;
+            break;
+        case 'supplyFishing':
+            score += isTip ? 6 : 0;
+            score += isRemote ? 5 : 0;
+            score += isLeaf ? 2 : 0;
+            score += isCorner ? 1 : 0;
+            score -= isEntry ? 3 : 0;
+            break;
+        case 'supplyWood':
+            score += isLeaf ? 3 : 0;
+            score += isCorner ? 2 : 0;
+            score += isRemote ? 1.5 : 0;
+            score += isEntry ? 1 : 0;
+            score -= isVault ? 2.5 : 0;
+            break;
+        case 'supplyRubble':
+            score += isRemote ? 5 : 0;
+            score += isTip ? 4 : 0;
+            score += isLeaf ? 2 : 0;
+            score += isVault ? 1.5 : 0;
+            score -= isEntry ? 4 : 0;
+            break;
+        default:
+            break;
+        }
+
+        return score;
+    }
+
+    function pickSupplyChunks(island, supplyKind, count) {
+        const normalizedCount = Math.max(0, Math.floor(count || 0));
+        if (!island || normalizedCount <= 0) {
+            return [];
+        }
+
+        return island.chunks
+            .filter((chunk) => chunk && !chunk.tags.has('vault'))
+            .sort((left, right) => scoreSupplyChunk(right, supplyKind) - scoreSupplyChunk(left, supplyKind))
+            .slice(0, normalizedCount);
+    }
+
+    function assignSupplyChunkTags(island) {
+        if (!island || !island.progression) {
+            return;
+        }
+
+        const densityProfile = island.progression.resourceNodeDensityProfile && typeof island.progression.resourceNodeDensityProfile === 'object'
+            ? island.progression.resourceNodeDensityProfile
+            : buildResourceNodeDensityProfile(island.progression);
+        const supplyTagBonuses = densityProfile && densityProfile.supplyTagBonuses && typeof densityProfile.supplyTagBonuses === 'object'
+            ? densityProfile.supplyTagBonuses
+            : {};
+        const mandatoryResources = new Set(Array.isArray(island.progression.craftNeedMandatoryResources)
+            ? island.progression.craftNeedMandatoryResources
+            : []);
+        const recommendedResources = new Set(Array.isArray(island.progression.craftNeedRecommendedResources)
+            ? island.progression.craftNeedRecommendedResources
+            : []);
+        const phaseId = island.progression.craftRequirementPhaseId || '';
+        const waterCount = mandatoryResources.has('water')
+            ? 1
+            : (recommendedResources.has('water') ? 1 : 0);
+        const fishingCount = mandatoryResources.has('raw_fish')
+            ? (phaseId === 'advanced' ? 2 : 1)
+            : (recommendedResources.has('raw_fish') ? 1 : 0);
+        const woodCount = mandatoryResources.has('raw_wood')
+            ? (phaseId === 'bridge' || phaseId === 'advanced' ? 2 : 1)
+            : (recommendedResources.has('raw_wood') ? 1 : 0);
+        const rubbleCount = mandatoryResources.has('raw_rubble')
+            ? 1
+            : (recommendedResources.has('raw_rubble') ? 1 : 0);
+        const capSupplyCount = (count, maxCount) => {
+            return Math.max(0, Math.min(island.chunks.length, maxCount, Math.floor(count || 0)));
+        };
+        const supplyCounts = {
+            supplyWater: capSupplyCount(waterCount + (Number.isFinite(supplyTagBonuses.supplyWater) ? supplyTagBonuses.supplyWater : 0), 3),
+            supplyFishing: capSupplyCount(fishingCount + (Number.isFinite(supplyTagBonuses.supplyFishing) ? supplyTagBonuses.supplyFishing : 0), 3),
+            supplyWood: capSupplyCount(woodCount + (Number.isFinite(supplyTagBonuses.supplyWood) ? supplyTagBonuses.supplyWood : 0), 4),
+            supplyRubble: capSupplyCount(rubbleCount + (Number.isFinite(supplyTagBonuses.supplyRubble) ? supplyTagBonuses.supplyRubble : 0), 3)
+        };
+
+        Object.keys(supplyCounts).forEach((supplyKind) => {
+            pickSupplyChunks(island, supplyKind, supplyCounts[supplyKind]).forEach((chunk) => {
+                chunk.tags.add(supplyKind);
+            });
+        });
+    }
+
     function markVaultChunk(island) {
         const candidates = island.chunks.filter((chunk) => chunk.tags.has('tip') || chunk.tags.has('remote'));
         const pool = candidates.length > 0 ? candidates : island.chunks;
@@ -810,11 +1456,12 @@
             const island = createAbsoluteIslandRecord(islandIndex, progression, contourKind, translated);
             island.chunks[0].tags.add('entry');
             island.entryChunkKeys.add(chunkKey(island.chunks[0].chunkX, island.chunks[0].chunkY));
-            applyDynamicChunkTags(island);
-            computeChunkDistances(island);
-            houseProfiles.assignIslandHousePlan(island);
-            return island;
-        }
+        applyDynamicChunkTags(island);
+        computeChunkDistances(island);
+        assignSupplyChunkTags(island);
+        houseProfiles.assignIslandHousePlan(island);
+        return island;
+    }
 
         const attemptCount = islandIndex <= 6 ? 6 : 3;
         let selectedBuild = null;
@@ -837,7 +1484,13 @@
                 }))
                 : null;
             const placement = preferredPlacement || placementCandidates[0];
-            const bridgePairs = chooseBridgePairs(islandIndex, placement.adjacencyPairs, random, previousIsland);
+            const bridgePairs = chooseBridgePairs(
+                islandIndex,
+                placement.adjacencyPairs,
+                random,
+                previousIsland,
+                progression
+            );
             const validForwardProgress = islandIndex > 6
                 || previousIsland.chunks.length <= 1
                 || hasForwardBridge(previousIsland, bridgePairs);
@@ -882,6 +1535,7 @@
             markVaultChunk(island);
         }
 
+        assignSupplyChunkTags(island);
         houseProfiles.assignIslandHousePlan(island);
         return island;
     }
@@ -892,6 +1546,7 @@
         resetLayoutState,
         getArchetypeDefinition,
         getScenarioDefinition,
+        buildResourceNodeDensityProfile,
         buildIslandProgression,
         buildPlacedIsland,
         assignHouseProfile: houseProfiles.assignHouseProfile
@@ -902,6 +1557,7 @@
         finalIslandIndex,
         getArchetypeDefinition,
         getScenarioDefinition,
+        buildResourceNodeDensityProfile,
         assignHouseProfile: houseProfiles.assignHouseProfile
     });
 })();

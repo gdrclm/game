@@ -81,6 +81,11 @@ window.Game.systems.houses = {
     getHouseAtChunkTile,
     getHouseAtWorld,
     canTraverseBetweenTiles,
+    collectVisibleInteriorHouses: window.Game.systems.houseRenderer.collectVisibleInteriorHouses,
+    collectVisibleExteriorHouses: window.Game.systems.houseRenderer.collectVisibleExteriorHouses,
+    drawInteriorHouseList: window.Game.systems.houseRenderer.drawInteriorHouseList,
+    drawExteriorHouseSouthList: window.Game.systems.houseRenderer.drawExteriorHouseSouthList,
+    drawExteriorHouseNorthList: window.Game.systems.houseRenderer.drawExteriorHouseNorthList,
     drawInteriorHouses: window.Game.systems.houseRenderer.drawInteriorHouses,
     drawExteriorHouseSouthParts: window.Game.systems.houseRenderer.drawExteriorHouseSouthParts,
     drawExteriorHouseNorthParts: window.Game.systems.houseRenderer.drawExteriorHouseNorthParts

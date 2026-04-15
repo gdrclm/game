@@ -1,5 +1,48 @@
 (() => {
     const houseRenderer = window.Game.systems.houseRenderer = window.Game.systems.houseRenderer || {};
+    const houseViewportBoundsBuffer = { x: 0, y: 0, width: 0, height: 0 };
+    const houseDrawPositionBuffer = { x: 0, y: 0 };
+    const houseScreenBoundsBuffer = { x: 0, y: 0, width: 0, height: 0 };
+    const houseDoorScreenPointBuffer = { x: 0, y: 0 };
+
+    function fillScreenPoint(x, y, out) {
+        const camera = window.Game.systems.camera || null;
+
+        if (camera && typeof camera.isoToScreenTo === 'function') {
+            return camera.isoToScreenTo(x, y, out);
+        }
+
+        const point = camera && typeof camera.isoToScreen === 'function'
+            ? camera.isoToScreen(x, y)
+            : null;
+
+        out.x = point ? point.x : 0;
+        out.y = point ? point.y : 0;
+        return out;
+    }
+
+    function rectsIntersect(first, second) {
+        if (!first || !second) {
+            return false;
+        }
+
+        return (
+            first.x < (second.x + second.width)
+            && (first.x + first.width) > second.x
+            && first.y < (second.y + second.height)
+            && (first.y + first.height) > second.y
+        );
+    }
+
+    function getHouseViewportBounds() {
+        const { tileWidth, tileHeight } = window.Game.config;
+
+        houseViewportBoundsBuffer.x = -tileWidth * 2;
+        houseViewportBoundsBuffer.y = -tileHeight * 6;
+        houseViewportBoundsBuffer.width = window.Game.canvas.width + tileWidth * 4;
+        houseViewportBoundsBuffer.height = window.Game.canvas.height + tileHeight * 10;
+        return houseViewportBoundsBuffer;
+    }
 
     function getVisibleHouses(focusChunkX, focusChunkY) {
         const houses = [];
@@ -10,7 +53,11 @@
                 const chunk = window.Game.state.loadedChunks[`${chunkX},${chunkY}`];
 
                 if (chunk && chunk.houses) {
-                    houses.push(...chunk.houses);
+                    chunk.houses.forEach((house) => {
+                        if (isHouseOnScreen(house)) {
+                            houses.push(house);
+                        }
+                    });
                 }
             }
         }
@@ -18,11 +65,25 @@
         return houses.sort((first, second) => first.renderDepth - second.renderDepth);
     }
 
-    function getDrawPosition(house, variant) {
-        return {
-            x: house.projectedOrigin.x + variant.localFootprintMinX + window.Game.camera.offset.x - variant.drawOffsetX,
-            y: house.projectedOrigin.y + variant.localFootprintMinY + window.Game.camera.offset.y - variant.drawOffsetY
-        };
+    function getDrawPosition(house, variant, out = {}) {
+        out.x = house.projectedOrigin.x + variant.localFootprintMinX + window.Game.camera.offset.x - variant.drawOffsetX;
+        out.y = house.projectedOrigin.y + variant.localFootprintMinY + window.Game.camera.offset.y - variant.drawOffsetY;
+        return out;
+    }
+
+    function getHouseScreenBounds(house) {
+        const variant = houseRenderer.getHouseVariant(house.footprint, house.paletteIndex);
+        const drawPosition = getDrawPosition(house, variant, houseDrawPositionBuffer);
+
+        houseScreenBoundsBuffer.x = drawPosition.x - 18;
+        houseScreenBoundsBuffer.y = drawPosition.y - 20;
+        houseScreenBoundsBuffer.width = variant.drawWidth + 36;
+        houseScreenBoundsBuffer.height = variant.drawHeight + 40;
+        return houseScreenBoundsBuffer;
+    }
+
+    function isHouseOnScreen(house) {
+        return rectsIntersect(getHouseScreenBounds(house), getHouseViewportBounds());
     }
 
     function getHouseStyle(house) {
@@ -36,15 +97,14 @@
             return null;
         }
 
-        const { x, y } = window.Game.systems.camera.isoToScreen(
+        fillScreenPoint(
             house.door.worldOutside.x,
-            house.door.worldOutside.y
+            house.door.worldOutside.y,
+            houseDoorScreenPointBuffer
         );
-
-        return {
-            x: x + window.Game.camera.offset.x,
-            y: y + window.Game.camera.offset.y + window.Game.config.tileHeight / 2
-        };
+        houseDoorScreenPointBuffer.x += window.Game.camera.offset.x;
+        houseDoorScreenPointBuffer.y += window.Game.camera.offset.y + window.Game.config.tileHeight / 2;
+        return houseDoorScreenPointBuffer;
     }
 
     function drawGroundDiamond(x, y, width, height, fillStyle, strokeStyle = '') {
@@ -181,7 +241,7 @@
             return;
         }
 
-        const drawPosition = getDrawPosition(house, variant);
+        const drawPosition = getDrawPosition(house, variant, houseDrawPositionBuffer);
 
         window.Game.ctx.drawImage(
             variant.interiorImage,
@@ -194,7 +254,7 @@
 
     function drawExteriorHouseSouth(house) {
         const variant = houseRenderer.getHouseVariant(house.footprint, house.paletteIndex);
-        const drawPosition = getDrawPosition(house, variant);
+        const drawPosition = getDrawPosition(house, variant, houseDrawPositionBuffer);
 
         if (variant.bodyImage.complete) {
             window.Game.ctx.drawImage(
@@ -221,7 +281,7 @@
 
     function drawExteriorHouseNorth(house) {
         const variant = houseRenderer.getHouseVariant(house.footprint, house.paletteIndex);
-        const drawPosition = getDrawPosition(house, variant);
+        const drawPosition = getDrawPosition(house, variant, houseDrawPositionBuffer);
 
         if (variant.northRoofImage.complete) {
             window.Game.ctx.drawImage(
@@ -236,29 +296,75 @@
         drawHouseStyleNorth(house, variant, drawPosition);
     }
 
+    function collectVisibleInteriorHouses(focusChunkX, focusChunkY, activeHouseId = null) {
+        if (!activeHouseId) {
+            return [];
+        }
+
+        return getVisibleHouses(focusChunkX, focusChunkY)
+            .filter((house) => house.id === activeHouseId);
+    }
+
+    function collectVisibleExteriorHouses(focusChunkX, focusChunkY, activeHouseId = null) {
+        return getVisibleHouses(focusChunkX, focusChunkY)
+            .filter((house) => house.id !== activeHouseId);
+    }
+
+    function drawInteriorHouseList(houses = []) {
+        houses.forEach(drawHouseInterior);
+    }
+
+    function drawExteriorHouseSouthList(houses = []) {
+        houses.forEach(drawExteriorHouseSouth);
+    }
+
+    function drawExteriorHouseNorthList(houses = []) {
+        houses.forEach(drawExteriorHouseNorth);
+    }
+
     function drawInteriorHouses(focusChunkX, focusChunkY, activeHouseId = null) {
         if (!activeHouseId) {
             return;
         }
 
-        getVisibleHouses(focusChunkX, focusChunkY)
-            .filter((house) => house.id === activeHouseId)
-            .forEach(drawHouseInterior);
+        const perf = window.Game.systems.perf || null;
+        const visibleHouses = collectVisibleInteriorHouses(focusChunkX, focusChunkY, activeHouseId);
+
+        if (perf && typeof perf.incrementFrameStat === 'function') {
+            perf.incrementFrameStat('housePartsDrawn', visibleHouses.length);
+        }
+
+        drawInteriorHouseList(visibleHouses);
     }
 
     function drawExteriorHouseSouthParts(focusChunkX, focusChunkY, activeHouseId = null) {
-        getVisibleHouses(focusChunkX, focusChunkY)
-            .filter((house) => house.id !== activeHouseId)
-            .forEach(drawExteriorHouseSouth);
+        const perf = window.Game.systems.perf || null;
+        const visibleHouses = collectVisibleExteriorHouses(focusChunkX, focusChunkY, activeHouseId);
+
+        if (perf && typeof perf.incrementFrameStat === 'function') {
+            perf.incrementFrameStat('housePartsDrawn', visibleHouses.length);
+        }
+
+        drawExteriorHouseSouthList(visibleHouses);
     }
 
     function drawExteriorHouseNorthParts(focusChunkX, focusChunkY, activeHouseId = null) {
-        getVisibleHouses(focusChunkX, focusChunkY)
-            .filter((house) => house.id !== activeHouseId)
-            .forEach(drawExteriorHouseNorth);
+        const perf = window.Game.systems.perf || null;
+        const visibleHouses = collectVisibleExteriorHouses(focusChunkX, focusChunkY, activeHouseId);
+
+        if (perf && typeof perf.incrementFrameStat === 'function') {
+            perf.incrementFrameStat('housePartsDrawn', visibleHouses.length);
+        }
+
+        drawExteriorHouseNorthList(visibleHouses);
     }
 
     Object.assign(houseRenderer, {
+        collectVisibleInteriorHouses,
+        collectVisibleExteriorHouses,
+        drawInteriorHouseList,
+        drawExteriorHouseSouthList,
+        drawExteriorHouseNorthList,
         drawInteriorHouses,
         drawExteriorHouseSouthParts,
         drawExteriorHouseNorthParts

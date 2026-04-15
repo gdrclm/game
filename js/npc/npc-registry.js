@@ -549,13 +549,13 @@
             summary: 'Странный моряк без судна. Говорит о воде, потере формы и том, как всё равно продолжать путь.',
             description: 'Рен выглядит так, будто давно потерял свой корабль, но не потерял способность смотреть на дальний берег без ненависти.',
             advice: 'Это уже поздний нарративный NPC: он нужен не для прямого бафа, а чтобы мир чувствовался прожитым, а не сгенерированным.',
-            talkPrompt: 'Нажми "Говорить", чтобы взять у Рена лёгкую лодку.',
+            talkPrompt: 'Нажми "Говорить", чтобы взять у Рена готовую лодку.',
             spawnHint: 'water',
             visualRole: 'ferryman',
             reward: {
-                itemId: 'lightBoat',
+                itemId: 'boat_ready',
                 quantity: 1,
-                grantedText: 'Рен отдаёт тебе лёгкую лодку и усмехается: форму можно потерять, ход - нет.',
+                grantedText: 'Рен отдаёт тебе готовую лодку и усмехается: форму можно потерять, ход - нет.',
                 fullText: 'Рен не бросает лодку в переполненную сумку: сначала освободи место.'
             },
             intro: 'Я лишился судна давно. Но путь не обязан сохранять прежнюю форму, чтобы оставаться путём.',
@@ -616,6 +616,16 @@
             kind: 'merchant',
             label: 'Странствующий торговец',
             defaultDialogueId: 'merchantGreeting'
+        },
+        craft_merchant: {
+            kind: 'craft_merchant',
+            label: 'Ремесленный торговец',
+            defaultDialogueId: 'artisanGreeting'
+        },
+        station_keeper: {
+            kind: 'station_keeper',
+            label: 'Хранитель станции',
+            defaultDialogueId: 'artisanGreeting'
         },
         islandOriginalNpc: {
             kind: 'islandOriginalNpc',

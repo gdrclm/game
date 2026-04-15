@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 0 Deterministic Regression Tests</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            font: 14px/1.5 "SF Mono", "Menlo", monospace;
+            background: #f3efe4;
+            color: #1f241d;
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 22px;
+        }
+
+        #summary {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #fffaf0;
+            border: 1px solid #d7ccb5;
+        }
+
+        .group {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #fffdf8;
+            border: 1px solid #ddd2be;
+        }
+
+        .group h2 {
+            margin: 0 0 10px;
+            font-size: 15px;
+        }
+
+        .test {
+            padding: 6px 0;
+            border-top: 1px solid #eee5d3;
+        }
+
+        .test:first-child {
+            border-top: 0;
+        }
+
+        .pass {
+            color: #275c2f;
+        }
+
+        .fail {
+            color: #8b2b2b;
+        }
+
+        canvas,
+        #debugPanel {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Phase 0 Deterministic Regression Runner</h1>
+    <div id="summary">Подготовка тестов…</div>
+    <div id="results"></div>
+
+    <canvas id="gameCanvas"></canvas>
+    <div id="debugPanel"></div>
+
+    <script>
+        (() => {
+            function formatLocation(filename, lineno, colno) {
+                if (!filename) {
+                    return '';
+                }
+
+                const line = Number.isFinite(lineno) ? lineno : 0;
+                const column = Number.isFinite(colno) ? colno : 0;
+                return line > 0 ? `${filename}:${line}:${column || 0}` : filename;
+            }
+
+            function appendBootError(title, message) {
+                const summaryElement = document.getElementById('summary');
+                const resultsElement = document.getElementById('results');
+
+                if (summaryElement) {
+                    summaryElement.textContent = 'Ошибка загрузки тестов.';
+                }
+
+                if (!resultsElement) {
+                    return;
+                }
+
+                const errorElement = document.createElement('section');
+                errorElement.className = 'group';
+                errorElement.innerHTML = `<h2>${title}</h2><div class="test fail">${message}</div>`;
+                resultsElement.appendChild(errorElement);
+            }
+
+            window.addEventListener('error', (event) => {
+                const location = formatLocation(event.filename, event.lineno, event.colno);
+                const details = [event.message || 'Неизвестная ошибка', location].filter(Boolean).join(' ');
+                appendBootError('Ошибка JavaScript', details);
+            });
+
+            window.addEventListener('unhandledrejection', (event) => {
+                const reason = event && event.reason
+                    ? (event.reason.message || String(event.reason))
+                    : 'Неизвестный Promise rejection';
+                appendBootError('Необработанный Promise rejection', reason);
+            });
+        })();
+    </script>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/worldgen/phase0/shared.js"></script>
+    <script src="../js/worldgen/phase0/deterministic-rng.js"></script>
+    <script src="../js/worldgen/phase0/contracts.js"></script>
+    <script src="../js/worldgen/phase0/validation.js"></script>
+    <script src="../js/worldgen/phase0/debug/index.js"></script>
+    <script src="../js/worldgen/phase0/adapters/index.js"></script>
+    <script src="../js/worldgen/phase0/world-profile-synthesizer.js"></script>
+    <script src="../js/worldgen/phase0/world-tone-synthesizer.js"></script>
+    <script src="../js/worldgen/phase0/derived-tendencies.js"></script>
+    <script src="../js/worldgen/phase0/subseed-deriver.js"></script>
+    <script src="../js/worldgen/phase0/master-seed-generator.js"></script>
+    <script src="../js/worldgen/phase0/index.js"></script>
+    <script src="worldgen-phase0-tests.js"></script>
+</body>
+</html>

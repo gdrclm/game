@@ -75,6 +75,14 @@
             label: 'Мастерская',
             aliases: ['workshop'],
             unlockedFromIsland: 6,
+            progressionUnlock: {
+                stableFromIsland: 6,
+                rewardFromIsland: 8,
+                rewardChestTiers: ['elite', 'jackpot', 'final'],
+                rewardWeight: 2.35,
+                windowLabel: 'mid',
+                notes: 'Мастерская стабильно включается только с середины маршрута.'
+            },
             craftTracks: [STATION_CRAFT_TRACKS.route, STATION_CRAFT_TRACKS.construction],
             role: 'Строительство и ремонт.',
             outputs: ['Переносной мост', 'Лодка', 'Ремонтные наборы'],
@@ -85,7 +93,15 @@
             id: 'smithy',
             label: 'Кузница',
             aliases: ['forge'],
-            unlockedFromIsland: 10,
+            unlockedFromIsland: 18,
+            progressionUnlock: {
+                stableFromIsland: 18,
+                rewardFromIsland: 18,
+                rewardChestTiers: ['elite', 'jackpot', 'final'],
+                rewardWeight: 1.5,
+                windowLabel: 'late',
+                notes: 'Поздняя тяжёлая станция для редких инструментов и топовых сборок.'
+            },
             craftTracks: [STATION_CRAFT_TRACKS.heavy],
             role: 'Тяжёлые инструменты и топовые предметы.',
             outputs: ['Кирки', 'Дрели', 'Ключи', 'Поздние артефакты'],
@@ -107,7 +123,15 @@
             id: 'altar',
             label: 'Алтарь',
             aliases: [],
-            unlockedFromIsland: null,
+            unlockedFromIsland: 26,
+            progressionUnlock: {
+                stableFromIsland: 26,
+                rewardFromIsland: 26,
+                rewardChestTiers: ['jackpot', 'final'],
+                rewardWeight: 1.05,
+                windowLabel: 'endgame',
+                notes: 'Эндгейм-станция для ритуальных и особых поздних веток.'
+            },
             craftTracks: [STATION_CRAFT_TRACKS.ritual],
             role: 'Ритуальные и особые поздние сборки.',
             outputs: ['Ритуальные предметы', 'Особые преобразования'],
@@ -172,6 +196,155 @@
     function getStationLabel(stationIdOrAlias, fallback = '') {
         const station = getStationDefinition(stationIdOrAlias);
         return station && station.label ? station.label : (fallback || stationIdOrAlias || '');
+    }
+
+    function getCurrentIslandIndex(options = {}) {
+        const candidates = [
+            options.islandIndex,
+            options.currentIslandIndex,
+            options.progression && options.progression.islandIndex,
+            options.activeInteraction && options.activeInteraction.islandIndex,
+            options.activeInteraction && options.activeInteraction.expedition && options.activeInteraction.expedition.islandIndex,
+            options.activeHouse && options.activeHouse.islandIndex,
+            options.activeHouse && options.activeHouse.expedition && options.activeHouse.expedition.islandIndex,
+            game.state && game.state.activeTileInfo && game.state.activeTileInfo.progression && game.state.activeTileInfo.progression.islandIndex,
+            game.state && game.state.currentIslandIndex
+        ];
+
+        for (const candidate of candidates) {
+            if (Number.isFinite(candidate)) {
+                return Math.max(1, Math.floor(candidate));
+            }
+        }
+
+        return 1;
+    }
+
+    function getStationUnlocksStore() {
+        return game.state
+            && game.state.craftingState
+            && typeof game.state.craftingState.stationUnlocks === 'object'
+            && game.state.craftingState.stationUnlocks
+                ? game.state.craftingState.stationUnlocks
+                : {};
+    }
+
+    function isStationExplicitlyUnlocked(stationIdOrAlias, options = {}) {
+        const normalizedStationId = normalizeStationId(stationIdOrAlias);
+        if (!normalizedStationId || options.includeUnlockedStations === false) {
+            return false;
+        }
+
+        const optionUnlockedStations = normalizeStationList(
+            Array.isArray(options.unlockedStations)
+                ? options.unlockedStations
+                : (Array.isArray(options.unlockedStationIds) ? options.unlockedStationIds : [])
+        );
+
+        if (optionUnlockedStations.includes(normalizedStationId)) {
+            return true;
+        }
+
+        return Boolean(getStationUnlocksStore()[normalizedStationId]);
+    }
+
+    function getStationProgressionProfile(stationIdOrAlias) {
+        const station = getStationDefinition(stationIdOrAlias);
+        return station && station.progressionUnlock ? cloneValue(station.progressionUnlock) : null;
+    }
+
+    function buildStationProgressionStatus(stationIdOrAlias, options = {}) {
+        const normalizedStationId = normalizeStationId(stationIdOrAlias);
+        const station = getStationDefinition(normalizedStationId);
+
+        if (!station || !normalizedStationId) {
+            return {
+                stationId: normalizedStationId || '',
+                stationLabel: stationIdOrAlias || '',
+                available: false,
+                reason: 'missing-station',
+                currentIslandIndex: getCurrentIslandIndex(options),
+                requiredIslandIndex: null,
+                message: 'Станция не найдена.'
+            };
+        }
+
+        const progressionProfile = getStationProgressionProfile(normalizedStationId);
+        const currentIslandIndex = getCurrentIslandIndex(options);
+        const requiredIslandIndex = Number.isFinite(progressionProfile && progressionProfile.stableFromIsland)
+            ? Math.max(1, Math.floor(progressionProfile.stableFromIsland))
+            : null;
+        const explicitlyUnlocked = isStationExplicitlyUnlocked(normalizedStationId, options);
+
+        if (!requiredIslandIndex || currentIslandIndex >= requiredIslandIndex || explicitlyUnlocked) {
+            return {
+                stationId: normalizedStationId,
+                stationLabel: station.label,
+                available: true,
+                reason: explicitlyUnlocked ? 'explicit-unlock' : 'available',
+                currentIslandIndex,
+                requiredIslandIndex,
+                progressionProfile,
+                message: explicitlyUnlocked
+                    ? `${station.label} открыта заранее через редкий station unlock.`
+                    : `${station.label} доступна на текущем этапе маршрута.`
+            };
+        }
+
+        let message = `${station.label} станет доступна с ${requiredIslandIndex} острова. Сейчас: ${currentIslandIndex}.`;
+
+        if (progressionProfile && progressionProfile.windowLabel === 'mid') {
+            message = `${station.label} стабильно включается только с середины маршрута: с ${requiredIslandIndex} острова. Сейчас: ${currentIslandIndex}.`;
+        } else if (progressionProfile && progressionProfile.windowLabel === 'late') {
+            message = `${station.label} относится к поздним станциям и открывается только с ${requiredIslandIndex} острова. Сейчас: ${currentIslandIndex}.`;
+        } else if (progressionProfile && progressionProfile.windowLabel === 'endgame') {
+            message = `${station.label} относится к эндгейму и открывается только с ${requiredIslandIndex} острова. Сейчас: ${currentIslandIndex}.`;
+        }
+
+        return {
+            stationId: normalizedStationId,
+            stationLabel: station.label,
+            available: false,
+            reason: 'progression-locked',
+            currentIslandIndex,
+            requiredIslandIndex,
+            progressionProfile,
+            message
+        };
+    }
+
+    function isStationAvailableByProgression(stationIdOrAlias, options = {}) {
+        const progressionStatus = buildStationProgressionStatus(stationIdOrAlias, options);
+        return Boolean(progressionStatus && progressionStatus.available);
+    }
+
+    function getStationUnlockRewardDefinitions() {
+        return stationDefinitions
+            .map((station) => {
+                const progressionProfile = station && station.progressionUnlock;
+
+                if (
+                    !station
+                    || !progressionProfile
+                    || !Number.isFinite(progressionProfile.rewardFromIsland)
+                    || !Array.isArray(progressionProfile.rewardChestTiers)
+                    || progressionProfile.rewardChestTiers.length === 0
+                ) {
+                    return null;
+                }
+
+                return {
+                    stationId: station.id,
+                    minIsland: Math.max(1, Math.floor(progressionProfile.rewardFromIsland)),
+                    chestTiers: cloneValue(progressionProfile.rewardChestTiers),
+                    weight: Number.isFinite(progressionProfile.rewardWeight) ? progressionProfile.rewardWeight : 1,
+                    windowLabel: progressionProfile.windowLabel || '',
+                    stableFromIsland: Number.isFinite(progressionProfile.stableFromIsland)
+                        ? Math.max(1, Math.floor(progressionProfile.stableFromIsland))
+                        : null
+                };
+            })
+            .filter(Boolean);
     }
 
     function normalizeCraftTrack(craftTrack) {
@@ -251,11 +424,28 @@
                     ? 'workbench'
                     : (configuredStationIds[0]
                         || (buildingType === 'workshop' || buildingType === 'bridgehouse' ? 'workbench' : 'bench')));
-            stationIds = normalizeStationList([primaryStationId, ...configuredStationIds]);
+            stationIds = [primaryStationId];
             contextLabel = primaryStationId === 'workbench' ? 'Мастерская' : 'Верстак';
             contextSummary = primaryStationId === 'workbench'
-                ? 'Явная ремесленная станция для мостов, ремонта и тяжёлой утилиты.'
-                : 'Явный полевой верстак для верёвок, простых сборок и утилиты.';
+                ? 'Явная ремесленная станция только для рецептов мастерской.'
+                : 'Явный полевой верстак только для рецептов верстака.';
+        } else if (sourceKind === 'station_keeper') {
+            const configuredStationIds = normalizeStationList(
+                Array.isArray(expedition.stationIds)
+                    ? expedition.stationIds
+                    : [expedition.stationId]
+            );
+
+            primaryStationId = normalizeStationId(expedition.stationId)
+                || (configuredStationIds.includes('workbench')
+                    ? 'workbench'
+                    : (configuredStationIds[0]
+                        || (buildingType === 'workshop' || buildingType === 'bridgehouse' ? 'workbench' : 'bench')));
+            stationIds = configuredStationIds.length > 0 ? configuredStationIds : [primaryStationId];
+            contextLabel = 'Хранитель станции';
+            contextSummary = typeof expedition.summary === 'string' && expedition.summary.trim()
+                ? expedition.summary.trim()
+                : `Явный хранитель станции ${getStationLabel(primaryStationId).toLowerCase()} с отдельным окном рецептов.`;
         } else {
             return null;
         }
@@ -306,19 +496,35 @@
         const explicitStations = Array.isArray(options.availableStations)
             ? options.availableStations
             : (typeof options.station === 'string' ? [options.station] : []);
+        const unlockedStations = options.includeUnlockedStations === false
+            ? []
+            : Object.keys(
+                game.state
+                && game.state.craftingState
+                && game.state.craftingState.stationUnlocks
+                && typeof game.state.craftingState.stationUnlocks === 'object'
+                    ? game.state.craftingState.stationUnlocks
+                    : {}
+            );
         const stations = new Set(['hand']);
 
         normalizeStationList(explicitStations).forEach((station) => {
             stations.add(station);
         });
 
-        if (stations.size > 1 || explicitStations.length > 0) {
+        normalizeStationList(unlockedStations).forEach((station) => {
+            stations.add(station);
+        });
+
+        if (stations.size > 1 || explicitStations.length > 0 || unlockedStations.length > 0) {
             return [...stations];
         }
 
         buildSourceContexts(options).forEach((context) => {
             context.stationIds.forEach((stationId) => {
-                stations.add(stationId);
+                if (isStationAvailableByProgression(stationId, options)) {
+                    stations.add(stationId);
+                }
             });
         });
 
@@ -360,11 +566,16 @@
         getStationDefinitions,
         getStationLabel,
         buildStationSourceContext,
+        getCurrentIslandIndex,
         getCraftTrackLabel,
         getActiveStationContext,
         getStationCraftTracks,
-        resolveAvailableStations
-        ,
+        getStationProgressionProfile,
+        buildStationProgressionStatus,
+        getStationUnlockRewardDefinitions,
+        isStationExplicitlyUnlocked,
+        isStationAvailableByProgression,
+        resolveAvailableStations,
         stationSupportsCraftTrack,
         STATION_CRAFT_TRACKS
     });

@@ -31,8 +31,20 @@
                 <span id="questPanelToggleIcon" class="panel-toggle__icon" aria-hidden="true">−</span>
             </button>
             <div id="questCardBody" class="sidebar-card__body">
-                <p id="questTrackerEmpty" class="panel-copy">Активных квестов пока нет.</p>
-                <div id="questTrackerList" class="quest-list" aria-live="polite"></div>
+                <div class="quest-card__tabs" role="tablist" aria-label="Панели квестов">
+                    <button id="questTabQuests" class="quest-card__tab" type="button" role="tab" aria-selected="true">Квесты</button>
+                    <button id="questTabProduction" class="quest-card__tab" type="button" role="tab" aria-selected="false">Производство</button>
+                </div>
+                <div id="questTabPanelQuests" class="quest-card__panel" role="tabpanel">
+                    <p id="questTrackerEmpty" class="panel-copy">Активных квестов пока нет.</p>
+                    <div id="questTrackerList" class="quest-list" aria-live="polite"></div>
+                </div>
+                <div id="questTabPanelProduction" class="quest-card__panel" role="tabpanel" hidden>
+                    <p class="hud-kicker">Крафт</p>
+                    <h3 class="hud-title hud-title--compact">Производственные цели</h3>
+                    <p id="productionGoalsSummary" class="panel-copy production-goals__summary">Подготовь базовые ветки под текущее окно островов.</p>
+                    <div id="productionGoalsList" class="production-goals" aria-live="polite"></div>
+                </div>
             </div>
         `;
 
@@ -47,12 +59,27 @@
             questCardBody: document.getElementById('questCardBody'),
             questTrackerList: document.getElementById('questTrackerList'),
             questTrackerEmpty: document.getElementById('questTrackerEmpty'),
-            questCardTitle: document.getElementById('questCardTitle')
+            questCardTitle: document.getElementById('questCardTitle'),
+            questTabQuests: document.getElementById('questTabQuests'),
+            questTabProduction: document.getElementById('questTabProduction'),
+            questTabPanelQuests: document.getElementById('questTabPanelQuests'),
+            questTabPanelProduction: document.getElementById('questTabPanelProduction')
         };
     }
 
     function isQuestPanelCollapsed() {
         return Boolean(game.state.isQuestPanelCollapsed);
+    }
+
+    function getActiveQuestTab() {
+        const tab = game.state.questPanelTab;
+        return tab === 'production' ? 'production' : 'quests';
+    }
+
+    function setActiveQuestTab(tabId) {
+        game.state.questPanelTab = tabId === 'production' ? 'production' : 'quests';
+        bridge.renderAfterStateChange();
+        return game.state.questPanelTab;
     }
 
     function getCollapsedQuestEntryIds() {
@@ -99,10 +126,22 @@
             return;
         }
 
-        const { questPanelToggle, questTrackerList } = getElements();
+        const { questPanelToggle, questTrackerList, questTabQuests, questTabProduction } = getElements();
         if (questPanelToggle) {
             questPanelToggle.addEventListener('click', () => {
                 toggleQuestPanel();
+            });
+        }
+
+        if (questTabQuests) {
+            questTabQuests.addEventListener('click', () => {
+                setActiveQuestTab('quests');
+            });
+        }
+
+        if (questTabProduction) {
+            questTabProduction.addEventListener('click', () => {
+                setActiveQuestTab('production');
             });
         }
 
@@ -131,9 +170,14 @@
             questPanelToggle,
             questPanelToggleIcon,
             questCardBody,
-            questCardTitle
+            questCardTitle,
+            questTabQuests,
+            questTabProduction,
+            questTabPanelQuests,
+            questTabPanelProduction
         } = getElements();
         const collapsed = isQuestPanelCollapsed();
+        const activeTab = getActiveQuestTab();
 
         if (questPanelToggle) {
             questPanelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
@@ -145,6 +189,26 @@
 
         if (questCardBody) {
             questCardBody.hidden = collapsed;
+        }
+
+        if (questTabQuests) {
+            const isActive = activeTab === 'quests';
+            questTabQuests.classList.toggle('is-active', isActive);
+            questTabQuests.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }
+
+        if (questTabProduction) {
+            const isActive = activeTab === 'production';
+            questTabProduction.classList.toggle('is-active', isActive);
+            questTabProduction.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }
+
+        if (questTabPanelQuests) {
+            questTabPanelQuests.hidden = activeTab !== 'quests';
+        }
+
+        if (questTabPanelProduction) {
+            questTabPanelProduction.hidden = activeTab !== 'production';
         }
 
         if (questCardTitle) {

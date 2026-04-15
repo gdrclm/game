@@ -33,6 +33,10 @@
         return game.systems.resourceRegistry || null;
     }
 
+    function getIslandLayoutSystem() {
+        return game.systems.islandLayout || null;
+    }
+
     function getStateSchema() {
         return game.systems.stateSchema || null;
     }
@@ -453,7 +457,9 @@
 
     function isInteriorInteractionKind(kind) {
         return kind === 'merchant'
+            || kind === 'craft_merchant'
             || kind === 'artisan'
+            || kind === 'station_keeper'
             || kind === 'chest'
             || kind === 'emptyHouse'
             || kind === 'trapHouse'
@@ -752,12 +758,28 @@
             : '';
     }
 
+    function canExposeStationInteraction(stationId, options = {}) {
+        const stationRuntime = game.systems.stationRuntime || null;
+
+        if (!stationRuntime || typeof stationRuntime.isStationAvailableByProgression !== 'function') {
+            return true;
+        }
+
+        return stationRuntime.isStationAvailableByProgression(stationId, {
+            islandIndex: options.progression && Number.isFinite(options.progression.islandIndex)
+                ? options.progression.islandIndex
+                : undefined
+        });
+    }
+
     function shouldSpawnWorkbenchInteraction(house) {
         const expedition = house && house.expedition ? house.expedition : null;
         const kind = normalizeDescriptorValue(expedition && expedition.kind);
         const buildingType = normalizeDescriptorValue(expedition && expedition.buildingType);
 
         return kind === 'artisan'
+            || kind === 'craft_merchant'
+            || kind === 'station_keeper'
             || buildingType === 'workshop'
             || buildingType === 'bridgehouse';
     }
@@ -790,9 +812,7 @@
         const primaryStationId = buildingType === 'workshop' || buildingType === 'bridgehouse'
             ? 'workbench'
             : 'bench';
-        const stationIds = primaryStationId === 'workbench'
-            ? ['bench', 'workbench']
-            : ['bench'];
+        const stationIds = [primaryStationId];
         const label = primaryStationId === 'workbench' ? 'Мастерская' : 'Верстак';
         const ownerLabel = expedition.label || expedition.locationLabel || '';
         const ownerSuffix = ownerLabel ? ` Рядом: ${ownerLabel}.` : '';
@@ -812,8 +832,13 @@
         };
     }
 
-    function appendWorkbenchInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random) {
+    function appendWorkbenchInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random, options = {}) {
         if (!shouldSpawnWorkbenchInteraction(house)) {
+            return;
+        }
+
+        const interactionExpedition = buildWorkbenchInteractionExpedition(house);
+        if (!canExposeStationInteraction(interactionExpedition.stationId, options)) {
             return;
         }
 
@@ -833,7 +858,7 @@
             chunkY,
             picked.x,
             picked.y,
-            buildWorkbenchInteractionExpedition(house),
+            interactionExpedition,
             {
                 id: interactionId,
                 houseId: interactionId,
@@ -911,6 +936,128 @@
         return resourceRegistry && typeof resourceRegistry.getResourceNodeDefinitions === 'function'
             ? resourceRegistry.getResourceNodeDefinitions()
             : [];
+    }
+
+    function getResourceNodeDefinitionsForInteractionMode(interactionMode = 'full') {
+        const definitions = getResourceNodeDefinitions();
+
+        if (interactionMode !== 'base') {
+            return definitions;
+        }
+
+        return definitions.filter((definition) => ![
+            'fishingSpot',
+            'fishingReedsSpot',
+            'fishingCalmSpot',
+            'fishingRareSpot'
+        ].includes(definition && definition.id));
+    }
+
+    function hasChunkTag(chunkRecord, tag) {
+        return Boolean(
+            chunkRecord
+            && chunkRecord.tags instanceof Set
+            && typeof tag === 'string'
+            && chunkRecord.tags.has(tag)
+        );
+    }
+
+    function isFishingResourceNodeDefinition(definition) {
+        return Boolean(definition && [
+            'fishingSpot',
+            'fishingReedsSpot',
+            'fishingCalmSpot',
+            'fishingRareSpot'
+        ].includes(definition.id));
+    }
+
+    function countPlacedResourceNodesByKinds(placedResourceNodes, resourceNodeKinds = []) {
+        const matchKinds = Array.isArray(resourceNodeKinds)
+            ? resourceNodeKinds.filter((value) => typeof value === 'string' && value.length > 0)
+            : [];
+
+        if (matchKinds.length === 0) {
+            return 0;
+        }
+
+        return (Array.isArray(placedResourceNodes) ? placedResourceNodes : []).reduce((count, resourceNode) => {
+            return resourceNode && matchKinds.includes(resourceNode.resourceNodeKind)
+                ? count + 1
+                : count;
+        }, 0);
+    }
+
+    function getResourceNodeDensityProfile(progression) {
+        if (progression && progression.resourceNodeDensityProfile && typeof progression.resourceNodeDensityProfile === 'object') {
+            return progression.resourceNodeDensityProfile;
+        }
+
+        const islandLayout = getIslandLayoutSystem();
+        return islandLayout && typeof islandLayout.buildResourceNodeDensityProfile === 'function'
+            ? islandLayout.buildResourceNodeDensityProfile(progression || {})
+            : {
+                supplyTagBonuses: {},
+                resourceNodeSpawnBonuses: {},
+                fishingSpotCapBonus: 0
+            };
+    }
+
+    function applySupplyTagSpawnLimit(baseLimit, definition, progression, chunkRecord, placedResourceNodes = []) {
+        const normalizedBaseLimit = Math.max(0, Math.floor(baseLimit) || 0);
+
+        if (!definition || !chunkRecord || !(chunkRecord.tags instanceof Set)) {
+            return normalizedBaseLimit;
+        }
+
+        const islandIndex = progression && Number.isFinite(progression.islandIndex)
+            ? Math.max(1, Math.floor(progression.islandIndex))
+            : 1;
+        const densityProfile = getResourceNodeDensityProfile(progression);
+        const resourceNodeSpawnBonuses = densityProfile && densityProfile.resourceNodeSpawnBonuses && typeof densityProfile.resourceNodeSpawnBonuses === 'object'
+            ? densityProfile.resourceNodeSpawnBonuses
+            : {};
+        const resourceNodeBonus = Number.isFinite(resourceNodeSpawnBonuses[definition.id])
+            ? Math.max(0, Math.floor(resourceNodeSpawnBonuses[definition.id]))
+            : 0;
+        const fishingSpotCapBonus = densityProfile && Number.isFinite(densityProfile.fishingSpotCapBonus)
+            ? Math.max(0, Math.floor(densityProfile.fishingSpotCapBonus))
+            : 0;
+
+        if (definition.id === 'waterSource') {
+            return hasChunkTag(chunkRecord, 'supplyWater')
+                ? Math.max(normalizedBaseLimit, 1 + resourceNodeBonus)
+                : Math.min(normalizedBaseLimit, 1);
+        }
+
+        if (isFishingResourceNodeDefinition(definition)) {
+            if (!hasChunkTag(chunkRecord, 'supplyFishing')) {
+                return 0;
+            }
+
+            const fishingSpotCap = (islandIndex >= 16 ? 3 : 2) + fishingSpotCapBonus;
+            const placedFishingSpots = countPlacedResourceNodesByKinds(placedResourceNodes, [
+                'fishingSpot',
+                'fishingReedsSpot',
+                'fishingCalmSpot',
+                'fishingRareSpot'
+            ]);
+
+            return Math.max(0, Math.min(normalizedBaseLimit + resourceNodeBonus, fishingSpotCap - placedFishingSpots));
+        }
+
+        if (definition.id === 'woodTree') {
+            return hasChunkTag(chunkRecord, 'supplyWood')
+                ? Math.max(normalizedBaseLimit, (islandIndex >= 10 ? 3 : 2) + resourceNodeBonus)
+                : Math.min(normalizedBaseLimit, 1);
+        }
+
+        if (definition.id === 'rubbleScree') {
+            return hasChunkTag(chunkRecord, 'supplyRubble')
+                ? Math.max(normalizedBaseLimit, (islandIndex >= 13 ? 2 : 1) + resourceNodeBonus)
+                : Math.min(normalizedBaseLimit, 1);
+        }
+
+        return Math.max(0, normalizedBaseLimit + resourceNodeBonus);
     }
 
     function getResourceNodePlacementProfile(definition) {
@@ -1153,7 +1300,7 @@
         return progression.islandIndex >= fromIsland && progression.islandIndex <= toIsland;
     }
 
-    function getResourceNodeSpawnLimit(definition, progression, chunkData, random = Math.random) {
+    function getResourceNodeSpawnLimit(definition, progression, chunkData, random = Math.random, chunkRecord = null, placedResourceNodes = []) {
         if (!definition || !isIslandWithinWindow(definition, progression)) {
             return 0;
         }
@@ -1168,30 +1315,45 @@
         const hasShoreTiles = hasTileType(['shore']);
         const hasReedsTiles = hasTileType(['reeds']);
 
+        let spawnLimit = 0;
+
         switch (definition.id) {
             case 'grassBush':
-                return islandIndex <= 6 ? 3 : 2;
+                spawnLimit = islandIndex <= 6 ? 3 : 2;
+                break;
             case 'reedPatch':
-                return hasWaterTiles ? 2 : 0;
+                spawnLimit = hasWaterTiles ? 2 : 0;
+                break;
             case 'stonePile':
-                return islandIndex <= 15 ? 2 : 1;
+                spawnLimit = islandIndex <= 15 ? 2 : 1;
+                break;
             case 'rubbleScree':
-                return islandIndex >= 7 && islandIndex <= 24 ? 2 : 1;
+                spawnLimit = islandIndex >= 7 && islandIndex <= 24 ? 2 : 1;
+                break;
             case 'woodTree':
-                return islandIndex >= 2 ? 2 : 0;
+                spawnLimit = islandIndex >= 2 ? 2 : 0;
+                break;
             case 'waterSource':
-                return hasWaterTiles ? 2 : 0;
+                spawnLimit = hasWaterTiles ? 2 : 0;
+                break;
             case 'fishingSpot':
-                return islandIndex >= 6 && islandIndex <= 30 && hasShoreTiles ? 1 : 0;
+                spawnLimit = islandIndex >= 6 && islandIndex <= 30 && hasShoreTiles ? 1 : 0;
+                break;
             case 'fishingReedsSpot':
-                return islandIndex >= 6 && islandIndex <= 30 && hasReedsTiles ? 1 : 0;
+                spawnLimit = islandIndex >= 6 && islandIndex <= 30 && hasReedsTiles ? 1 : 0;
+                break;
             case 'fishingCalmSpot':
-                return islandIndex >= 6 && islandIndex <= 30 && hasDeepWaterTiles ? 1 : 0;
+                spawnLimit = islandIndex >= 6 && islandIndex <= 30 && hasDeepWaterTiles ? 1 : 0;
+                break;
             case 'fishingRareSpot':
-                return islandIndex >= 10 && islandIndex <= 30 && hasDeepWaterTiles && random() <= 0.2 ? 1 : 0;
+                spawnLimit = islandIndex >= 10 && islandIndex <= 30 && hasDeepWaterTiles && random() <= 0.2 ? 1 : 0;
+                break;
             default:
-                return 0;
+                spawnLimit = 0;
+                break;
         }
+
+        return applySupplyTagSpawnLimit(spawnLimit, definition, progression, chunkRecord, placedResourceNodes);
     }
 
     function scoreResourceNodeCandidate(definition, chunkData, travelZones, x, y, houses, random, placedResourceNodes = []) {
@@ -1443,9 +1605,17 @@
         const travelZones = Array.isArray(options.travelZones) ? options.travelZones : null;
         const houseCellSet = getHouseCellSet(houses);
         const placedResourceNodes = [];
+        const interactionMode = options.interactionMode === 'base' ? 'base' : 'full';
 
-        getResourceNodeDefinitions().forEach((definition) => {
-            const spawnLimit = getResourceNodeSpawnLimit(definition, progression, chunkData, random);
+        getResourceNodeDefinitionsForInteractionMode(interactionMode).forEach((definition) => {
+            const spawnLimit = getResourceNodeSpawnLimit(
+                definition,
+                progression,
+                chunkData,
+                random,
+                chunkRecord,
+                placedResourceNodes
+            );
             const candidates = spawnLimit > 0
                 ? collectResourceNodeCandidates(chunkData, travelZones, houseCellSet, occupiedKeys, houses, random, definition, chunkRecord, placedResourceNodes)
                 : [];
@@ -1822,9 +1992,7 @@
         });
     }
 
-    function createChunkInteractions(chunkX, chunkY, chunkData, houses, random, options = {}) {
-        const result = [];
-        const occupiedKeys = new Set();
+    function appendHouseLinkedInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options = {}) {
         const houseCellSet = getHouseCellSet(houses);
 
         houses
@@ -1876,13 +2044,33 @@
                 house.interactionId = interaction.id;
                 result.push(interaction);
                 appendCampInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random);
-                appendWorkbenchInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random);
+                appendWorkbenchInteractionForHouse(result, chunkX, chunkY, chunkData, house, houseCellSet, occupiedKeys, random, options);
             });
+    }
 
+    function appendDeferredChunkInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options = {}) {
         appendSpecialInteractionPlans(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
         appendTrailCacheInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
         appendResourceNodeInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
+    }
+
+    function createChunkInteractions(chunkX, chunkY, chunkData, houses, random, options = {}) {
+        const result = [];
+        const occupiedKeys = new Set();
+        const interactionMode = options.interactionMode === 'base' ? 'base' : 'full';
+
+        appendHouseLinkedInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
         appendPersistentGroundItems(result, chunkX, chunkY, houses);
+
+        if (interactionMode === 'base') {
+            appendResourceNodeInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, {
+                ...options,
+                interactionMode: 'base'
+            });
+        } else {
+            appendDeferredChunkInteractions(result, chunkX, chunkY, chunkData, houses, occupiedKeys, random, options);
+        }
+
         return result;
     }
 
@@ -1933,7 +2121,7 @@
         }
 
         chunk.interactionTileMap = buildInteractionTileMap(chunk.interactions || []);
-        chunk.renderCache = null;
+        bumpChunkEntityVersion(chunk);
         return interaction;
     }
 
@@ -1941,6 +2129,22 @@
         const nextItems = mergeGroundItemBundles(getGroundItemStateAtWorld(worldX, worldY), item);
         setGroundItemStateAtWorld(worldX, worldY, nextItems);
         return syncGroundItemInteraction(worldX, worldY);
+    }
+
+    function bumpChunkEntityVersion(chunk) {
+        if (!chunk) {
+            return;
+        }
+
+        chunk.entityVersion = Number(chunk.entityVersion || 0) + 1;
+        const render = game.systems.render || null;
+
+        if (render && typeof render.markSceneLayersDirty === 'function') {
+            render.markSceneLayersDirty({
+                entities: true,
+                overlay: true
+            });
+        }
     }
 
     function replaceGroundItemAtWorld(worldX, worldY, items) {
@@ -1985,7 +2189,7 @@
                 chunk.interactionTileMap = buildInteractionTileMap(chunk.interactions);
             }
 
-            chunk.renderCache = null;
+            bumpChunkEntityVersion(chunk);
 
             if (game.state.activeInteractionId === targetId) {
                 game.state.activeInteraction = null;

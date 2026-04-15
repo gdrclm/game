@@ -12,6 +12,29 @@
         value: 'ценности',
         risk: 'проклятые'
     };
+    const craftingQuestFocusLabels = {
+        healing: 'лечение',
+        building: 'строительство',
+        repair: 'ремонт',
+        water: 'вода',
+        route: 'маршрут',
+        survival: 'выживание',
+        merchant: 'торговля',
+        bagquest: 'походный комплект'
+    };
+    const recipeQuestFocusLabels = {
+        survival: 'выживание',
+        healing: 'лечение',
+        food: 'еда',
+        water: 'вода',
+        bridge: 'мосты',
+        construction: 'строительство',
+        repair: 'ремонт',
+        route: 'дальний маршрут',
+        movement: 'маршрут',
+        info: 'навигация',
+        light: 'свет'
+    };
 
     function getBagUpgradeData() {
         return game.systems.bagUpgradeData || null;
@@ -23,6 +46,10 @@
 
     function getItemRegistry() {
         return game.systems.itemRegistry || null;
+    }
+
+    function getComponentRegistry() {
+        return game.systems.componentRegistry || null;
     }
 
     function getQuestRuntime() {
@@ -93,13 +120,31 @@
             : null;
     }
 
+    function getCraftedLoadoutProfile(profileId) {
+        const data = getBagUpgradeData();
+        return data && typeof data.getCraftedLoadoutProfile === 'function'
+            ? data.getCraftedLoadoutProfile(profileId)
+            : null;
+    }
+
     function cloneRequirement(requirement) {
+        const craftedLoadoutProfile = requirement && requirement.craftedLoadoutProfileId
+            ? getCraftedLoadoutProfile(requirement.craftedLoadoutProfileId)
+            : null;
+        const profileRules = craftedLoadoutProfile && Array.isArray(craftedLoadoutProfile.matchAny)
+            ? craftedLoadoutProfile.matchAny
+            : [];
+        const requirementRules = requirement && Array.isArray(requirement.matchAny)
+            ? requirement.matchAny
+            : [];
+
         return requirement
             ? {
+                ...craftedLoadoutProfile,
                 ...requirement,
-                matchAny: Array.isArray(requirement.matchAny)
-                    ? requirement.matchAny.map((rule) => ({ ...rule }))
-                    : []
+                label: requirement.label || (craftedLoadoutProfile && craftedLoadoutProfile.label) || '',
+                description: requirement.description || (craftedLoadoutProfile && craftedLoadoutProfile.description) || '',
+                matchAny: [...profileRules, ...requirementRules].map((rule) => ({ ...rule }))
             }
             : null;
     }
@@ -138,6 +183,7 @@
 
     function getRequirementTagList(requirement) {
         const itemRegistry = getItemRegistry();
+        const componentRegistry = getComponentRegistry();
         const tags = [];
         const seen = new Set();
 
@@ -160,6 +206,22 @@
                 );
             });
 
+            (Array.isArray(rule.craftingTags) ? rule.craftingTags : []).forEach((tag) => {
+                const normalizedTag = String(tag || '').trim().toLowerCase();
+                appendTag(craftingQuestFocusLabels[normalizedTag] || tag);
+            });
+
+            (Array.isArray(rule.itemIds) ? rule.itemIds : []).forEach((itemId) => {
+                const definition = itemRegistry && typeof itemRegistry.getItemDefinition === 'function'
+                    ? itemRegistry.getItemDefinition(itemId)
+                    : null;
+                appendTag(definition && definition.label ? definition.label : itemId);
+            });
+
+            (Array.isArray(rule.sourceRecipeTags) ? rule.sourceRecipeTags : []).forEach((tag) => {
+                appendTag(recipeQuestFocusLabels[String(tag || '').trim().toLowerCase()] || tag);
+            });
+
             if (Number.isFinite(rule.minTier)) {
                 appendTag(`T${rule.minTier}+`);
             } else if (Number.isFinite(rule.maxTier)) {
@@ -177,6 +239,10 @@
             if (Number.isFinite(rule.minCarriedIslands) && rule.minCarriedIslands > 0) {
                 appendTag(`нести ${rule.minCarriedIslands}+ острова`);
             }
+
+            if (Array.isArray(rule.craftingTags) && rule.craftingTags.length > 0 && componentRegistry) {
+                appendTag('крафт');
+            }
         });
 
         return tags;
@@ -189,6 +255,21 @@
         getRequirementRules(requirement).forEach((rule) => {
             (Array.isArray(rule.questCategories) ? rule.questCategories : []).forEach((category) => {
                 appendUniqueLabel(labels, seen, slotQuestFocusLabels[category] || category);
+            });
+
+            (Array.isArray(rule.craftingTags) ? rule.craftingTags : []).forEach((tag) => {
+                appendUniqueLabel(labels, seen, craftingQuestFocusLabels[String(tag || '').trim().toLowerCase()] || tag);
+            });
+
+            (Array.isArray(rule.itemIds) ? rule.itemIds : []).forEach((itemId) => {
+                const definition = getItemRegistry() && typeof getItemRegistry().getItemDefinition === 'function'
+                    ? getItemRegistry().getItemDefinition(itemId)
+                    : null;
+                appendUniqueLabel(labels, seen, definition && definition.label ? definition.label : itemId);
+            });
+
+            (Array.isArray(rule.sourceRecipeTags) ? rule.sourceRecipeTags : []).forEach((tag) => {
+                appendUniqueLabel(labels, seen, recipeQuestFocusLabels[String(tag || '').trim().toLowerCase()] || tag);
             });
 
             if (Number.isFinite(rule.minTier) && rule.minTier >= 4) {
@@ -536,7 +617,7 @@
             : (islandIndex >= 8 ? 'ordinary' : 'poor');
 
         return {
-            kind: 'artisan',
+            kind: 'craft_merchant',
             npcKind: stage.npcKind,
             label: artisan.label || 'Ремесленник',
             summary: artisan.summary || 'Опытный мастер, который может расширить сумку.',
@@ -555,7 +636,7 @@
             ? getStageById(encounter.bagStageId)
             : null;
 
-        if (!encounter || encounter.kind !== 'artisan' || !stage) {
+        if (!encounter || !['craft_merchant', 'artisan'].includes(encounter.kind) || !stage) {
             return null;
         }
 

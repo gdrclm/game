@@ -1,5 +1,74 @@
 (() => {
     const interactionRenderer = window.Game.systems.interactionRenderer = window.Game.systems.interactionRenderer || {};
+    const interactionViewportBoundsBuffer = { x: 0, y: 0, width: 0, height: 0 };
+    const interactionScreenPointBuffer = { x: 0, y: 0 };
+
+    function fillScreenPoint(x, y, out) {
+        const camera = window.Game.systems.camera || null;
+
+        if (camera && typeof camera.isoToScreenTo === 'function') {
+            return camera.isoToScreenTo(x, y, out);
+        }
+
+        const point = camera && typeof camera.isoToScreen === 'function'
+            ? camera.isoToScreen(x, y)
+            : null;
+
+        out.x = point ? point.x : 0;
+        out.y = point ? point.y : 0;
+        return out;
+    }
+
+    function rectsIntersect(first, second) {
+        if (!first || !second) {
+            return false;
+        }
+
+        return (
+            first.x < (second.x + second.width)
+            && (first.x + first.width) > second.x
+            && first.y < (second.y + second.height)
+            && (first.y + first.height) > second.y
+        );
+    }
+
+    function getInteractionViewportBounds() {
+        const { tileWidth, tileHeight } = window.Game.config;
+
+        interactionViewportBoundsBuffer.x = -tileWidth * 1.5;
+        interactionViewportBoundsBuffer.y = -tileHeight * 4;
+        interactionViewportBoundsBuffer.width = window.Game.canvas.width + tileWidth * 3;
+        interactionViewportBoundsBuffer.height = window.Game.canvas.height + tileHeight * 8;
+        return interactionViewportBoundsBuffer;
+    }
+
+    function getInteractionScreenBounds(interaction) {
+        const { tileWidth, tileHeight } = window.Game.config;
+        fillScreenPoint(interaction.worldX, interaction.worldY, interactionScreenPointBuffer);
+        const screenX = interactionScreenPointBuffer.x;
+        const screenY = interactionScreenPointBuffer.y;
+        const baseY = screenY + tileHeight / 2 + 2;
+        const halfWidth = interaction && (
+            interaction.kind === 'merchant'
+            || interaction.kind === 'craft_merchant'
+            || interaction.kind === 'artisan'
+            || interaction.kind === 'station_keeper'
+            || interaction.kind === 'islandOriginalNpc'
+        )
+            ? 34
+            : 28;
+
+        return {
+            x: screenX - halfWidth - 18,
+            y: baseY - 92,
+            width: halfWidth * 2 + 36,
+            height: 118
+        };
+    }
+
+    function isInteractionOnScreen(interaction) {
+        return rectsIntersect(getInteractionScreenBounds(interaction), getInteractionViewportBounds());
+    }
 
     function getVisibleInteractions(focusChunkX, focusChunkY) {
         const result = [];
@@ -10,7 +79,11 @@
                 const chunk = window.Game.state.loadedChunks[`${chunkX},${chunkY}`];
 
                 if (chunk && Array.isArray(chunk.interactions)) {
-                    result.push(...chunk.interactions);
+                    chunk.interactions.forEach((interaction) => {
+                        if (isInteractionOnScreen(interaction)) {
+                            result.push(interaction);
+                        }
+                    });
                 }
             }
         }
@@ -1180,7 +1253,9 @@
         }
 
         const { tileHeight } = window.Game.config;
-        const { x: screenX, y: screenY } = window.Game.systems.camera.isoToScreen(interaction.worldX, interaction.worldY);
+        fillScreenPoint(interaction.worldX, interaction.worldY, interactionScreenPointBuffer);
+        const screenX = interactionScreenPointBuffer.x;
+        const screenY = interactionScreenPointBuffer.y;
         const baseY = screenY + tileHeight / 2 + 2;
         const isActive = window.Game.state.activeInteractionId === interaction.id;
         const resolved = isInteractionResolved(interaction);
@@ -1194,7 +1269,11 @@
             return;
         }
 
-        if (interaction.kind === 'artisan') {
+        if (
+            interaction.kind === 'artisan'
+            || interaction.kind === 'craft_merchant'
+            || interaction.kind === 'station_keeper'
+        ) {
             drawArtisan(screenX, baseY, resolved);
             return;
         }
@@ -1260,20 +1339,36 @@
         return Boolean(activeHouseId && interaction.houseId === activeHouseId);
     }
 
-    function drawInteractions(focusChunkX, focusChunkY, options = {}) {
+    function collectVisibleInteractions(focusChunkX, focusChunkY, options = {}) {
         const {
             activeHouseId = null,
             minDepthExclusive = -Infinity,
             maxDepthInclusive = Infinity
         } = options;
 
-        getVisibleInteractions(focusChunkX, focusChunkY)
+        return getVisibleInteractions(focusChunkX, focusChunkY)
             .filter((interaction) => shouldRenderInteraction(interaction, activeHouseId))
-            .filter((interaction) => interaction.renderDepth > minDepthExclusive && interaction.renderDepth <= maxDepthInclusive)
-            .forEach(drawInteraction);
+            .filter((interaction) => interaction.renderDepth > minDepthExclusive && interaction.renderDepth <= maxDepthInclusive);
+    }
+
+    function drawInteractionList(interactions = []) {
+        interactions.forEach(drawInteraction);
+    }
+
+    function drawInteractions(focusChunkX, focusChunkY, options = {}) {
+        const perf = window.Game.systems.perf || null;
+        const visibleInteractions = collectVisibleInteractions(focusChunkX, focusChunkY, options);
+
+        if (perf && typeof perf.incrementFrameStat === 'function') {
+            perf.incrementFrameStat('interactionsDrawn', visibleInteractions.length);
+        }
+
+        drawInteractionList(visibleInteractions);
     }
 
     Object.assign(interactionRenderer, {
+        collectVisibleInteractions,
+        drawInteractionList,
         drawInteractions
     });
 })();

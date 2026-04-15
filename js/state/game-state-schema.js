@@ -1,6 +1,6 @@
 (() => {
     const stateSchema = window.Game.systems.stateSchema = window.Game.systems.stateSchema || {};
-    const SAVE_VERSION = 9;
+    const SAVE_VERSION = 10;
 
     function isPlainObject(value) {
         return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -115,7 +115,8 @@
                 inventory: createStarterInventory(),
                 unlockedInventorySlots: 4,
                 selectedInventorySlot: null,
-                stepsSinceAutoRest: 30
+                stepsSinceAutoRest: 30,
+                boatTraversalState: null
             },
             craftingState: createDefaultCraftingState(),
             world: {
@@ -166,6 +167,7 @@
                 routeTotalCost: 0,
                 routePreviewLength: 0,
                 routePreviewTotalCost: 0,
+                routePreviewIsExact: true,
                 selectedWorldTile: null,
                 selectedWorldInteractionId: null,
                 activeItemEffects: [],
@@ -231,7 +233,10 @@
                     : defaults.player.selectedInventorySlot,
                 stepsSinceAutoRest: typeof state.stepsSinceAutoRest === 'number'
                     ? state.stepsSinceAutoRest
-                    : defaults.player.stepsSinceAutoRest
+                    : defaults.player.stepsSinceAutoRest,
+                boatTraversalState: state.boatTraversalState
+                    ? cloneValue(state.boatTraversalState)
+                    : defaults.player.boatTraversalState
             },
             craftingState: mergeWithDefaults(
                 defaults.craftingState,
@@ -336,6 +341,9 @@
                 routePreviewTotalCost: typeof state.routePreviewTotalCost === 'number'
                     ? state.routePreviewTotalCost
                     : defaults.runtime.routePreviewTotalCost,
+                routePreviewIsExact: typeof state.routePreviewIsExact === 'boolean'
+                    ? state.routePreviewIsExact
+                    : defaults.runtime.routePreviewIsExact,
                 selectedWorldTile: state.selectedWorldTile ? cloneValue(state.selectedWorldTile) : defaults.runtime.selectedWorldTile,
                 selectedWorldInteractionId: typeof state.selectedWorldInteractionId === 'string'
                     ? state.selectedWorldInteractionId
@@ -394,6 +402,7 @@
             unlockedInventorySlots: normalized.player.unlockedInventorySlots,
             selectedInventorySlot: normalized.player.selectedInventorySlot,
             stepsSinceAutoRest: normalized.player.stepsSinceAutoRest,
+            boatTraversalState: normalized.player.boatTraversalState,
             craftingState: normalized.craftingState,
             currentIslandIndex: normalized.world.currentIslandIndex,
             visitedIslandIds: normalized.world.visitedIslandIds,
@@ -435,6 +444,7 @@
             routeTotalCost: normalized.runtime.routeTotalCost,
             routePreviewLength: normalized.runtime.routePreviewLength,
             routePreviewTotalCost: normalized.runtime.routePreviewTotalCost,
+            routePreviewIsExact: normalized.runtime.routePreviewIsExact,
             selectedWorldTile: normalized.runtime.selectedWorldTile,
             selectedWorldInteractionId: normalized.runtime.selectedWorldInteractionId,
             isMoving: normalized.runtime.isMoving,

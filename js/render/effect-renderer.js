@@ -1,17 +1,37 @@
 (() => {
     const game = window.Game;
     const effectRenderer = game.systems.effectRenderer = game.systems.effectRenderer || {};
+    const effectScreenPointBuffer = { x: 0, y: 0 };
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
     }
 
+    function fillScreenPoint(x, y, out) {
+        const camera = game.systems.camera || null;
+
+        if (camera && typeof camera.isoToScreenTo === 'function') {
+            return camera.isoToScreenTo(x, y, out);
+        }
+
+        const point = camera && typeof camera.isoToScreen === 'function'
+            ? camera.isoToScreen(x, y)
+            : null;
+
+        out.x = point ? point.x : 0;
+        out.y = point ? point.y : 0;
+        return out;
+    }
+
     function drawBurstChest(effect, progress) {
         const { tileHeight } = game.config;
-        const { x: screenX, y: screenY } = game.systems.camera.isoToScreen(
+        fillScreenPoint(
             effect.interaction.worldX,
-            effect.interaction.worldY
+            effect.interaction.worldY,
+            effectScreenPointBuffer
         );
+        const screenX = effectScreenPointBuffer.x;
+        const screenY = effectScreenPointBuffer.y;
         const baseY = screenY + tileHeight / 2 + 2 - progress * 10;
         const alpha = 1 - progress;
         const scale = 1 - progress * 0.45;
@@ -69,10 +89,13 @@
         const drop = effect.drop;
         const label = getRewardLabel(drop);
         const palette = getRewardPalette(drop);
-        const { x: screenX, y: screenY } = game.systems.camera.isoToScreen(
+        fillScreenPoint(
             effect.interaction.worldX,
-            effect.interaction.worldY
+            effect.interaction.worldY,
+            effectScreenPointBuffer
         );
+        const screenX = effectScreenPointBuffer.x;
+        const screenY = effectScreenPointBuffer.y;
         const drawX = screenX + (effect.driftX || 0);
         const drawY = screenY - 26 - progress * 34;
         const alpha = clamp(progress < 0.2 ? progress / 0.2 : (1 - progress) / 0.8, 0, 1);

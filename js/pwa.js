@@ -179,10 +179,38 @@
         }
     }
 
+    function scheduleDeferredCallback(callback, timeout = 2500) {
+        if (typeof callback !== 'function') {
+            return;
+        }
+
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(callback, { timeout });
+            return;
+        }
+
+        window.setTimeout(callback, timeout);
+    }
+
+    function scheduleServiceWorkerRegistration() {
+        const register = () => {
+            scheduleDeferredCallback(() => {
+                registerServiceWorker();
+            });
+        };
+
+        if (document.readyState === 'complete') {
+            register();
+            return;
+        }
+
+        window.addEventListener('load', register, { once: true });
+    }
+
     function initializePwa() {
         bindEvents();
         refreshUi();
-        registerServiceWorker();
+        scheduleServiceWorkerRegistration();
     }
 
     if (document.readyState === 'loading') {

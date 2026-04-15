@@ -315,6 +315,155 @@ button:focus-visible,
         var(--panel-surface);
 }
 
+.map-quest-button {
+    display: none;
+}
+
+.hud-card--production-goals {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 42%),
+        var(--panel-surface);
+}
+
+.production-goals {
+    display: grid;
+    gap: 10px;
+}
+
+.production-goals__summary {
+    color: rgba(226, 243, 252, 0.8);
+}
+
+.production-goals__item {
+    display: grid;
+    gap: 10px;
+    padding: 12px 12px 11px;
+    border-radius: 18px;
+    border: 1px solid rgba(188, 223, 236, 0.16);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 62%),
+        rgba(8, 20, 31, 0.46);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.production-goals__item--mandatory {
+    border-color: rgba(240, 211, 134, 0.4);
+}
+
+.production-goals__item--recommended {
+    border-color: rgba(130, 212, 186, 0.28);
+}
+
+.production-goals__item--active {
+    border-color: rgba(129, 187, 237, 0.34);
+}
+
+.production-goals__item--complete {
+    border-color: rgba(166, 199, 219, 0.24);
+}
+
+.production-goals__item--status-urgent {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 0 0 1px rgba(225, 149, 118, 0.18);
+}
+
+.production-goals__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.production-goals__title {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.1;
+    color: #f3fbff;
+}
+
+.production-goals__badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.production-goals__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.production-goals__badge--priority {
+    color: rgba(235, 247, 253, 0.84);
+    background: rgba(151, 193, 216, 0.16);
+}
+
+.production-goals__item--mandatory .production-goals__badge--priority {
+    color: #fff5cf;
+    background: rgba(205, 154, 64, 0.22);
+}
+
+.production-goals__item--recommended .production-goals__badge--priority {
+    color: #d6fff1;
+    background: rgba(64, 154, 126, 0.22);
+}
+
+.production-goals__item--active .production-goals__badge--priority {
+    color: #ddf1ff;
+    background: rgba(77, 133, 188, 0.24);
+}
+
+.production-goals__item--complete .production-goals__badge--priority {
+    color: #edf8ff;
+    background: rgba(118, 145, 163, 0.2);
+}
+
+.production-goals__badge--status {
+    color: #eff8ff;
+    background: rgba(216, 236, 247, 0.12);
+}
+
+.production-goals__item--status-ready .production-goals__badge--status {
+    color: #e2fff0;
+    background: rgba(75, 156, 122, 0.24);
+}
+
+.production-goals__item--status-craftable .production-goals__badge--status,
+.production-goals__item--status-active .production-goals__badge--status {
+    color: #edf7ff;
+    background: rgba(86, 136, 184, 0.24);
+}
+
+.production-goals__item--status-assembling .production-goals__badge--status,
+.production-goals__item--status-later .production-goals__badge--status {
+    color: #fff3d8;
+    background: rgba(174, 128, 54, 0.22);
+}
+
+.production-goals__item--status-urgent .production-goals__badge--status,
+.production-goals__item--status-missing .production-goals__badge--status {
+    color: #ffe5dd;
+    background: rgba(183, 92, 65, 0.26);
+}
+
+.production-goals__detail {
+    margin: 0;
+    color: rgba(224, 239, 247, 0.82);
+    font-size: 0.88rem;
+    line-height: 1.42;
+}
+
 .hud-panel--left .hud-title {
     font-size: clamp(1.54rem, 1.62vw, 2.06rem);
 }
@@ -665,15 +814,15 @@ button:focus-visible,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 72px;
-    min-height: 32px;
-    padding: 6px 10px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.26);
-    border-radius: 999px;
+    border-radius: 50%;
     background: rgba(5, 25, 45, 0.36);
     color: #f7fbff;
     font: inherit;
-    font-size: 0.72rem;
+    font-size: 1rem;
     font-weight: 700;
     line-height: 1;
     cursor: pointer;
@@ -701,6 +850,13 @@ button:focus-visible,
     max-width: min(355px, 30%);
     font: 12px/1.52 Consolas, "Courier New", monospace;
     white-space: pre-line;
+}
+
+.overlay-card--perf {
+    z-index: 8;
+    max-height: min(440px, calc(100vh - 36px));
+    overflow: auto;
+    pointer-events: auto;
 }
 
 .pause-overlay {
@@ -760,13 +916,14 @@ button:focus-visible,
 }
 
 .inventory-detail-overlay {
+    --inventory-detail-safe-bottom: clamp(72px, calc(var(--scene-safe-bottom) * 0.55), 180px);
     position: fixed;
     inset: 0;
     z-index: 110;
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 24px 24px var(--inventory-detail-safe-bottom);
     background: rgba(6, 20, 42, 0.46);
     backdrop-filter: blur(7px);
 }
@@ -789,9 +946,10 @@ button:focus-visible,
     display: grid;
     gap: 18px;
     width: min(920px, 100%);
-    max-height: min(84vh, 960px);
+    max-height: min(calc(100vh - var(--inventory-detail-safe-bottom) - 32px), 960px);
     overflow-y: auto;
     padding: 28px 30px;
+    transform: translateY(calc(var(--bottom-bar-height) * -0.08));
     border-radius: 30px;
     border: 2px solid rgba(255, 255, 255, 0.18);
     background:
@@ -1158,6 +1316,7 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
 }
 
 .merchant-panel,
+.station-panel,
 .map-panel {
     color: var(--text-primary);
     background:
@@ -1170,7 +1329,8 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
         inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
-.merchant-panel {
+.merchant-panel,
+.station-panel {
     position: absolute;
     right: var(--scene-safe-right);
     bottom: var(--scene-safe-bottom);
@@ -1185,11 +1345,17 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     overflow: hidden;
 }
 
-.merchant-panel[hidden] {
+.station-panel {
+    width: min(760px, calc(100% - 36px));
+}
+
+.merchant-panel[hidden],
+.station-panel[hidden] {
     display: none;
 }
 
 .merchant-panel__header,
+.station-panel__header,
 .map-panel__header {
     display: flex;
     align-items: flex-start;
@@ -1203,6 +1369,40 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     gap: 4px;
     flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.map-panel__mode-controls {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.map-panel__mode-controls[hidden] {
+    display: none !important;
+}
+
+.map-panel__mode-button {
+    min-width: 0;
+    min-height: 34px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow:
+        0 6px 0 rgba(11, 47, 89, 0.18),
+        0 8px 16px rgba(3, 17, 44, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.map-panel__mode-button.is-active {
+    background: linear-gradient(180deg, #efffd6 0%, #b8ea8a 70%, #68ba56 100%);
+    box-shadow:
+        0 8px 0 rgba(21, 75, 36, 0.22),
+        0 12px 22px rgba(41, 104, 47, 0.2),
+        0 0 0 2px rgba(226, 252, 182, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 
 .map-panel__zoom {
@@ -1291,7 +1491,8 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
 }
 
 #mapPanelClose::before,
-#merchantPanelClose::before {
+#merchantPanelClose::before,
+#stationPanelClose::before {
     content: "\00D7";
     position: absolute;
     top: 50%;
@@ -1305,7 +1506,9 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
 }
 
 .merchant-panel__summary,
-.merchant-panel__gold {
+.merchant-panel__gold,
+.station-panel__summary,
+.station-panel__meta {
     margin: 0;
 }
 
@@ -1314,7 +1517,90 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     font-weight: 800;
 }
 
-.merchant-panel__content {
+.station-panel__meta {
+    color: rgba(238, 247, 255, 0.82);
+}
+
+.station-panel__filters {
+    display: grid;
+    gap: 10px;
+}
+
+.station-panel__filter-section {
+    display: grid;
+    gap: 6px;
+}
+
+.station-panel__filter-title,
+.station-panel__results-meta {
+    margin: 0;
+}
+
+.station-panel__filter-title {
+    color: rgba(238, 247, 255, 0.76);
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.station-panel__filter-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hud-button.station-panel__filter-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    white-space: nowrap;
+}
+
+.station-panel__filter-button--active {
+    background: linear-gradient(180deg, #e9fff1 0%, #a7efbd 72%, #67b785 100%);
+    color: #19502d;
+}
+
+.station-panel__filter-button--inactive:not(.station-panel__filter-button--active) {
+    opacity: 0.72;
+}
+
+.station-panel__filter-button-label,
+.station-panel__filter-button-count {
+    display: block;
+    line-height: 1;
+}
+
+.station-panel__filter-button-label {
+    font-size: 0.72rem;
+    font-weight: 900;
+}
+
+.station-panel__filter-button-count {
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(7, 41, 73, 0.12);
+    font-size: 0.64rem;
+    font-weight: 900;
+}
+
+.station-panel__filter-button--active .station-panel__filter-button-count {
+    background: rgba(17, 81, 44, 0.14);
+}
+
+.station-panel__results-meta {
+    color: rgba(238, 247, 255, 0.82);
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.merchant-panel__content,
+.station-panel__content {
     display: grid;
     gap: 14px;
     min-width: 0;
@@ -1446,6 +1732,13 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     line-height: 1.2;
 }
 
+.map-panel__hover-line--detail {
+    color: rgba(20, 73, 102, 0.82);
+    font-size: 0.73rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
 .map-panel__legend {
     display: flex;
     flex-wrap: wrap;
@@ -1498,9 +1791,17 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     background: #d78260;
 }
 
+.map-legend__swatch--station {
+    background: #8fcfbf;
+}
+
 .merchant-panel__description {
     display: grid;
     gap: 8px;
+}
+
+.station-panel__craft {
+    background: rgba(255, 255, 255, 0.88);
 }
 
 .merchant-section .panel-copy,
@@ -2140,6 +2441,182 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
     opacity: 0.84;
 }
 
+.station-panel__recipe-list {
+    display: grid;
+    gap: 10px;
+}
+
+.station-panel__recipe-card {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(20, 79, 126, 0.14);
+}
+
+.station-panel__recipe-card--ready {
+    background: linear-gradient(180deg, rgba(241, 253, 241, 0.96), rgba(255, 255, 255, 0.92));
+    border-color: rgba(46, 121, 79, 0.22);
+}
+
+.station-panel__recipe-card--locked {
+    background: rgba(250, 252, 255, 0.88);
+}
+
+.station-panel__recipe-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.station-panel__recipe-title {
+    margin: 0;
+    color: rgba(7, 52, 93, 0.95);
+    font-size: 0.9rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.station-panel__recipe-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(20, 79, 126, 0.1);
+    color: rgba(14, 69, 112, 0.86);
+    font-size: 0.66rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.station-panel__recipe-card--ready .station-panel__recipe-badge {
+    background: rgba(67, 164, 100, 0.16);
+    color: rgba(24, 99, 57, 0.9);
+}
+
+.station-panel__recipe-summary,
+.station-panel__recipe-requirements-label {
+    margin: 0;
+}
+
+.station-panel__recipe-summary {
+    color: rgba(8, 43, 81, 0.74);
+    font-size: 0.75rem;
+    line-height: 1.45;
+}
+
+.station-panel__recipe-facts {
+    display: grid;
+    gap: 8px;
+}
+
+.station-panel__recipe-fact {
+    display: grid;
+    gap: 4px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(232, 242, 250, 0.82);
+}
+
+.station-panel__recipe-fact-label,
+.station-panel__recipe-fact-value {
+    display: block;
+}
+
+.station-panel__recipe-fact-label {
+    color: rgba(14, 69, 112, 0.72);
+    font-size: 0.64rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.station-panel__recipe-fact-value {
+    color: rgba(8, 43, 81, 0.9);
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+.station-panel__recipe-requirements-label {
+    color: rgba(7, 52, 93, 0.82);
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.station-panel__recipe-requirements {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.station-panel__requirement {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 7px 9px;
+    border-radius: 12px;
+    background: rgba(234, 244, 252, 0.74);
+}
+
+.station-panel__requirement--ok {
+    background: rgba(228, 248, 233, 0.86);
+}
+
+.station-panel__requirement--missing {
+    background: rgba(250, 239, 232, 0.92);
+}
+
+.station-panel__requirement-label,
+.station-panel__requirement-count {
+    display: block;
+    min-width: 0;
+}
+
+.station-panel__requirement-label {
+    color: rgba(8, 43, 81, 0.86);
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.station-panel__requirement-count {
+    color: rgba(14, 69, 112, 0.82);
+    font-size: 0.7rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.station-panel__requirement--missing .station-panel__requirement-count {
+    color: rgba(148, 67, 44, 0.92);
+}
+
+.station-panel__recipe-button {
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    text-align: center;
+}
+
+@media (min-width: 980px) {
+    .station-panel__recipe-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+}
+
 #inventoryCardBody {
     max-height: min(38vh, 360px);
     overflow-y: auto;
@@ -2249,6 +2726,53 @@ body.is-defeat .condition-overlay__death:not([hidden]) {
 
 .quest-card {
     padding-top: 18px;
+}
+
+.quest-card__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.quest-card__tab {
+    min-height: 32px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: rgba(10, 22, 33, 0.48);
+    color: rgba(226, 243, 252, 0.9);
+    border: 1px solid rgba(188, 223, 236, 0.16);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 6px 12px rgba(3, 16, 32, 0.28);
+}
+
+.quest-card__tab.is-active {
+    background: linear-gradient(180deg, rgba(235, 255, 224, 0.96), rgba(168, 224, 178, 0.88));
+    color: rgba(13, 46, 24, 0.92);
+    border-color: rgba(126, 195, 135, 0.5);
+    box-shadow:
+        0 10px 18px rgba(15, 66, 30, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.quest-card__panel[hidden] {
+    display: none !important;
+}
+
+.quest-card__panel {
+    max-height: min(56vh, 620px);
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.quest-card__panel .quest-list {
+    max-height: none;
+    padding-right: 0;
 }
 
 .quest-list {
@@ -2843,6 +3367,7 @@ body.is-paused .scene-frame {
 body.is-paused .hud-panel,
 body.is-paused .bottom-bar,
 body.is-paused .merchant-panel,
+body.is-paused .station-panel,
 body.is-paused .map-panel,
 body.is-paused .mobile-hud,
 body.is-paused .mobile-modal,
@@ -2976,7 +3501,8 @@ body.is-defeat #statusOverlayTitle {
         min-width: 0;
     }
 
-    .merchant-panel {
+    .merchant-panel,
+    .station-panel {
         width: min(440px, calc(100vw - var(--scene-safe-left) - var(--scene-safe-right)));
     }
 
@@ -3072,6 +3598,7 @@ body.is-defeat #statusOverlayTitle {
         --overlay-gap: 10px;
         --mobile-topbar-height: 72px;
         --mobile-action-rack-height: 72px;
+        --mobile-action-button-size: clamp(54px, 16vw, 64px);
         --mobile-walk-size: clamp(108px, 30vw, 124px);
         --mobile-control-gap: 12px;
         --mobile-toolbar-button-size: 48px;
@@ -3323,6 +3850,7 @@ body.is-defeat #statusOverlayTitle {
         grid-auto-flow: column;
         grid-auto-columns: minmax(0, 1fr);
         align-items: end;
+        justify-items: center;
         gap: 10px;
         width: 100%;
         min-height: var(--mobile-action-rack-height);
@@ -3362,10 +3890,13 @@ body.is-defeat #statusOverlayTitle {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100%;
+        width: min(100%, var(--mobile-action-button-size));
+        max-width: var(--mobile-action-button-size);
         min-width: 0;
+        justify-self: center;
+        align-self: end;
         aspect-ratio: 1;
-        min-height: 52px;
+        min-height: 0;
         padding: 0;
         border-radius: 20px;
         background: linear-gradient(180deg, var(--mobile-quick-bg-start) 0%, var(--mobile-quick-bg-mid) 72%, var(--mobile-quick-bg-end) 100%);
@@ -3586,10 +4117,13 @@ body.is-defeat #statusOverlayTitle {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100%;
+        width: min(100%, var(--mobile-action-button-size));
+        max-width: var(--mobile-action-button-size);
         min-width: 0;
+        justify-self: center;
+        align-self: end;
         aspect-ratio: 1;
-        min-height: 52px;
+        min-height: 0;
         padding: 0;
         border-radius: 20px;
         background: linear-gradient(180deg, rgba(255, 252, 244, 0.96), rgba(222, 236, 247, 0.94));
@@ -3644,6 +4178,14 @@ body.is-defeat #statusOverlayTitle {
             0 6px 0 rgba(48, 99, 154, 0.16),
             0 0 0 2px rgba(248, 250, 255, 0.72),
             inset 0 1px 0 rgba(255, 255, 255, 0.62);
+    }
+
+    .map-quest-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 10px;
     }
 
     .mobile-modal {
@@ -3979,7 +4521,8 @@ body.is-defeat #statusOverlayTitle {
     }
 
     .map-panel,
-    .merchant-panel {
+    .merchant-panel,
+    .station-panel {
         left: 10px;
         right: 10px;
     }
@@ -3990,6 +4533,22 @@ body.is-defeat #statusOverlayTitle {
         padding: 16px;
     }
 
+    .map-panel__actions {
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .map-panel__mode-controls:not([hidden]) {
+        display: inline-flex;
+        max-width: 100%;
+    }
+
+    .map-panel__mode-button {
+        min-height: 36px;
+        padding: 7px 11px;
+        font-size: 0.72rem;
+    }
+
     .map-panel__island-badge {
         top: 14px;
         left: 14px;
@@ -3997,7 +4556,8 @@ body.is-defeat #statusOverlayTitle {
         font-size: 0.76rem;
     }
 
-    .merchant-panel {
+    .merchant-panel,
+    .station-panel {
         top: auto;
         bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
         width: auto;

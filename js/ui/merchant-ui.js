@@ -2,6 +2,7 @@
     const game = window.Game;
     const merchantUi = game.systems.merchantUi = game.systems.merchantUi || {};
     const bridge = game.systems.uiBridge;
+    let lastMerchantPanelSignature = null;
 
     if (!bridge) {
         return;
@@ -39,7 +40,18 @@
     }
 
     function isSupportedEncounter(encounter) {
-        return Boolean(encounter && (encounter.kind === 'merchant' || encounter.kind === 'artisan'));
+        return Boolean(encounter && (
+            encounter.kind === 'merchant'
+            || encounter.kind === 'craft_merchant'
+            || encounter.kind === 'artisan'
+        ));
+    }
+
+    function isCraftMerchantEncounter(encounter) {
+        return Boolean(encounter && (
+            encounter.kind === 'craft_merchant'
+            || encounter.kind === 'artisan'
+        ));
     }
 
     function getEncounterForSource(source) {
@@ -74,6 +86,7 @@
         const ui = getUiState();
         const elements = bridge.getElements();
         ui.openMerchantHouseId = null;
+        lastMerchantPanelSignature = null;
 
         if (elements.merchantPanel) {
             elements.merchantPanel.hidden = true;
@@ -667,6 +680,135 @@
         `;
     }
 
+    function buildMerchantInventorySignature(inventoryRuntime) {
+        return inventoryRuntime.getInventory()
+            .slice(0, inventoryRuntime.getUnlockedInventorySlots())
+            .map((item) => inventoryRuntime.normalizeInventoryItem(item))
+            .filter(Boolean)
+            .map((item) => `${item.id}:${Math.max(1, item.quantity || 1)}`)
+            .join('|');
+    }
+
+    function buildMerchantPanelSignature(source, liveEncounter, quest, selectedItemId, currentGold, currentSlots, slotCap, inventoryRuntime) {
+        const courierRuntime = getCourierRuntime();
+        const currentAdvanceCount = courierRuntime && typeof courierRuntime.getCurrentTimeAdvanceCount === 'function'
+            ? courierRuntime.getCurrentTimeAdvanceCount()
+            : 0;
+        const courierDashboard = courierRuntime && typeof courierRuntime.getMerchantCourierDashboard === 'function'
+            ? courierRuntime.getMerchantCourierDashboard(source)
+            : null;
+
+        return JSON.stringify({
+            houseId: source && source.houseId ? source.houseId : 'none',
+            encounter: {
+                kind: liveEncounter ? liveEncounter.kind : 'none',
+                label: liveEncounter && liveEncounter.label ? liveEncounter.label : '',
+                summary: liveEncounter && liveEncounter.summary ? liveEncounter.summary : '',
+                islandIndex: liveEncounter && Number.isFinite(liveEncounter.islandIndex) ? liveEncounter.islandIndex : 0,
+                stock: Array.isArray(liveEncounter && liveEncounter.stock)
+                    ? liveEncounter.stock.map((stockItem) => ({
+                        itemId: stockItem.itemId,
+                        label: stockItem.label,
+                        price: stockItem.price,
+                        quantity: stockItem.quantity
+                    }))
+                    : [],
+                adviceOffers: Array.isArray(liveEncounter && liveEncounter.adviceOffers)
+                    ? liveEncounter.adviceOffers.map((offer) => ({
+                        id: offer.id,
+                        purchased: Boolean(offer.purchased),
+                        price: offer.price,
+                        title: offer.title,
+                        text: offer.text,
+                        hook: offer.hook,
+                        islandWindowLabel: offer.islandWindowLabel
+                    }))
+                    : []
+            },
+            quest: quest ? {
+                questId: quest.questId || '',
+                label: quest.label || '',
+                completed: Boolean(quest.completed),
+                quantity: quest.quantity || 0,
+                ownedAmount: quest.ownedAmount || 0,
+                rewardGold: quest.rewardGold || 0,
+                rewardItemLabel: quest.rewardItemLabel || '',
+                rewardItemQuantity: quest.rewardItemQuantity || 0,
+                progressCurrent: quest.progressCurrent || 0,
+                progressRequired: quest.progressRequired || 0,
+                progressHeadline: quest.progressHeadline || '',
+                requirementStatusLabel: quest.requirementStatusLabel || '',
+                unlockPreviewLabel: quest.unlockPreviewLabel || '',
+                courierStatus: quest.courierStatus || '',
+                courierReturnAdvanceCount: quest.courierReturnAdvanceCount || 0,
+                courierResultLabel: quest.courierResultLabel || '',
+                courierTierLabel: quest.courierTierLabel || '',
+                courierTiers: Array.isArray(quest.courierTiers)
+                    ? quest.courierTiers.map((tier) => ({
+                        id: tier.id,
+                        fee: tier.fee,
+                        disabled: Boolean(tier.disabled),
+                        disabledReason: tier.disabledReason || ''
+                    }))
+                    : []
+            } : null,
+            selectedItemId: selectedItemId || '',
+            currentGold,
+            currentSlots,
+            slotCap,
+            currentAdvanceCount,
+            courierDashboard: courierDashboard ? {
+                eligibleQuests: Array.isArray(courierDashboard.eligibleQuests)
+                    ? courierDashboard.eligibleQuests.map((eligibleQuest) => ({
+                        questId: eligibleQuest.questId,
+                        progressRequired: eligibleQuest.progressRequired,
+                        ownedAmount: eligibleQuest.ownedAmount,
+                        courierStatus: eligibleQuest.courierStatus || '',
+                        courierReturnAdvanceCount: eligibleQuest.courierReturnAdvanceCount || 0
+                    }))
+                    : [],
+                activeJobs: Array.isArray(courierDashboard.activeJobs)
+                    ? courierDashboard.activeJobs.map((job) => ({
+                        jobId: job.jobId,
+                        etaLabel: job.etaLabel || '',
+                        questLabel: job.questLabel || '',
+                        targetSourceLabel: job.targetSourceLabel || '',
+                        returnAdvanceCount: job.returnAdvanceCount || 0
+                    }))
+                    : [],
+                recentResults: Array.isArray(courierDashboard.recentResults)
+                    ? courierDashboard.recentResults.map((result) => ({
+                        resultId: result.resultId,
+                        resultCode: result.resultCode || '',
+                        deliveredRewardGold: result.deliveredRewardGold || 0,
+                        deliveredRewardItemId: result.deliveredRewardItemId || '',
+                        deliveredRewardItemQuantity: result.deliveredRewardItemQuantity || 0
+                    }))
+                    : []
+            } : null,
+            inventory: buildMerchantInventorySignature(inventoryRuntime)
+        });
+    }
+
+    function buildMerchantPanelContent(source, liveEncounter, quest, selectedDescription, selectedItemId, currentGold, currentSlots, slotCap, inventoryRuntime, pricing, shopRuntime) {
+        if (isCraftMerchantEncounter(liveEncounter)) {
+            return `
+                ${buildDescriptionSection(selectedDescription)}
+                ${buildArtisanQuestSection(quest, currentSlots, slotCap)}
+                ${buildArtisanInventorySection(selectedItemId, inventoryRuntime)}
+            `;
+        }
+
+        return `
+            ${buildDescriptionSection(selectedDescription)}
+            ${buildMerchantAdviceSection(liveEncounter, currentGold)}
+            ${buildMerchantQuestSection(quest, selectedItemId, inventoryRuntime)}
+            ${buildCourierSection(source)}
+            ${buildStockSection(liveEncounter, selectedItemId)}
+            ${buildSellSection(liveEncounter, selectedItemId, inventoryRuntime, pricing, shopRuntime)}
+        `;
+    }
+
     function renderMerchantPanel(activeInteraction = game.state.activeInteraction) {
         const elements = bridge.getElements();
         const inventoryRuntime = getInventoryRuntime();
@@ -704,31 +846,42 @@
         const slotCap = bagUpgradeRuntime && typeof bagUpgradeRuntime.getBagSlotCap === 'function'
             ? bagUpgradeRuntime.getBagSlotCap()
             : 10;
+        const panelSignature = buildMerchantPanelSignature(
+            source,
+            liveEncounter,
+            quest,
+            selectedItemId,
+            currentGold,
+            currentSlots,
+            slotCap,
+            inventoryRuntime
+        );
 
         elements.merchantPanel.hidden = false;
-        elements.merchantPanelTitle.textContent = liveEncounter.label || (liveEncounter.kind === 'artisan' ? 'Ремесленник' : 'Торговец');
+        elements.merchantPanelTitle.textContent = liveEncounter.label || (isCraftMerchantEncounter(liveEncounter) ? 'Ремесленный торговец' : 'Торговец');
         elements.merchantPanelSummary.textContent = liveEncounter.summary || '';
-        elements.merchantPanelGold.textContent = liveEncounter.kind === 'artisan'
+        elements.merchantPanelGold.textContent = isCraftMerchantEncounter(liveEncounter)
             ? `Слоты сумки: ${currentSlots}/${slotCap}`
             : `Твоё золото: ${currentGold}`;
 
-        if (liveEncounter.kind === 'artisan') {
-            elements.merchantPanelContent.innerHTML = `
-                ${buildDescriptionSection(selectedDescription)}
-                ${buildArtisanQuestSection(quest, currentSlots, slotCap)}
-                ${buildArtisanInventorySection(selectedItemId, inventoryRuntime)}
-            `;
+        if (panelSignature === lastMerchantPanelSignature) {
             return;
         }
 
-        elements.merchantPanelContent.innerHTML = `
-            ${buildDescriptionSection(selectedDescription)}
-            ${buildMerchantAdviceSection(liveEncounter, currentGold)}
-            ${buildMerchantQuestSection(quest, selectedItemId, inventoryRuntime)}
-            ${buildCourierSection(source)}
-            ${buildStockSection(liveEncounter, selectedItemId)}
-            ${buildSellSection(liveEncounter, selectedItemId, inventoryRuntime, pricing, shopRuntime)}
-        `;
+        elements.merchantPanelContent.innerHTML = buildMerchantPanelContent(
+            source,
+            liveEncounter,
+            quest,
+            selectedDescription,
+            selectedItemId,
+            currentGold,
+            currentSlots,
+            slotCap,
+            inventoryRuntime,
+            pricing,
+            shopRuntime
+        );
+        lastMerchantPanelSignature = panelSignature;
     }
 
     function openMerchantPanel(source, options = {}) {
@@ -739,7 +892,7 @@
 
         if (!source || !encounter) {
             if (!options.silent) {
-                bridge.setActionMessage('Рядом нет торговца или ремесленника.');
+                bridge.setActionMessage('Рядом нет торговца или ремесленной станции.');
                 bridge.renderAfterStateChange();
             }
             return false;
@@ -749,7 +902,7 @@
             shopRuntime.prepareMerchantEncounter(source);
         }
 
-        if (encounter.kind === 'artisan' && encounter.quest && questRuntime && typeof questRuntime.acceptQuest === 'function') {
+        if (isCraftMerchantEncounter(encounter) && encounter.quest && questRuntime && typeof questRuntime.acceptQuest === 'function') {
             questRuntime.acceptQuest(source, encounter.quest);
             questRuntime.getQuestProgress(source, encounter.quest);
         }
@@ -758,7 +911,7 @@
 
         if (!options.silent) {
             bridge.setActionMessage(
-                encounter.kind === 'artisan'
+                isCraftMerchantEncounter(encounter)
                     ? `${encounter.label}: открыт заказ на расширение сумки.`
                     : `${encounter.label}: открыто меню торговли.`
             );

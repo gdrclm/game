@@ -1,40 +1,141 @@
-function drawRoute() {
+const screenViewportBoundsBuffer = { x: 0, y: 0, width: 0, height: 0 };
+const routeScreenPointBuffer = { x: 0, y: 0 };
+const selectedTileScreenPointBuffer = { x: 0, y: 0 };
+const routeTargetScreenPointBuffer = { x: 0, y: 0 };
+
+function fillScreenPoint(x, y, out) {
+    const camera = window.Game.systems.camera;
+
+    if (camera && typeof camera.isoToScreenTo === 'function') {
+        return camera.isoToScreenTo(x, y, out);
+    }
+
+    const point = camera && typeof camera.isoToScreen === 'function'
+        ? camera.isoToScreen(x, y)
+        : null;
+
+    out.x = point ? point.x : 0;
+    out.y = point ? point.y : 0;
+    return out;
+}
+
+function getScreenViewportBounds() {
     const game = window.Game;
     const { tileWidth, tileHeight } = game.config;
-    const route = game.state.route;
+
+    screenViewportBoundsBuffer.x = -tileWidth * 2;
+    screenViewportBoundsBuffer.y = -tileHeight * 5;
+    screenViewportBoundsBuffer.width = game.canvas.width + tileWidth * 4;
+    screenViewportBoundsBuffer.height = game.canvas.height + tileHeight * 10;
+    return screenViewportBoundsBuffer;
+}
+
+function rectContainsPoint(rect, x, y) {
+    if (!rect) {
+        return false;
+    }
+
+    return (
+        x >= rect.x
+        && x <= (rect.x + rect.width)
+        && y >= rect.y
+        && y <= (rect.y + rect.height)
+    );
+}
+
+function getRouteRenderStride(routeLength) {
+    if (routeLength <= 20) {
+        return 1;
+    }
+
+    if (routeLength <= 36) {
+        return 3;
+    }
+
+    if (routeLength <= 60) {
+        return 4;
+    }
+
+    if (routeLength <= 96) {
+        return 6;
+    }
+
+    return 8;
+}
+
+function drawRouteStep(point, index, options = {}) {
+    const game = window.Game;
+    const { tileWidth, tileHeight } = game.config;
+    fillScreenPoint(point.x, point.y, routeScreenPointBuffer);
+    const screenX = routeScreenPointBuffer.x;
+    const screenY = routeScreenPointBuffer.y;
+    const routeBand = point && point.travelBand ? point.travelBand : 'normal';
+    const bandStyle = game.systems.content.getRouteBandDefinition(routeBand);
+    const showStroke = options.showStroke !== false;
+    const showNumber = options.showNumber === true;
+
+    if (!rectContainsPoint(getScreenViewportBounds(), screenX, screenY + tileHeight / 2)) {
+        return false;
+    }
+
+    game.ctx.save();
+    game.ctx.translate(screenX, screenY);
+    game.ctx.beginPath();
+    game.ctx.moveTo(0, 0);
+    game.ctx.lineTo(tileWidth / 2, tileHeight / 2);
+    game.ctx.lineTo(0, tileHeight);
+    game.ctx.lineTo(-tileWidth / 2, tileHeight / 2);
+    game.ctx.closePath();
+    game.ctx.fillStyle = bandStyle.fillStyle || game.colors.route;
+    game.ctx.fill();
+
+    if (showStroke) {
+        game.ctx.lineWidth = 2;
+        game.ctx.strokeStyle = bandStyle.strokeStyle || '#5b2c06';
+        game.ctx.stroke();
+    }
+
+    if (showNumber && index > 0) {
+        game.ctx.fillStyle = bandStyle.textStyle || '#000';
+        game.ctx.font = '10px Arial';
+        game.ctx.textAlign = 'center';
+        game.ctx.textBaseline = 'middle';
+        game.ctx.fillText(index.toString(), 0, 0);
+    }
+
+    game.ctx.restore();
+    return true;
+}
+
+function drawRoute() {
+    const game = window.Game;
+    const route = Array.isArray(game.state.route) ? game.state.route : [];
 
     if (route.length === 0) {
         return;
     }
 
+    const stride = getRouteRenderStride(route.length);
+    const simplified = stride > 1;
+
     route.forEach((point, index) => {
-        const { x: screenX, y: screenY } = game.systems.camera.isoToScreen(point.x, point.y);
-        const routeBand = point && point.travelBand ? point.travelBand : 'normal';
-        const bandStyle = game.systems.content.getRouteBandDefinition(routeBand);
+        const isStart = index === 0;
+        const isEnd = index === route.length - 1;
+        const isSample = !simplified || isStart || isEnd || index % stride === 0;
 
-        game.ctx.save();
-        game.ctx.translate(screenX, screenY);
-        game.ctx.beginPath();
-        game.ctx.moveTo(0, 0);
-        game.ctx.lineTo(tileWidth / 2, tileHeight / 2);
-        game.ctx.lineTo(0, tileHeight);
-        game.ctx.lineTo(-tileWidth / 2, tileHeight / 2);
-        game.ctx.closePath();
-        game.ctx.fillStyle = bandStyle.fillStyle || game.colors.route;
-        game.ctx.fill();
-        game.ctx.lineWidth = 2;
-        game.ctx.strokeStyle = bandStyle.strokeStyle || '#5b2c06';
-        game.ctx.stroke();
-
-        if (index > 0) {
-            game.ctx.fillStyle = bandStyle.textStyle || '#000';
-            game.ctx.font = '10px Arial';
-            game.ctx.textAlign = 'center';
-            game.ctx.textBaseline = 'middle';
-            game.ctx.fillText(index.toString(), 0, 0);
+        if (!isSample) {
+            return;
         }
 
-        game.ctx.restore();
+        const showStroke = !simplified || isEnd || index % (stride * 2) === 0;
+        const showNumber = !simplified
+            ? index > 0
+            : (isEnd || (index > 0 && index % (stride * 2) === 0));
+
+        drawRouteStep(point, index, {
+            showStroke,
+            showNumber
+        });
     });
 }
 
@@ -47,7 +148,13 @@ function drawSelectedWorldTile() {
     }
 
     const { tileWidth, tileHeight } = game.config;
-    const { x: screenX, y: screenY } = game.systems.camera.isoToScreen(selectedTile.x, selectedTile.y);
+    fillScreenPoint(selectedTile.x, selectedTile.y, selectedTileScreenPointBuffer);
+    const screenX = selectedTileScreenPointBuffer.x;
+    const screenY = selectedTileScreenPointBuffer.y;
+
+    if (!rectContainsPoint(getScreenViewportBounds(), screenX, screenY + tileHeight / 2)) {
+        return;
+    }
 
     game.ctx.save();
     game.ctx.translate(screenX, screenY);
@@ -161,7 +268,9 @@ function drawRouteTargetChip() {
     const target = route[route.length - 1];
     const label = getRouteChipLabel();
     const palette = getRouteChipAccent(route);
-    const targetScreen = game.systems.camera.isoToScreen(target.x, target.y);
+    fillScreenPoint(target.x, target.y, routeTargetScreenPointBuffer);
+    const targetScreenX = routeTargetScreenPointBuffer.x;
+    const targetScreenY = routeTargetScreenPointBuffer.y;
 
     game.ctx.save();
     game.ctx.font = '600 12px Arial';
@@ -172,9 +281,9 @@ function drawRouteTargetChip() {
     const chipHeight = 24;
     const pointerSize = 6;
     const chipWidth = Math.ceil(game.ctx.measureText(label).width) + paddingX * 2;
-    const chipX = Math.max(10, Math.min(targetScreen.x - chipWidth / 2, game.canvas.width - chipWidth - 10));
-    const chipY = Math.max(10, Math.min(targetScreen.y - tileHeight * 0.95 - chipHeight, game.canvas.height - chipHeight - 18));
-    const pointerX = Math.max(chipX + 10, Math.min(targetScreen.x, chipX + chipWidth - 10));
+    const chipX = Math.max(10, Math.min(targetScreenX - chipWidth / 2, game.canvas.width - chipWidth - 10));
+    const chipY = Math.max(10, Math.min(targetScreenY - tileHeight * 0.95 - chipHeight, game.canvas.height - chipHeight - 18));
+    const pointerX = Math.max(chipX + 10, Math.min(targetScreenX, chipX + chipWidth - 10));
 
     drawRoundedRect(game.ctx, chipX, chipY, chipWidth, chipHeight, 11);
     game.ctx.fillStyle = palette.background;
@@ -186,7 +295,7 @@ function drawRouteTargetChip() {
     game.ctx.beginPath();
     game.ctx.moveTo(pointerX - pointerSize, chipY + chipHeight - 1);
     game.ctx.lineTo(pointerX + pointerSize, chipY + chipHeight - 1);
-    game.ctx.lineTo(targetScreen.x, targetScreen.y - tileHeight * 0.2);
+    game.ctx.lineTo(targetScreenX, targetScreenY - tileHeight * 0.2);
     game.ctx.closePath();
     game.ctx.fillStyle = palette.background;
     game.ctx.fill();
@@ -198,34 +307,99 @@ function drawRouteTargetChip() {
     game.ctx.restore();
 }
 
-function drawSceneEntities(playerPos, focusChunkX, focusChunkY, activeHouse = null) {
+function hasOverlayContent() {
+    const game = window.Game;
+    const effects = game.systems.effects || null;
+    const now = effects && typeof effects.getNow === 'function'
+        ? effects.getNow()
+        : null;
+    const activeEffects = effects && typeof effects.getActiveEffects === 'function'
+        ? effects.getActiveEffects(now || undefined)
+        : [];
+
+    return Boolean(
+        (Array.isArray(game.state.route) && game.state.route.length > 0)
+        || game.state.selectedWorldTile
+        || activeEffects.length > 0
+    );
+}
+
+function drawWorldEntities(playerPos, focusChunkX, focusChunkY, activeHouse = null) {
     const game = window.Game;
     const activeHouseId = activeHouse ? activeHouse.id : null;
     const playerDepth = playerPos.x + playerPos.y + 0.35;
-
-    game.systems.houses.drawInteriorHouses(focusChunkX, focusChunkY, activeHouseId);
-    game.systems.houses.drawExteriorHouseSouthParts(focusChunkX, focusChunkY, activeHouseId);
-    game.systems.interactionRenderer.drawInteractions(focusChunkX, focusChunkY, {
+    const interiorHouses = game.systems.houses.collectVisibleInteriorHouses(focusChunkX, focusChunkY, activeHouseId);
+    const exteriorHouses = game.systems.houses.collectVisibleExteriorHouses(focusChunkX, focusChunkY, activeHouseId);
+    const lowerInteractions = game.systems.interactionRenderer.collectVisibleInteractions(focusChunkX, focusChunkY, {
         activeHouseId,
         maxDepthInclusive: playerDepth
     });
-    game.systems.playerRenderer.drawPlayer(playerPos);
-    game.systems.interactionRenderer.drawInteractions(focusChunkX, focusChunkY, {
+    const upperInteractions = game.systems.interactionRenderer.collectVisibleInteractions(focusChunkX, focusChunkY, {
         activeHouseId,
         minDepthExclusive: playerDepth
     });
-    game.systems.houses.drawExteriorHouseNorthParts(focusChunkX, focusChunkY, activeHouseId);
-    drawRoute();
-    drawSelectedWorldTile();
-    drawRouteTargetChip();
+    const perf = game.systems.perf || null;
+
+    if (perf && typeof perf.incrementFrameStat === 'function') {
+        perf.incrementFrameStat('housePartsDrawn', interiorHouses.length);
+        perf.incrementFrameStat('housePartsDrawn', exteriorHouses.length);
+        perf.incrementFrameStat('housePartsDrawn', exteriorHouses.length);
+        perf.incrementFrameStat('interactionsDrawn', lowerInteractions.length + upperInteractions.length);
+    }
+
+    game.systems.houses.drawInteriorHouseList(interiorHouses);
+    game.systems.houses.drawExteriorHouseSouthList(exteriorHouses);
+    game.systems.interactionRenderer.drawInteractionList(lowerInteractions);
+    game.systems.playerRenderer.drawPlayer(playerPos);
+    game.systems.interactionRenderer.drawInteractionList(upperInteractions);
+    game.systems.houses.drawExteriorHouseNorthList(exteriorHouses);
+}
+
+function drawWorldOverlays() {
+    const game = window.Game;
+
+    if (!hasOverlayContent()) {
+        return;
+    }
+
+    if (Array.isArray(game.state.route) && game.state.route.length > 0) {
+        drawRoute();
+    }
+
+    if (game.state.selectedWorldTile) {
+        drawSelectedWorldTile();
+    }
+
+    if (Array.isArray(game.state.route) && game.state.route.length > 0) {
+        drawRouteTargetChip();
+    }
 
     if (game.systems.effectRenderer) {
         game.systems.effectRenderer.drawEffects();
     }
 }
 
+function drawSceneEntities(playerPos, focusChunkX, focusChunkY, activeHouse = null) {
+    const game = window.Game;
+    const perf = game.systems.perf || null;
+
+    const draw = () => {
+        drawWorldEntities(playerPos, focusChunkX, focusChunkY, activeHouse);
+        drawWorldOverlays();
+    };
+
+    if (perf && typeof perf.measure === 'function') {
+        return perf.measure('drawSceneEntities', draw);
+    }
+
+    return draw();
+}
+
 window.Game.systems.entityRenderer = {
     drawRoute,
     drawSelectedWorldTile,
+    drawWorldEntities,
+    drawWorldOverlays,
+    hasOverlayContent,
     drawSceneEntities
 };

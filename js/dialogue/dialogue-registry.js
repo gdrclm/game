@@ -67,7 +67,7 @@
             },
             nodes: {
                 artisanIntro: {
-                    condition: (context) => Boolean(context.encounter && context.encounter.kind === 'artisan'),
+                    condition: (context) => Boolean(context.encounter && ['craft_merchant', 'artisan'].includes(context.encounter.kind)),
                     text: (context) => `${context.encounter.label}: ${context.encounter.summary}`,
                     effects: [
                         { type: 'setActionMessage', value: (context) => `${context.encounter.label}: открыт ремесленный заказ.` },
@@ -76,7 +76,7 @@
                     autoClose: true
                 },
                 artisanCompleted: {
-                    condition: (context) => Boolean(context.encounter && context.encounter.kind === 'artisan'),
+                    condition: (context) => Boolean(context.encounter && ['craft_merchant', 'artisan'].includes(context.encounter.kind)),
                     text: (context) => `${context.encounter.label}: работа завершена, но мастер всё ещё может оценить твою сумку.`,
                     effects: [
                         { type: 'setActionMessage', value: (context) => `${context.encounter.label}: сумка уже расширена, панель мастера открыта.` },

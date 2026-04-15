@@ -25,6 +25,7 @@
     let elements = null;
     let eventsBound = false;
     let movedNodes = [];
+    let lastSyncSignature = null;
 
     if (!bridge) {
         return;
@@ -62,7 +63,8 @@
             mobileModalKicker: document.getElementById('mobileModalKicker'),
             mobileModalTitle: document.getElementById('mobileModalTitle'),
             mobileModalBody: document.getElementById('mobileModalBody'),
-            merchantPanel: document.getElementById('merchantPanel')
+            merchantPanel: document.getElementById('merchantPanel'),
+            stationPanel: document.getElementById('stationPanel')
         };
 
         return elements;
@@ -325,7 +327,7 @@
 
         if (refs.mobileWalkButton) {
             refs.mobileWalkButton.disabled = !walkState.isEnabled;
-            refs.mobileWalkButton.hidden = !walkState.isVisible;
+            refs.mobileWalkButton.hidden = false;
             refs.mobileWalkButton.classList.toggle('is-ready', walkState.isVisible);
         }
 
@@ -442,6 +444,7 @@
             || game.state.isGameOver
             || game.state.isMapOpen
             || (refs.merchantPanel && !refs.merchantPanel.hidden)
+            || (refs.stationPanel && !refs.stationPanel.hidden)
         );
 
         if (refs.mobileHud) {
@@ -457,15 +460,63 @@
         }
     }
 
-    function sync() {
+    function buildSyncSignature() {
+        const refs = getElements();
+        const bridgeElements = typeof bridge.getElements === 'function'
+            ? bridge.getElements()
+            : null;
+        const actionHintText = bridgeElements && bridgeElements.actionHint && typeof bridgeElements.actionHint.textContent === 'string'
+            ? bridgeElements.actionHint.textContent.trim()
+            : '';
+        const actionSignature = ['walk', 'use', 'sleep', 'inspect', 'talk', 'drop']
+            .map((action) => {
+                const state = getDesktopActionState(action);
+                return `${action}:${state.isEnabled ? 1 : 0}:${state.isHighlighted ? 1 : 0}:${state.isVisible ? 1 : 0}`;
+            })
+            .join('|');
+
+        return JSON.stringify({
+            mobileViewport: isMobileViewport(),
+            activePanelKey: getActivePanelKey() || '',
+            selectedInventorySlot: bridge.getGame().state.selectedInventorySlot,
+            isPaused: Boolean(game.state.isPaused),
+            isMapOpen: Boolean(game.state.isMapOpen),
+            isMoving: Boolean(game.state.isMoving),
+            isGameOver: Boolean(game.state.isGameOver),
+            hasWon: Boolean(game.state.hasWon),
+            merchantPanelOpen: Boolean(refs.merchantPanel && !refs.merchantPanel.hidden),
+            stationPanelOpen: Boolean(refs.stationPanel && !refs.stationPanel.hidden),
+            usedSlots: countUsedInventorySlots(),
+            activeQuestCount: getActiveQuestCount(),
+            stats: {
+                hunger: bridge.getStatValue('hunger'),
+                energy: bridge.getStatValue('energy'),
+                sleep: bridge.getStatValue('sleep'),
+                cold: bridge.getStatValue('cold'),
+                focus: bridge.getStatValue('focus')
+            },
+            actionHintText,
+            actionSignature
+        });
+    }
+
+    function sync(options = {}) {
         if (getActivePanelKey() === 'actions') {
             closePanel({ silent: true });
         }
 
         syncVisibility();
 
+        const nextSignature = buildSyncSignature();
+
+        if (!options.force && nextSignature === lastSyncSignature) {
+            return false;
+        }
+
+        lastSyncSignature = nextSignature;
+
         if (!isMobileViewport()) {
-            return;
+            return false;
         }
 
         syncStats();
@@ -475,6 +526,7 @@
         }
         syncHintText();
         syncToolbarOffset();
+        return true;
     }
 
     function bindEvents() {
@@ -545,7 +597,7 @@
         }
 
         window.addEventListener('resize', () => {
-            sync();
+            sync({ force: true });
         });
 
         eventsBound = true;
@@ -554,7 +606,7 @@
     function initialize() {
         queryElements();
         bindEvents();
-        sync();
+        sync({ force: true });
     }
 
     Object.assign(mobileUi, {

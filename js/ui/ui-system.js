@@ -62,6 +62,10 @@
         return game.systems.merchantUi;
     }
 
+    function getStationUiModule() {
+        return game.systems.stationUi;
+    }
+
     function getDialogueUiModule() {
         return game.systems.dialogueUi;
     }
@@ -104,6 +108,12 @@
     let eventsBound = false;
     ui.openMerchantHouseId = ui.openMerchantHouseId || null;
     ui.merchantDescriptionByHouseId = ui.merchantDescriptionByHouseId || {};
+    ui.lastRenderedActionHintText = typeof ui.lastRenderedActionHintText === 'string'
+        ? ui.lastRenderedActionHintText
+        : '';
+    ui.lastRenderedActionHintContextKey = typeof ui.lastRenderedActionHintContextKey === 'string'
+        ? ui.lastRenderedActionHintContextKey
+        : '';
     const DIRTY_UI_SECTIONS = [
         'stats',
         'location',
@@ -120,6 +130,91 @@
         'map',
         'actionHint'
     ];
+    const MOBILE_SYNC_SECTIONS = new Set([
+        'stats',
+        'actions',
+        'inventory',
+        'merchant',
+        'dialogue',
+        'quests',
+        'actionHint'
+    ]);
+    const DEFAULT_INSTRUCTIONS_TEXT = 'Кликайте по клеткам, чтобы выбрать маршрут. Кнопка движения, пробел или повторный клик по той же клетке запускают выбранный путь. Тропа и мосты экономят силы, тростник и осыпь утяжеляют путь, а грязь и хрупкие мосты лучше обходить.';
+    const CRAFT_ONBOARDING_MAX_ISLAND = 6;
+
+    function countInventoryItem(itemId) {
+        const inventoryRuntime = getInventoryRuntime();
+        return inventoryRuntime && typeof inventoryRuntime.countInventoryItem === 'function'
+            ? inventoryRuntime.countInventoryItem(itemId)
+            : 0;
+    }
+
+    function buildCraftOnboardingState() {
+        const islandIndex = Math.max(1, Math.floor(game.state.currentIslandIndex || 1));
+        if (islandIndex > CRAFT_ONBOARDING_MAX_ISLAND) {
+            return null;
+        }
+
+        const steps = [
+            {
+                id: 'gatherGrass',
+                label: 'Собери траву',
+                isComplete: countInventoryItem('raw_grass') > 0
+            },
+            {
+                id: 'fillFlask',
+                label: 'Наполни флягу у воды',
+                isComplete: countInventoryItem('flask_water_dirty') > 0
+                    || countInventoryItem('flask_water_full') > 0
+                    || countInventoryItem('flask_water_alchemy') > 0
+            },
+            {
+                id: 'weakHealing',
+                label: 'Сделай слабое лечение',
+                isComplete: countInventoryItem('healing_base') > 0
+                    || countInventoryItem('healingBrew') > 0
+            },
+            {
+                id: 'planks',
+                label: 'Собери доски',
+                isComplete: countInventoryItem('wood_plank_basic') > 0
+            },
+            {
+                id: 'bridge',
+                label: 'Собери мост',
+                isComplete: countInventoryItem('bridge_kit') > 0
+                    || countInventoryItem('portableBridge') > 0
+            }
+        ];
+
+        const currentIndex = steps.findIndex((step) => !step.isComplete);
+
+        return {
+            steps,
+            currentIndex,
+            isComplete: currentIndex === -1
+        };
+    }
+
+    function buildCraftOnboardingText(state) {
+        if (!state) {
+            return DEFAULT_INSTRUCTIONS_TEXT;
+        }
+
+        if (state.isComplete) {
+            return 'Крафт-цикл освоен: травы, фляга, лечение, доски и мост уже собраны. Дальше важно держать темп и готовить улучшенные версии заранее.';
+        }
+
+        const currentStep = state.steps[state.currentIndex];
+        const stepList = state.steps.map((step, index) => {
+            const statusSuffix = step.isComplete
+                ? ' (готово)'
+                : (index === state.currentIndex ? ' (сейчас)' : '');
+            return `${index + 1}. ${step.label}${statusSuffix}`;
+        }).join(' · ');
+
+        return `Крафт-цикл: ${currentStep ? currentStep.label : 'следующий шаг'}. ${stepList}`;
+    }
 
     function ensureDirtySections() {
         if (!(ui.dirtySections instanceof Set)) {
@@ -157,6 +252,39 @@
         const dirtySections = new Set(ensureDirtySections());
         ensureDirtySections().clear();
         return dirtySections;
+    }
+
+    function shouldSyncMobileUi(dirtySections, shouldResetActionMessage = false) {
+        if (shouldResetActionMessage) {
+            return true;
+        }
+
+        return Array.from(MOBILE_SYNC_SECTIONS).some((section) => dirtySections.has(section));
+    }
+
+    function syncActionHint(activeInteraction, tileInfo, contextKey, dirtySections, shouldResetActionMessage) {
+        if (game.state.isMoving) {
+            return false;
+        }
+
+        if (!elements.actionHint || (!shouldResetActionMessage && !dirtySections.has('actionHint'))) {
+            return false;
+        }
+
+        const nextActionHintText = ui.lastActionMessage || getDefaultActionHint(activeInteraction, tileInfo);
+
+        if (
+            ui.lastRenderedActionHintContextKey === contextKey
+            && ui.lastRenderedActionHintText === nextActionHintText
+            && elements.actionHint.textContent === nextActionHintText
+        ) {
+            return false;
+        }
+
+        elements.actionHint.textContent = nextActionHintText;
+        ui.lastRenderedActionHintContextKey = contextKey;
+        ui.lastRenderedActionHintText = nextActionHintText;
+        return true;
     }
 
     function clamp(value, min, max) {
@@ -255,7 +383,14 @@
     }
 
     function getCurrentProgression(tileInfo = game.state.activeTileInfo) {
-        return tileInfo && tileInfo.progression ? tileInfo.progression : null;
+        const currentProgression = tileInfo && tileInfo.progression ? tileInfo.progression : null;
+        const expeditionProgression = game.systems.expeditionProgression || null;
+
+        return currentProgression
+            && expeditionProgression
+            && typeof expeditionProgression.decorateProgressionWithCraftRequirements === 'function'
+            ? expeditionProgression.decorateProgressionWithCraftRequirements(currentProgression)
+            : currentProgression;
     }
 
     function getTimeOfDayAdvancesElapsed() {
@@ -868,6 +1003,7 @@
 
     function applyLootPlan(lootPlan) {
         const itemEffects = game.systems.itemEffects || null;
+        const lootSystem = game.systems.lootSystem || null;
         const buffedLootPlan = itemEffects && typeof itemEffects.applyChestBuffsToLootPlan === 'function'
             ? (itemEffects.applyChestBuffsToLootPlan(lootPlan) || lootPlan)
             : lootPlan;
@@ -891,6 +1027,8 @@
             itemsAdded: [],
             itemsDropped: [],
             displayDrops: [],
+            unlockedRecipes: [],
+            unlockedStations: [],
             statChanges: {},
             flavorText: effectiveLootPlan && effectiveLootPlan.flavorText ? effectiveLootPlan.flavorText : '',
             outcomeType: effectiveLootPlan && effectiveLootPlan.outcomeType ? effectiveLootPlan.outcomeType : 'reward'
@@ -900,18 +1038,7 @@
             return results;
         }
 
-        effectiveLootPlan.drops.forEach((drop) => {
-            if (!drop) {
-                return;
-            }
-
-            if (drop.type === 'gold') {
-                changeGold(drop.amount || 0);
-                results.gold += drop.amount || 0;
-                results.displayDrops.push({ ...drop });
-                return;
-            }
-
+        function addInventoryDrop(drop) {
             const outcome = addInventoryItem(drop.itemId, drop.quantity || 1);
             const definition = getItemDefinition(drop.itemId);
             const displayDrop = {
@@ -927,6 +1054,59 @@
             }
 
             results.itemsDropped.push(displayDrop);
+        }
+
+        effectiveLootPlan.drops.forEach((drop) => {
+            if (!drop) {
+                return;
+            }
+
+            if (drop.type === 'gold') {
+                changeGold(drop.amount || 0);
+                results.gold += drop.amount || 0;
+                results.displayDrops.push({ ...drop });
+                return;
+            }
+
+            if (drop.type === 'item' || drop.type === 'resource_tool' || drop.type === 'structure_part') {
+                addInventoryDrop(drop);
+                return;
+            }
+
+            const unlockResult = lootSystem && typeof lootSystem.applyCraftUnlockDrop === 'function'
+                ? lootSystem.applyCraftUnlockDrop(drop, {
+                    islandIndex: game.state.currentIslandIndex || 1
+                })
+                : null;
+
+            if (unlockResult && unlockResult.handled) {
+                if (unlockResult.success && unlockResult.displayDrop) {
+                    if (unlockResult.unlockType === 'recipe') {
+                        results.unlockedRecipes.push(unlockResult.displayDrop);
+                    } else if (unlockResult.unlockType === 'station') {
+                        results.unlockedStations.push(unlockResult.displayDrop);
+                    }
+                    results.displayDrops.push(unlockResult.displayDrop);
+                }
+                return;
+            }
+
+            if (drop.type === 'component_bundle') {
+                (Array.isArray(drop.entries) ? drop.entries : []).forEach((entry) => {
+                    if (!entry || !entry.itemId) {
+                        return;
+                    }
+
+                    addInventoryDrop({
+                        type: 'item',
+                        itemId: entry.itemId,
+                        label: entry.label,
+                        icon: entry.icon,
+                        quantity: entry.quantity || 1
+                    });
+                });
+                return;
+            }
         });
 
         Object.entries(effectiveLootPlan.rewardDelta || {}).forEach(([key, value]) => {
@@ -975,6 +1155,14 @@
 
         results.itemsAdded.forEach((drop) => {
             segments.push(drop.quantity > 1 ? `${drop.label} x${drop.quantity}` : drop.label);
+        });
+
+        results.unlockedRecipes.forEach((drop) => {
+            segments.push(drop.label);
+        });
+
+        results.unlockedStations.forEach((drop) => {
+            segments.push(drop.label);
         });
 
         if (results.itemsDropped.length > 0) {
@@ -1045,11 +1233,15 @@
     }
 
     function setActionMessage(message) {
-        ui.lastActionMessage = message;
+        const nextMessage = typeof message === 'string' ? message : '';
+        ui.lastActionMessage = nextMessage;
         markDirty('actionHint');
-        if (elements.actionHint) {
-            elements.actionHint.textContent = message;
+
+        if (elements.actionHint && elements.actionHint.textContent !== nextMessage) {
+            elements.actionHint.textContent = nextMessage;
         }
+
+        ui.lastRenderedActionHintText = nextMessage;
     }
 
     function ensureGameOverState() {
@@ -1063,6 +1255,7 @@
         game.state.routeTotalCost = 0;
         game.state.routePreviewLength = 0;
         game.state.routePreviewTotalCost = 0;
+        game.state.routePreviewIsExact = true;
         setActionMessage('Все характеристики исчерпаны. Экспедиция закончилась.');
         return true;
     }
@@ -1075,6 +1268,7 @@
         game.state.routeTotalCost = 0;
         game.state.routePreviewLength = 0;
         game.state.routePreviewTotalCost = 0;
+        game.state.routePreviewIsExact = true;
         game.state.victoryMessage = message;
         setActionMessage(message);
     }
@@ -1278,7 +1472,7 @@
         if (itemEffects && typeof itemEffects.isBridgeBuilderItem === 'function') {
             return itemEffects.isBridgeBuilderItem(itemId);
         }
-        return itemId === 'ferryBoard' || itemId === 'roughBridge';
+        return false;
     }
 
     function getDefaultActionHint(activeInteraction, tileInfo) {
@@ -1306,8 +1500,16 @@
                 return `${encounter.label}: ${encounter.summary} Нажми "Говорить", чтобы открыть меню торговли.`;
             }
 
+            if (encounter.kind === 'craft_merchant' || encounter.kind === 'artisan') {
+                return `${encounter.label}: ${encounter.summary} Нажми "Говорить", чтобы открыть ремесленный заказ.`;
+            }
+
             if (encounter.kind === 'shelter') {
                 return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Спать".`;
+            }
+
+            if (encounter.kind === 'station_keeper') {
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать".`;
             }
 
             return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать".`;
@@ -1351,6 +1553,10 @@
             pauseSlotMenuSummary: document.getElementById('pauseSlotMenuSummary'),
             pauseSlotMenuStatus: document.getElementById('pauseSlotMenuStatus'),
             pauseSlotList: document.getElementById('pauseSlotList'),
+            pauseTravelMenu: document.getElementById('pauseTravelMenu'),
+            pauseTravelMenuSummary: document.getElementById('pauseTravelMenuSummary'),
+            pauseTravelMenuStatus: document.getElementById('pauseTravelMenuStatus'),
+            pauseTravelList: document.getElementById('pauseTravelList'),
             pwaStatus: document.getElementById('pwaStatus'),
             merchantPanel: document.getElementById('merchantPanel'),
             merchantPanelTitle: document.getElementById('merchantPanelTitle'),
@@ -1367,7 +1573,9 @@
             pauseResumeButton: document.getElementById('pauseResumeButton'),
             pauseSaveButton: document.getElementById('pauseSaveButton'),
             pauseLoadButton: document.getElementById('pauseLoadButton'),
+            pauseTravelButton: document.getElementById('pauseTravelButton'),
             pauseBackButton: document.getElementById('pauseBackButton'),
+            pauseTravelBackButton: document.getElementById('pauseTravelBackButton'),
             newGameButton: document.getElementById('newGameButton'),
             inventoryGrid: document.getElementById('inventoryGrid'),
             selectedCharacterPortrait: document.getElementById('selectedCharacterPortrait'),
@@ -1379,6 +1587,8 @@
             routeSummary: document.getElementById('routeSummary'),
             progressSummary: document.getElementById('progressSummary'),
             economySummary: document.getElementById('economySummary'),
+            productionGoalsSummary: document.getElementById('productionGoalsSummary'),
+            productionGoalsList: document.getElementById('productionGoalsList'),
             instructions: document.getElementById('instructions'),
             instructionsText: document.getElementById('instructionsText'),
             instructionsClose: document.getElementById('instructionsClose'),
@@ -1436,6 +1646,10 @@
         return getStatusUiModule().updateProgressSummaries(tileInfo);
     }
 
+    function syncProductionGoalsPanel(tileInfo) {
+        return getStatusUiModule().syncProductionGoalsPanel(tileInfo);
+    }
+
     function updateCharacterCard(displayPosition, tileInfo, activeHouse, activeInteraction) {
         return getStatusUiModule().updateCharacterCard(displayPosition, tileInfo, activeHouse, activeInteraction);
     }
@@ -1454,45 +1668,18 @@
 
     function setActionButtonState(action, enabled, highlighted = false, visible = null) {
         const actionUi = getActionUiModule();
-        if (actionUi && typeof actionUi.setActionButtonState === 'function') {
-            return actionUi.setActionButtonState(action, enabled, highlighted, visible);
-        }
-        const button = elements.actionButtons.find((item) => item.dataset.action === action);
-
-        if (!button) {
+        if (!actionUi || typeof actionUi.setActionButtonState !== 'function') {
             return;
         }
-
-        button.disabled = !enabled;
-        button.classList.toggle('hud-button--available', Boolean(enabled && highlighted));
+        return actionUi.setActionButtonState(action, enabled, highlighted, visible);
     }
 
     function updateActionButtons(activeInteraction = getActiveInteraction()) {
         const actionUi = getActionUiModule();
-        if (actionUi && typeof actionUi.updateActionButtons === 'function') {
-            return actionUi.updateActionButtons(activeInteraction);
+        if (!actionUi || typeof actionUi.updateActionButtons !== 'function') {
+            return;
         }
-        const selectedItem = getSelectedInventoryItem();
-        const selectedItemEffect = selectedItem ? getItemConsumableEffect(selectedItem.id) : null;
-        const groundItem = getCurrentGroundItem();
-        const encounter = getHouseEncounter(activeInteraction);
-        const canUseInteraction = encounter
-            && !isHouseResolved(activeInteraction)
-            && encounter.kind !== 'merchant'
-            && encounter.kind !== 'shelter';
-        const canTalkInteraction = encounter
-            && encounter.kind === 'merchant';
-        const shelterNearby = encounter && encounter.kind === 'shelter';
-        const canUseItem = Boolean(selectedItem && (selectedItemEffect || isBridgeBuilderItem(selectedItem.id)));
-        const canUseGroundItem = Boolean(groundItem);
-        const canDropItem = Boolean(selectedItem);
-        const baseEnabled = !game.state.isGameOver && !game.state.isMoving;
-
-        setActionButtonState('use', baseEnabled && (canUseItem || canUseGroundItem || canUseInteraction), Boolean(canUseGroundItem || canUseInteraction));
-        setActionButtonState('talk', baseEnabled && Boolean(canTalkInteraction), Boolean(canTalkInteraction));
-        setActionButtonState('sleep', baseEnabled, Boolean(shelterNearby || game.state.activeHouse));
-        setActionButtonState('inspect', baseEnabled, Boolean(selectedItem || groundItem || activeInteraction));
-        setActionButtonState('drop', baseEnabled && canDropItem, canDropItem);
+        return actionUi.updateActionButtons(activeInteraction);
     }
 
     function resizeCanvasToViewport() {
@@ -1609,46 +1796,37 @@
         });
     }
 
-    function renderAfterStateChange(sections) {
+    function renderAfterStateChange(sections, options = {}) {
+        const sceneChanged = options.sceneChanged !== false;
         markDirty(sections);
 
         if (game.systems.render) {
-            game.systems.render.render();
-            return;
+            if (sceneChanged) {
+                game.systems.render.render();
+                return;
+            }
+
+            if (
+                typeof game.systems.render.hasPendingRender === 'function'
+                && game.systems.render.hasPendingRender()
+            ) {
+                return;
+            }
         }
 
         refreshDirty();
     }
 
-    function buildGoldEffectDrop(amount) {
-        return {
-            type: 'gold',
-            label: 'Золото',
-            icon: '$',
-            amount: Math.max(1, amount)
-        };
-    }
-
     function persistMerchantState(source) {
+        const merchantUi = getMerchantUiModule();
+        if (merchantUi && typeof merchantUi.persistMerchantState === 'function') {
+            return merchantUi.persistMerchantState(source);
+        }
+
         const shopRuntime = game.systems.shopRuntime || null;
-
-        if (shopRuntime && typeof shopRuntime.persistMerchantState === 'function') {
-            return shopRuntime.persistMerchantState(source);
-        }
-
-        const encounter = getHouseEncounter(source);
-
-        if (!source || !encounter || encounter.kind !== 'merchant') {
-            return;
-        }
-
-        game.state.merchantStateByHouseId = game.state.merchantStateByHouseId || {};
-        game.state.merchantStateByHouseId[source.houseId] = {
-            stock: Array.isArray(encounter.stock)
-                ? encounter.stock.map((stockItem) => ({ ...stockItem }))
-                : [],
-            quest: encounter.quest ? { ...encounter.quest } : null
-        };
+        return shopRuntime && typeof shopRuntime.persistMerchantState === 'function'
+            ? shopRuntime.persistMerchantState(source)
+            : null;
     }
 
     function closeMerchantPanel() {
@@ -1656,6 +1834,7 @@
         if (merchantUi && typeof merchantUi.closeMerchantPanel === 'function') {
             return merchantUi.closeMerchantPanel();
         }
+
         ui.openMerchantHouseId = null;
 
         if (elements.merchantPanel) {
@@ -1663,551 +1842,61 @@
         }
     }
 
-    function getOpenMerchantSource(activeInteraction = getActiveInteraction()) {
-        if (!ui.openMerchantHouseId || !activeInteraction || activeInteraction.houseId !== ui.openMerchantHouseId) {
-            return null;
+    function closeStationPanel(options = {}) {
+        const stationUi = getStationUiModule();
+        if (!stationUi || typeof stationUi.closeStationPanel !== 'function') {
+            return;
         }
 
-        const encounter = getHouseEncounter(activeInteraction);
-        return encounter && encounter.kind === 'merchant' ? activeInteraction : null;
-    }
-
-    function escapeHtml(value) {
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    function formatQuantityLabel(quantity) {
-        return quantity > 1 ? `x${quantity}` : '1 шт.';
-    }
-
-    function getMerchantInspectableItems(encounter) {
-        const items = [];
-        const seenItemIds = new Set();
-
-        const appendItem = (itemId, label) => {
-            if (!itemId || seenItemIds.has(itemId)) {
-                return;
-            }
-
-            seenItemIds.add(itemId);
-            items.push({
-                itemId,
-                label: label || (getItemDefinition(itemId) ? getItemDefinition(itemId).label : itemId)
-            });
-        };
-
-        if (encounter && encounter.quest) {
-            appendItem(encounter.quest.itemId, encounter.quest.label);
-        }
-
-        if (encounter && Array.isArray(encounter.stock)) {
-            encounter.stock.forEach((stockItem) => {
-                appendItem(stockItem.itemId, stockItem.label);
-            });
-        }
-
-        getInventory()
-            .slice(0, getUnlockedInventorySlots())
-            .map(normalizeInventoryItem)
-            .filter(Boolean)
-            .forEach((item) => {
-                appendItem(item.id, item.label);
-            });
-
-        return items;
-    }
-
-    function getMerchantDescriptionState(source, encounter) {
-        if (!source || !source.houseId) {
-            return null;
-        }
-
-        const items = getMerchantInspectableItems(encounter);
-        const selectedItemId = ui.merchantDescriptionByHouseId[source.houseId];
-        const selectedItem = items.find((item) => item.itemId === selectedItemId) || items[0] || null;
-
-        if (!selectedItem) {
-            return null;
-        }
-
-        ui.merchantDescriptionByHouseId[source.houseId] = selectedItem.itemId;
-        return {
-            itemId: selectedItem.itemId,
-            label: selectedItem.label,
-            description: getItemDescription(selectedItem.itemId) || 'Описание предмета пока недоступно.'
-        };
+        return stationUi.closeStationPanel(options);
     }
 
     function renderMerchantPanel(activeInteraction = getActiveInteraction()) {
         const merchantUi = getMerchantUiModule();
-        if (merchantUi && typeof merchantUi.renderMerchantPanel === 'function') {
-            return merchantUi.renderMerchantPanel(activeInteraction);
+        if (!merchantUi || typeof merchantUi.renderMerchantPanel !== 'function') {
+            return;
         }
-        if (!elements.merchantPanel || !elements.merchantPanelContent) {
+        return merchantUi.renderMerchantPanel(activeInteraction);
+    }
+
+    function renderStationPanel(activeInteraction = getActiveInteraction()) {
+        const stationUi = getStationUiModule();
+        if (!stationUi || typeof stationUi.renderStationPanel !== 'function') {
             return;
         }
 
-        const source = getOpenMerchantSource(activeInteraction);
-
-        if (!source || game.state.isMoving || game.state.isPaused || game.state.isGameOver) {
-            closeMerchantPanel();
-            return;
-        }
-
-        const encounter = getHouseEncounter(source);
-        const quest = encounter.quest || null;
-        const ownedQuestItems = quest ? countInventoryItem(quest.itemId) : 0;
-        const selectedMerchantDescription = getMerchantDescriptionState(source, encounter);
-        const selectedMerchantItemId = selectedMerchantDescription ? selectedMerchantDescription.itemId : null;
-        const stockRows = Array.isArray(encounter.stock)
-            ? encounter.stock.map((stockItem, index) => {
-                const soldOut = !stockItem || stockItem.quantity <= 0;
-
-                return `
-                    <div class="merchant-row">
-                        <div class="merchant-row__meta">
-                            <button class="merchant-link${selectedMerchantItemId === stockItem.itemId ? ' merchant-link--selected' : ''}" type="button" data-merchant-action="describe" data-item-id="${stockItem.itemId}">
-                                ${escapeHtml(stockItem.label)} ${soldOut ? '(нет)' : ''}
-                            </button>
-                            <div class="merchant-row__note">Цена: ${stockItem.price} золота · Осталось: ${Math.max(0, stockItem.quantity || 0)}</div>
-                        </div>
-                        <div class="merchant-row__actions">
-                            <button class="hud-button" type="button" data-merchant-action="buy" data-stock-index="${index}" ${soldOut ? 'disabled' : ''}>Купить</button>
-                        </div>
-                    </div>
-                `;
-            }).join('')
-            : '';
-        const sellRows = getInventory()
-            .slice(0, getUnlockedInventorySlots())
-            .map((item, index) => {
-                const normalizedItem = normalizeInventoryItem(item);
-
-                if (!normalizedItem) {
-                    return '';
-                }
-
-                const sellPrice = getMerchantSellPrice(
-                    normalizedItem.id,
-                    encounter.islandIndex || game.state.currentIslandIndex
-                );
-
-                return `
-                    <div class="merchant-row">
-                        <div class="merchant-row__meta">
-                            <button class="merchant-link${selectedMerchantItemId === normalizedItem.id ? ' merchant-link--selected' : ''}" type="button" data-merchant-action="describe" data-item-id="${normalizedItem.id}">
-                                ${escapeHtml(normalizedItem.label)}
-                            </button>
-                            <div class="merchant-row__note">В рюкзаке: ${formatQuantityLabel(Math.max(1, normalizedItem.quantity || 1))} · Цена продажи: ${sellPrice}</div>
-                        </div>
-                        <div class="merchant-row__actions">
-                            <button class="hud-button" type="button" data-merchant-action="sell" data-inventory-index="${index}">Продать</button>
-                        </div>
-                    </div>
-                `;
-            })
-            .filter(Boolean)
-            .join('');
-        const questRewardItemLabel = quest && quest.rewardItemLabel && Math.max(0, Math.round(quest.rewardItemQuantity || 0)) > 0
-            ? `${quest.rewardItemLabel}${Math.round(quest.rewardItemQuantity || 0) > 1 ? ` x${Math.round(quest.rewardItemQuantity || 0)}` : ''}`
-            : '';
-        const questRewardSummary = quest
-            ? `${quest.rewardGold} золота${questRewardItemLabel ? ` + ${questRewardItemLabel}` : ''}`
-            : '';
-        const questMarkup = quest
-            ? `
-                <div class="merchant-section">
-                    <h3 class="merchant-section__title">Квест</h3>
-                    <div class="merchant-row">
-                        <div class="merchant-row__meta">
-                            <button class="merchant-link${selectedMerchantItemId === quest.itemId ? ' merchant-link--selected' : ''}" type="button" data-merchant-action="describe" data-item-id="${quest.itemId}">
-                                ${escapeHtml(quest.label)} ${quest.quantity > 1 ? `x${quest.quantity}` : ''}
-                            </button>
-                            <div class="merchant-row__note">${escapeHtml(quest.description || '')}</div>
-                            <div class="merchant-row__note">Есть у тебя: ${ownedQuestItems}/${quest.quantity} · Награда: ${escapeHtml(questRewardSummary)}</div>
-                        </div>
-                        <div class="merchant-row__actions">
-                            <button class="hud-button" type="button" data-merchant-action="quest" ${quest.completed || ownedQuestItems < quest.quantity ? 'disabled' : ''}>${quest.completed ? 'Сдано' : 'Сдать'}</button>
-                        </div>
-                    </div>
-                </div>
-            `
-            : `
-                <div class="merchant-section">
-                    <h3 class="merchant-section__title">Квест</h3>
-                    <p class="panel-copy">Сейчас у торговца нет поручений.</p>
-                </div>
-            `;
-        const descriptionMarkup = selectedMerchantDescription
-            ? `
-                <div class="merchant-section">
-                    <h3 class="merchant-section__title">Описание</h3>
-                    <div class="merchant-panel__description">
-                        <div class="merchant-row__title">${escapeHtml(selectedMerchantDescription.label)}</div>
-                        <p class="panel-copy">${escapeHtml(selectedMerchantDescription.description)}</p>
-                    </div>
-                </div>
-            `
-            : `
-                <div class="merchant-section">
-                    <h3 class="merchant-section__title">Описание</h3>
-                    <p class="panel-copy">Нажми на товар или квестовый предмет, чтобы увидеть описание.</p>
-                </div>
-            `;
-
-        elements.merchantPanel.hidden = false;
-        elements.merchantPanelTitle.textContent = encounter.label || 'Торговец';
-        elements.merchantPanelSummary.textContent = encounter.summary || '';
-        elements.merchantPanelGold.textContent = `Твоё золото: ${getGold()}`;
-        elements.merchantPanelContent.innerHTML = `
-            ${descriptionMarkup}
-            ${questMarkup}
-            <div class="merchant-section">
-                <h3 class="merchant-section__title">Купить</h3>
-                ${stockRows || '<p class="panel-copy">У торговца всё распродано.</p>'}
-            </div>
-            <div class="merchant-section">
-                <h3 class="merchant-section__title">Продать</h3>
-                ${sellRows || '<p class="panel-copy">В рюкзаке нет товаров на продажу.</p>'}
-            </div>
-        `;
+        return stationUi.renderStationPanel(activeInteraction);
     }
 
     function openMerchantPanel(source) {
         const merchantUi = getMerchantUiModule();
-        if (merchantUi && typeof merchantUi.openMerchantPanel === 'function') {
-            return merchantUi.openMerchantPanel(source);
-        }
-        const encounter = getHouseEncounter(source);
-
-        if (!source || !encounter || encounter.kind !== 'merchant') {
-            setActionMessage('Рядом нет торговца.');
+        if (!merchantUi || typeof merchantUi.openMerchantPanel !== 'function') {
+            setActionMessage('Рядом нет торговца или ремесленника.');
             renderAfterStateChange();
             return;
         }
-
-        ui.openMerchantHouseId = source.houseId;
-        setActionMessage(`${encounter.label}: открыто меню торговли.`);
-        renderAfterStateChange();
+        return merchantUi.openMerchantPanel(source);
     }
 
-    function completeMerchantQuest(source) {
-        const shopRuntime = game.systems.shopRuntime || null;
-
-        if (shopRuntime && typeof shopRuntime.completeMerchantQuest === 'function') {
-            const outcome = shopRuntime.completeMerchantQuest(source);
-            setActionMessage(outcome && outcome.message ? outcome.message : 'РЈ СЌС‚РѕРіРѕ С‚РѕСЂРіРѕРІС†Р° РЅРµС‚ РЅРµР·Р°РІРµСЂС€С‘РЅРЅРѕРіРѕ РєРІРµСЃС‚Р°.');
-
-            if (outcome && Array.isArray(outcome.effectDrops) && outcome.effectDrops.length > 0 && game.systems.effects) {
-                game.systems.effects.spawnInventoryUse(game.state.playerPos, outcome.effectDrops);
-            }
-
-            renderAfterStateChange();
-            return;
+    function openStationPanel(source, options = {}) {
+        const stationUi = getStationUiModule();
+        if (!stationUi || typeof stationUi.openStationPanel !== 'function') {
+            setActionMessage('Рядом нет лагеря или станции с отдельным интерфейсом.');
+            renderAfterStateChange(['actions', 'inventory', 'actionHint'], {
+                sceneChanged: false
+            });
+            return false;
         }
 
-        const encounter = getHouseEncounter(source);
-        const quest = encounter && encounter.quest ? encounter.quest : null;
-
-        if (!quest || quest.completed) {
-            setActionMessage('У этого торговца нет незавершённого квеста.');
-            renderAfterStateChange();
-            return;
-        }
-
-        if (countInventoryItem(quest.itemId) < quest.quantity) {
-            setActionMessage(`Для квеста не хватает предмета "${quest.label}". Нужно ${quest.quantity}.`);
-            renderAfterStateChange();
-            return;
-        }
-
-        consumeInventoryItemById(quest.itemId, quest.quantity);
-        changeGold(quest.rewardGold);
-        quest.completed = true;
-        persistMerchantState(source);
-
-        if (game.systems.effects) {
-            game.systems.effects.spawnInventoryUse(game.state.playerPos, [buildGoldEffectDrop(quest.rewardGold)]);
-        }
-
-        setActionMessage(`Квест торговца выполнен. Получено золото: +${quest.rewardGold}.`);
-        renderAfterStateChange();
-    }
-
-    function buyMerchantStock(source, stockIndex) {
-        const shopRuntime = game.systems.shopRuntime || null;
-
-        if (shopRuntime && typeof shopRuntime.buyMerchantStock === 'function') {
-            const outcome = shopRuntime.buyMerchantStock(source, stockIndex);
-            setActionMessage(outcome && outcome.message ? outcome.message : 'Р­С‚РѕС‚ С‚РѕРІР°СЂ СѓР¶Рµ Р·Р°РєРѕРЅС‡РёР»СЃСЏ.');
-
-            if (outcome && Array.isArray(outcome.effectDrops) && outcome.effectDrops.length > 0 && game.systems.effects) {
-                game.systems.effects.spawnInventoryUse(game.state.playerPos, outcome.effectDrops);
-            }
-
-            renderAfterStateChange();
-            return;
-        }
-
-        const encounter = getHouseEncounter(source);
-        const stock = encounter && Array.isArray(encounter.stock) ? encounter.stock : [];
-        const entry = stock[stockIndex];
-
-        if (!entry || entry.quantity <= 0) {
-            setActionMessage('Этот товар уже закончился.');
-            renderAfterStateChange();
-            return;
-        }
-
-        if (getGold() < entry.price) {
-            setActionMessage(`Не хватает золота. Нужно ${entry.price}, сейчас есть ${getGold()}.`);
-            renderAfterStateChange();
-            return;
-        }
-
-        const outcome = addInventoryItem(entry.itemId, 1);
-
-        if (!outcome.added) {
-            setActionMessage('В рюкзаке нет места для покупки.');
-            renderAfterStateChange();
-            return;
-        }
-
-        changeGold(-entry.price);
-        entry.quantity = Math.max(0, (entry.quantity || 0) - 1);
-        persistMerchantState(source);
-
-        if (game.systems.effects) {
-            const drop = buildItemEffectDrop({ id: entry.itemId, icon: entry.icon, label: entry.label, quantity: 1 });
-            game.systems.effects.spawnInventoryUse(game.state.playerPos, drop ? [drop] : []);
-        }
-
-        setActionMessage(`Куплен предмет "${entry.label}" за ${entry.price} золота.`);
-        renderAfterStateChange();
-    }
-
-    function sellInventoryItemToMerchant(source, inventoryIndex) {
-        const shopRuntime = game.systems.shopRuntime || null;
-
-        if (shopRuntime && typeof shopRuntime.sellInventoryItemToMerchant === 'function') {
-            const outcome = shopRuntime.sellInventoryItemToMerchant(source, inventoryIndex);
-            setActionMessage(outcome && outcome.message ? outcome.message : 'РџСЂРѕРґР°С‚СЊ СЌС‚РѕС‚ РїСЂРµРґРјРµС‚ СЃРµР№С‡Р°СЃ РЅРµР»СЊР·СЏ.');
-
-            if (outcome && Array.isArray(outcome.effectDrops) && outcome.effectDrops.length > 0 && game.systems.effects) {
-                game.systems.effects.spawnInventoryUse(game.state.playerPos, outcome.effectDrops);
-            }
-
-            renderAfterStateChange();
-            return;
-        }
-
-        const encounter = getHouseEncounter(source);
-        const item = normalizeInventoryItem(getInventory()[inventoryIndex]);
-
-        if (!encounter || encounter.kind !== 'merchant' || !item) {
-            setActionMessage('Продать этот предмет сейчас нельзя.');
-            renderAfterStateChange();
-            return;
-        }
-
-        const sellPrice = getMerchantSellPrice(item.id, encounter.islandIndex || game.state.currentIslandIndex);
-        const removedItem = removeInventoryItemAtIndex(inventoryIndex, 1);
-
-        if (!removedItem) {
-            setActionMessage('Продать этот предмет сейчас нельзя.');
-            renderAfterStateChange();
-            return;
-        }
-
-        changeGold(sellPrice);
-
-        if (game.systems.effects) {
-            game.systems.effects.spawnInventoryUse(game.state.playerPos, [buildGoldEffectDrop(sellPrice)]);
-        }
-
-        setActionMessage(`Продан предмет "${item.label}" за ${sellPrice} золота.`);
-        renderAfterStateChange();
+        return stationUi.openStationPanel(source, options);
     }
 
     function handleMerchantPanelClick(event) {
         const merchantUi = getMerchantUiModule();
-        if (merchantUi && typeof merchantUi.handleMerchantPanelClick === 'function') {
-            return merchantUi.handleMerchantPanelClick(event);
-        }
-        const button = event.target.closest('[data-merchant-action]');
-
-        if (!button || button.disabled) {
+        if (!merchantUi || typeof merchantUi.handleMerchantPanelClick !== 'function') {
             return;
         }
-
-        const source = getOpenMerchantSource();
-
-        if (!source) {
-            closeMerchantPanel();
-            renderAfterStateChange();
-            return;
-        }
-
-        const action = button.getAttribute('data-merchant-action');
-
-        if (action === 'describe') {
-            const itemId = button.getAttribute('data-item-id');
-
-            if (itemId && source.houseId) {
-                ui.merchantDescriptionByHouseId[source.houseId] = itemId;
-            }
-
-            renderAfterStateChange();
-            return;
-        }
-
-        if (action === 'quest') {
-            completeMerchantQuest(source);
-            return;
-        }
-
-        if (action === 'buy') {
-            buyMerchantStock(source, Number(button.getAttribute('data-stock-index')));
-            return;
-        }
-
-        if (action === 'sell') {
-            sellInventoryItemToMerchant(source, Number(button.getAttribute('data-inventory-index')));
-        }
-    }
-
-    function pickupGroundItem() {
-        const inventoryRuntime = getInventoryRuntime();
-        const itemEffects = getItemEffectsModule();
-        if (inventoryRuntime && itemEffects) {
-            const outcome = inventoryRuntime.pickupGroundItem();
-
-            if (!outcome.success) {
-                setActionMessage(outcome.reason === 'full'
-                    ? (outcome.capacityType === 'bulk'
-                        ? 'Груз слишком тяжёлый: в сумке не хватает объёма.'
-                        : 'Рюкзак полон, подобрать предметы не удалось.')
-                    : 'Под ногами ничего не лежит.');
-                renderAfterStateChange();
-                return;
-            }
-
-            const pickedDrops = outcome.picked
-                .map((item) => itemEffects.buildItemEffectDrop(item))
-                .filter(Boolean);
-
-            if (pickedDrops.length > 0 && game.systems.effects) {
-                game.systems.effects.spawnInventoryUse(game.state.playerPos, pickedDrops);
-            }
-
-            const pickedSummary = outcome.picked
-                .map((item) => `${item.label}${item.quantity > 1 ? ` x${item.quantity}` : ''}`)
-                .join(', ');
-            const remainingSummary = outcome.remaining.length > 0
-                ? ` Рюкзак полон: осталось ${outcome.remaining.map((item) => item.label).join(', ')}.`
-                : '';
-
-            setActionMessage(`Подобрано: ${pickedSummary}.${remainingSummary}`);
-            renderAfterStateChange();
-            return;
-        }
-        const groundItem = getCurrentGroundItem();
-
-        if (!groundItem || !Array.isArray(groundItem.items) || groundItem.items.length === 0) {
-            setActionMessage('Под ногами ничего не лежит.');
-            renderAfterStateChange();
-            return;
-        }
-
-        const picked = [];
-        const remaining = [];
-
-        groundItem.items.forEach((item) => {
-            const outcome = addInventoryItem(item.id, item.quantity || 1);
-
-            if (outcome.added) {
-                const drop = buildItemEffectDrop(item);
-                if (drop) {
-                    picked.push(drop);
-                }
-            } else {
-                remaining.push({
-                    id: item.id,
-                    icon: item.icon,
-                    label: item.label,
-                    quantity: Math.max(1, item.quantity || 1)
-                });
-            }
-        });
-
-        if (game.systems.interactions) {
-            game.systems.interactions.replaceGroundItemAtWorld(groundItem.worldX, groundItem.worldY, remaining);
-        }
-
-        game.systems.world.updatePlayerContext(game.state.playerPos);
-
-        if (picked.length === 0) {
-            setActionMessage('Рюкзак полон, подобрать предметы не удалось.');
-            renderAfterStateChange();
-            return;
-        }
-
-        if (game.systems.effects) {
-            game.systems.effects.spawnInventoryUse(game.state.playerPos, picked);
-        }
-
-        const pickedSummary = picked.map((item) => item.quantity > 1 ? `${item.label} x${item.quantity}` : item.label).join(', ');
-        const remainingSummary = remaining.length > 0
-            ? ` Осталось на земле: ${remaining.map((item) => item.quantity > 1 ? `${item.label} x${item.quantity}` : item.label).join(', ')}.`
-            : '';
-
-        setActionMessage(`Подобрано: ${pickedSummary}.${remainingSummary}`);
-        renderAfterStateChange();
-    }
-
-    function dropSelectedInventoryItem() {
-        const inventoryRuntime = getInventoryRuntime();
-        if (inventoryRuntime) {
-            const outcome = inventoryRuntime.dropSelectedInventoryItem();
-
-            if (!outcome.success) {
-                setActionMessage('Сначала выбери предмет в инвентаре.');
-                renderAfterStateChange();
-                return;
-            }
-
-            setActionMessage(`Выброшен предмет: ${outcome.item.label}${outcome.item.quantity > 1 ? ` x${outcome.item.quantity}` : ''}.`);
-            renderAfterStateChange();
-            return;
-        }
-        const selectedItem = getSelectedInventoryItem();
-
-        if (!selectedItem || game.state.selectedInventorySlot === null) {
-            setActionMessage('Сначала выбери предмет в инвентаре.');
-            renderAfterStateChange();
-            return;
-        }
-
-        const removedItem = removeInventoryItemAtIndex(game.state.selectedInventorySlot, selectedItem.quantity || 1);
-
-        if (!removedItem) {
-            setActionMessage('Не удалось выбросить предмет.');
-            renderAfterStateChange();
-            return;
-        }
-
-        if (game.systems.interactions) {
-            game.systems.interactions.addGroundItemDrop(game.state.playerPos.x, game.state.playerPos.y, removedItem);
-        }
-
-        game.systems.world.updatePlayerContext(game.state.playerPos);
-        setActionMessage(`Выброшен предмет: ${removedItem.label}${removedItem.quantity > 1 ? ` x${removedItem.quantity}` : ''}.`);
-        renderAfterStateChange();
+        return merchantUi.handleMerchantPanelClick(event);
     }
 
     function getBuildDirectionCandidates() {
@@ -2343,17 +2032,6 @@
         renderAfterStateChange();
     }
 
-    function inspectInventoryItem(item) {
-        if (!item) {
-            setActionMessage('Этот слот пуст. Осматривать здесь пока нечего.');
-            renderAfterStateChange();
-            return;
-        }
-
-        setActionMessage(inventoryDescriptions[item.id] || `Предмет "${item.label}" пока без описания.`);
-        renderAfterStateChange();
-    }
-
     function selectInventorySlot(index) {
         return getInventoryUiModule().selectInventorySlot(index);
     }
@@ -2468,6 +2146,15 @@
             return;
         }
 
+        if (encounter.kind === 'craft_merchant' || encounter.kind === 'artisan') {
+            const craftQuestStatus = encounter.quest && encounter.quest.completed
+                ? 'Ремесленный заказ уже выполнен.'
+                : 'Есть ремесленный заказ и расширение сумки.';
+            setActionMessage(`${encounter.label}: ${encounter.summary} ${craftQuestStatus}`);
+            renderAfterStateChange();
+            return;
+        }
+
         if (encounter.kind === 'shelter') {
             setActionMessage(`Укрытие: ${encounter.summary} Нажми "Спать", чтобы передохнуть.`);
             renderAfterStateChange();
@@ -2475,14 +2162,17 @@
         }
 
         if (encounter.kind === 'camp') {
-            setActionMessage(`${encounter.label}: ${encounter.summary} Это отдельная лагерная точка для воды, еды и лагерных рецептов.`);
-            renderAfterStateChange();
+            openStationPanel(source);
             return;
         }
 
         if (encounter.kind === 'workbench') {
-            setActionMessage(`${encounter.label}: ${encounter.summary} Открой сумку рядом, чтобы увидеть явный список рецептов по станциям.`);
-            renderAfterStateChange();
+            openStationPanel(source);
+            return;
+        }
+
+        if (encounter.kind === 'station_keeper') {
+            openStationPanel(source);
             return;
         }
 
@@ -2596,6 +2286,15 @@
             return;
         }
 
+        if (encounter.kind === 'craft_merchant' || encounter.kind === 'artisan') {
+            const craftQuestStatus = encounter.quest && encounter.quest.completed
+                ? 'Ремесленный заказ уже выполнен.'
+                : 'Есть ремесленный заказ на сумку и особые заготовки.';
+            setActionMessage(`${encounter.label}: ${encounter.summary} ${craftQuestStatus}`);
+            renderAfterStateChange();
+            return;
+        }
+
         if (encounter.kind === 'islandOriginalNpc') {
             setActionMessage(`${encounter.label}: ${encounter.advice || encounter.description || encounter.summary}`);
             renderAfterStateChange();
@@ -2603,13 +2302,19 @@
         }
 
         if (encounter.kind === 'camp') {
-            setActionMessage(`${encounter.label}: ${encounter.summary} Это явная лагерная станция, а не просто shelter-логика.`);
+            setActionMessage(`${encounter.label}: ${encounter.summary} Это отдельная лагерная станция с собственным окном интерфейса.`);
             renderAfterStateChange();
             return;
         }
 
         if (encounter.kind === 'workbench') {
-            setActionMessage(`${encounter.label}: ${encounter.summary} Это явная станция для крафта у верстака и в мастерской.`);
+            setActionMessage(`${encounter.label}: ${encounter.summary} Это отдельная станция с собственным окном интерфейса, а не часть сумки.`);
+            renderAfterStateChange();
+            return;
+        }
+
+        if (encounter.kind === 'station_keeper') {
+            setActionMessage(`${encounter.label}: ${encounter.summary} Это отдельный хранитель станции, который открывает только станционный интерфейс.`);
             renderAfterStateChange();
             return;
         }
@@ -2621,114 +2326,34 @@
 
     function handleUseAction() {
         const actionUi = getActionUiModule();
-        if (actionUi && typeof actionUi.handleUseAction === 'function') {
-            return actionUi.handleUseAction();
-        }
-        const selectedItem = getSelectedInventoryItem();
-        const groundItem = getCurrentGroundItem();
-
-        if (selectedItem || game.state.selectedInventorySlot !== null) {
-            useInventoryItem(selectedItem);
+        if (!actionUi || typeof actionUi.handleUseAction !== 'function') {
             return;
         }
-
-        if (groundItem) {
-            pickupGroundItem();
-            return;
-        }
-
-        if (game.state.activeInteraction) {
-            resolveHouseUse(game.state.activeInteraction);
-            return;
-        }
-
-        setActionMessage('Рядом нет объекта для использования.');
-        renderAfterStateChange();
+        return actionUi.handleUseAction();
     }
 
     function handleInspectAction() {
         const actionUi = getActionUiModule();
-        if (actionUi && typeof actionUi.handleInspectAction === 'function') {
-            return actionUi.handleInspectAction();
-        }
-        const selectedItem = getSelectedInventoryItem();
-        const groundItem = getCurrentGroundItem();
-
-        if (selectedItem || game.state.selectedInventorySlot !== null) {
-            inspectInventoryItem(selectedItem);
+        if (!actionUi || typeof actionUi.handleInspectAction !== 'function') {
             return;
         }
-
-        if (groundItem) {
-            setActionMessage(`Под ногами: ${getGroundItemDescription(groundItem)}.`);
-            renderAfterStateChange();
-            return;
-        }
-
-        if (game.state.activeInteraction) {
-            inspectActiveHouse();
-            return;
-        }
-
-        const tileInfo = game.state.activeTileInfo;
-        const tileLabel = getTileLabel(tileInfo ? tileInfo.tileType : 'grass');
-        const progression = getCurrentProgression(tileInfo);
-        const suffix = progression ? ` Остров ${progression.islandIndex}: ${progression.label}.` : '';
-        const bandLabel = tileInfo ? getTravelBandLabel(tileInfo.travelBand) : getTravelBandLabel('normal');
-        const weightLabel = tileInfo ? formatRouteCost(tileInfo.travelWeight) : '1.0';
-        const travelLabel = tileInfo ? tileInfo.travelLabel || tileLabel : tileLabel;
-        setActionMessage(`Осмотр: ${travelLabel}, координаты ${game.state.playerPos.x}, ${game.state.playerPos.y}. Это ${bandLabel}, цена шага x${weightLabel}.${suffix}`);
-        renderAfterStateChange();
+        return actionUi.handleInspectAction();
     }
 
     function handleTalkAction() {
         const actionUi = getActionUiModule();
-        if (actionUi && typeof actionUi.handleTalkAction === 'function') {
-            return actionUi.handleTalkAction();
-        }
-        if (game.state.activeInteraction) {
-            openMerchantPanel(game.state.activeInteraction);
+        if (!actionUi || typeof actionUi.handleTalkAction !== 'function') {
             return;
         }
-
-        setActionMessage('Рядом нет персонажей для разговора.');
-        renderAfterStateChange();
+        return actionUi.handleTalkAction();
     }
 
     function handleActionClick(event) {
         const actionUi = getActionUiModule();
-        if (actionUi && typeof actionUi.handleActionClick === 'function') {
-            return actionUi.handleActionClick(event);
-        }
-        if (game.state.isGameOver) {
+        if (!actionUi || typeof actionUi.handleActionClick !== 'function') {
             return;
         }
-
-        const action = event.currentTarget.dataset.action;
-
-        if (action === 'sleep') {
-            performSleep();
-            return;
-        }
-
-        if (action === 'use') {
-            handleUseAction();
-            return;
-        }
-
-        if (action === 'inspect') {
-            handleInspectAction();
-            return;
-        }
-
-        if (action === 'drop') {
-            dropSelectedInventoryItem();
-            return;
-        }
-
-        if (action === 'talk') {
-            handleTalkAction();
-        }
+        return actionUi.handleActionClick(event);
     }
 
     function bindEvents() {
@@ -2780,12 +2405,32 @@
             });
         }
 
+        if (elements.pauseTravelButton) {
+            elements.pauseTravelButton.addEventListener('click', () => {
+                const statusUi = getStatusUiModule();
+
+                if (statusUi && typeof statusUi.openPauseTravelMenu === 'function') {
+                    statusUi.openPauseTravelMenu();
+                }
+            });
+        }
+
         if (elements.pauseBackButton) {
             elements.pauseBackButton.addEventListener('click', () => {
                 const statusUi = getStatusUiModule();
 
                 if (statusUi && typeof statusUi.closePauseSlotMenu === 'function') {
                     statusUi.closePauseSlotMenu();
+                }
+            });
+        }
+
+        if (elements.pauseTravelBackButton) {
+            elements.pauseTravelBackButton.addEventListener('click', () => {
+                const statusUi = getStatusUiModule();
+
+                if (statusUi && typeof statusUi.closePauseTravelMenu === 'function') {
+                    statusUi.closePauseTravelMenu();
                 }
             });
         }
@@ -2806,6 +2451,16 @@
 
                 if (statusUi && typeof statusUi.handlePauseSlotListClick === 'function') {
                     statusUi.handlePauseSlotListClick(event);
+                }
+            });
+        }
+
+        if (elements.pauseTravelList) {
+            elements.pauseTravelList.addEventListener('click', (event) => {
+                const statusUi = getStatusUiModule();
+
+                if (statusUi && typeof statusUi.handlePauseTravelListClick === 'function') {
+                    statusUi.handlePauseTravelListClick(event);
                 }
             });
         }
@@ -2843,97 +2498,134 @@
         activeHouse = game.state.activeHouse,
         activeInteraction = game.state.activeInteraction
     ) {
-        if (!elements.sceneViewport) {
-            queryElements();
-            bindEvents();
+        const perf = game.systems.perf || null;
+        const refresh = () => {
+            if (!elements.sceneViewport) {
+                queryElements();
+                bindEvents();
+            }
+
+            const tileInfo = game.state.activeTileInfo;
+            const roundedPosition = roundPosition(displayPosition);
+            const contextKey = [
+                roundedPosition.x,
+                roundedPosition.y,
+                activeHouse ? activeHouse.id : 'none',
+                activeInteraction ? activeInteraction.id : 'none',
+                game.state.activeGroundItemId || 'none',
+                game.state.selectedInventorySlot === null ? 'none' : game.state.selectedInventorySlot,
+                game.state.isMoving ? 'moving' : 'idle'
+            ].join('|');
+
+            const shouldResetActionMessage = ui.lastActionContextKey !== contextKey;
+
+            if (shouldResetActionMessage && !game.state.isMoving) {
+                ui.lastActionContextKey = contextKey;
+                ui.lastActionMessage = '';
+            }
+
+            if (!hasDirtySections() && !shouldResetActionMessage) {
+                return false;
+            }
+
+            const dirtySections = consumeDirtySections();
+            const dialogueUi = getDialogueUiModule();
+            const questUi = getQuestUiModule();
+            const mapUi = getMapUiModule();
+            const mobileUi = getMobileUiModule();
+
+            if (dirtySections.has('stats')) {
+                updateStats();
+            }
+
+            if (dirtySections.has('location')) {
+                updateLocationSummaries(displayPosition, tileInfo, activeHouse, activeInteraction);
+            }
+
+            if (dirtySections.has('progress')) {
+                updateProgressSummaries(tileInfo);
+            }
+
+            if (dirtySections.has('progress') || dirtySections.has('inventory') || dirtySections.has('location')) {
+                updateInstructionsText();
+            }
+
+            if (
+                dirtySections.has('progress')
+                || dirtySections.has('inventory')
+                || dirtySections.has('location')
+            ) {
+                syncProductionGoalsPanel(tileInfo);
+            }
+
+            if (dirtySections.has('character')) {
+                updateCharacterCard(displayPosition, tileInfo, activeHouse, activeInteraction);
+            }
+
+            if (dirtySections.has('actions')) {
+                updateActionButtons(activeInteraction);
+            }
+
+            if (dirtySections.has('inventory')) {
+                renderInventory();
+            }
+
+            if (dirtySections.has('portrait')) {
+                drawPortrait();
+            }
+
+            if (dirtySections.has('condition')) {
+                syncConditionOverlay();
+            }
+
+            if (dirtySections.has('status')) {
+                syncStatusOverlay();
+            }
+
+            if (dirtySections.has('merchant')) {
+                renderMerchantPanel(activeInteraction);
+            }
+
+            if (
+                shouldResetActionMessage
+                || dirtySections.has('location')
+                || dirtySections.has('actions')
+                || dirtySections.has('inventory')
+                || dirtySections.has('merchant')
+                || dirtySections.has('map')
+            ) {
+                renderStationPanel(activeInteraction);
+            }
+
+            if (dirtySections.has('dialogue') && dialogueUi && typeof dialogueUi.syncDialogueState === 'function') {
+                dialogueUi.syncDialogueState();
+            }
+
+            if (dirtySections.has('quests') && questUi && typeof questUi.syncQuestState === 'function') {
+                questUi.syncQuestState();
+            }
+
+            if (dirtySections.has('map') && mapUi && typeof mapUi.syncMapState === 'function') {
+                mapUi.syncMapState();
+            }
+
+            syncActionHint(activeInteraction, tileInfo, contextKey, dirtySections, shouldResetActionMessage);
+
+            if (mobileUi && typeof mobileUi.sync === 'function' && shouldSyncMobileUi(dirtySections, shouldResetActionMessage)) {
+                mobileUi.sync({
+                    dirtySections: Array.from(dirtySections),
+                    shouldResetActionMessage
+                });
+            }
+
+            return true;
+        };
+
+        if (perf && typeof perf.measure === 'function') {
+            return perf.measure('refreshDirty', refresh);
         }
 
-        const tileInfo = game.state.activeTileInfo;
-        const roundedPosition = roundPosition(displayPosition);
-        const contextKey = [
-            roundedPosition.x,
-            roundedPosition.y,
-            activeHouse ? activeHouse.id : 'none',
-            activeInteraction ? activeInteraction.id : 'none',
-            game.state.activeGroundItemId || 'none',
-            game.state.selectedInventorySlot === null ? 'none' : game.state.selectedInventorySlot,
-            game.state.isMoving ? 'moving' : 'idle'
-        ].join('|');
-
-        const shouldResetActionMessage = ui.lastActionContextKey !== contextKey;
-
-        if (shouldResetActionMessage) {
-            ui.lastActionContextKey = contextKey;
-            ui.lastActionMessage = '';
-        }
-
-        if (!hasDirtySections() && !shouldResetActionMessage) {
-            return false;
-        }
-
-        const dirtySections = consumeDirtySections();
-
-        if (dirtySections.has('stats')) {
-            updateStats();
-        }
-
-        if (dirtySections.has('location')) {
-            updateLocationSummaries(displayPosition, tileInfo, activeHouse, activeInteraction);
-        }
-
-        if (dirtySections.has('progress')) {
-            updateProgressSummaries(tileInfo);
-        }
-
-        if (dirtySections.has('character')) {
-            updateCharacterCard(displayPosition, tileInfo, activeHouse, activeInteraction);
-        }
-
-        if (dirtySections.has('actions')) {
-            updateActionButtons(activeInteraction);
-        }
-
-        if (dirtySections.has('inventory')) {
-            renderInventory();
-        }
-
-        if (dirtySections.has('portrait')) {
-            drawPortrait();
-        }
-
-        if (dirtySections.has('condition')) {
-            syncConditionOverlay();
-        }
-
-        if (dirtySections.has('status')) {
-            syncStatusOverlay();
-        }
-
-        if (dirtySections.has('merchant')) {
-            renderMerchantPanel(activeInteraction);
-        }
-
-        if (dirtySections.has('dialogue') && getDialogueUiModule() && typeof getDialogueUiModule().syncDialogueState === 'function') {
-            getDialogueUiModule().syncDialogueState();
-        }
-
-        if (dirtySections.has('quests') && getQuestUiModule() && typeof getQuestUiModule().syncQuestState === 'function') {
-            getQuestUiModule().syncQuestState();
-        }
-
-        if (dirtySections.has('map') && getMapUiModule() && typeof getMapUiModule().syncMapState === 'function') {
-            getMapUiModule().syncMapState();
-        }
-
-        if (elements.actionHint && (shouldResetActionMessage || dirtySections.has('actionHint'))) {
-            elements.actionHint.textContent = ui.lastActionMessage || getDefaultActionHint(activeInteraction, tileInfo);
-        }
-
-        if (getMobileUiModule() && typeof getMobileUiModule().sync === 'function') {
-            getMobileUiModule().sync();
-        }
-
-        return true;
+        return refresh();
     }
 
     function refresh(
@@ -2953,6 +2645,19 @@
         elements.instructions.hidden = Boolean(game.state.isInstructionsDismissed);
     }
 
+    function updateInstructionsText() {
+        if (!elements.instructionsText) {
+            return;
+        }
+
+        if (game.state.isInstructionsDismissed) {
+            return;
+        }
+
+        const onboardingState = buildCraftOnboardingState();
+        elements.instructionsText.textContent = buildCraftOnboardingText(onboardingState);
+    }
+
     function dismissInstructions() {
         game.state.isInstructionsDismissed = true;
         syncInstructionsOverlay();
@@ -2970,9 +2675,7 @@
         if (getMobileUiModule() && typeof getMobileUiModule().initialize === 'function') {
             getMobileUiModule().initialize();
         }
-        if (elements.instructionsText) {
-            elements.instructionsText.textContent = 'Кликайте по клеткам, чтобы выбрать маршрут. Кнопка движения, пробел или повторный клик по той же клетке запускают выбранный путь. Тропа и мосты экономят силы, тростник и осыпь утяжеляют путь, а грязь и хрупкие мосты лучше обходить.';
-        }
+        updateInstructionsText();
         syncInstructionsOverlay();
         markDirty();
     }
@@ -3062,6 +2765,7 @@
         markDirty,
         markHouseResolved,
         normalizeInventoryItem,
+        openStationPanel,
         performSleep,
         renderAfterStateChange,
         refreshDirty,

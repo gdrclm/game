@@ -6,6 +6,10 @@
         return game.systems.itemCatalog || null;
     }
 
+    function getRecipeRegistry() {
+        return game.systems.recipeRegistry || null;
+    }
+
     function getDefinitionsMap() {
         const catalog = getCatalog();
         return catalog && catalog.itemById ? catalog.itemById : {};
@@ -134,6 +138,36 @@
             ...buildQuestCategories(definition)
         ]);
         const craftingTags = new Set(Array.isArray(definition.craftingTags) ? definition.craftingTags : []);
+        const normalizedDefinitionId = typeof definition.id === 'string'
+            ? definition.id.trim().toLowerCase()
+            : '';
+        const recipeRegistry = getRecipeRegistry();
+        const sourceRecipeIds = Array.isArray(definition.sourceRecipeIds)
+            ? definition.sourceRecipeIds
+                .filter((recipeId) => typeof recipeId === 'string' && recipeId.trim())
+                .map((recipeId) => recipeId.trim())
+            : [];
+        const sourceRecipeTagSet = new Set(
+            sourceRecipeIds.flatMap((recipeId) => {
+                const recipeDefinition = recipeRegistry && typeof recipeRegistry.getRecipeDefinition === 'function'
+                    ? recipeRegistry.getRecipeDefinition(recipeId)
+                    : null;
+                return Array.isArray(recipeDefinition && recipeDefinition.tags)
+                    ? recipeDefinition.tags
+                    : [];
+            })
+        );
+
+        if (Array.isArray(requirement.itemIds) && requirement.itemIds.length > 0) {
+            const matchesItemId = requirement.itemIds.some((itemId) => (
+                typeof itemId === 'string'
+                && itemId.trim().toLowerCase() === normalizedDefinitionId
+            ));
+            if (!matchesItemId) {
+                return false;
+            }
+        }
+
         if (Array.isArray(requirement.questCategories) && requirement.questCategories.length > 0) {
             const intersects = requirement.questCategories.some((category) => catalogCategories.has(category));
             if (!intersects) {
@@ -143,6 +177,23 @@
 
         if (Array.isArray(requirement.craftingTags) && requirement.craftingTags.length > 0) {
             const intersects = requirement.craftingTags.some((tag) => craftingTags.has(tag));
+            if (!intersects) {
+                return false;
+            }
+        }
+
+        if (Array.isArray(requirement.sourceRecipeIds) && requirement.sourceRecipeIds.length > 0) {
+            const matchesSourceRecipeId = requirement.sourceRecipeIds.some((recipeId) => (
+                typeof recipeId === 'string'
+                && sourceRecipeIds.includes(recipeId.trim())
+            ));
+            if (!matchesSourceRecipeId) {
+                return false;
+            }
+        }
+
+        if (Array.isArray(requirement.sourceRecipeTags) && requirement.sourceRecipeTags.length > 0) {
+            const intersects = requirement.sourceRecipeTags.some((tag) => sourceRecipeTagSet.has(tag));
             if (!intersects) {
                 return false;
             }

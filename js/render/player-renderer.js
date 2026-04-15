@@ -2,12 +2,31 @@
     const game = window.Game;
     const playerRenderer = game.systems.playerRenderer = game.systems.playerRenderer || {};
     const spriteAssets = new Map();
+    const playerScreenPointBuffer = { x: 0, y: 0 };
 
     game.assets = game.assets || {};
     game.assets.playerSprites = spriteAssets;
 
+    function fillScreenPoint(x, y, out) {
+        const camera = game.systems.camera || null;
+
+        if (camera && typeof camera.isoToScreenTo === 'function') {
+            return camera.isoToScreenTo(x, y, out);
+        }
+
+        const point = camera && typeof camera.isoToScreen === 'function'
+            ? camera.isoToScreen(x, y)
+            : null;
+
+        out.x = point ? point.x : 0;
+        out.y = point ? point.y : 0;
+        return out;
+    }
+
     function drawFallbackPlayer(position) {
-        const { x: screenX, y: screenY } = game.systems.camera.isoToScreen(position.x, position.y);
+        fillScreenPoint(position.x, position.y, playerScreenPointBuffer);
+        const screenX = playerScreenPointBuffer.x;
+        const screenY = playerScreenPointBuffer.y;
         const tileCenterY = screenY + game.config.tileHeight / 2;
 
         game.ctx.save();
@@ -294,7 +313,9 @@
         }
 
         const metrics = getDrawMetrics(frame);
-        const { x: screenX, y: screenY } = game.systems.camera.isoToScreen(position.x, position.y);
+        fillScreenPoint(position.x, position.y, playerScreenPointBuffer);
+        const screenX = playerScreenPointBuffer.x;
+        const screenY = playerScreenPointBuffer.y;
         const tileCenterY = screenY + game.config.tileHeight / 2;
         const drawX = screenX - metrics.anchorX;
         const drawY = tileCenterY - metrics.anchorY;

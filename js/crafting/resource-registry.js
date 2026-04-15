@@ -993,6 +993,19 @@
                 merchantQuestWeight: 3,
                 description: 'Поздний трофейный улов. Идёт в общую рыбную переработку, но особенно хорош для дорогой торговли и поздней логистики.'
             }
+        },
+        {
+            id: 'soilClod',
+            resourceId: 'soil',
+            label: 'Комья земли',
+            icon: 'KZ',
+            lootTier: 0,
+            categories: 'resource material',
+            extra: {
+                stackable: true,
+                baseValue: 2,
+                description: 'Сырьё из плохих секторов. Пять комьев можно сжать руками в земляной ресурс.'
+            }
         }
     ];
 

@@ -955,8 +955,7 @@
             recipeId: 'portable-bridge',
             label: 'Переносной мост',
             station: 'bench',
-            stationLabel: 'Верстак / мастерская',
-            stationOptions: ['bench', 'workbench'],
+            stationLabel: 'Верстак',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
                 createIngredient('component', 'wood_plank_basic', 'Доска', 2),
@@ -977,8 +976,7 @@
             recipeId: 'portable-bridge-assembly',
             label: 'Собрать переносной мост',
             station: 'bench',
-            stationLabel: 'Верстак / мастерская',
-            stationOptions: ['bench', 'workbench'],
+            stationLabel: 'Верстак',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
                 createIngredient('item', 'bridge_kit', 'Мост-комплект', 1)
@@ -1018,8 +1016,7 @@
             recipeId: 'field-bridge-upgrade',
             label: 'Собрать полевой мостик',
             station: 'bench',
-            stationLabel: 'Верстак / мастерская',
-            stationOptions: ['bench', 'workbench'],
+            stationLabel: 'Верстак',
             tier: RECIPE_TIERS.buildWaterAndRepair,
             ingredients: [
                 createIngredient('item', 'portableBridge', 'Переносной мост', 1),
@@ -1280,6 +1277,88 @@
             notes: 'Поздняя сигнальная утилита на базе рыбьего жира: расширяет рыбий жир из просто еды в экономический и маршрутный ресурс.'
         },
         {
+            recipeId: 'relic-case',
+            label: 'Футляр реликвий',
+            station: 'scribe',
+            stationLabel: 'Писарь',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('item', 'trade_papers', 'Торговые бумаги', 1),
+                createIngredient('item', 'market_seal', 'Рыночная печать', 1),
+                createIngredient('component', 'wood_plank_basic', 'Доска', 1)
+            ],
+            result: createResult('item', 'relicCase', 'Футляр реликвий', 1, {
+                gameplayItemId: 'relicCase'
+            }),
+            tags: ['utility', 'trade', 'collector_loadout', 'info', 'scribe'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 22, to: 24, priority: 'critical', note: 'Коллекционерское окно, где ценный лут имеет смысл только если его можно заранее прочитать и выгодно вывести.' }
+            ]),
+            notes: 'Поздняя экономическая сборка под коллекционерский стиль: не усиливает цифры напрямую, а меняет работу с дорогими домами и выводом ценностей.'
+        },
+        {
+            recipeId: 'tool-holster',
+            label: 'Кобура инструмента',
+            station: 'workbench',
+            stationLabel: 'Мастерская',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('item', 'pathMarker', 'Маркер пути', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' }),
+                createIngredient('component', 'wood_plank_basic', 'Доска', 1)
+            ],
+            result: createResult('item', 'toolHolster', 'Кобура инструмента', 1, {
+                gameplayItemId: 'toolHolster'
+            }),
+            tags: ['utility', 'route', 'collector_loadout', 'workbench'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 21, to: 24, priority: 'recommended', note: 'Перестраивает late-mid сумку под инструментальные рывки и длинные связки шагов.' }
+            ]),
+            notes: 'Поздний переход от просто переноски вещей к инструментальному стилю маршрута: удобнее старт движения, длиннее связки, дешевле переправы.'
+        },
+        {
+            recipeId: 'storm-boots',
+            label: 'Штормовые сапоги',
+            station: 'smithy',
+            stationLabel: 'Кузница',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'stone_block', 'Каменный блок', 1),
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' }),
+                createIngredient('material', 'metal', 'Металл', 1)
+            ],
+            result: createResult('item', 'stormBoots', 'Штормовые сапоги', 1, {
+                gameplayItemId: 'stormBoots'
+            }),
+            tags: ['movement', 'route', 'endgame_route', 'smithy', 'risk'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 25, to: 27, priority: 'critical', note: 'Окно, где важнее не +цифра, а способность стабильно проходить плохие и узкие зоны.' }
+            ]),
+            notes: 'Поздняя маршрутная сборка под эндгейм-логистику: сапоги не просто удешевляют путь, а позволяют иначе выбирать сам маршрут.'
+        },
+        {
+            recipeId: 'anchor-line',
+            label: 'Якорная линия',
+            station: 'smithy',
+            stationLabel: 'Кузница',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'wood_frame_basic', 'Каркас', 1),
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
+                createIngredient('component', 'fiber_rope', 'Верёвка', 1, { gameplayItemId: 'fiber_rope' }),
+                createIngredient('material', 'metal', 'Металл', 1)
+            ],
+            result: createResult('item', 'anchorLine', 'Якорная линия', 1, {
+                gameplayItemId: 'anchorLine'
+            }),
+            tags: ['utility', 'route', 'water', 'endgame_route', 'smithy'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 25, to: 27, priority: 'critical', note: 'Эндгейм-маршрут, где нужна кнопка аварийного отката к безопасной точке, а не ещё один мелкий бонус.' }
+            ]),
+            notes: 'Поздняя страховочная ветка. Меняет стиль late-game с greed на контролируемый проход через одну сильную аварийную кнопку.'
+        },
+        {
             recipeId: 'island-drill',
             label: 'Островная дрель',
             station: 'smithy',
@@ -1288,14 +1367,57 @@
             ingredients: [
                 createIngredient('component', 'stone_block', 'Каменный блок', 2),
                 createIngredient('component', 'wood_frame_basic', 'Каркас', 1),
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
                 createIngredient('material', 'metal', 'Металл', 1)
             ],
-            result: createResult('item', 'islandDrill', 'Островная дрель', 1),
-            tags: ['construction', 'utility', 'endgame', 'smithy'],
+            result: createResult('item', 'islandDrill', 'Островная дрель', 1, {
+                gameplayItemId: 'islandDrill'
+            }),
+            tags: ['construction', 'utility', 'endgame', 'smithy', 'heavy_utility', 'endgame_route'],
             islandNeedProfile: createIslandNeedProfile([
                 { from: 25, to: 27, priority: 'critical', note: 'Эндгейм-рецепт тяжёлой маршрутной утилиты.' }
             ]),
-            notes: 'Поздний кузнечный рецепт на тяжёлый инструмент.'
+            notes: 'Поздний кузнечный рецепт на тяжёлый инструмент. В late-game это уже не просто ещё один предмет, а способ сбросить локальное давление маршрута.'
+        },
+        {
+            recipeId: 'black-cup',
+            label: 'Чёрный кубок',
+            station: 'altar',
+            stationLabel: 'Алтарь',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('component', 'healing_base', 'Травяная база лечения', 1),
+                createIngredient('component', 'fish_oil', 'Рыбий жир', 1),
+                createIngredient('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, { gameplayItemId: 'flask_water_alchemy' })
+            ],
+            result: createResult('item', 'blackCup', 'Чёрный кубок', 1, {
+                gameplayItemId: 'blackCup'
+            }),
+            tags: ['ritual', 'survival', 'final_survival', 'altar', 'risk'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 28, to: 29, priority: 'situational', note: 'Сильный, но рискованный островной ритуал под финальную подготовку и только под проход.' }
+            ]),
+            notes: 'Финальный situational рецепт из воды, травы и рыбы. Даёт сильный островной бафф с ценой в повышенном drain, поэтому это не greedy кнопка, а сознательный выбор.'
+        },
+        {
+            recipeId: 'last-vow',
+            label: 'Последний обет',
+            station: 'altar',
+            stationLabel: 'Алтарь',
+            tier: RECIPE_TIERS.buildWaterAndRepair,
+            ingredients: [
+                createIngredient('item', 'blackCup', 'Чёрный кубок', 1),
+                createIngredient('item', 'secondWind', 'Второе дыхание', 1),
+                createIngredient('itemState', 'waterFlaskAlchemy', 'Фляга алхимической воды', 1, { gameplayItemId: 'flask_water_alchemy' })
+            ],
+            result: createResult('item', 'lastVow', 'Последний обет', 1, {
+                gameplayItemId: 'lastVow'
+            }),
+            tags: ['ritual', 'movement', 'final_survival', 'guaranteed_route', 'altar', 'risk'],
+            islandNeedProfile: createIslandNeedProfile([
+                { from: 28, to: 30, priority: 'critical', note: 'Финальный проход, где нужен короткий сильный рывок через тяжёлые зоны, а не ещё один обычный бафф.' }
+            ]),
+            notes: 'Финальная ритуальная сборка под закрытие острова. Сильно меняет style прохождения последних карт, потому что превращает предмет в кнопку решающего прорыва.'
         }
     ];
 
@@ -1315,7 +1437,7 @@
         {
             profileId: RECIPE_PROFILE_IDS.wave1Minimal,
             label: 'Первая волна',
-            description: 'Минимальный production-набор по craft docs: вода, пища, мост, лодка, ремонт, верёвка, дешёвое лечение и ускоряющий настой.',
+            description: 'Активный progression-набор: ранняя база плюс поздние style-рецепты, которые должны существовать в реальной игре, а не только в полном каталоге.',
             recipeIds: [
                 'fill-water-flask',
                 'boil-water',
@@ -1341,7 +1463,14 @@
                 'bridge-repair-kit',
                 'boat-frame',
                 'boat',
-                'boat-repair-kit'
+                'boat-repair-kit',
+                'relic-case',
+                'tool-holster',
+                'storm-boots',
+                'anchor-line',
+                'island-drill',
+                'black-cup',
+                'last-vow'
             ]
         }
     ];
@@ -1394,8 +1523,38 @@
         return getConfiguredRecipeProfileId();
     }
 
-    function getActiveRecipeDefinitions() {
-        return getRecipeDefinitionsForProfile(getActiveRecipeProfileId());
+    function resolveRecipeUnlockWindow(recipe) {
+        if (!recipe || !recipe.islandNeedProfile) {
+            return { earliest: null, latest: null };
+        }
+
+        const earliest = Number.isFinite(recipe.islandNeedProfile.earliestIsland)
+            ? recipe.islandNeedProfile.earliestIsland
+            : null;
+        const latest = Number.isFinite(recipe.islandNeedProfile.latestIsland)
+            ? recipe.islandNeedProfile.latestIsland
+            : null;
+
+        return { earliest, latest };
+    }
+
+    function isRecipeUnlockedForIsland(recipe, islandIndex = game.state.currentIslandIndex || 1) {
+        const normalizedIslandIndex = Math.max(1, Math.round(islandIndex || 1));
+        const { earliest } = resolveRecipeUnlockWindow(recipe);
+
+        if (!Number.isFinite(earliest)) {
+            return true;
+        }
+
+        return normalizedIslandIndex >= earliest;
+    }
+
+    function getActiveRecipeDefinitions(options = {}) {
+        const islandIndex = Number.isFinite(options.islandIndex)
+            ? options.islandIndex
+            : (game.state && Number.isFinite(game.state.currentIslandIndex) ? game.state.currentIslandIndex : 1);
+        return getRecipeDefinitionsForProfile(getActiveRecipeProfileId())
+            .filter((recipe) => isRecipeUnlockedForIsland(recipe, islandIndex));
     }
 
     function isRecipeActive(recipeId, profileId) {
@@ -1527,6 +1686,7 @@
         getRecipesByComponentTag,
         getRecipesForIsland,
         getRecipesByResultId,
+        isRecipeUnlockedForIsland,
         isRecipeActive,
         isPracticalRecipeTier,
         normalizeRecipeDefinition,

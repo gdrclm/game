@@ -25,36 +25,71 @@
     }
 
     function getChunk(chunkX, chunkY, options = {}) {
-        const { generateIfMissing = true } = options;
+        const {
+            generateIfMissing = true,
+            immediate = true,
+            priority = 'normal',
+            queueDeferred
+        } = options;
+        const requestedDetailLevel = Object.prototype.hasOwnProperty.call(options, 'detailLevel')
+            ? options.detailLevel
+            : (generateIfMissing ? 'full' : 'base');
         const state = window.Game.state;
         const chunkKey = getChunkKey(chunkX, chunkY);
+        const chunkGenerator = window.Game.systems.chunkGenerator || null;
 
         if (state.loadedChunks[chunkKey]) {
-            return state.loadedChunks[chunkKey];
+            const chunk = state.loadedChunks[chunkKey];
+
+            if (
+                chunkGenerator
+                && typeof chunkGenerator.ensureChunkGenerationLevel === 'function'
+                && requestedDetailLevel === 'full'
+            ) {
+                return chunkGenerator.ensureChunkGenerationLevel(chunk, {
+                    detailLevel: requestedDetailLevel,
+                    immediate,
+                    priority
+                });
+            }
+
+            return chunk;
         }
 
         if (!generateIfMissing || typeof window.Game.systems.generateChunk !== 'function') {
             return null;
         }
 
-        return window.Game.systems.generateChunk(chunkX, chunkY);
+        return window.Game.systems.generateChunk(chunkX, chunkY, {
+            detailLevel: requestedDetailLevel,
+            immediate,
+            priority,
+            queueDeferred
+        });
     }
 
     function storeChunk(chunk) {
         const state = window.Game.state;
         const chunkKey = getChunkKey(chunk.x, chunk.y);
+        const pathfinding = window.Game.systems.pathfinding || null;
 
         if (!state.loadedChunks[chunkKey]) {
             state.loadedChunkCount++;
         }
 
         state.loadedChunks[chunkKey] = chunk;
+
+        if (pathfinding && typeof pathfinding.invalidateCaches === 'function') {
+            pathfinding.invalidateCaches();
+        }
+
         return chunk;
     }
 
     function unloadChunk(chunkX, chunkY) {
         const state = window.Game.state;
         const chunkKey = getChunkKey(chunkX, chunkY);
+        const pathfinding = window.Game.systems.pathfinding || null;
 
         if (!state.loadedChunks[chunkKey]) {
             return false;
@@ -62,6 +97,11 @@
 
         delete state.loadedChunks[chunkKey];
         state.loadedChunkCount = Math.max(0, state.loadedChunkCount - 1);
+
+        if (pathfinding && typeof pathfinding.invalidateCaches === 'function') {
+            pathfinding.invalidateCaches();
+        }
+
         return true;
     }
 

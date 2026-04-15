@@ -740,6 +740,18 @@
         return pickListEntry(['fisherman', 'bridgewright', 'junkDealer', 'merchant', 'storyteller'], random, 'merchant');
     }
 
+    function chooseTradeIslandMerchantRole(islandIndex, random) {
+        if (islandIndex >= 22) {
+            return pickListEntry(['exchanger', 'collector', 'quartermaster', 'merchant'], random, 'exchanger');
+        }
+
+        if (islandIndex >= 12) {
+            return pickListEntry(['exchanger', 'merchant', 'quartermaster'], random, 'exchanger');
+        }
+
+        return pickListEntry(['merchant', 'storyteller', 'exchanger'], random, 'merchant');
+    }
+
     function chooseSettlementPrimaryMerchantRole(progression, random) {
         const islandIndex = progression && progression.islandIndex ? progression.islandIndex : 1;
         const settlementType = getSettlementType(progression);
@@ -816,7 +828,8 @@
             const profile = shopRuntime.createMerchantEncounterProfile(islandIndex, random, {
                 merchantRole,
                 label,
-                summary
+                summary,
+                scenario: progression.scenario || 'normal'
             });
             profile.houseStyle = houseStyle;
             profile.merchantRole = merchantRole;
@@ -826,10 +839,16 @@
         }
 
         const stock = lootSystem && typeof lootSystem.createMerchantStock === 'function'
-            ? lootSystem.createMerchantStock(islandIndex, random, { merchantRole })
+            ? lootSystem.createMerchantStock(islandIndex, random, {
+                merchantRole,
+                scenario: progression.scenario || 'normal'
+            })
             : [];
         const quest = lootSystem && typeof lootSystem.createMerchantQuest === 'function'
-            ? lootSystem.createMerchantQuest(islandIndex, random, { merchantRole })
+            ? lootSystem.createMerchantQuest(islandIndex, random, {
+                merchantRole,
+                scenario: progression.scenario || 'normal'
+            })
             : null;
 
         return {
@@ -1226,7 +1245,7 @@
             return pickListEntry(roleDefinition.buildingTypes, random, 'shop');
         }
 
-        if (profile.kind === 'artisan') {
+        if (profile.kind === 'artisan' || profile.kind === 'craft_merchant' || profile.kind === 'station_keeper') {
             return artisanBuildingByNpcKind[profile.npcKind] || 'workshop';
         }
 
@@ -1346,7 +1365,12 @@
                 profile.houseStyle = buildingDefinition.houseStyle;
             }
 
-            if (profile.kind === 'merchant' || profile.kind === 'artisan') {
+            if (
+                profile.kind === 'merchant'
+                || profile.kind === 'artisan'
+                || profile.kind === 'craft_merchant'
+                || profile.kind === 'station_keeper'
+            ) {
                 profile.summary = `${buildingDefinition.label}. ${profile.summary}`;
             } else if (profile.kind === 'shelter' || profile.kind === 'well' || profile.kind === 'forage') {
                 profile.label = buildingDefinition.label;
@@ -1472,6 +1496,12 @@
             return createWellProfile(progression.islandIndex, { guaranteedSafePoint: true, houseStyle: 'ordinary' });
         }
 
+        if (progression.scenario === 'depletedIsland') {
+            return random() < 0.58
+                ? createWellProfile(progression.islandIndex, { guaranteedSafePoint: true, houseStyle: 'ordinary' })
+                : createCampProfile(progression.islandIndex, { guaranteedSafePoint: true, houseStyle: 'poor' });
+        }
+
         if (progression.islandIndex >= 6 || progression.islandIndex % 2 === 0 || random() < 0.72) {
             return createWellProfile(progression.islandIndex, { guaranteedSafePoint: true });
         }
@@ -1502,6 +1532,12 @@
             });
         }
 
+        if (progression.scenario === 'depletedIsland') {
+            return createChestProfile(progression, random, {
+                forcedChestTier: random() < 0.28 ? 'hidden' : 'ordinary'
+            });
+        }
+
         if (progression.islandIndex >= 10 && random() < 0.18) {
             return createChestProfile(progression, random, {
                 forcedChestTier: random() < 0.22 ? 'jackpot' : 'elite'
@@ -1528,7 +1564,10 @@
 
         if (scenario === 'tradeIsland') {
             if (roll < 0.4) {
-                return createMerchantProfile(progression, random, { houseStyle: 'rich' });
+                return createMerchantProfile(progression, random, {
+                    houseStyle: 'rich',
+                    merchantRole: chooseTradeIslandMerchantRole(islandIndex, random)
+                });
             }
             if (roll < 0.74) {
                 return createChestProfile(progression, random, {
@@ -1573,6 +1612,33 @@
                 return createEmptyHouseProfile(progression, { houseStyle: 'ordinary' });
             }
             return createWellProfile(islandIndex, { houseStyle: 'ordinary' });
+        }
+
+        if (scenario === 'depletedIsland') {
+            if (roll < 0.18) {
+                return createChestProfile(progression, random, {
+                    forcedChestTier: remote || vault
+                        ? (random() < 0.42 ? 'hidden' : 'ordinary')
+                        : 'ordinary'
+                });
+            }
+            if (roll < 0.28) {
+                return createMerchantProfile(progression, random, { houseStyle: 'poor' });
+            }
+            if (roll < 0.54) {
+                return createEmptyHouseProfile(progression, { houseStyle: 'poor' });
+            }
+            if (roll < 0.78) {
+                return random() < 0.58
+                    ? createWellProfile(islandIndex, { houseStyle: 'ordinary' })
+                    : createCampProfile(islandIndex, { houseStyle: 'poor' });
+            }
+            if (roll < 0.93) {
+                return createTrapHouseProfile(progression, random);
+            }
+            return random() < 0.2
+                ? createForageProfile(islandIndex, { houseStyle: 'poor' })
+                : createCampProfile(islandIndex, { houseStyle: 'poor' });
         }
 
         let chestChance = clamp(0.08 + islandIndex * 0.03, 0.08, 0.56);
@@ -1875,7 +1941,10 @@
 
         if (slots.length > profiles.length && island.islandIndex >= 2) {
             if (island.progression.scenario === 'tradeIsland') {
-                profiles.push(createMerchantProfile(island.progression, random, { houseStyle: 'rich' }));
+                profiles.push(createMerchantProfile(island.progression, random, {
+                    houseStyle: 'rich',
+                    merchantRole: chooseTradeIslandMerchantRole(island.islandIndex, random)
+                }));
             } else if (island.progression.scenario === 'trapIsland') {
                 profiles.push(createTrapHouseProfile(island.progression, random));
             } else if (island.progression.scenario === 'jackpotIsland') {
@@ -1927,6 +1996,8 @@
             finalChest: 6,
             chest: 5,
             artisan: 4.6,
+            craft_merchant: 4.6,
+            station_keeper: 4.5,
             merchant: 4,
             trapHouse: 3.3,
             shelter: 2.7,

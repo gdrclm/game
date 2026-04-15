@@ -1,3 +1,6 @@
+const ROUTE_PREVIEW_EXTRA_STEPS = 6;
+const ROUTE_PREVIEW_COST_BUFFER = 1.75;
+
 function handleClick(event) {
     const game = window.Game;
 
@@ -25,8 +28,6 @@ function handleClick(event) {
         game.systems.movement.endMovement();
     }
 
-    preloadChunkAndNeighbors(targetX, targetY);
-
     if (
         game.systems.actionUi
         && typeof game.systems.actionUi.tryCollectClickedRock === 'function'
@@ -43,24 +44,27 @@ function handleClick(event) {
         && selectedWorldTile.y === targetY
     );
 
-    game.state.selectedWorldTile = { x: targetX, y: targetY };
-    game.state.selectedWorldInteractionId = clickedInteraction ? clickedInteraction.id : null;
-    planRouteToTarget(targetX, targetY, {
-        showRouteWarning: true,
-        clearActionMessage: true
-    });
-
     if (
         isRepeatClickOnSelectedTile
         && existingRoute.length > 0
-        && game.state.route.length > 0
         && !game.state.isMoving
         && game.systems.movement
         && typeof game.systems.movement.startMovement === 'function'
     ) {
+        game.state.selectedWorldTile = { x: targetX, y: targetY };
+        game.state.selectedWorldInteractionId = clickedInteraction ? clickedInteraction.id : null;
         game.systems.movement.startMovement();
         return;
     }
+
+    game.state.selectedWorldTile = { x: targetX, y: targetY };
+    game.state.selectedWorldInteractionId = clickedInteraction ? clickedInteraction.id : null;
+    const routePlan = planRouteToTarget(targetX, targetY, {
+        showRouteWarning: true,
+        clearActionMessage: true,
+        queryMode: 'preview',
+        preloadTarget: false
+    });
 
     if (game.systems.actionUi && typeof game.systems.actionUi.describeSelectedWorldTarget === 'function') {
         const describedSelection = game.systems.actionUi.describeSelectedWorldTarget({
@@ -84,12 +88,32 @@ function handleClick(event) {
 function preloadChunkAndNeighbors(x, y) {
     const game = window.Game;
     const { chunkX, chunkY } = game.systems.world.getChunkCoordinatesForWorld(x, y);
+    const chunkCoordinates = [];
 
     for (let dx = -game.config.chunkPreloadRadius; dx <= game.config.chunkPreloadRadius; dx++) {
         for (let dy = -game.config.chunkPreloadRadius; dy <= game.config.chunkPreloadRadius; dy++) {
-            game.systems.world.getChunk(chunkX + dx, chunkY + dy);
+            chunkCoordinates.push({
+                chunkX: chunkX + dx,
+                chunkY: chunkY + dy
+            });
         }
     }
+
+    if (game.systems.chunkGenerator && typeof game.systems.chunkGenerator.prewarmChunks === 'function') {
+        game.systems.chunkGenerator.prewarmChunks(chunkCoordinates, {
+            detailLevel: 'base',
+            priority: 'high'
+        });
+        return;
+    }
+
+    chunkCoordinates.forEach((entry) => {
+        game.systems.world.getChunk(entry.chunkX, entry.chunkY, {
+            detailLevel: 'base',
+            queueDeferred: false,
+            priority: 'high'
+        });
+    });
 }
 
 function getBaseMoveCellsPerTurn() {
@@ -110,6 +134,47 @@ function clearPlannedRoute() {
     game.state.routeTotalCost = 0;
     game.state.routePreviewLength = 0;
     game.state.routePreviewTotalCost = 0;
+    game.state.routePreviewIsExact = true;
+}
+
+function getRoutePreviewStepLimit(routeLengthLimit = getRouteLengthLimit()) {
+    const game = window.Game;
+
+    return Math.max(
+        routeLengthLimit,
+        Math.min(
+            game.config.maxPathLength,
+            Math.max(routeLengthLimit * 2, routeLengthLimit + ROUTE_PREVIEW_EXTRA_STEPS)
+        )
+    );
+}
+
+function getRoutePreviewCostLimit(startX, startY, previewStepLimit) {
+    const game = window.Game;
+    const startTileInfo = game.systems.world.getTileInfo(startX, startY, { generateIfMissing: false });
+    const baselineStepCost = Number.isFinite(startTileInfo && startTileInfo.travelWeight) && startTileInfo.travelWeight > 0
+        ? startTileInfo.travelWeight
+        : 1;
+
+    return Math.max(previewStepLimit, previewStepLimit * baselineStepCost * ROUTE_PREVIEW_COST_BUFFER);
+}
+
+function buildPathQueryOptions(startX, startY, maxMoveCellsPerTurn, options = {}) {
+    const queryMode = options.queryMode === 'exact' ? 'exact' : 'preview';
+
+    if (queryMode === 'exact') {
+        return { queryMode };
+    }
+
+    const previewStepLimit = getRoutePreviewStepLimit(maxMoveCellsPerTurn);
+    return {
+        queryMode,
+        maxPathLength: previewStepLimit,
+        maxAllowedCost: getRoutePreviewCostLimit(startX, startY, previewStepLimit),
+        tileQueryOptions: {
+            generateIfMissing: false
+        }
+    };
 }
 
 function planRouteToTarget(targetX, targetY, options = {}) {
@@ -128,19 +193,21 @@ function planRouteToTarget(targetX, targetY, options = {}) {
         : { x: targetX, y: targetY };
     const baseMoveCellsPerTurn = getBaseMoveCellsPerTurn();
     const maxMoveCellsPerTurn = getRouteLengthLimit();
-    const pathResult = game.systems.pathfinding.findPathResult(startX, startY, resolvedTarget.x, resolvedTarget.y);
+    const pathResult = game.systems.pathfinding.findPathResult(
+        startX,
+        startY,
+        resolvedTarget.x,
+        resolvedTarget.y,
+        buildPathQueryOptions(startX, startY, maxMoveCellsPerTurn, options)
+    );
 
     game.state.routePreviewLength = pathResult.path.length;
     game.state.routePreviewTotalCost = pathResult.totalCost;
+    game.state.routePreviewIsExact = Boolean(pathResult.isExact);
     game.state.route = pathResult.path.slice(0, maxMoveCellsPerTurn);
     game.state.routeTotalCost = game.systems.pathfinding.calculatePathCost(game.state.route);
 
-    const isTruncated = Boolean(
-        game.state.route.length === maxMoveCellsPerTurn
-        && game.state.route.length > 0
-        && (resolvedTarget.x !== game.state.route[game.state.route.length - 1].x
-            || resolvedTarget.y !== game.state.route[game.state.route.length - 1].y)
-    );
+    const isTruncated = Boolean(pathResult.isExact && pathResult.path.length > maxMoveCellsPerTurn);
     let hasRouteWarning = false;
 
     if (isTruncated && showRouteWarning && game.systems.ui) {
@@ -152,8 +219,8 @@ function planRouteToTarget(targetX, targetY, options = {}) {
         hasRouteWarning = true;
     }
 
-    if (game.state.route.length > 0) {
-        preloadChunksAlongRoute();
+    if (pathResult.path.length > 0) {
+        preloadChunksAlongRoute(pathResult.path);
     } else {
         clearPlannedRoute();
     }
@@ -171,6 +238,7 @@ function planRouteToTarget(targetX, targetY, options = {}) {
         hasRoute: game.state.route.length > 0,
         hasRouteWarning,
         isTruncated,
+        requiresExactResolve: !pathResult.isExact,
         pathResult,
         resolvedTarget
     };
@@ -192,6 +260,13 @@ function planRouteToSelectedTile(options = {}) {
 
     return planRouteToTarget(selectedWorldTile.x, selectedWorldTile.y, {
         preloadTarget: true,
+        ...options
+    });
+}
+
+function ensureExactRouteToSelectedTile(options = {}) {
+    return planRouteToSelectedTile({
+        queryMode: 'exact',
         ...options
     });
 }
@@ -227,13 +302,7 @@ function handleKeyDown(event) {
     }
 
     if (event.code === 'Space' && !game.state.isMoving) {
-        const routeReady = (
-            Array.isArray(game.state.route)
-            && game.state.route.length > 0
-        ) || planRouteToSelectedTile({
-            showRouteWarning: false,
-            clearActionMessage: false
-        }).hasRoute;
+        const routeReady = Array.isArray(game.state.route) && game.state.route.length > 0;
 
         if (routeReady) {
             event.preventDefault();
@@ -242,18 +311,34 @@ function handleKeyDown(event) {
     }
 }
 
-function preloadChunksAlongRoute() {
+function preloadChunksAlongRoute(path = window.Game.state.route) {
     const game = window.Game;
     const chunksToLoad = new Set();
 
-    game.state.route.forEach((point) => {
+    (Array.isArray(path) ? path : []).forEach((point) => {
         const { chunkX, chunkY } = game.systems.world.getChunkCoordinatesForWorld(point.x, point.y);
         chunksToLoad.add(`${chunkX},${chunkY}`);
     });
 
-    chunksToLoad.forEach((chunkKey) => {
+    const chunkCoordinates = Array.from(chunksToLoad, (chunkKey) => {
         const [chunkX, chunkY] = chunkKey.split(',').map(Number);
-        game.systems.world.getChunk(chunkX, chunkY);
+        return { chunkX, chunkY };
+    });
+
+    if (game.systems.chunkGenerator && typeof game.systems.chunkGenerator.prewarmChunks === 'function') {
+        game.systems.chunkGenerator.prewarmChunks(chunkCoordinates, {
+            detailLevel: 'base',
+            priority: 'normal'
+        });
+        return;
+    }
+
+    chunkCoordinates.forEach((entry) => {
+        game.systems.world.getChunk(entry.chunkX, entry.chunkY, {
+            detailLevel: 'base',
+            queueDeferred: false,
+            priority: 'normal'
+        });
     });
 }
 
@@ -262,6 +347,8 @@ window.Game.systems.input = {
     handleKeyDown,
     planRouteToTarget,
     planRouteToSelectedTile,
+    ensureExactRouteToSelectedTile,
+    clearPlannedRoute,
     preloadChunkAndNeighbors,
     preloadChunksAlongRoute
 };

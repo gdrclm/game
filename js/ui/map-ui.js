@@ -32,14 +32,30 @@
         berries: '#d86f87',
         well: '#7ec8ea'
     };
+    const MAP_STATION_COLORS = {
+        camp: '#f7b567',
+        bench: '#e8cd87',
+        workbench: '#8fd6c2',
+        smithy: '#d5c1ae',
+        scribe: '#94c3f3',
+        altar: '#d8b7df'
+    };
     const MAP_ZOOM_MIN = 0.75;
     const MAP_ZOOM_BASE_MAX = 4;
     const MAP_ZOOM_PER_ISLAND = 0.45;
+    const MAP_ZOOM_BASE_CHUNK_COUNT = 6;
+    const MAP_ZOOM_PER_CHUNK = 0.14;
     const MAP_ZOOM_HARD_MAX = 10;
     const MAP_ZOOM_STEP = 1.25;
     const MAP_HOVER_DELAY_MS = 2000;
     const MOBILE_BREAKPOINT = 760;
     const MAP_POINTER_MOVE_THRESHOLD = 6;
+    const MAP_INTERACTION_MODES = {
+        ISLAND: 'island',
+        BOOKMARK: 'bookmark',
+        PAN: 'pan',
+        COMBINED: 'combined'
+    };
 
     let elements = null;
     let eventsBound = false;
@@ -62,6 +78,7 @@
     let mapHoverCanvasX = 0;
     let mapHoverCanvasY = 0;
     let selectedMapIslandIndex = null;
+    let mapInteractionMode = MAP_INTERACTION_MODES.ISLAND;
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
@@ -71,22 +88,78 @@
         return !window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
     }
 
+    function isTouchViewport() {
+        return window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(hover: none)').matches;
+    }
+
     function getMapRuntime() {
         return game.systems.mapRuntime || null;
     }
 
+    function getExpeditionProgression() {
+        return game.systems.expeditionProgression || game.systems.expedition || null;
+    }
+
+    function getResourceRegistry() {
+        return game.systems.resourceRegistry || null;
+    }
+
+    function getStationRuntime() {
+        return game.systems.stationRuntime || null;
+    }
+
+    function hexToRgba(hexColor, alpha = 1) {
+        if (typeof hexColor !== 'string') {
+            return `rgba(255, 255, 255, ${alpha})`;
+        }
+
+        const normalized = hexColor.replace('#', '');
+        const expanded = normalized.length === 3
+            ? normalized.split('').map((char) => `${char}${char}`).join('')
+            : normalized;
+
+        if (expanded.length !== 6) {
+            return `rgba(255, 255, 255, ${alpha})`;
+        }
+
+        const red = Number.parseInt(expanded.slice(0, 2), 16);
+        const green = Number.parseInt(expanded.slice(2, 4), 16);
+        const blue = Number.parseInt(expanded.slice(4, 6), 16);
+
+        if (![red, green, blue].every(Number.isFinite)) {
+            return `rgba(255, 255, 255, ${alpha})`;
+        }
+
+        return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+    }
+
     function ensureMapButton() {
         const pauseButton = document.getElementById('pauseButton');
-        if (!pauseButton || document.getElementById('mapButton')) {
+        if (!pauseButton) {
             return;
         }
 
-        const mapButton = document.createElement('button');
-        mapButton.id = 'mapButton';
-        mapButton.className = 'hud-button';
-        mapButton.type = 'button';
-        mapButton.textContent = 'Карта';
-        pauseButton.parentNode.insertBefore(mapButton, pauseButton);
+        if (!document.getElementById('mapButton')) {
+            const mapButton = document.createElement('button');
+            mapButton.id = 'mapButton';
+            mapButton.className = 'hud-button';
+            mapButton.type = 'button';
+            mapButton.textContent = 'Карта';
+            pauseButton.parentNode.insertBefore(mapButton, pauseButton);
+        }
+
+        if (!document.getElementById('mobileQuestDockButton')) {
+            const questButton = document.createElement('button');
+            questButton.id = 'mobileQuestDockButton';
+            questButton.className = 'mobile-dock__button mobile-dock__button--quests map-quest-button';
+            questButton.type = 'button';
+            questButton.setAttribute('aria-label', 'Квесты');
+            questButton.setAttribute('title', 'Квесты');
+            questButton.innerHTML = `
+                <span class="mobile-dock__label">Квесты</span>
+            `;
+            pauseButton.parentNode.insertBefore(questButton, pauseButton);
+        }
     }
 
     function queryElements() {
@@ -101,12 +174,95 @@
             mapZoomIn: document.getElementById('mapZoomIn'),
             mapZoomOut: document.getElementById('mapZoomOut'),
             mapZoomValue: document.getElementById('mapZoomValue'),
+            mapModeControls: document.getElementById('mapModeControls'),
+            mapModeSelectIsland: document.getElementById('mapModeSelectIsland'),
+            mapModeBookmark: document.getElementById('mapModeBookmark'),
+            mapModePan: document.getElementById('mapModePan'),
             mapIslandBadge: document.getElementById('mapIslandBadge'),
             mapHoverCard: document.getElementById('mapHoverCard'),
             mapHoverCardTile: document.getElementById('mapHoverCardTile'),
-            mapHoverCardIsland: document.getElementById('mapHoverCardIsland')
+            mapHoverCardIsland: document.getElementById('mapHoverCardIsland'),
+            mapHoverCardResource: document.getElementById('mapHoverCardResource'),
+            mapHoverCardStation: document.getElementById('mapHoverCardStation')
         };
         return elements;
+    }
+
+    function getDefaultMapInteractionMode() {
+        return isDesktopViewport()
+            ? MAP_INTERACTION_MODES.COMBINED
+            : MAP_INTERACTION_MODES.ISLAND;
+    }
+
+    function normalizeMapInteractionMode(mode) {
+        return Object.values(MAP_INTERACTION_MODES).includes(mode)
+            ? mode
+            : getDefaultMapInteractionMode();
+    }
+
+    function usesExplicitMapTools() {
+        return !isDesktopViewport() || isTouchViewport();
+    }
+
+    function getEffectiveMapInteractionMode() {
+        if (!usesExplicitMapTools()) {
+            return MAP_INTERACTION_MODES.COMBINED;
+        }
+
+        const normalizedMode = normalizeMapInteractionMode(mapInteractionMode);
+        return normalizedMode === MAP_INTERACTION_MODES.COMBINED
+            ? MAP_INTERACTION_MODES.ISLAND
+            : normalizedMode;
+    }
+
+    function getMapInteractionModeLabel(mode = getEffectiveMapInteractionMode()) {
+        switch (mode) {
+        case MAP_INTERACTION_MODES.BOOKMARK:
+            return 'маяк';
+        case MAP_INTERACTION_MODES.PAN:
+            return 'рука';
+        case MAP_INTERACTION_MODES.ISLAND:
+            return 'остров';
+        default:
+            return 'карта';
+        }
+    }
+
+    function syncMapModeControls() {
+        const refs = elements || queryElements();
+        const showControls = usesExplicitMapTools();
+        const activeMode = getEffectiveMapInteractionMode();
+        const modeButtons = [
+            [refs.mapModeSelectIsland, MAP_INTERACTION_MODES.ISLAND],
+            [refs.mapModeBookmark, MAP_INTERACTION_MODES.BOOKMARK],
+            [refs.mapModePan, MAP_INTERACTION_MODES.PAN]
+        ];
+
+        if (refs.mapModeControls) {
+            refs.mapModeControls.hidden = !showControls;
+        }
+
+        modeButtons.forEach(([button, mode]) => {
+            if (!button) {
+                return;
+            }
+
+            const isActive = showControls && activeMode === mode;
+            button.hidden = !showControls;
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            button.classList.toggle('is-active', isActive);
+        });
+    }
+
+    function setMapInteractionMode(nextMode, options = {}) {
+        mapInteractionMode = normalizeMapInteractionMode(nextMode);
+        syncMapModeControls();
+
+        if (!options.silent && isMapOpen()) {
+            renderMapPanel();
+        }
+
+        return mapInteractionMode;
     }
 
     function clearMapHoverTimer() {
@@ -193,6 +349,34 @@
             });
         }
 
+        if (refs.mapModeSelectIsland) {
+            refs.mapModeSelectIsland.addEventListener('click', () => {
+                setMapInteractionMode(MAP_INTERACTION_MODES.ISLAND);
+            });
+        }
+
+        if (refs.mapModeBookmark) {
+            refs.mapModeBookmark.addEventListener('click', () => {
+                setMapInteractionMode(MAP_INTERACTION_MODES.BOOKMARK);
+            });
+        }
+
+        if (refs.mapModePan) {
+            refs.mapModePan.addEventListener('click', () => {
+                setMapInteractionMode(MAP_INTERACTION_MODES.PAN);
+            });
+        }
+
+        const questDockButton = document.getElementById('mobileQuestDockButton');
+        if (questDockButton) {
+            questDockButton.addEventListener('click', () => {
+                const mobileUi = game.systems.mobileUi || null;
+                if (mobileUi && typeof mobileUi.openPanel === 'function') {
+                    mobileUi.openPanel('quests');
+                }
+            });
+        }
+
         if (refs.mapCanvas) {
             refs.mapCanvas.addEventListener('pointerdown', handleMapPointerDown);
             refs.mapCanvas.addEventListener('pointermove', handleMapPointerMove);
@@ -245,9 +429,29 @@
             getVisitedIslandCount(),
             stats && Number.isFinite(stats.islandCount) ? stats.islandCount : 1
         );
+        const expeditionProgression = getExpeditionProgression();
+        const visitedIslandIds = game.state.visitedIslandIds || {};
+        let maxChunkCount = 0;
+
+        if (expeditionProgression && typeof expeditionProgression.getArchipelagoMetadata === 'function') {
+            const metadata = expeditionProgression.getArchipelagoMetadata();
+            if (Array.isArray(metadata)) {
+                metadata.forEach((entry) => {
+                    if (!entry || !Number.isFinite(entry.islandIndex)) {
+                        return;
+                    }
+                    if (!visitedIslandIds[entry.islandIndex] && entry.islandIndex !== game.state.currentIslandIndex) {
+                        return;
+                    }
+                    maxChunkCount = Math.max(maxChunkCount, Number(entry.chunkCount) || 0);
+                });
+            }
+        }
+
+        const sizeBoost = Math.max(0, maxChunkCount - MAP_ZOOM_BASE_CHUNK_COUNT) * MAP_ZOOM_PER_CHUNK;
 
         return clamp(
-            MAP_ZOOM_BASE_MAX + (discoveredIslands - 1) * MAP_ZOOM_PER_ISLAND,
+            MAP_ZOOM_BASE_MAX + (discoveredIslands - 1) * MAP_ZOOM_PER_ISLAND + sizeBoost,
             MAP_ZOOM_MIN,
             MAP_ZOOM_HARD_MAX
         );
@@ -307,6 +511,7 @@
             resetMapPan();
             resetMapHoverState();
             resetSelectedMapIsland();
+            setMapInteractionMode(getDefaultMapInteractionMode(), { silent: true });
             setMapZoom(mapZoom, { silent: true });
             const runtime = getMapRuntime();
             if (runtime && typeof runtime.captureVisibleWorld === 'function') {
@@ -318,6 +523,7 @@
             stopMapDrag();
             resetMapHoverState();
             resetSelectedMapIsland();
+            setMapInteractionMode(getDefaultMapInteractionMode(), { silent: true });
         }
 
         bridge.renderAfterStateChange();
@@ -355,8 +561,25 @@
             .filter((bookmark) => bookmark && Number.isFinite(bookmark.x) && Number.isFinite(bookmark.y));
     }
 
+    function getBookmarkMarkerMetrics(cellSize) {
+        const scale = 3;
+        const flagWidth = Math.max(24, cellSize * 0.68 * scale);
+        const flagHeight = Math.max(30, cellSize * 0.92 * scale);
+
+        return {
+            width: flagWidth,
+            height: flagHeight,
+            halfWidth: flagWidth / 2,
+            topOffset: flagHeight * 0.58
+        };
+    }
+
     function toggleMapBookmark(entry) {
         if (!entry || !Number.isFinite(entry.x) || !Number.isFinite(entry.y)) {
+            return false;
+        }
+
+        if (!isIslandLandEntry(entry)) {
             return false;
         }
 
@@ -424,6 +647,57 @@
         return { key, entry };
     }
 
+    function resolveBookmarkHit(canvasX, canvasY) {
+        if (!lastRenderedLayout || !lastRenderedBounds) {
+            return null;
+        }
+
+        const bookmarks = getMapBookmarks();
+
+        for (let index = bookmarks.length - 1; index >= 0; index -= 1) {
+            const bookmark = bookmarks[index];
+
+            if (
+                !bookmark
+                || bookmark.x < lastRenderedBounds.minX
+                || bookmark.x > lastRenderedBounds.maxX
+                || bookmark.y < lastRenderedBounds.minY
+                || bookmark.y > lastRenderedBounds.maxY
+            ) {
+                continue;
+            }
+
+            const centerX = getCanvasX(bookmark.x, lastRenderedBounds, lastRenderedLayout) + lastRenderedLayout.cellSize / 2;
+            const centerY = getCanvasY(bookmark.y, lastRenderedBounds, lastRenderedLayout) + lastRenderedLayout.cellSize / 2;
+            const metrics = getBookmarkMarkerMetrics(lastRenderedLayout.cellSize);
+            const left = centerX - metrics.halfWidth;
+            const right = centerX + metrics.halfWidth;
+            const top = centerY - metrics.topOffset;
+            const bottom = top + metrics.height;
+
+            if (canvasX < left || canvasX > right || canvasY < top || canvasY > bottom) {
+                continue;
+            }
+
+            const key = `${bookmark.x},${bookmark.y}`;
+            const tileEntry = lastRenderedTileIndex.get(key) || null;
+
+            return {
+                key,
+                bookmark,
+                entry: tileEntry || {
+                    x: bookmark.x,
+                    y: bookmark.y,
+                    islandIndex: bookmark.islandIndex,
+                    tileType: bookmark.tileType || 'unloaded',
+                    baseTileType: bookmark.tileType || 'unloaded'
+                }
+            };
+        }
+
+        return null;
+    }
+
     function positionMapHoverCard(canvasX, canvasY) {
         const refs = elements || queryElements();
 
@@ -456,11 +730,48 @@
             ? 'house'
             : (entry.baseTileType || entry.tileType || 'unloaded');
         const tileLabel = bridge.getTileLabel(tileType);
+        const resourceRegistry = getResourceRegistry();
+        const stationRuntime = getStationRuntime();
+        const resourceDefinition = entry.resourceKind && resourceRegistry && typeof resourceRegistry.getBaseResourceDefinition === 'function'
+            ? resourceRegistry.getBaseResourceDefinition(entry.resourceKind)
+            : null;
+        const resourceLabel = resourceDefinition && resourceDefinition.label
+            ? resourceDefinition.label
+            : (
+                entry.houseKind === 'well'
+                    ? 'Колодец'
+                    : (entry.houseKind === 'forage' ? 'Ягодник' : '')
+            );
+        const stationId = typeof entry.interactionStationId === 'string'
+            ? entry.interactionStationId.trim()
+            : '';
+        const stationLabel = stationId && stationRuntime && typeof stationRuntime.getStationLabel === 'function'
+            ? stationRuntime.getStationLabel(stationId, entry.interactionLabel || stationId)
+            : (
+                entry.interactionKind === 'camp'
+                    ? 'Лагерь'
+                    : (entry.interactionLabel || '')
+            );
 
         refs.mapHoverCardTile.textContent = `Клетка: ${tileLabel}`;
         refs.mapHoverCardIsland.textContent = Number.isFinite(entry.islandIndex)
             ? `Остров ${entry.islandIndex}`
             : 'Остров не определён';
+
+        if (refs.mapHoverCardResource) {
+            refs.mapHoverCardResource.hidden = !resourceLabel;
+            refs.mapHoverCardResource.textContent = resourceLabel
+                ? `Ресурсная зона: ${resourceLabel}`
+                : '';
+        }
+
+        if (refs.mapHoverCardStation) {
+            refs.mapHoverCardStation.hidden = !stationLabel;
+            refs.mapHoverCardStation.textContent = stationLabel
+                ? `Станция: ${stationLabel}`
+                : '';
+        }
+
         refs.mapHoverCard.hidden = false;
         refs.mapHoverCard.setAttribute('aria-hidden', 'false');
         positionMapHoverCard(canvasX, canvasY);
@@ -562,6 +873,29 @@
         return islandIndex;
     }
 
+    function applyMapBookmarkInteraction(entry) {
+        if (!entry) {
+            return false;
+        }
+
+        const islandIndex = resolveClickedIslandIndex(entry);
+
+        if (Number.isFinite(islandIndex)) {
+            const normalizedIslandIndex = Math.max(1, Math.floor(islandIndex));
+            const wasAlreadySelected = selectedMapIslandIndex === normalizedIslandIndex;
+            selectedMapIslandIndex = normalizedIslandIndex;
+            syncSelectedMapIslandBadge();
+
+            // The first click on a different island only selects it.
+            // A bookmark can be placed or removed only after that island is already active.
+            if (!wasAlreadySelected) {
+                return false;
+            }
+        }
+
+        return toggleMapBookmark(entry);
+    }
+
     function hasSameIslandLandNeighbor(tileIndex, islandIndex, worldX, worldY) {
         const neighbor = tileIndex.get(`${worldX},${worldY}`);
         return Boolean(
@@ -649,11 +983,11 @@
     }
 
     function drawBookmarkMarker(ctx, centerX, centerY, cellSize) {
-        const scale = 3;
-        const flagWidth = Math.max(24, cellSize * 0.68 * scale);
-        const flagHeight = Math.max(30, cellSize * 0.92 * scale);
-        const halfWidth = flagWidth / 2;
-        const topY = centerY - flagHeight * 0.58;
+        const metrics = getBookmarkMarkerMetrics(cellSize);
+        const flagWidth = metrics.width;
+        const flagHeight = metrics.height;
+        const halfWidth = metrics.halfWidth;
+        const topY = centerY - metrics.topOffset;
         const bottomY = topY + flagHeight;
         const notchY = bottomY - Math.max(3, flagHeight * 0.24);
 
@@ -693,11 +1027,10 @@
         ctx.fillText('Пройди несколько экранов, и туман войны начнет отступать.', width / 2, height / 2 + 14);
     }
 
-    function buildMapStats(exploredTiles) {
+    function buildMapStats(exploredTiles, highlights = {}) {
         const islandIds = new Set();
         const houseIds = new Set();
         const questHouseIds = new Set();
-        const resourcePoints = new Set();
 
         exploredTiles.forEach((entry) => {
             if (Number.isFinite(entry.islandIndex)) {
@@ -711,38 +1044,24 @@
             if (entry.isQuestGiver && entry.houseId) {
                 questHouseIds.add(entry.houseId);
             }
-
-            if (entry.resourceKind) {
-                resourcePoints.add(`${entry.resourceKind}:${entry.x},${entry.y}`);
-            }
-
-            if ((entry.houseKind === 'well' || entry.houseKind === 'forage') && entry.houseId) {
-                resourcePoints.add(`${entry.houseKind}:${entry.houseId}`);
-            }
         });
 
         return {
             islandCount: islandIds.size,
             houseCount: houseIds.size,
             questCount: questHouseIds.size,
-            resourceCount: resourcePoints.size
+            resourceZoneCount: Array.isArray(highlights.resourceZones) ? highlights.resourceZones.length : 0,
+            craftStationCount: Array.isArray(highlights.craftStations) ? highlights.craftStations.length : 0
         };
     }
 
     function buildMarkerSets(exploredTiles) {
         const houseMarkers = new Map();
         const questMarkers = new Map();
-        const resourceMarkers = new Map();
 
         exploredTiles.forEach((entry) => {
             if (entry.houseId) {
-                if (entry.houseKind === 'well' || entry.houseKind === 'forage') {
-                    resourceMarkers.set(`poi:${entry.houseId}`, {
-                        x: entry.houseMarkerX,
-                        y: entry.houseMarkerY,
-                        resourceKind: entry.houseKind === 'well' ? 'well' : 'berries'
-                    });
-                } else if (!houseMarkers.has(entry.houseId)) {
+                if (entry.houseKind !== 'well' && entry.houseKind !== 'forage' && !houseMarkers.has(entry.houseId)) {
                     houseMarkers.set(entry.houseId, {
                         x: entry.houseMarkerX,
                         y: entry.houseMarkerY
@@ -756,21 +1075,119 @@
                     });
                 }
             }
-
-            if (entry.resourceKind) {
-                resourceMarkers.set(`tile:${entry.resourceKind}:${entry.x},${entry.y}`, {
-                    x: entry.x,
-                    y: entry.y,
-                    resourceKind: entry.resourceKind
-                });
-            }
         });
 
         return {
             houseMarkers: Array.from(houseMarkers.values()),
-            questMarkers: Array.from(questMarkers.values()),
-            resourceMarkers: Array.from(resourceMarkers.values())
+            questMarkers: Array.from(questMarkers.values())
         };
+    }
+
+    function getStationMarkerColor(stationId = '') {
+        return MAP_STATION_COLORS[stationId] || '#c4d4ea';
+    }
+
+    function drawResourceZoneHighlights(ctx, resourceZones, bounds, layout) {
+        if (!Array.isArray(resourceZones) || resourceZones.length === 0) {
+            return;
+        }
+
+        resourceZones.forEach((zone) => {
+            if (!zone || typeof zone.resourceKind !== 'string') {
+                return;
+            }
+
+            const baseColor = MAP_RESOURCE_COLORS[zone.resourceKind] || MAP_RESOURCE_COLORS.stone;
+            const glowColor = hexToRgba(baseColor, zone.isPointOfInterest ? 0.34 : 0.18);
+            const coreColor = hexToRgba(baseColor, zone.isPointOfInterest ? 0.8 : 0.42);
+
+            if (zone.isPointOfInterest) {
+                const centerX = getCanvasX(zone.centerX, bounds, layout) + layout.cellSize / 2;
+                const centerY = getCanvasY(zone.centerY, bounds, layout) + layout.cellSize / 2;
+                const radius = Math.max(4, layout.cellSize * 0.45);
+
+                ctx.save();
+                ctx.fillStyle = glowColor;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = coreColor;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, Math.max(2, radius * 0.45), 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                return;
+            }
+
+            ctx.save();
+            (Array.isArray(zone.tiles) ? zone.tiles : []).forEach((tile) => {
+                if (!tile || !Number.isFinite(tile.x) || !Number.isFinite(tile.y)) {
+                    return;
+                }
+
+                const drawX = getCanvasX(tile.x, bounds, layout);
+                const drawY = getCanvasY(tile.y, bounds, layout);
+                const inset = Math.max(0, layout.cellSize * 0.08);
+
+                ctx.fillStyle = glowColor;
+                ctx.fillRect(
+                    Math.round(drawX + inset),
+                    Math.round(drawY + inset),
+                    Math.max(2, Math.round(layout.cellSize - inset * 2)),
+                    Math.max(2, Math.round(layout.cellSize - inset * 2))
+                );
+            });
+
+            const centerX = getCanvasX(zone.centerX, bounds, layout) + layout.cellSize / 2;
+            const centerY = getCanvasY(zone.centerY, bounds, layout) + layout.cellSize / 2;
+            const markerSize = Math.max(4, layout.cellSize * 0.4);
+
+            ctx.fillStyle = coreColor;
+            ctx.fillRect(
+                Math.round(centerX - markerSize / 2),
+                Math.round(centerY - markerSize / 2),
+                Math.round(markerSize),
+                Math.round(markerSize)
+            );
+            ctx.restore();
+        });
+    }
+
+    function drawCraftStationMarkers(ctx, craftStations, bounds, layout) {
+        if (!Array.isArray(craftStations) || craftStations.length === 0) {
+            return;
+        }
+
+        craftStations.forEach((station) => {
+            if (!station || !Number.isFinite(station.x) || !Number.isFinite(station.y)) {
+                return;
+            }
+
+            const drawX = getCanvasX(station.x, bounds, layout) + layout.cellSize / 2;
+            const drawY = getCanvasY(station.y, bounds, layout) + layout.cellSize / 2;
+            const radius = Math.max(4, layout.cellSize * 0.42);
+            const accentColor = getStationMarkerColor(station.stationId);
+
+            ctx.save();
+            ctx.fillStyle = hexToRgba(accentColor, 0.18);
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, Math.max(radius + 2, layout.cellSize * 0.58), 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = accentColor;
+            ctx.beginPath();
+            ctx.moveTo(drawX, drawY - radius);
+            ctx.lineTo(drawX + radius, drawY);
+            ctx.lineTo(drawX, drawY + radius);
+            ctx.lineTo(drawX - radius, drawY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#12231e';
+            ctx.lineWidth = Math.max(1.5, layout.cellSize * 0.12);
+            ctx.stroke();
+            ctx.restore();
+        });
     }
 
     function getWorldBounds(exploredTiles) {
@@ -881,8 +1298,14 @@
 
         const bounds = getWorldBounds(exploredTiles);
         const layout = buildMapLayout(bounds, contextState);
+        const highlights = runtime && typeof runtime.buildExplorationHighlights === 'function'
+            ? runtime.buildExplorationHighlights(exploredTiles)
+            : {
+                resourceZones: [],
+                craftStations: []
+            };
         const markers = buildMarkerSets(exploredTiles);
-        const stats = buildMapStats(exploredTiles);
+        const stats = buildMapStats(exploredTiles, highlights);
         const bookmarks = getMapBookmarks();
         const playerX = getCanvasX(game.state.playerPos.x, bounds, layout) + layout.cellSize / 2;
         const playerY = getCanvasY(game.state.playerPos.y, bounds, layout) + layout.cellSize / 2;
@@ -904,7 +1327,11 @@
             refs.mapCanvas.classList.toggle('is-dragging', isPannable && activeDragPointerId !== null);
         }
 
-        refs.mapPanelSummary.textContent = `Разведано клеток: ${exploredTiles.length} · домов: ${stats.houseCount} · квестодателей: ${stats.questCount} · ресурсов: ${stats.resourceCount}`;
+        const mobileModeSuffix = usesExplicitMapTools()
+            ? ` · режим: ${getMapInteractionModeLabel()}`
+            : '';
+
+        refs.mapPanelSummary.textContent = `Разведано клеток: ${exploredTiles.length} · домов: ${stats.houseCount} · квестодателей: ${stats.questCount} · зон ресурсов: ${stats.resourceZoneCount} · станций: ${stats.craftStationCount}${mobileModeSuffix}`;
         updateZoomControls(stats);
 
         drawBackground(ctx, contextState.width, contextState.height);
@@ -917,18 +1344,7 @@
             ctx.fillRect(drawX, drawY, layout.cellSize, layout.cellSize);
         });
 
-        markers.resourceMarkers.forEach((marker) => {
-            const drawX = getCanvasX(marker.x, bounds, layout) + layout.cellSize / 2;
-            const drawY = getCanvasY(marker.y, bounds, layout) + layout.cellSize / 2;
-
-            ctx.fillStyle = MAP_RESOURCE_COLORS[marker.resourceKind] || MAP_RESOURCE_COLORS.stone;
-            ctx.fillRect(
-                Math.round(drawX - Math.max(2, layout.cellSize * 0.28)),
-                Math.round(drawY - Math.max(2, layout.cellSize * 0.28)),
-                Math.max(4, Math.round(layout.cellSize * 0.55)),
-                Math.max(4, Math.round(layout.cellSize * 0.55))
-            );
-        });
+        drawResourceZoneHighlights(ctx, highlights.resourceZones, bounds, layout);
 
         markers.houseMarkers.forEach((marker) => {
             const drawX = getCanvasX(marker.x, bounds, layout) + layout.cellSize / 2;
@@ -944,6 +1360,8 @@
             ctx.closePath();
             ctx.fill();
         });
+
+        drawCraftStationMarkers(ctx, highlights.craftStations, bounds, layout);
 
         markers.questMarkers.forEach((marker) => {
             const drawX = getCanvasX(marker.x, bounds, layout) + layout.cellSize / 2;
@@ -1010,7 +1428,11 @@
         dragStartClientX = event.clientX;
         dragStartClientY = event.clientY;
         didMapPointerMove = false;
-        mapPointerCanPan = Boolean(lastRenderedLayout.canPanX || lastRenderedLayout.canPanY);
+        mapPointerCanPan = Boolean(lastRenderedLayout.canPanX || lastRenderedLayout.canPanY)
+            && (
+                !usesExplicitMapTools()
+                || getEffectiveMapInteractionMode() === MAP_INTERACTION_MODES.PAN
+            );
 
         if (refs.mapCanvas && typeof refs.mapCanvas.setPointerCapture === 'function') {
             refs.mapCanvas.setPointerCapture(event.pointerId);
@@ -1075,8 +1497,8 @@
     function handleMapPointerUp(event) {
         const refs = elements || queryElements();
         const isActivePointer = activeDragPointerId !== null && event.pointerId === activeDragPointerId;
-        const shouldToggleBookmark = isActivePointer && !didMapPointerMove && event.type === 'pointerup' && isDesktopViewport();
-        const pointerPosition = shouldToggleBookmark
+        const shouldHandleTap = isActivePointer && !didMapPointerMove && event.type === 'pointerup';
+        const pointerPosition = shouldHandleTap
             ? getMapPointerPosition(event)
             : null;
 
@@ -1090,17 +1512,42 @@
 
         stopMapDrag();
 
-        if (!shouldToggleBookmark || !pointerPosition) {
+        if (!shouldHandleTap || !pointerPosition) {
             return;
         }
 
+        const bookmarkHit = resolveBookmarkHit(pointerPosition.x, pointerPosition.y);
         const hovered = resolveHoveredMapTile(pointerPosition.x, pointerPosition.y);
-        if (!hovered) {
+        const interactionEntry = (bookmarkHit && bookmarkHit.entry) || (hovered && hovered.entry) || null;
+
+        if (bookmarkHit && getEffectiveMapInteractionMode() === MAP_INTERACTION_MODES.BOOKMARK) {
+            applyMapBookmarkInteraction(bookmarkHit.entry);
+            renderMapPanel();
             return;
         }
 
-        selectMapIsland(hovered.entry);
-        toggleMapBookmark(hovered.entry);
+        if (!interactionEntry) {
+            if (bookmarkHit && !usesExplicitMapTools()) {
+                applyMapBookmarkInteraction(bookmarkHit.entry);
+                renderMapPanel();
+            }
+            return;
+        }
+
+        switch (getEffectiveMapInteractionMode()) {
+        case MAP_INTERACTION_MODES.ISLAND:
+            selectMapIsland(interactionEntry);
+            break;
+        case MAP_INTERACTION_MODES.BOOKMARK:
+            applyMapBookmarkInteraction(interactionEntry);
+            break;
+        case MAP_INTERACTION_MODES.PAN:
+            return;
+        default:
+            applyMapBookmarkInteraction(interactionEntry);
+            break;
+        }
+
         renderMapPanel();
     }
 
@@ -1111,6 +1558,7 @@
     function syncMapState() {
         const refs = elements || queryElements();
         bindEvents();
+        syncMapModeControls();
         setMapZoom(mapZoom, { silent: true });
         updateZoomControls();
 
@@ -1139,6 +1587,7 @@
         setMapZoom,
         changeMapZoom,
         syncMapState,
-        toggleMapPanel
+        toggleMapPanel,
+        setMapInteractionMode
     });
 })();

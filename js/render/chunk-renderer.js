@@ -1,8 +1,19 @@
+let chunkCacheInvalidationCount = 0;
+const chunkWorldProjectionBuffer = { x: 0, y: 0 };
+
 function createRenderCanvas(width, height) {
     const renderCanvas = document.createElement('canvas');
     renderCanvas.width = width;
     renderCanvas.height = height;
     return renderCanvas;
+}
+
+function clearRenderCanvas(canvas, context) {
+    if (!canvas || !context) {
+        return;
+    }
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawOverlayDiamond(context, tileWidth, tileHeight, fillStyle) {
@@ -111,34 +122,134 @@ function isTerrainHarvested(worldX, worldY) {
         return false;
     }
 
+    const coordinateKey = `${worldX},${worldY}`;
+
     return Boolean(
-        harvested[`${worldX},${worldY}`]
-        || harvested[`soilClod:${worldX},${worldY}`]
-        || legacyTerrainGatherItemIds.some((itemId) => harvested[`${itemId}:${worldX},${worldY}`])
+        harvested[coordinateKey]
+        || harvested[`soilClod:${coordinateKey}`]
+        || legacyTerrainGatherItemIds.some((itemId) => harvested[`${itemId}:${coordinateKey}`])
     );
 }
 
-function buildChunkRenderCache(chunk) {
-    const game = window.Game;
-    const { chunkSize, tileWidth, tileHeight } = game.config;
+function getChunkCacheDimensions() {
+    const { chunkSize, tileWidth, tileHeight } = window.Game.config;
     const padding = 2;
-    const originX = chunkSize * tileWidth / 2 + padding;
-    const originY = padding;
-    const canvas = createRenderCanvas(chunkSize * tileWidth + padding * 2, chunkSize * tileHeight + padding * 2);
-    const context = canvas.getContext('2d');
+
+    return {
+        padding,
+        originX: chunkSize * tileWidth / 2 + padding,
+        originY: padding,
+        width: chunkSize * tileWidth + padding * 2,
+        height: chunkSize * tileHeight + padding * 2
+    };
+}
+
+function createChunkCacheState(previousCache = null) {
+    const { width, height, originX, originY } = getChunkCacheDimensions();
+    const cacheStateVersion = previousCache && Number.isFinite(previousCache.cacheStateVersion)
+        ? previousCache.cacheStateVersion + 1
+        : 1;
+
+    return {
+        baseCanvas: createRenderCanvas(width, height),
+        overlayCanvas: createRenderCanvas(width, height),
+        originX,
+        originY,
+        width,
+        height,
+        baseDirty: true,
+        overlayDirty: true,
+        contentVersion: 0,
+        cacheStateVersion,
+        dirtyReasons: previousCache && previousCache.dirtyReasons
+            ? { ...previousCache.dirtyReasons }
+            : {}
+    };
+}
+
+function ensureChunkRenderCache(chunk) {
+    if (!chunk) {
+        return null;
+    }
+
+    const nextDimensions = getChunkCacheDimensions();
+    const currentCache = chunk.renderCache || null;
+
+    if (
+        !currentCache
+        || !currentCache.baseCanvas
+        || !currentCache.overlayCanvas
+        || currentCache.width !== nextDimensions.width
+        || currentCache.height !== nextDimensions.height
+    ) {
+        chunk.renderCache = createChunkCacheState(currentCache);
+    }
+
+    return chunk.renderCache;
+}
+
+function invalidateChunkRenderCache(chunk, options = {}) {
+    if (!chunk) {
+        return null;
+    }
+
+    const hadRenderCache = Boolean(chunk.renderCache);
+    const perf = window.Game.systems.perf || null;
+    const recordInvalidation = () => {
+        if (!hadRenderCache) {
+            return;
+        }
+
+        chunkCacheInvalidationCount += 1;
+        if (perf && typeof perf.incrementFrameStat === 'function') {
+            perf.incrementFrameStat('invalidatedChunkCaches');
+        }
+    };
+
+    if (options.reset === true || options.full === true) {
+        recordInvalidation();
+        chunk.renderCache = null;
+        return null;
+    }
+
+    const cache = ensureChunkRenderCache(chunk);
+
+    if (!cache) {
+        return null;
+    }
+
+    const tilesChanged = options.tilesChanged === true;
+    const overlayChanged = options.overlayChanged !== false;
+
+    recordInvalidation();
+    cache.baseDirty = cache.baseDirty || tilesChanged;
+    cache.overlayDirty = cache.overlayDirty || overlayChanged || tilesChanged;
+    cache.cacheStateVersion += 1;
+
+    if (typeof options.reason === 'string' && options.reason.trim()) {
+        cache.dirtyReasons[options.reason.trim()] = true;
+    }
+
+    return cache;
+}
+
+function createTileTypeResolver(chunk) {
+    const game = window.Game;
+    const { chunkSize } = game.config;
     const baseWorldX = chunk.x * chunkSize;
     const baseWorldY = chunk.y * chunkSize;
     const tileTypeCache = new Map();
+    const tileTypeCacheWidth = chunkSize + 4;
 
-    function getBaseTileTypeAt(worldX, worldY) {
-        const key = `${worldX},${worldY}`;
+    return function getBaseTileTypeAt(worldX, worldY) {
+        const localX = worldX - baseWorldX;
+        const localY = worldY - baseWorldY;
+        const key = (localY + 2) * tileTypeCacheWidth + (localX + 2);
 
         if (tileTypeCache.has(key)) {
             return tileTypeCache.get(key);
         }
 
-        const localX = worldX - baseWorldX;
-        const localY = worldY - baseWorldY;
         let tileType = 'unloaded';
 
         if (localX >= 0 && localX < chunkSize && localY >= 0 && localY < chunkSize) {
@@ -150,32 +261,44 @@ function buildChunkRenderCache(chunk) {
 
         tileTypeCache.set(key, tileType);
         return tileType;
-    }
+    };
+}
 
-    function buildTileRenderContext(worldX, worldY, tileType) {
-        return {
-            tileType,
-            progression: chunk.progression || null,
-            neighbors: {
-                north: getBaseTileTypeAt(worldX, worldY - 1),
-                east: getBaseTileTypeAt(worldX + 1, worldY),
-                south: getBaseTileTypeAt(worldX, worldY + 1),
-                west: getBaseTileTypeAt(worldX - 1, worldY),
-                northwest: getBaseTileTypeAt(worldX - 1, worldY - 1),
-                northeast: getBaseTileTypeAt(worldX + 1, worldY - 1),
-                southeast: getBaseTileTypeAt(worldX + 1, worldY + 1),
-                southwest: getBaseTileTypeAt(worldX - 1, worldY + 1)
-            }
-        };
-    }
+function buildTileRenderContext(chunk, worldX, worldY, tileType, getBaseTileTypeAt) {
+    return {
+        tileType,
+        progression: chunk.progression || null,
+        neighbors: {
+            north: getBaseTileTypeAt(worldX, worldY - 1),
+            east: getBaseTileTypeAt(worldX + 1, worldY),
+            south: getBaseTileTypeAt(worldX, worldY + 1),
+            west: getBaseTileTypeAt(worldX - 1, worldY),
+            northwest: getBaseTileTypeAt(worldX - 1, worldY - 1),
+            northeast: getBaseTileTypeAt(worldX + 1, worldY - 1),
+            southeast: getBaseTileTypeAt(worldX + 1, worldY + 1),
+            southwest: getBaseTileTypeAt(worldX - 1, worldY + 1)
+        }
+    };
+}
+
+function buildChunkBaseLayer(chunk, cache) {
+    const game = window.Game;
+    const { chunkSize, tileWidth, tileHeight } = game.config;
+    const baseWorldX = chunk.x * chunkSize;
+    const baseWorldY = chunk.y * chunkSize;
+    const context = cache.baseCanvas.getContext('2d');
+    const getBaseTileTypeAt = createTileTypeResolver(chunk);
+
+    clearRenderCanvas(cache.baseCanvas, context);
 
     for (let y = 0; y < chunkSize; y++) {
         for (let x = 0; x < chunkSize; x++) {
-            const localScreenX = originX + (x - y) * tileWidth / 2;
-            const localScreenY = originY + (x + y) * tileHeight / 2;
+            const localScreenX = cache.originX + (x - y) * tileWidth / 2;
+            const localScreenY = cache.originY + (x + y) * tileHeight / 2;
             const worldX = baseWorldX + x;
             const worldY = baseWorldY + y;
             const tileType = chunk.data[y][x];
+
             game.systems.content.drawTileAtContext(
                 context,
                 localScreenX,
@@ -184,10 +307,55 @@ function buildChunkRenderCache(chunk) {
                 worldX,
                 worldY,
                 chunk.progression || null,
-                buildTileRenderContext(worldX, worldY, tileType)
+                buildTileRenderContext(chunk, worldX, worldY, tileType, getBaseTileTypeAt)
             );
+        }
+    }
+}
 
+function getTravelZoneKeyForTile(chunk, tileType, worldX, worldY, localX, localY) {
+    const game = window.Game;
+    let travelZoneKey = chunk.travelZones && chunk.travelZones[localY]
+        ? chunk.travelZones[localY][localX]
+        : 'none';
+
+    if (travelZoneKey === 'none' && tileType === 'bridge' && chunk.progression) {
+        const bridgeInfo = {
+            x: worldX,
+            y: worldY,
+            tileType: 'bridge',
+            baseTileType: 'bridge',
+            progression: chunk.progression,
+            house: null,
+            travelZoneKey: 'none'
+        };
+
+        if (game.systems.expedition.isFragileBridgeTile(bridgeInfo)) {
+            travelZoneKey = 'collapseSpan';
+        }
+    }
+
+    return travelZoneKey || 'none';
+}
+
+function buildChunkOverlayLayer(chunk, cache) {
+    const game = window.Game;
+    const { chunkSize, tileWidth, tileHeight } = game.config;
+    const context = cache.overlayCanvas.getContext('2d');
+    const baseWorldX = chunk.x * chunkSize;
+    const baseWorldY = chunk.y * chunkSize;
+
+    clearRenderCanvas(cache.overlayCanvas, context);
+
+    for (let y = 0; y < chunkSize; y++) {
+        for (let x = 0; x < chunkSize; x++) {
+            const localScreenX = cache.originX + (x - y) * tileWidth / 2;
+            const localScreenY = cache.originY + (x + y) * tileHeight / 2;
+            const worldX = baseWorldX + x;
+            const worldY = baseWorldY + y;
+            const tileType = chunk.data[y][x];
             const overlay = getIslandOverlayColor(chunk, tileType);
+
             if (overlay) {
                 context.save();
                 context.translate(localScreenX, localScreenY);
@@ -195,27 +363,9 @@ function buildChunkRenderCache(chunk) {
                 context.restore();
             }
 
-            let travelZoneKey = chunk.travelZones && chunk.travelZones[y]
-                ? chunk.travelZones[y][x]
-                : 'none';
-
-            if (travelZoneKey === 'none' && tileType === 'bridge' && chunk.progression) {
-                const bridgeInfo = {
-                    x: worldX,
-                    y: worldY,
-                    tileType: 'bridge',
-                    baseTileType: 'bridge',
-                    progression: chunk.progression,
-                    house: null,
-                    travelZoneKey: 'none'
-                };
-
-                if (game.systems.expedition.isFragileBridgeTile(bridgeInfo)) {
-                    travelZoneKey = 'collapseSpan';
-                }
-            }
-
+            const travelZoneKey = getTravelZoneKeyForTile(chunk, tileType, worldX, worldY, x, y);
             const travelZone = game.systems.content.getTravelZoneDefinition(travelZoneKey);
+
             if (travelZone && travelZoneKey !== 'none') {
                 context.save();
                 context.translate(localScreenX, localScreenY);
@@ -231,34 +381,119 @@ function buildChunkRenderCache(chunk) {
             }
         }
     }
+}
 
-    chunk.renderCache = {
-        canvas,
-        originX,
-        originY
+function ensureChunkRenderLayers(chunk) {
+    const cache = ensureChunkRenderCache(chunk);
+
+    if (!cache) {
+        return null;
+    }
+
+    let rebuilt = false;
+
+    if (cache.baseDirty) {
+        buildChunkBaseLayer(chunk, cache);
+        cache.baseDirty = false;
+        rebuilt = true;
+    }
+
+    if (cache.overlayDirty) {
+        buildChunkOverlayLayer(chunk, cache);
+        cache.overlayDirty = false;
+        rebuilt = true;
+    }
+
+    if (rebuilt) {
+        cache.contentVersion += 1;
+        cache.dirtyReasons = {};
+    }
+
+    return cache;
+}
+
+function getChunkWorldBounds(chunk) {
+    const { chunkSize } = window.Game.config;
+    const cache = ensureChunkRenderCache(chunk);
+
+    if (!cache) {
+        return null;
+    }
+
+    const startX = chunk.x * chunkSize;
+    const startY = chunk.y * chunkSize;
+    const camera = window.Game.systems.camera || null;
+    const worldTop = camera && typeof camera.projectIsoTo === 'function'
+        ? camera.projectIsoTo(startX, startY, chunkWorldProjectionBuffer)
+        : (camera && typeof camera.projectIso === 'function'
+            ? camera.projectIso(startX, startY)
+            : null);
+
+    if (!worldTop) {
+        return null;
+    }
+
+    return {
+        x: worldTop.x - cache.originX,
+        y: worldTop.y - cache.originY,
+        width: cache.width,
+        height: cache.height
     };
 }
 
-function drawChunk(chunk) {
-    const chunkSize = window.Game.config.chunkSize;
-    const startX = chunk.x * chunkSize;
-    const startY = chunk.y * chunkSize;
-    const cache = chunk.renderCache;
-    const worldTop = window.Game.systems.camera.projectIso(startX, startY);
-
-    if (!cache) {
-        buildChunkRenderCache(chunk);
+function getChunkRenderSignature(chunk) {
+    if (!chunk) {
+        return 'missing';
     }
 
-    window.Game.ctx.drawImage(
-        chunk.renderCache.canvas,
-        worldTop.x + window.Game.camera.offset.x - chunk.renderCache.originX,
-        worldTop.y + window.Game.camera.offset.y - chunk.renderCache.originY
+    const cache = chunk.renderCache || null;
+
+    if (!cache) {
+        return `dirty:${chunk.x},${chunk.y}:0`;
+    }
+
+    if (cache.baseDirty || cache.overlayDirty) {
+        return `dirty:${chunk.x},${chunk.y}:${cache.cacheStateVersion || 0}`;
+    }
+
+    return `ready:${chunk.x},${chunk.y}:${cache.contentVersion || 0}`;
+}
+
+function drawChunkLayers(chunk, context, drawX, drawY) {
+    const cache = ensureChunkRenderLayers(chunk);
+
+    if (!cache || !context) {
+        return false;
+    }
+
+    context.drawImage(cache.baseCanvas, drawX, drawY);
+    context.drawImage(cache.overlayCanvas, drawX, drawY);
+    return true;
+}
+
+function drawChunk(chunk, context = window.Game.ctx) {
+    const worldBounds = getChunkWorldBounds(chunk);
+
+    if (!worldBounds) {
+        return false;
+    }
+
+    return drawChunkLayers(
+        chunk,
+        context,
+        worldBounds.x + window.Game.camera.offset.x,
+        worldBounds.y + window.Game.camera.offset.y
     );
 }
 
 window.Game.systems.chunkRenderer = {
     createRenderCanvas,
-    buildChunkRenderCache,
+    ensureChunkRenderCache,
+    invalidateChunkRenderCache,
+    getChunkCacheInvalidationCount: () => chunkCacheInvalidationCount,
+    buildChunkRenderCache: ensureChunkRenderLayers,
+    getChunkWorldBounds,
+    getChunkRenderSignature,
+    drawChunkLayers,
     drawChunk
 };

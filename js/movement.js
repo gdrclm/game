@@ -1,7 +1,9 @@
 const AUTO_REST_STEP_COOLDOWN = 30;
 const AUTO_REST_RECOVERY_AMOUNT = 50;
 const TIME_OF_DAY_STEP_INTERVAL = 30;
-const MOVEMENT_UI_SECTIONS = [
+const MOVEMENT_VISIBLE_CAPTURE_STEP_BATCH = 3;
+const MOVEMENT_CHUNK_UNLOAD_INTERVAL_MS = 400;
+const MOVEMENT_STEP_UI_SECTIONS = [
     'stats',
     'location',
     'progress',
@@ -10,14 +12,95 @@ const MOVEMENT_UI_SECTIONS = [
     'portrait',
     'condition',
     'status',
-    'merchant',
-    'dialogue',
-    'quests',
-    'map',
     'actionHint'
 ];
+const MOVEMENT_EXTENDED_UI_SECTIONS = [
+    ...MOVEMENT_STEP_UI_SECTIONS,
+    'merchant',
+    'dialogue',
+    'quests'
+];
+const MOVEMENT_MAP_UI_SECTIONS = ['map'];
+let lastMovementChunkKey = null;
+let lastMovementLoadingMarginKey = null;
+let lastMovementVisibleCaptureChunkKey = null;
+let movementStepsSinceVisibleCapture = 0;
+let lastMovementChunkUnloadAt = 0;
+let lastMovementFacingKey = '';
+let deferredMovementWorkRequestId = null;
+let pendingVisibleCaptureChunkState = null;
 
-function captureVisibleWorldAtPlayer() {
+function getMovementNow() {
+    return typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+}
+
+function getChunkKey(chunkX, chunkY) {
+    return `${chunkX},${chunkY}`;
+}
+
+function getPlayerChunkState(position = window.Game.state.playerPos) {
+    const world = window.Game.systems.world;
+    const { chunkX, chunkY } = world.getChunkCoordinatesForWorld(position.x, position.y);
+    const { localX, localY } = world.getLocalCoordinatesForWorld(position.x, position.y);
+
+    return {
+        chunkX,
+        chunkY,
+        localX,
+        localY,
+        key: getChunkKey(chunkX, chunkY)
+    };
+}
+
+function getChunkLoadingMarginKey(chunkState = getPlayerChunkState()) {
+    const game = window.Game;
+    const loadingBorder = game.config.chunkLoadMargin;
+    const left = chunkState.localX <= loadingBorder ? 'L' : '-';
+    const right = chunkState.localX >= game.config.chunkSize - loadingBorder - 1 ? 'R' : '-';
+    const top = chunkState.localY <= loadingBorder ? 'T' : '-';
+    const bottom = chunkState.localY >= game.config.chunkSize - loadingBorder - 1 ? 'B' : '-';
+
+    return `${chunkState.key}|${left}${right}${top}${bottom}`;
+}
+
+function isInsideChunkLoadingMargin(chunkState = getPlayerChunkState()) {
+    const game = window.Game;
+    const loadingBorder = game.config.chunkLoadMargin;
+
+    return (
+        chunkState.localX <= loadingBorder
+        || chunkState.localX >= game.config.chunkSize - loadingBorder - 1
+        || chunkState.localY <= loadingBorder
+        || chunkState.localY >= game.config.chunkSize - loadingBorder - 1
+    );
+}
+
+function resetMovementStreamingState() {
+    lastMovementChunkKey = null;
+    lastMovementLoadingMarginKey = null;
+    lastMovementVisibleCaptureChunkKey = null;
+    movementStepsSinceVisibleCapture = 0;
+    lastMovementChunkUnloadAt = 0;
+    lastMovementFacingKey = '';
+}
+
+function primeMovementStreamingState() {
+    const chunkState = getPlayerChunkState();
+
+    lastMovementChunkKey = chunkState.key;
+    lastMovementLoadingMarginKey = getChunkLoadingMarginKey(chunkState);
+    lastMovementVisibleCaptureChunkKey = chunkState.key;
+    movementStepsSinceVisibleCapture = 0;
+    lastMovementChunkUnloadAt = getMovementNow();
+
+    if (isInsideChunkLoadingMargin(chunkState)) {
+        checkChunkLoading(chunkState);
+    }
+}
+
+function captureVisibleWorldAtPlayer(chunkState = null) {
     const game = window.Game;
     const runtime = game.systems.mapRuntime || null;
 
@@ -25,8 +108,9 @@ function captureVisibleWorldAtPlayer() {
         return;
     }
 
-    const focusChunkX = Math.floor(game.state.playerPos.x / game.config.chunkSize);
-    const focusChunkY = Math.floor(game.state.playerPos.y / game.config.chunkSize);
+    const resolvedChunkState = chunkState || getPlayerChunkState();
+    const focusChunkX = resolvedChunkState.chunkX;
+    const focusChunkY = resolvedChunkState.chunkY;
     runtime.captureVisibleWorld(focusChunkX, focusChunkY);
 }
 
@@ -38,6 +122,94 @@ function markMovementUiDirty(sections) {
     }
 
     ui.markDirty(sections);
+}
+
+function hasFreshPlayerContext(position = window.Game.state.playerPos) {
+    const state = window.Game.state;
+    const activeTileInfo = state.activeTileInfo || null;
+
+    if (!activeTileInfo) {
+        return false;
+    }
+
+    return (
+        activeTileInfo.x === Math.round(position.x)
+        && activeTileInfo.y === Math.round(position.y)
+    );
+}
+
+function refreshPlayerContext(position = window.Game.state.playerPos, options = {}) {
+    if (!options.force && hasFreshPlayerContext(position)) {
+        return window.Game.state.activeTileInfo || null;
+    }
+
+    return window.Game.systems.world.updatePlayerContext(position);
+}
+
+function getFacingKey(dx, dy) {
+    const stepX = Math.sign(dx);
+    const stepY = Math.sign(dy);
+
+    if (stepX === 0 && stepY === 0) {
+        return '';
+    }
+
+    return `${stepX},${stepY}`;
+}
+
+function updateFacingFromDelta(dx, dy) {
+    const nextFacingKey = getFacingKey(dx, dy);
+
+    if (!nextFacingKey || nextFacingKey === lastMovementFacingKey) {
+        return false;
+    }
+
+    lastMovementFacingKey = nextFacingKey;
+    window.Game.systems.playerRenderer.setFacingFromDelta(dx, dy);
+    return true;
+}
+
+function scheduleDeferredMovementWork() {
+    if (deferredMovementWorkRequestId) {
+        return;
+    }
+
+    deferredMovementWorkRequestId = requestAnimationFrame(flushDeferredMovementWork);
+}
+
+function queueVisibleWorldCapture(chunkState) {
+    if (!chunkState) {
+        return;
+    }
+
+    pendingVisibleCaptureChunkState = {
+        chunkX: chunkState.chunkX,
+        chunkY: chunkState.chunkY,
+        localX: chunkState.localX,
+        localY: chunkState.localY,
+        key: chunkState.key
+    };
+    scheduleDeferredMovementWork();
+}
+
+function flushDeferredMovementWork() {
+    deferredMovementWorkRequestId = null;
+
+    if (pendingVisibleCaptureChunkState) {
+        const captureChunkState = pendingVisibleCaptureChunkState;
+        pendingVisibleCaptureChunkState = null;
+        captureVisibleWorldAtPlayer(captureChunkState);
+        markMovementUiDirty(MOVEMENT_MAP_UI_SECTIONS);
+    }
+}
+
+function flushDeferredMovementWorkNow() {
+    if (deferredMovementWorkRequestId) {
+        cancelAnimationFrame(deferredMovementWorkRequestId);
+        deferredMovementWorkRequestId = null;
+    }
+
+    flushDeferredMovementWork();
 }
 
 function getStepsSinceAutoRest() {
@@ -166,7 +338,7 @@ function getAdjacentShelter(position) {
     return bestMatch ? bestMatch.interaction : null;
 }
 
-function getAutoRestTrigger(previousContext = {}) {
+function getAutoRestTrigger(previousContext = {}, currentShelter = undefined) {
     const state = window.Game.state;
 
     if (getStepsSinceAutoRest() < AUTO_REST_STEP_COOLDOWN) {
@@ -179,9 +351,11 @@ function getAutoRestTrigger(previousContext = {}) {
         };
     }
 
-    const currentShelter = getAdjacentShelter(state.playerPos);
+    const resolvedCurrentShelter = currentShelter === undefined
+        ? getAdjacentShelter(state.playerPos)
+        : currentShelter;
 
-    if (currentShelter && currentShelter.id !== previousContext.shelterId) {
+    if (resolvedCurrentShelter && resolvedCurrentShelter.id !== previousContext.shelterId) {
         return {
             kind: 'shelter'
         };
@@ -235,7 +409,7 @@ function applyAutoRest(trigger, options = {}) {
         ui.setActionMessage(trimmedPrefix ? `${trimmedPrefix} ${restMessage}` : restMessage);
     }
 
-    markMovementUiDirty(MOVEMENT_UI_SECTIONS);
+    markMovementUiDirty(MOVEMENT_STEP_UI_SECTIONS);
     return true;
 }
 
@@ -293,7 +467,7 @@ function advanceTimeOfDayAfterMovement(options = {}) {
         ui.setActionMessage(trimmedPrefix ? `${trimmedPrefix} ${combinedMessage}` : combinedMessage);
     }
 
-    markMovementUiDirty(MOVEMENT_UI_SECTIONS);
+    markMovementUiDirty(MOVEMENT_EXTENDED_UI_SECTIONS);
     return {
         nextTimeOfDay,
         courierOutcome,
@@ -345,7 +519,7 @@ function consumeActionTempo(options = {}) {
     }
 
     if (timeAdvances === 0) {
-        markMovementUiDirty(MOVEMENT_UI_SECTIONS);
+        markMovementUiDirty(MOVEMENT_STEP_UI_SECTIONS);
     }
 
     return {
@@ -368,17 +542,20 @@ function startMovement() {
     state.stepProgress = 0;
     state.lastFrameTime = null;
     state.traversedStepsInPath = 0;
+    primeMovementStreamingState();
 
     if (state.route.length > 0) {
         const firstTarget = state.route[0];
-        window.Game.systems.playerRenderer.setFacingFromDelta(
+        updateFacingFromDelta(
             firstTarget.x - state.playerPos.x,
             firstTarget.y - state.playerPos.y
         );
     }
 
     if (window.Game.systems.ui && typeof window.Game.systems.ui.renderAfterStateChange === 'function') {
-        window.Game.systems.ui.renderAfterStateChange(['character', 'actions', 'portrait']);
+        window.Game.systems.ui.renderAfterStateChange(['character', 'actions', 'portrait'], {
+            sceneChanged: false
+        });
     }
 
     if (state.animationRequestId) {
@@ -435,8 +612,6 @@ function animate(timestamp) {
         return;
     }
 
-    checkChunkLoading();
-    unloadDistantChunks();
     renderInterpolatedPosition();
     state.animationRequestId = requestAnimationFrame(animate);
 }
@@ -447,12 +622,17 @@ function endMovement() {
 
 function endMovementWithOptions(options = {}) {
     const state = window.Game.state;
-    const { completed = false } = options;
+    const {
+        completed = false,
+        skipPlayerContextRefresh = false
+    } = options;
 
     state.isMoving = false;
     state.currentTargetIndex = 0;
     state.stepProgress = 0;
     state.lastFrameTime = null;
+    flushDeferredMovementWorkNow();
+    resetMovementStreamingState();
 
     if (state.animationRequestId) {
         cancelAnimationFrame(state.animationRequestId);
@@ -468,185 +648,332 @@ function endMovementWithOptions(options = {}) {
     state.routeTotalCost = 0;
     state.routePreviewLength = 0;
     state.routePreviewTotalCost = 0;
-    let preparedContinuationRoute = false;
+    state.routePreviewIsExact = true;
 
     if (completed && !state.isGameOver) {
         const inputSystem = window.Game.systems.input || null;
         if (inputSystem && typeof inputSystem.planRouteToSelectedTile === 'function') {
-            const continuationPlan = inputSystem.planRouteToSelectedTile({
+            inputSystem.planRouteToSelectedTile({
                 showRouteWarning: false,
                 clearActionMessage: false
             });
-            preparedContinuationRoute = Boolean(continuationPlan && continuationPlan.hasRoute);
         }
     }
 
-    window.Game.systems.world.updatePlayerContext();
-    markMovementUiDirty(MOVEMENT_UI_SECTIONS);
-    window.Game.systems.render.settleCameraOnPlayer();
-
-    if (preparedContinuationRoute && window.Game.systems.ui && typeof window.Game.systems.ui.renderAfterStateChange === 'function') {
-        window.Game.systems.ui.renderAfterStateChange(MOVEMENT_UI_SECTIONS);
+    if (!skipPlayerContextRefresh) {
+        refreshPlayerContext(state.playerPos);
     }
+
+    markMovementUiDirty(MOVEMENT_STEP_UI_SECTIONS);
+    window.Game.systems.render.settleCameraOnPlayer();
 }
 
-function moveToNextPoint() {
-    const state = window.Game.state;
-    const expedition = window.Game.systems.expedition;
+function handleMovementStreamingStep() {
+    const chunkState = getPlayerChunkState();
+    const nextLoadingMarginKey = getChunkLoadingMarginKey(chunkState);
+    const chunkChanged = chunkState.key !== lastMovementChunkKey;
+    const loadingMarginChanged = nextLoadingMarginKey !== lastMovementLoadingMarginKey;
+    const shouldLoadChunks = chunkChanged || loadingMarginChanged;
+    const shouldUnloadChunks = chunkChanged || (getMovementNow() - lastMovementChunkUnloadAt) >= MOVEMENT_CHUNK_UNLOAD_INTERVAL_MS;
+
+    if (chunkChanged) {
+        window.Game.systems.world.getChunk(chunkState.chunkX, chunkState.chunkY, {
+            detailLevel: 'base'
+        });
+    }
+
+    if (shouldLoadChunks) {
+        checkChunkLoading(chunkState);
+    }
+
+    if (shouldUnloadChunks) {
+        unloadDistantChunks(chunkState);
+        lastMovementChunkUnloadAt = getMovementNow();
+    }
+
+    movementStepsSinceVisibleCapture += 1;
+
+    if (
+        chunkChanged
+        || loadingMarginChanged
+        || chunkState.key !== lastMovementVisibleCaptureChunkKey
+        || movementStepsSinceVisibleCapture >= MOVEMENT_VISIBLE_CAPTURE_STEP_BATCH
+    ) {
+        queueVisibleWorldCapture(chunkState);
+        lastMovementVisibleCaptureChunkKey = chunkState.key;
+        movementStepsSinceVisibleCapture = 0;
+    }
+
+    lastMovementChunkKey = chunkState.key;
+    lastMovementLoadingMarginKey = nextLoadingMarginKey;
+}
+
+function buildBridgeTransitionMessage(bridgeTransition) {
+    if (!bridgeTransition) {
+        return '';
+    }
+
+    if (bridgeTransition.status === 'worn') {
+        return `Мост за спиной износился: осталось ${bridgeTransition.durabilityRemaining} из ${bridgeTransition.maxDurability} проходов.`;
+    }
+
+    if (bridgeTransition.status === 'weakened') {
+        return 'Обычный мост за спиной просел и стал старым.';
+    }
+
+    if (bridgeTransition.status === 'collapsed') {
+        return 'Старый мост за спиной рухнул в воду.';
+    }
+
+    return '';
+}
+
+function buildBoatTransitionMessage(boatTransition) {
+    if (!boatTransition) {
+        return '';
+    }
+
+    if (boatTransition.status === 'worn') {
+        return `Лодка изнашивается на воде: осталось ${boatTransition.durabilityRemaining} из ${boatTransition.maxDurability} переходов.`;
+    }
+
+    if (boatTransition.status === 'damaged') {
+        return `Лодка сильно потрёпана: остался ${boatTransition.durabilityRemaining} водный переход из ${boatTransition.maxDurability}.`;
+    }
+
+    if (boatTransition.status === 'broken') {
+        return 'Лодка окончательно разбита. Нужен ремкомплект лодки.';
+    }
+
+    return '';
+}
+
+function buildIslandArrivalMessage(previousTileInfo, currentTileInfo, isFirstVisitToIsland) {
+    if (
+        !currentTileInfo
+        || !currentTileInfo.progression
+        || !previousTileInfo
+        || !window.Game.systems.ui
+    ) {
+        return '';
+    }
+
+    const previousIslandIndex = previousTileInfo.progression
+        ? previousTileInfo.progression.islandIndex
+        : 1;
+
+    if (currentTileInfo.progression.islandIndex === previousIslandIndex) {
+        return '';
+    }
+
+    const rewardScaling = window.Game.systems.rewardScaling || null;
+    const weatherRuntime = window.Game.systems.weatherRuntime || null;
+    const expeditionProgression = window.Game.systems.expeditionProgression || null;
+    const outsideDrainMultiplier = rewardScaling && typeof rewardScaling.getOutsidePreviewDrainMultiplier === 'function'
+        ? rewardScaling.getOutsidePreviewDrainMultiplier(currentTileInfo)
+        : currentTileInfo.progression.outsideDrainMultiplier;
+    const weatherLabel = weatherRuntime && typeof weatherRuntime.getWeatherLabel === 'function'
+        ? weatherRuntime.getWeatherLabel(currentTileInfo)
+        : '';
+    const islandPressureSummary = rewardScaling && typeof rewardScaling.getIslandPressureSummary === 'function'
+        ? rewardScaling.getIslandPressureSummary(currentTileInfo)
+        : '';
+    const craftRequirement = expeditionProgression && typeof expeditionProgression.getIslandCraftRequirementSummary === 'function'
+        ? expeditionProgression.getIslandCraftRequirementSummary(currentTileInfo.progression)
+        : null;
+    const drainLabel = `x${outsideDrainMultiplier.toFixed(2)}`;
+    let arrivalMessage = `Остров ${currentTileInfo.progression.islandIndex}: ${currentTileInfo.progression.label}. `;
+
+    if (isFirstVisitToIsland) {
+        arrivalMessage += `Вне укрытий расход теперь ${drainLabel}.`;
+    } else {
+        arrivalMessage += `Возврат на остров возвращает его местный темп расхода: ${drainLabel}.`;
+    }
+
+    if (weatherLabel && weatherLabel !== 'Ясно') {
+        arrivalMessage += ` Погода: ${weatherLabel}.`;
+    }
+
+    if (islandPressureSummary) {
+        arrivalMessage += ` ${islandPressureSummary}.`;
+    }
+
+    if (craftRequirement && craftRequirement.headline) {
+        arrivalMessage += ` Сейчас критично: ${craftRequirement.headline}.`;
+    }
+
+    return arrivalMessage;
+}
+
+function resolveAutoRestTriggerForStep(stepContext) {
+    if (!stepContext || !stepContext.shouldCheckAutoRest) {
+        return null;
+    }
+
+    const previousShelter = getAdjacentShelter(stepContext.previousPosition);
+    const currentShelter = window.Game.state.activeHouse
+        ? null
+        : getAdjacentShelter(window.Game.state.playerPos);
+
+    return getAutoRestTrigger({
+        houseId: stepContext.previousTileInfo && stepContext.previousTileInfo.house
+            ? stepContext.previousTileInfo.house.id
+            : null,
+        shelterId: previousShelter ? previousShelter.id : null
+    }, currentShelter);
+}
+
+function getMovementMessagePrefix() {
+    const ui = window.Game.systems.ui || null;
+
+    return ui && typeof ui.lastActionMessage === 'string'
+        ? ui.lastActionMessage
+        : '';
+}
+
+function consumeMovementStep() {
+    const game = window.Game;
+    const state = game.state;
 
     if (state.currentTargetIndex >= state.route.length) {
         endMovement();
-        return;
+        return null;
     }
 
     const nextPoint = state.route[state.currentTargetIndex];
-    const actionMessageBeforeStep = window.Game.systems.ui && typeof window.Game.systems.ui.lastActionMessage === 'string'
-        ? window.Game.systems.ui.lastActionMessage
-        : '';
-    const previousTileInfo = window.Game.systems.world.getTileInfo(
-        state.playerPos.x,
-        state.playerPos.y,
-        { generateIfMissing: false }
-    );
-    const upcomingTileInfo = window.Game.systems.world.getTileInfo(
-        nextPoint.x,
-        nextPoint.y,
-        { generateIfMissing: false }
-    );
-    const previousShelter = getAdjacentShelter(state.playerPos);
-    const upcomingIslandIndex = upcomingTileInfo && upcomingTileInfo.progression
-        ? upcomingTileInfo.progression.islandIndex
-        : 1;
-    const visitedIslandIds = state.visitedIslandIds || { 1: true };
-    const isFirstVisitToIsland = !visitedIslandIds[upcomingIslandIndex];
+    const previousPosition = {
+        x: state.playerPos.x,
+        y: state.playerPos.y
+    };
+    const previousTileInfo = hasFreshPlayerContext(previousPosition)
+        ? state.activeTileInfo
+        : game.systems.world.getTileInfo(previousPosition.x, previousPosition.y, { generateIfMissing: false });
+    const visitedIslandIdsSnapshot = { ...(state.visitedIslandIds || { 1: true }) };
 
-    if (!window.Game.systems.pathfinding.canTraverseWorldStep(state.playerPos.x, state.playerPos.y, nextPoint.x, nextPoint.y)) {
-        if (window.Game.systems.ui) {
-            window.Game.systems.ui.setActionMessage('Путь изменился: проход впереди больше недоступен.');
+    if (!game.systems.pathfinding.canTraverseWorldStep(previousPosition.x, previousPosition.y, nextPoint.x, nextPoint.y)) {
+        if (game.systems.ui) {
+            game.systems.ui.setActionMessage('Путь изменился: проход впереди больше недоступен.');
         }
-        endMovementWithOptions({ completed: false });
-        return;
+
+        endMovementWithOptions({
+            completed: false,
+            skipPlayerContextRefresh: true
+        });
+        return null;
     }
 
     state.playerPos = { ...nextPoint };
-    window.Game.systems.world.updatePlayerContext(state.playerPos);
-    captureVisibleWorldAtPlayer();
-    const currentTileInfo = state.activeTileInfo;
+    refreshPlayerContext(state.playerPos, { force: true });
+    handleMovementStreamingStep();
     state.traversedStepsInPath += 1;
     incrementAutoRestStepCounter();
     incrementTimeOfDayStepCounter();
 
-    const bridgeTransition = expedition.handleTileTransition(previousTileInfo, currentTileInfo);
-    if (window.Game.systems.ui) {
-        if (bridgeTransition && bridgeTransition.status === 'worn') {
-            window.Game.systems.ui.setActionMessage(`Мост за спиной износился: осталось ${bridgeTransition.durabilityRemaining} из ${bridgeTransition.maxDurability} проходов.`);
-        } else if (bridgeTransition && bridgeTransition.status === 'weakened') {
-            window.Game.systems.ui.setActionMessage('Обычный мост за спиной просел и стал старым.');
-        } else if (bridgeTransition && bridgeTransition.status === 'collapsed') {
-            window.Game.systems.ui.setActionMessage('Старый мост за спиной рухнул в воду.');
-        }
-    }
-
-    const previousIslandIndex = previousTileInfo && previousTileInfo.progression
-        ? previousTileInfo.progression.islandIndex
+    const currentTileInfo = state.activeTileInfo;
+    const currentIslandIndex = currentTileInfo && currentTileInfo.progression
+        ? currentTileInfo.progression.islandIndex
         : 1;
-    const shouldShowIslandArrival = Boolean(
-        currentTileInfo
-        && currentTileInfo.progression
-        && currentTileInfo.progression.islandIndex !== previousIslandIndex
-        && window.Game.systems.ui
-    );
 
-    if (shouldShowIslandArrival) {
-        const rewardScaling = window.Game.systems.rewardScaling || null;
-        const weatherRuntime = window.Game.systems.weatherRuntime || null;
-        const outsideDrainMultiplier = rewardScaling && typeof rewardScaling.getOutsidePreviewDrainMultiplier === 'function'
-            ? rewardScaling.getOutsidePreviewDrainMultiplier(currentTileInfo)
-            : currentTileInfo.progression.outsideDrainMultiplier;
-        const weatherLabel = weatherRuntime && typeof weatherRuntime.getWeatherLabel === 'function'
-            ? weatherRuntime.getWeatherLabel(currentTileInfo)
-            : '';
-        const islandPressureSummary = rewardScaling && typeof rewardScaling.getIslandPressureSummary === 'function'
-            ? rewardScaling.getIslandPressureSummary(currentTileInfo)
-            : '';
-        const drainLabel = `x${outsideDrainMultiplier.toFixed(2)}`;
-        let arrivalMessage = `Остров ${currentTileInfo.progression.islandIndex}: ${currentTileInfo.progression.label}. `;
+    return {
+        previousPosition,
+        previousTileInfo,
+        currentTileInfo,
+        isFirstVisitToIsland: !visitedIslandIdsSnapshot[currentIslandIndex],
+        isFinalStepInRoute: state.currentTargetIndex + 1 >= state.route.length,
+        shouldCheckAutoRest: getStepsSinceAutoRest() >= AUTO_REST_STEP_COOLDOWN
+    };
+}
 
-        if (isFirstVisitToIsland) {
-            arrivalMessage += `Вне укрытий расход теперь ${drainLabel}.`;
-        } else {
-            arrivalMessage += `Возврат на остров возвращает его местный темп расхода: ${drainLabel}.`;
-        }
-
-        if (weatherLabel && weatherLabel !== 'Ясно') {
-            arrivalMessage += ` Погода: ${weatherLabel}.`;
-        }
-
-        if (islandPressureSummary) {
-            arrivalMessage += ` ${islandPressureSummary}.`;
-        }
-
-        window.Game.systems.ui.setActionMessage(arrivalMessage);
+function applyMovementStepSideEffects(stepContext) {
+    if (!stepContext) {
+        return;
     }
 
-    if (window.Game.systems.ui) {
-        window.Game.systems.ui.applyMovementStepCosts();
+    const state = window.Game.state;
+    const expedition = window.Game.systems.expedition;
+    const ui = window.Game.systems.ui || null;
+    const bridgeTransition = expedition.handleTileTransition(stepContext.previousTileInfo, stepContext.currentTileInfo);
+    const boatTransition = expedition && typeof expedition.handleBoatTransition === 'function'
+        ? expedition.handleBoatTransition(stepContext.previousTileInfo, stepContext.currentTileInfo)
+        : null;
+    const bridgeMessage = buildBridgeTransitionMessage(bridgeTransition);
+    const boatMessage = buildBoatTransitionMessage(boatTransition);
+    const islandArrivalMessage = buildIslandArrivalMessage(
+        stepContext.previousTileInfo,
+        stepContext.currentTileInfo,
+        stepContext.isFirstVisitToIsland
+    );
+    const stepMessage = [bridgeMessage, boatMessage, islandArrivalMessage].filter(Boolean).join(' ');
+
+    if (ui && stepMessage) {
+        ui.setActionMessage(stepMessage);
+    }
+
+    if (ui && typeof ui.applyMovementStepCosts === 'function') {
+        ui.applyMovementStepCosts();
+
         if (state.isGameOver) {
-            endMovementWithOptions({ completed: false });
+            endMovementWithOptions({
+                completed: false,
+                skipPlayerContextRefresh: true
+            });
             return;
         }
     }
 
-    const ui = window.Game.systems.ui || null;
-    const autoRestTrigger = getAutoRestTrigger({
-        houseId: previousTileInfo && previousTileInfo.house ? previousTileInfo.house.id : null,
-        shelterId: previousShelter ? previousShelter.id : null
-    });
+    const autoRestTrigger = resolveAutoRestTriggerForStep(stepContext);
     const shouldAdvanceTimeOfDay = shouldAdvanceTimeOfDayAfterStep();
-    const isFinalStepInRoute = state.currentTargetIndex + 1 >= state.route.length;
 
-    if (autoRestTrigger && !isFinalStepInRoute) {
-        applyAutoRest(autoRestTrigger, {
-            messagePrefix: ui && ui.lastActionMessage !== actionMessageBeforeStep
-                ? ui.lastActionMessage
-                : ''
-        });
-    }
-
-    if (shouldAdvanceTimeOfDay && !isFinalStepInRoute) {
-        advanceTimeOfDayAfterMovement({
-            messagePrefix: ui && ui.lastActionMessage !== actionMessageBeforeStep
-                ? ui.lastActionMessage
-                : ''
-        });
-    }
-
-    markMovementUiDirty(MOVEMENT_UI_SECTIONS);
-
-    state.currentTargetIndex++;
-
-    if (state.currentTargetIndex >= state.route.length) {
-        endMovementWithOptions({ completed: true });
-        let needsPostMovementRender = false;
-
+    if (!stepContext.isFinalStepInRoute) {
         if (autoRestTrigger) {
             applyAutoRest(autoRestTrigger, {
-                messagePrefix: ui && typeof ui.lastActionMessage === 'string' ? ui.lastActionMessage : ''
+                messagePrefix: getMovementMessagePrefix()
             });
-            needsPostMovementRender = true;
         }
 
         if (shouldAdvanceTimeOfDay) {
             advanceTimeOfDayAfterMovement({
-                messagePrefix: ui && typeof ui.lastActionMessage === 'string' ? ui.lastActionMessage : ''
+                messagePrefix: getMovementMessagePrefix()
             });
-            needsPostMovementRender = true;
         }
 
-        if (needsPostMovementRender && ui && typeof ui.renderAfterStateChange === 'function') {
-            ui.renderAfterStateChange(MOVEMENT_UI_SECTIONS);
+        markMovementUiDirty(
+            shouldAdvanceTimeOfDay
+                ? MOVEMENT_EXTENDED_UI_SECTIONS
+                : MOVEMENT_STEP_UI_SECTIONS
+        );
+    }
+
+    state.currentTargetIndex++;
+
+    if (state.currentTargetIndex >= state.route.length) {
+        endMovementWithOptions({
+            completed: true,
+            skipPlayerContextRefresh: true
+        });
+
+        if (autoRestTrigger) {
+            applyAutoRest(autoRestTrigger, {
+                messagePrefix: getMovementMessagePrefix()
+            });
+        }
+
+        if (shouldAdvanceTimeOfDay) {
+            advanceTimeOfDayAfterMovement({
+                messagePrefix: getMovementMessagePrefix()
+            });
         }
     }
+}
+
+function moveToNextPoint() {
+    const stepContext = consumeMovementStep();
+
+    if (!stepContext) {
+        return;
+    }
+
+    applyMovementStepSideEffects(stepContext);
 }
 
 function renderInterpolatedPosition() {
@@ -672,41 +999,58 @@ function renderInterpolatedPosition() {
         y: startPos.y + (targetPos.y - startPos.y) * state.stepProgress
     };
 
-    window.Game.systems.playerRenderer.setFacingFromDelta(
+    updateFacingFromDelta(
         targetPos.x - startPos.x,
         targetPos.y - startPos.y
     );
     window.Game.systems.render.renderWithInterpolation(interpolatedPos);
 }
 
-function checkChunkLoading() {
+function checkChunkLoading(chunkState = getPlayerChunkState()) {
     const game = window.Game;
-    const playerX = game.state.playerPos.x;
-    const playerY = game.state.playerPos.y;
     const { chunkSize } = game.config;
-    const { chunkX, chunkY } = game.systems.world.getChunkCoordinatesForWorld(playerX, playerY);
-    const { localX: inChunkX, localY: inChunkY } = game.systems.world.getLocalCoordinatesForWorld(playerX, playerY);
+    const { chunkX, chunkY } = chunkState;
+    const inChunkX = chunkState.localX;
+    const inChunkY = chunkState.localY;
     const loadingBorder = game.config.chunkLoadMargin;
+    const chunkCoordinates = [];
 
     if (inChunkX <= loadingBorder) {
-        game.systems.world.getChunk(chunkX - 1, chunkY);
+        chunkCoordinates.push({ chunkX: chunkX - 1, chunkY });
     } else if (inChunkX >= chunkSize - loadingBorder - 1) {
-        game.systems.world.getChunk(chunkX + 1, chunkY);
+        chunkCoordinates.push({ chunkX: chunkX + 1, chunkY });
     }
 
     if (inChunkY <= loadingBorder) {
-        game.systems.world.getChunk(chunkX, chunkY - 1);
+        chunkCoordinates.push({ chunkX, chunkY: chunkY - 1 });
     } else if (inChunkY >= chunkSize - loadingBorder - 1) {
-        game.systems.world.getChunk(chunkX, chunkY + 1);
+        chunkCoordinates.push({ chunkX, chunkY: chunkY + 1 });
     }
+
+    if (chunkCoordinates.length === 0) {
+        return;
+    }
+
+    if (game.systems.chunkGenerator && typeof game.systems.chunkGenerator.prewarmChunks === 'function') {
+        game.systems.chunkGenerator.prewarmChunks(chunkCoordinates, {
+            detailLevel: 'base',
+            priority: 'high'
+        });
+        return;
+    }
+
+    chunkCoordinates.forEach((entry) => {
+        game.systems.world.getChunk(entry.chunkX, entry.chunkY, {
+            detailLevel: 'base',
+            queueDeferred: false,
+            priority: 'high'
+        });
+    });
 }
 
-function unloadDistantChunks() {
+function unloadDistantChunks(chunkState = getPlayerChunkState()) {
     const game = window.Game;
-    const { chunkX: playerChunkX, chunkY: playerChunkY } = game.systems.world.getChunkCoordinatesForWorld(
-        game.state.playerPos.x,
-        game.state.playerPos.y
-    );
+    const { chunkX: playerChunkX, chunkY: playerChunkY } = chunkState;
 
     Object.keys(game.state.loadedChunks).forEach((key) => {
         const [chunkX, chunkY] = key.split(',').map(Number);

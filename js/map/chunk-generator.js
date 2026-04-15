@@ -1,9 +1,203 @@
 (() => {
     const game = window.Game;
     const chunkGenerator = game.systems.chunkGenerator = game.systems.chunkGenerator || {};
+    const MAX_HEAVY_CHUNKS_PER_TICK = 1;
+    const MAX_STAGE_CACHE_ENTRIES = 48;
+    const GENERATION_QUEUE_FLUSH_DELAY_MS = 0;
+    const generationBasisCache = {
+        topology: new Map(),
+        structures: new Map(),
+        travel: new Map()
+    };
+    const generationQueue = [];
+    const queuedGenerationTasks = new Map();
+    let generationQueueRequestId = null;
+    let nextGenerationTaskId = 1;
 
     function getPainter() {
         return game.systems.topologyPainter || {};
+    }
+
+    function getGenerationCacheKey(chunkX, chunkY) {
+        return `${Number.isFinite(game.config.worldSeed) ? game.config.worldSeed : 'seedless'}:${chunkX},${chunkY}`;
+    }
+
+    function cloneGenerationValue(value) {
+        if (Array.isArray(value)) {
+            return value.map((entry) => cloneGenerationValue(entry));
+        }
+
+        if (value instanceof Set) {
+            return new Set(Array.from(value).map((entry) => cloneGenerationValue(entry)));
+        }
+
+        if (value instanceof Map) {
+            return new Map(Array.from(value.entries()).map(([key, entry]) => [key, cloneGenerationValue(entry)]));
+        }
+
+        if (value && typeof value === 'object') {
+            return Object.fromEntries(
+                Object.entries(value).map(([key, entry]) => [key, cloneGenerationValue(entry)])
+            );
+        }
+
+        return value;
+    }
+
+    function getCachedBasis(cache, cacheKey) {
+        if (!cache.has(cacheKey)) {
+            return null;
+        }
+
+        const cachedValue = cache.get(cacheKey);
+        cache.delete(cacheKey);
+        cache.set(cacheKey, cachedValue);
+        return cloneGenerationValue(cachedValue);
+    }
+
+    function setCachedBasis(cache, cacheKey, value) {
+        cache.delete(cacheKey);
+        cache.set(cacheKey, cloneGenerationValue(value));
+
+        while (cache.size > MAX_STAGE_CACHE_ENTRIES) {
+            const oldestKey = cache.keys().next();
+
+            if (oldestKey.done) {
+                return;
+            }
+
+            cache.delete(oldestKey.value);
+        }
+    }
+
+    function createMetricGrid(fill = 0) {
+        return Array.from(
+            { length: game.config.chunkSize },
+            () => Array(game.config.chunkSize).fill(fill)
+        );
+    }
+
+    function buildChunkGenerationMaps(chunkData) {
+        const chunkSize = game.config.chunkSize;
+        const center = Math.floor(chunkSize / 2);
+        const edgeDistance = createMetricGrid(0);
+        const centerDistance = createMetricGrid(0);
+        const waterNeighbors = createMetricGrid(0);
+        const rockNeighbors = createMetricGrid(0);
+        const bridgeNeighbors = createMetricGrid(0);
+        const directions = [
+            { dx: 1, dy: 0 },
+            { dx: -1, dy: 0 },
+            { dx: 0, dy: 1 },
+            { dx: 0, dy: -1 },
+            { dx: 1, dy: 1 },
+            { dx: 1, dy: -1 },
+            { dx: -1, dy: 1 },
+            { dx: -1, dy: -1 }
+        ];
+
+        for (let y = 0; y < chunkSize; y++) {
+            for (let x = 0; x < chunkSize; x++) {
+                edgeDistance[y][x] = Math.min(x, y, chunkSize - 1 - x, chunkSize - 1 - y);
+                centerDistance[y][x] = Math.abs(x - center) + Math.abs(y - center);
+
+                directions.forEach((direction) => {
+                    const nextX = x + direction.dx;
+                    const nextY = y + direction.dy;
+
+                    if (nextX < 0 || nextX >= chunkSize || nextY < 0 || nextY >= chunkSize) {
+                        return;
+                    }
+
+                    const neighborTile = chunkData[nextY][nextX];
+
+                    if (neighborTile === 'water') {
+                        waterNeighbors[y][x] += 1;
+                    }
+
+                    if (neighborTile === 'rock') {
+                        rockNeighbors[y][x] += 1;
+                    }
+
+                    if (neighborTile === 'bridge') {
+                        bridgeNeighbors[y][x] += 1;
+                    }
+                });
+            }
+        }
+
+        return {
+            edgeDistance,
+            centerDistance,
+            waterNeighbors,
+            rockNeighbors,
+            bridgeNeighbors
+        };
+    }
+
+    function normalizeGenerationPriority(priority = 'normal') {
+        if (priority === 'high') {
+            return 2;
+        }
+
+        if (priority === 'low') {
+            return 0;
+        }
+
+        return 1;
+    }
+
+    function normalizeGenerationDetail(detailLevel = 'full') {
+        return detailLevel === 'base' ? 'base' : 'full';
+    }
+
+    function getGenerationDetailRank(detailLevel = 'base') {
+        return normalizeGenerationDetail(detailLevel) === 'full' ? 2 : 1;
+    }
+
+    function mergeGenerationDetails(leftDetail = 'base', rightDetail = 'base') {
+        return getGenerationDetailRank(leftDetail) >= getGenerationDetailRank(rightDetail)
+            ? normalizeGenerationDetail(leftDetail)
+            : normalizeGenerationDetail(rightDetail);
+    }
+
+    function createStageRandom(chunkX, chunkY, stageSalt = 0) {
+        const salt = Math.max(1, Math.floor(Number(stageSalt) || 0) + 1);
+        return game.systems.utils.createSeededRandom(
+            chunkX * 131 + salt * 977,
+            chunkY * -149 - salt * 613
+        );
+    }
+
+    function getQueuedGenerationKey(chunkX, chunkY) {
+        return `${chunkX},${chunkY}`;
+    }
+
+    function scheduleGenerationQueueFlush() {
+        if (generationQueueRequestId) {
+            return;
+        }
+
+        generationQueueRequestId = window.setTimeout(flushGenerationQueue, GENERATION_QUEUE_FLUSH_DELAY_MS);
+    }
+
+    function resetGenerationRuntime(options = {}) {
+        const clearCaches = options.clearCaches !== false;
+
+        if (generationQueueRequestId) {
+            window.clearTimeout(generationQueueRequestId);
+            generationQueueRequestId = null;
+        }
+
+        generationQueue.length = 0;
+        queuedGenerationTasks.clear();
+        nextGenerationTaskId = 1;
+
+        if (clearCaches) {
+            generationBasisCache.topology.clear();
+            generationBasisCache.structures.clear();
+            generationBasisCache.travel.clear();
+        }
     }
 
     function getHouseCellSet(houses = []) {
@@ -255,6 +449,75 @@
         });
 
         return targets;
+    }
+
+    function getBridgeConnectionLane(chunkRecord, progression, direction) {
+        const painter = getPainter();
+        const chunkSize = game.config.chunkSize;
+        const center = Math.floor(chunkSize / 2);
+        const rawLaneOffset = painter && typeof painter.getConnectionLaneOffset === 'function'
+            ? painter.getConnectionLaneOffset(chunkRecord, progression, direction)
+            : 0;
+        const normalizedLaneOffset = painter && typeof painter.clampValue === 'function'
+            ? painter.clampValue(Math.round(rawLaneOffset * 0.65), -5, 5)
+            : Math.max(-5, Math.min(5, Math.round(rawLaneOffset * 0.65)));
+
+        return painter && typeof painter.clampValue === 'function'
+            ? painter.clampValue(center + normalizedLaneOffset, 2, chunkSize - 3)
+            : Math.max(2, Math.min(chunkSize - 3, center + normalizedLaneOffset));
+    }
+
+    function getCrossingIslandBreakSites(chunkRecord, progression) {
+        if (
+            !chunkRecord
+            || !progression
+            || progression.scenario !== 'crossingIsland'
+            || !chunkRecord.tags
+            || !chunkRecord.tags.has('entry')
+            || !(chunkRecord.bridgeDirections instanceof Set)
+            || chunkRecord.bridgeDirections.size === 0
+        ) {
+            return [];
+        }
+
+        return Array.from(chunkRecord.bridgeDirections)
+            .sort()
+            .map((direction) => {
+                const lane = getBridgeConnectionLane(chunkRecord, progression, direction);
+
+                if (direction === 'north') {
+                    return { direction, localX: lane, localY: 0 };
+                }
+
+                if (direction === 'south') {
+                    return { direction, localX: lane, localY: game.config.chunkSize - 1 };
+                }
+
+                if (direction === 'west') {
+                    return { direction, localX: 0, localY: lane };
+                }
+
+                if (direction === 'east') {
+                    return { direction, localX: game.config.chunkSize - 1, localY: lane };
+                }
+
+                return null;
+            })
+            .filter(Boolean);
+    }
+
+    function applyCrossingIslandForcedBridgeBreaks(chunkData, chunkRecord, progression) {
+        const breakSites = getCrossingIslandBreakSites(chunkRecord, progression);
+
+        breakSites.forEach((site) => {
+            if (!chunkData[site.localY] || chunkData[site.localY][site.localX] !== 'bridge') {
+                return;
+            }
+
+            chunkData[site.localY][site.localX] = 'water';
+        });
+
+        return breakSites;
     }
 
     function getDeadEndBranchCount(chunkRecord, progression) {
@@ -562,7 +825,7 @@
         };
     }
 
-    function applyTravelTerrainLayer(chunkData, houses, chunkRecord, progression, random) {
+    function applyTravelTerrainLayer(chunkData, houses, chunkRecord, progression, random, stageMaps = buildChunkGenerationMaps(chunkData)) {
         const chunkSize = game.config.chunkSize;
         const center = Math.floor(chunkSize / 2);
         const islandIndex = progression ? progression.islandIndex : 1;
@@ -574,6 +837,10 @@
             ? 0.16
             : 0;
         const ruggedBias = chunkRecord.tags.has('junction') ? 0.08 : 0;
+        const supplyWaterBias = chunkRecord.tags.has('supplyWater') ? 0.16 : 0;
+        const supplyFishingBias = chunkRecord.tags.has('supplyFishing') ? 0.18 : 0;
+        const supplyWoodBias = chunkRecord.tags.has('supplyWood') ? 0.1 : 0;
+        const supplyRubbleBias = chunkRecord.tags.has('supplyRubble') ? 0.18 : 0;
 
         for (let y = 0; y < chunkSize; y++) {
             for (let x = 0; x < chunkSize; x++) {
@@ -582,17 +849,17 @@
                 }
 
                 const tileType = chunkData[y][x];
-                const edgeDistance = Math.min(x, y, chunkSize - 1 - x, chunkSize - 1 - y);
-                const centerDistance = Math.abs(x - center) + Math.abs(y - center);
-                const waterNeighbors = countNeighborsByType(chunkData, x, y, (candidate) => candidate === 'water', true);
-                const rockNeighbors = countNeighborsByType(chunkData, x, y, (candidate) => candidate === 'rock', true);
+                const edgeDistance = stageMaps.edgeDistance[y][x];
+                const centerDistance = stageMaps.centerDistance[y][x];
+                const waterNeighbors = stageMaps.waterNeighbors[y][x];
+                const rockNeighbors = stageMaps.rockNeighbors[y][x];
 
                 if (
                     islandIndex >= 6
                     && tileType !== 'trail'
                     && waterNeighbors >= 2
                     && centerDistance >= 7
-                    && random() < 0.1 + remoteBias + bottleneckBias
+                    && random() < Math.max(0.03, 0.1 + remoteBias + bottleneckBias - supplyFishingBias * 0.45 - supplyWoodBias * 0.35)
                 ) {
                     chunkData[y][x] = 'mud';
                     continue;
@@ -603,7 +870,7 @@
                     && tileType !== 'trail'
                     && rockNeighbors >= 1
                     && waterNeighbors <= 2
-                    && random() < 0.22 + bottleneckBias + ruggedBias
+                    && random() < 0.22 + bottleneckBias + ruggedBias + supplyRubbleBias
                 ) {
                     chunkData[y][x] = 'rubble';
                     continue;
@@ -614,7 +881,7 @@
                     && tileType === 'shore'
                     && waterNeighbors >= 2
                     && edgeDistance >= 1
-                    && random() < 0.34 + remoteBias
+                    && random() < 0.34 + remoteBias + supplyWaterBias + supplyFishingBias
                 ) {
                     chunkData[y][x] = 'reeds';
                 }
@@ -624,25 +891,32 @@
         return paintTravelTrailNetwork(chunkData, houses, chunkRecord, progression, houseTileSet, random);
     }
 
-    function applyTravelZoneLayer(chunkData, travelZones, houses, chunkRecord, progression, random) {
+    function applyTravelZoneLayer(chunkData, travelZones, houses, chunkRecord, progression, random, stageMaps = buildChunkGenerationMaps(chunkData)) {
         const chunkSize = game.config.chunkSize;
         const center = Math.floor(chunkSize / 2);
         const islandIndex = progression ? progression.islandIndex : 1;
         const houseTileSet = getHouseCellSet(houses);
         const expedition = game.systems.expedition;
         const island = progression ? expedition.getIslandRecord(progression.islandIndex) : null;
+        const crossingPressureLevel = progression && progression.scenario === 'crossingIsland'
+            ? Math.max(1, Math.floor(progression.crossingPressureLevel || 1))
+            : 0;
         const fragileBridgeIsland = Boolean(
             progression
             && progression.islandIndex > 2
             && island
             && island.exitChunkKeys
-            && island.exitChunkKeys.size >= 3
+            && (island.exitChunkKeys.size >= 3 || crossingPressureLevel > 0)
         );
         const remoteBias = chunkRecord.tags.has('remote') || chunkRecord.tags.has('peninsula') || chunkRecord.tags.has('tip')
             ? 0.14
             : 0;
         const bottleneckBias = chunkRecord.tags.has('neck') || (progression && progression.routeStyle === 'bottleneck')
             ? 0.16
+            : 0;
+        const supplyRubbleBias = chunkRecord.tags.has('supplyRubble') ? 0.14 : 0;
+        const crossingBias = crossingPressureLevel > 0
+            ? 0.12 + crossingPressureLevel * 0.05
             : 0;
 
         for (let y = 0; y < chunkSize; y++) {
@@ -652,13 +926,22 @@
                 }
 
                 const tileType = chunkData[y][x];
-                const centerDistance = Math.abs(x - center) + Math.abs(y - center);
-                const edgeDistance = Math.min(x, y, chunkSize - 1 - x, chunkSize - 1 - y);
-                const waterNeighbors = countNeighborsByType(chunkData, x, y, (candidate) => candidate === 'water', true);
-                const rockNeighbors = countNeighborsByType(chunkData, x, y, (candidate) => candidate === 'rock', true);
+                const centerDistance = stageMaps.centerDistance[y][x];
+                const edgeDistance = stageMaps.edgeDistance[y][x];
+                const waterNeighbors = stageMaps.waterNeighbors[y][x];
+                const rockNeighbors = stageMaps.rockNeighbors[y][x];
 
                 if (tileType === 'bridge') {
-                    if (fragileBridgeIsland) {
+                    if (crossingPressureLevel > 0) {
+                        assignTravelZone(
+                            travelZones,
+                            chunkData,
+                            x,
+                            y,
+                            random() < 0.42 + crossingPressureLevel * 0.08 ? 'collapseSpan' : 'oldBridge',
+                            houseTileSet
+                        );
+                    } else if (fragileBridgeIsland) {
                         assignTravelZone(travelZones, chunkData, x, y, 'collapseSpan', houseTileSet);
                     } else if (islandIndex >= 4 && random() < 0.42) {
                         assignTravelZone(travelZones, chunkData, x, y, 'oldBridge', houseTileSet);
@@ -674,7 +957,7 @@
                     && islandIndex >= 5
                     && waterNeighbors >= 2
                     && (chunkRecord.tags.has('neck') || chunkRecord.tags.has('peninsula') || edgeDistance <= 2)
-                    && random() < 0.18 + remoteBias
+                    && random() < 0.18 + remoteBias + crossingBias
                 ) {
                     assignTravelZone(travelZones, chunkData, x, y, 'coldFord', houseTileSet);
                 }
@@ -705,16 +988,16 @@
                     rockNeighbors >= 1
                     && islandIndex >= 4
                     && (chunkRecord.tags.has('neck') || progression.routeStyle === 'bottleneck' || chunkRecord.tags.has('junction'))
-                    && random() < 0.22 + bottleneckBias
+                    && random() < 0.22 + bottleneckBias + supplyRubbleBias + crossingBias * 0.45
                 ) {
                     assignTravelZone(travelZones, chunkData, x, y, 'dangerPass', houseTileSet);
                 }
 
                 if (
                     islandIndex >= 7
-                    && (chunkRecord.tags.has('remote') || chunkRecord.tags.has('tip'))
+                    && (chunkRecord.tags.has('remote') || chunkRecord.tags.has('tip') || chunkRecord.tags.has('supplyRubble'))
                     && centerDistance >= 8
-                    && random() < 0.16 + remoteBias
+                    && random() < 0.16 + remoteBias + supplyRubbleBias
                 ) {
                     assignTravelZone(travelZones, chunkData, x, y, 'badSector', houseTileSet);
                 }
@@ -741,7 +1024,7 @@
                 if (
                     fragileBridgeIsland
                     && tileType !== 'bridge'
-                    && countNeighborsByType(chunkData, x, y, (candidate) => candidate === 'bridge', true) >= 1
+                    && stageMaps.bridgeNeighbors[y][x] >= 1
                 ) {
                     assignTravelZone(travelZones, chunkData, x, y, 'riskyProximity', houseTileSet);
                 }
@@ -827,6 +1110,451 @@
         return game.systems.interactions.buildInteractionTileMap(interactions || []);
     }
 
+    function buildGenerationContext(chunkX, chunkY, chunkRecord = null) {
+        const expedition = game.systems.expedition;
+        const resolvedChunkRecord = chunkRecord || expedition.getIslandChunkRecord(chunkX, chunkY);
+        const islandRecord = resolvedChunkRecord ? expedition.getIslandRecord(resolvedChunkRecord.islandIndex) : null;
+
+        return {
+            chunkX,
+            chunkY,
+            cacheKey: getGenerationCacheKey(chunkX, chunkY),
+            painter: getPainter(),
+            expedition,
+            chunkRecord: resolvedChunkRecord,
+            progression: islandRecord ? islandRecord.progression : null,
+            chunkData: null,
+            houses: [],
+            trailMeta: null,
+            travelZones: null,
+            interactions: [],
+            stageMaps: null,
+            topologyReady: false,
+            structuresReady: false,
+            travelReady: false
+        };
+    }
+
+    function runTopologyStage(context) {
+        if (!context || context.topologyReady) {
+            return context;
+        }
+
+        const cachedBasis = getCachedBasis(generationBasisCache.topology, context.cacheKey);
+
+        if (cachedBasis && Array.isArray(cachedBasis.chunkData)) {
+            context.chunkData = cachedBasis.chunkData;
+            context.topologyReady = true;
+            return context;
+        }
+
+        const { painter, chunkData, chunkRecord, progression, chunkX, chunkY } = {
+            painter: context.painter,
+            chunkData: context.painter.buildChunkGrid('water'),
+            chunkRecord: context.chunkRecord,
+            progression: context.progression,
+            chunkX: context.chunkX,
+            chunkY: context.chunkY
+        };
+        const random = createStageRandom(chunkX, chunkY, 0);
+
+        painter.paintIslandBody(chunkData, chunkRecord, progression, random);
+        painter.addChunkConnections(chunkData, chunkRecord, progression);
+        painter.carveTopologyFeatures(chunkData, chunkRecord, progression, random);
+        painter.addChunkConnections(chunkData, chunkRecord, progression);
+        painter.ensureSpawnArea(chunkData, chunkX, chunkY);
+
+        context.chunkData = chunkData;
+        context.topologyReady = true;
+        setCachedBasis(generationBasisCache.topology, context.cacheKey, {
+            chunkData
+        });
+        return context;
+    }
+
+    function runStructuresStage(context) {
+        if (!context) {
+            return context;
+        }
+
+        if (context.structuresReady) {
+            return context;
+        }
+
+        const cachedBasis = getCachedBasis(generationBasisCache.structures, context.cacheKey);
+
+        if (cachedBasis && Array.isArray(cachedBasis.chunkData) && Array.isArray(cachedBasis.houses)) {
+            context.chunkData = cachedBasis.chunkData;
+            context.houses = cachedBasis.houses;
+            context.topologyReady = true;
+            context.structuresReady = true;
+            return context;
+        }
+
+        runTopologyStage(context);
+
+        const random = createStageRandom(context.chunkX, context.chunkY, 1);
+        const houses = game.systems.houses.createChunkHouses(
+            context.chunkX,
+            context.chunkY,
+            context.chunkData,
+            random,
+            context.progression,
+            context.chunkRecord
+        );
+
+        houses.forEach((house, houseIndex) => {
+            context.expedition.assignHouseProfile(house, context.progression, context.chunkRecord, houseIndex);
+        });
+
+        context.painter.addRandomRocks(context.chunkData, houses, context.progression, random);
+        context.painter.addChunkConnections(context.chunkData, context.chunkRecord, context.progression);
+        context.painter.addShoreline(context.chunkData);
+
+        context.houses = houses;
+        context.structuresReady = true;
+        setCachedBasis(generationBasisCache.structures, context.cacheKey, {
+            chunkData: context.chunkData,
+            houses
+        });
+        return context;
+    }
+
+    function runTravelStage(context) {
+        if (!context) {
+            return context;
+        }
+
+        if (context.travelReady) {
+            return context;
+        }
+
+        const cachedBasis = getCachedBasis(generationBasisCache.travel, context.cacheKey);
+
+        if (cachedBasis && Array.isArray(cachedBasis.chunkData) && Array.isArray(cachedBasis.travelZones)) {
+            context.chunkData = cachedBasis.chunkData;
+            context.houses = Array.isArray(cachedBasis.houses) ? cachedBasis.houses : [];
+            context.trailMeta = cachedBasis.trailMeta || null;
+            context.travelZones = cachedBasis.travelZones;
+            context.stageMaps = buildChunkGenerationMaps(context.chunkData);
+            context.topologyReady = true;
+            context.structuresReady = true;
+            context.travelReady = true;
+            return context;
+        }
+
+        runStructuresStage(context);
+
+        const random = createStageRandom(context.chunkX, context.chunkY, 2);
+        let stageMaps = buildChunkGenerationMaps(context.chunkData);
+        const trailMeta = applyTravelTerrainLayer(
+            context.chunkData,
+            context.houses,
+            context.chunkRecord,
+            context.progression,
+            random,
+            stageMaps
+        );
+
+        context.painter.ensureSpawnArea(context.chunkData, context.chunkX, context.chunkY);
+        applyCrossingIslandForcedBridgeBreaks(context.chunkData, context.chunkRecord, context.progression);
+        stageMaps = buildChunkGenerationMaps(context.chunkData);
+
+        const travelZones = context.painter.buildTravelZoneGrid();
+        applyTravelZoneLayer(
+            context.chunkData,
+            travelZones,
+            context.houses,
+            context.chunkRecord,
+            context.progression,
+            random,
+            stageMaps
+        );
+
+        context.trailMeta = trailMeta;
+        context.travelZones = travelZones;
+        context.stageMaps = stageMaps;
+        context.travelReady = true;
+
+        setCachedBasis(generationBasisCache.travel, context.cacheKey, {
+            chunkData: context.chunkData,
+            houses: context.houses,
+            trailMeta,
+            travelZones
+        });
+        return context;
+    }
+
+    function buildInteractionSet(context, detailLevel = 'base') {
+        runTravelStage(context);
+
+        return game.systems.interactions.createChunkInteractions(
+            context.chunkX,
+            context.chunkY,
+            context.chunkData,
+            context.houses,
+            createStageRandom(context.chunkX, context.chunkY, 3),
+            {
+                progression: context.progression,
+                chunkRecord: context.chunkRecord,
+                trailMeta: context.trailMeta,
+                travelZones: context.travelZones,
+                interactionMode: normalizeGenerationDetail(detailLevel) === 'full' ? 'full' : 'base'
+            }
+        );
+    }
+
+    function runInteractionStage(context, detailLevel = 'base') {
+        if (!context) {
+            return context;
+        }
+
+        context.interactions = buildInteractionSet(context, detailLevel);
+        return context;
+    }
+
+    function applyChunkBridgeState(context) {
+        if (!context || !context.chunkRecord) {
+            return context;
+        }
+
+        context.expedition.applyCollapsedBridges(context.chunkData, context.travelZones, context.chunkX, context.chunkY);
+        context.expedition.applyPlacedBridges(context.chunkData, context.chunkX, context.chunkY);
+        context.expedition.applyWeakenedBridges(context.chunkData, context.travelZones, context.chunkX, context.chunkY);
+        return context;
+    }
+
+    function buildChunkRecordFromContext(context, detailLevel = 'base') {
+        return {
+            x: context.chunkX,
+            y: context.chunkY,
+            data: context.chunkData,
+            travelZones: context.travelZones,
+            houses: context.houses,
+            houseTileMap: buildHouseTileMap(context.houses),
+            interactions: context.interactions,
+            interactionTileMap: buildInteractionTileMap(context.interactions),
+            trailMeta: context.trailMeta,
+            progression: context.progression,
+            renderCache: null,
+            entityVersion: 0,
+            generationStage: 'finalized',
+            generationDetail: normalizeGenerationDetail(detailLevel),
+            pendingGenerationDetail: null
+        };
+    }
+
+    function runFinalizationStage(context, detailLevel = 'base') {
+        applyChunkBridgeState(context);
+        return buildChunkRecordFromContext(context, detailLevel);
+    }
+
+    function invalidateChunkPathfindingAndRender(chunk, options = {}) {
+        if (!chunk) {
+            return;
+        }
+
+        const chunkRenderer = game.systems.chunkRenderer || null;
+        if (options.entitiesOnly) {
+            chunk.entityVersion = Number(chunk.entityVersion || 0) + 1;
+        } else {
+            if (chunkRenderer && typeof chunkRenderer.invalidateChunkRenderCache === 'function') {
+                chunkRenderer.invalidateChunkRenderCache(chunk, {
+                    reset: true,
+                    reason: options.reason || 'chunkGenerator'
+                });
+            } else {
+                chunk.renderCache = null;
+            }
+        }
+
+        const pathfinding = game.systems.pathfinding || null;
+        if (pathfinding && typeof pathfinding.invalidateCaches === 'function') {
+            pathfinding.invalidateCaches();
+        }
+
+        const render = game.systems.render || null;
+        if (render && typeof render.markSceneLayersDirty === 'function') {
+            render.markSceneLayersDirty(
+                options.entitiesOnly
+                    ? { entities: true, overlay: true }
+                    : { world: true, entities: true, overlay: true }
+            );
+        }
+    }
+
+    function completeDeferredChunkGeneration(chunk) {
+        if (!chunk) {
+            return null;
+        }
+
+        if (getGenerationDetailRank(chunk.generationDetail || 'base') >= getGenerationDetailRank('full')) {
+            chunk.pendingGenerationDetail = null;
+            return chunk;
+        }
+
+        const expedition = game.systems.expedition;
+        const chunkRecord = expedition.getIslandChunkRecord(chunk.x, chunk.y);
+
+        if (!chunkRecord) {
+            chunk.generationDetail = 'full';
+            chunk.pendingGenerationDetail = null;
+            return chunk;
+        }
+
+        const context = buildGenerationContext(chunk.x, chunk.y, chunkRecord);
+        context.chunkData = chunk.data;
+        context.houses = Array.isArray(chunk.houses) ? chunk.houses : [];
+        context.trailMeta = chunk.trailMeta || null;
+        context.travelZones = Array.isArray(chunk.travelZones) ? chunk.travelZones : context.painter.buildTravelZoneGrid();
+        context.topologyReady = true;
+        context.structuresReady = true;
+        context.travelReady = true;
+
+        runInteractionStage(context, 'full');
+
+        chunk.interactions = context.interactions;
+        chunk.interactionTileMap = buildInteractionTileMap(context.interactions);
+        chunk.generationDetail = 'full';
+        chunk.pendingGenerationDetail = null;
+        invalidateChunkPathfindingAndRender(chunk, { entitiesOnly: true });
+        return chunk;
+    }
+
+    function queueChunkGeneration(chunkX, chunkY, options = {}) {
+        const detailLevel = normalizeGenerationDetail(options.detailLevel || 'full');
+        const priority = normalizeGenerationPriority(options.priority);
+        const taskKey = getQueuedGenerationKey(chunkX, chunkY);
+        const existingChunk = game.systems.world.getChunk(chunkX, chunkY, { generateIfMissing: false });
+
+        if (existingChunk && getGenerationDetailRank(existingChunk.generationDetail || 'base') >= getGenerationDetailRank(detailLevel)) {
+            existingChunk.pendingGenerationDetail = null;
+            return existingChunk;
+        }
+
+        if (existingChunk) {
+            existingChunk.pendingGenerationDetail = mergeGenerationDetails(existingChunk.pendingGenerationDetail || 'base', detailLevel);
+        }
+
+        const existingTask = queuedGenerationTasks.get(taskKey);
+
+        if (existingTask) {
+            existingTask.detailLevel = mergeGenerationDetails(existingTask.detailLevel, detailLevel);
+            existingTask.priority = Math.max(existingTask.priority, priority);
+            scheduleGenerationQueueFlush();
+            return existingChunk;
+        }
+
+        const task = {
+            key: taskKey,
+            chunkX,
+            chunkY,
+            detailLevel,
+            priority,
+            sequence: nextGenerationTaskId++
+        };
+
+        generationQueue.push(task);
+        queuedGenerationTasks.set(taskKey, task);
+        scheduleGenerationQueueFlush();
+        return existingChunk;
+    }
+
+    function prewarmChunks(chunkCoordinates = [], options = {}) {
+        const uniqueKeys = new Set();
+
+        chunkCoordinates.forEach((entry) => {
+            if (!entry || !Number.isFinite(entry.chunkX) || !Number.isFinite(entry.chunkY)) {
+                return;
+            }
+
+            const taskKey = getQueuedGenerationKey(entry.chunkX, entry.chunkY);
+            if (uniqueKeys.has(taskKey)) {
+                return;
+            }
+
+            uniqueKeys.add(taskKey);
+            queueChunkGeneration(entry.chunkX, entry.chunkY, options);
+        });
+    }
+
+    function ensureChunkGenerationLevel(chunk, options = {}) {
+        const detailLevel = normalizeGenerationDetail(options.detailLevel || 'full');
+
+        if (!chunk || getGenerationDetailRank(chunk.generationDetail || 'base') >= getGenerationDetailRank(detailLevel)) {
+            if (chunk) {
+                chunk.pendingGenerationDetail = null;
+            }
+
+            return chunk;
+        }
+
+        if (detailLevel !== 'full') {
+            return chunk;
+        }
+
+        if (options.immediate === false) {
+            queueChunkGeneration(chunk.x, chunk.y, {
+                detailLevel,
+                priority: options.priority
+            });
+            return chunk;
+        }
+
+        return completeDeferredChunkGeneration(chunk);
+    }
+
+    function flushGenerationQueue() {
+        generationQueueRequestId = null;
+
+        if (!generationQueue.length) {
+            return;
+        }
+
+        generationQueue.sort((left, right) => right.priority - left.priority || left.sequence - right.sequence);
+        let processedCount = 0;
+        let shouldRenderAfterFlush = false;
+
+        while (generationQueue.length > 0 && processedCount < MAX_HEAVY_CHUNKS_PER_TICK) {
+            const task = generationQueue.shift();
+            queuedGenerationTasks.delete(task.key);
+
+            try {
+                generateChunk(task.chunkX, task.chunkY, {
+                    detailLevel: task.detailLevel,
+                    immediate: true,
+                    queueDeferred: false
+                });
+            } catch (error) {
+                console.error('Failed to prewarm chunk generation', error);
+            }
+
+            const playerChunk = game.systems.world.getChunkCoordinatesForWorld(
+                game.state.playerPos.x,
+                game.state.playerPos.y
+            );
+            if (
+                Math.abs(task.chunkX - playerChunk.chunkX) <= game.config.viewDistance + 1
+                && Math.abs(task.chunkY - playerChunk.chunkY) <= game.config.viewDistance + 1
+            ) {
+                shouldRenderAfterFlush = true;
+            }
+
+            processedCount += 1;
+        }
+
+        if (processedCount > 0 && shouldRenderAfterFlush) {
+            const render = game.systems.render || null;
+            if (render && typeof render.render === 'function') {
+                render.render();
+            }
+        }
+
+        if (generationQueue.length > 0) {
+            scheduleGenerationQueueFlush();
+        }
+    }
+
     function createOceanChunk(chunkX, chunkY) {
         const painter = getPainter();
 
@@ -841,81 +1569,69 @@
             interactionTileMap: new Map(),
             trailMeta: null,
             progression: null,
-            renderCache: null
+            renderCache: null,
+            entityVersion: 0,
+            generationStage: 'finalized',
+            generationDetail: 'full',
+            pendingGenerationDetail: null
         });
     }
 
-    function generateChunk(chunkX, chunkY) {
-        const painter = getPainter();
-        const world = game.systems.world;
-        const existingChunk = world.getChunk(chunkX, chunkY, { generateIfMissing: false });
+    function generateChunk(chunkX, chunkY, options = {}) {
+        const perf = game.systems.perf || null;
+        const generate = () => {
+            const world = game.systems.world;
+            const detailLevel = normalizeGenerationDetail(options.detailLevel || 'full');
+            const existingChunk = world.getChunk(chunkX, chunkY, { generateIfMissing: false });
 
-        if (existingChunk) {
-            return existingChunk;
-        }
-
-        const expedition = game.systems.expedition;
-        const chunkRecord = expedition.getIslandChunkRecord(chunkX, chunkY);
-
-        if (!chunkRecord) {
-            return createOceanChunk(chunkX, chunkY);
-        }
-
-        const islandRecord = expedition.getIslandRecord(chunkRecord.islandIndex);
-        const progression = islandRecord ? islandRecord.progression : null;
-        const random = game.systems.utils.createSeededRandom(chunkX, chunkY);
-        const chunkData = painter.buildChunkGrid('water');
-
-        painter.paintIslandBody(chunkData, chunkRecord, progression, random);
-        painter.addChunkConnections(chunkData, chunkRecord, progression);
-        painter.carveTopologyFeatures(chunkData, chunkRecord, progression, random);
-        painter.addChunkConnections(chunkData, chunkRecord, progression);
-        painter.ensureSpawnArea(chunkData, chunkX, chunkY);
-
-        const houses = game.systems.houses.createChunkHouses(chunkX, chunkY, chunkData, random, progression, chunkRecord);
-        houses.forEach((house, houseIndex) => {
-            expedition.assignHouseProfile(house, progression, chunkRecord, houseIndex);
-        });
-
-        painter.addRandomRocks(chunkData, houses, progression, random);
-        painter.addChunkConnections(chunkData, chunkRecord, progression);
-        painter.addShoreline(chunkData);
-        const trailMeta = applyTravelTerrainLayer(chunkData, houses, chunkRecord, progression, random);
-        painter.ensureSpawnArea(chunkData, chunkX, chunkY);
-        const travelZones = painter.buildTravelZoneGrid();
-        applyTravelZoneLayer(chunkData, travelZones, houses, chunkRecord, progression, random);
-        const interactions = game.systems.interactions.createChunkInteractions(
-            chunkX,
-            chunkY,
-            chunkData,
-            houses,
-            random,
-            {
-                progression,
-                chunkRecord,
-                trailMeta,
-                travelZones
+            if (existingChunk) {
+                return ensureChunkGenerationLevel(existingChunk, {
+                    detailLevel,
+                    immediate: options.immediate,
+                    priority: options.priority
+                });
             }
-        );
-        expedition.applyCollapsedBridges(chunkData, travelZones, chunkX, chunkY);
-        expedition.applyPlacedBridges(chunkData, chunkX, chunkY);
-        expedition.applyWeakenedBridges(chunkData, travelZones, chunkX, chunkY);
 
-        const chunk = {
-            x: chunkX,
-            y: chunkY,
-            data: chunkData,
-            travelZones,
-            houses,
-            houseTileMap: buildHouseTileMap(houses),
-            interactions,
-            interactionTileMap: buildInteractionTileMap(interactions),
-            trailMeta,
-            progression,
-            renderCache: null
+            const expedition = game.systems.expedition;
+            const chunkRecord = expedition.getIslandChunkRecord(chunkX, chunkY);
+
+            if (!chunkRecord) {
+                return createOceanChunk(chunkX, chunkY);
+            }
+
+            const context = buildGenerationContext(chunkX, chunkY, chunkRecord);
+            runTopologyStage(context);
+            runStructuresStage(context);
+            runTravelStage(context);
+            runInteractionStage(context, 'base');
+
+            const chunk = world.storeChunk(runFinalizationStage(context, 'base'));
+
+            if (detailLevel === 'full') {
+                return options.immediate === false
+                    ? ensureChunkGenerationLevel(chunk, {
+                        detailLevel,
+                        immediate: false,
+                        priority: options.priority
+                    })
+                    : completeDeferredChunkGeneration(chunk);
+            }
+
+            if (options.queueDeferred !== false) {
+                queueChunkGeneration(chunkX, chunkY, {
+                    detailLevel: 'full',
+                    priority: options.priority || 'low'
+                });
+            }
+
+            return chunk;
         };
 
-        return world.storeChunk(chunk);
+        if (perf && typeof perf.measure === 'function') {
+            return perf.measure('generateChunk', generate);
+        }
+
+        return generate();
     }
 
     Object.assign(chunkGenerator, {
@@ -929,11 +1645,25 @@
         paintTravelTile,
         paintTravelTrailLine,
         getTravelConnectionTargets,
+        getCrossingIslandBreakSites,
+        applyCrossingIslandForcedBridgeBreaks,
         paintTravelTrailNetwork,
         applyTravelTerrainLayer,
         applyTravelZoneLayer,
         buildHouseTileMap,
         buildInteractionTileMap,
+        buildGenerationContext,
+        runTopologyStage,
+        runStructuresStage,
+        runTravelStage,
+        runInteractionStage,
+        runFinalizationStage,
+        ensureChunkGenerationLevel,
+        completeDeferredChunkGeneration,
+        queueChunkGeneration,
+        prewarmChunks,
+        flushGenerationQueue,
+        resetGenerationRuntime,
         createOceanChunk,
         generateChunk
     });

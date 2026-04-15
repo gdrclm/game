@@ -7,7 +7,18 @@
         const roundedX = Math.round(x);
         const roundedY = Math.round(y);
         const { chunkX, chunkY } = chunkStore.getChunkCoordinatesForWorld(roundedX, roundedY);
-        const chunk = chunkStore.getChunk(chunkX, chunkY, { generateIfMissing });
+        const chunkOptions = {
+            generateIfMissing,
+            immediate: options.immediate
+        };
+
+        if (options.detailLevel) {
+            chunkOptions.detailLevel = options.detailLevel;
+        } else if (generateIfMissing) {
+            chunkOptions.detailLevel = 'base';
+        }
+
+        const chunk = chunkStore.getChunk(chunkX, chunkY, chunkOptions);
 
         if (!chunk) {
             return {

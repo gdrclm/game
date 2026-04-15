@@ -309,6 +309,10 @@
     function normalizeGeneratedCraftingOutputDefinition(definition = {}) {
         const id = typeof definition.id === 'string' ? definition.id.trim() : '';
         const inventoryItem = normalizeComponentInventoryItem(definition);
+        const merchantInterest = normalizeMerchantInterest(
+            definition.merchantInterest
+            || (inventoryItem && inventoryItem.extra ? inventoryItem.extra.merchantInterest : [])
+        );
         const bulk = normalizeBulkValue(
             definition.bulk,
             inventoryItem && inventoryItem.extra ? inventoryItem.extra.bulk : 0
@@ -330,12 +334,14 @@
             tags: [...new Set((Array.isArray(definition.tags) ? definition.tags : [])
                 .map((tag) => normalizeLookupValue(tag))
                 .filter(Boolean))],
+            merchantInterest,
             bulk,
             inventoryItem: {
                 ...inventoryItem,
                 id: inventoryItem.id || id,
                 extra: {
                     ...(inventoryItem.extra && typeof inventoryItem.extra === 'object' ? inventoryItem.extra : {}),
+                    merchantInterest: cloneValue(merchantInterest),
                     bulk
                 }
             }
@@ -1021,7 +1027,7 @@
                     stackable: true,
                     chestWeight: 0,
                     merchantWeight: 0,
-                    baseValue: 15,
+                    baseValue: 12,
                     description: 'Плотный лагерный паёк с водой и горячей обработкой. Хорошо держит темп длинного маршрута.',
                     consumable: { hunger: 100, energy: 40, focus: 8 }
                 }
@@ -1042,7 +1048,7 @@
                     stackable: true,
                     chestWeight: 0,
                     merchantWeight: 0,
-                    baseValue: 18,
+                    baseValue: 12,
                     description: 'Густой лагерный бульон для тяжёлых отрезков. Сильно поддерживает восстановление.',
                     consumable: { hunger: 100, energy: 45, focus: 15, cold: 16 }
                 }
@@ -1063,7 +1069,7 @@
                     stackable: true,
                     chestWeight: 0,
                     merchantWeight: 0,
-                    baseValue: 12,
+                    baseValue: 11,
                     description: 'Простой лагерный бульон из рыбы и кипячёной воды. Быстро закрывает аварийный голод на маршруте.',
                     consumable: { hunger: 80, energy: 22, focus: 5, cold: 8 }
                 }
@@ -1084,7 +1090,7 @@
                     stackable: true,
                     chestWeight: 0,
                     merchantWeight: 0,
-                    baseValue: 11,
+                    baseValue: 10,
                     description: 'Засоленный походный улов. Восстанавливает меньше, чем горячая еда, но спасает слот от порчи сырой рыбы.',
                     consumable: { hunger: 65, energy: 12, focus: 4 }
                 }
@@ -1105,7 +1111,7 @@
                     stackable: true,
                     chestWeight: 0,
                     merchantWeight: 0,
-                    baseValue: 18,
+                    baseValue: 12,
                     description: 'Даёт всплеск темпа и удешевляет тяжёлое движение на несколько шагов.',
                     consumable: { energy: 18, focus: 12 },
                     activeEffect: { kind: 'travelBuff', discountMultiplier: 0.7, durationSteps: 8 }
@@ -1119,6 +1125,7 @@
             bulk: 7,
             sourceRecipeIds: ['portable-bridge'],
             tags: ['crafted', 'tool', 'movement', 'bridge'],
+            merchantInterest: ['bridgewright', 'quartermaster', 'junkDealer'],
             inventoryItem: {
                 id: 'bridge_kit',
                 icon: 'BK',
@@ -1126,8 +1133,9 @@
                 categories: 'tool utility movement',
                 extra: {
                     chestWeight: 0,
-                    merchantWeight: 0,
-                    baseValue: 18,
+                    merchantWeight: 4,
+                    merchantQuestWeight: 2,
+                    baseValue: 14,
                     description: 'Грубый мостовой комплект. Его можно использовать сразу или собрать из него более компактный переносной мост.',
                     bridgeFamily: 'portable',
                     bridgeUpgradeStage: 0,
@@ -1144,6 +1152,7 @@
             bulk: 6,
             sourceRecipeIds: ['portable-bridge-assembly'],
             tags: ['crafted', 'tool', 'movement', 'bridge', 'route'],
+            merchantInterest: ['bridgewright', 'quartermaster', 'collector'],
             inventoryItem: {
                 id: 'portableBridge',
                 icon: 'PM',
@@ -1152,7 +1161,8 @@
                 extra: {
                     chestWeight: 5,
                     merchantWeight: 6,
-                    baseValue: 18,
+                    merchantQuestWeight: 2,
+                    baseValue: 15,
                     description: 'Готовая переносная переправа. Более удобная и компактная форма мост-комплекта.',
                     bridgeFamily: 'portable',
                     bridgeUpgradeStage: 1,
@@ -1169,6 +1179,7 @@
             bulk: 7,
             sourceRecipeIds: ['reinforced-bridge-upgrade'],
             tags: ['crafted', 'tool', 'movement', 'bridge', 'route', 'advanced'],
+            merchantInterest: ['bridgewright', 'collector'],
             inventoryItem: {
                 id: 'reinforcedBridge',
                 icon: 'UM',
@@ -1177,7 +1188,8 @@
                 extra: {
                     chestWeight: 4,
                     merchantWeight: 5,
-                    baseValue: 24,
+                    merchantQuestWeight: 2,
+                    baseValue: 16,
                     description: 'Усиленная версия переносного моста. Даёт две клетки переправы и держит поздние маршруты увереннее.',
                     bridgeFamily: 'portable',
                     bridgeUpgradeStage: 2,
@@ -1194,6 +1206,7 @@
             bulk: 5,
             sourceRecipeIds: ['field-bridge-upgrade'],
             tags: ['crafted', 'tool', 'movement', 'bridge', 'route', 'advanced'],
+            merchantInterest: ['bridgewright', 'collector'],
             inventoryItem: {
                 id: 'fieldBridge',
                 icon: 'PB',
@@ -1202,7 +1215,8 @@
                 extra: {
                     chestWeight: 2,
                     merchantWeight: 3,
-                    baseValue: 30,
+                    merchantQuestWeight: 2,
+                    baseValue: 16,
                     description: 'Облегчённый маршрутный апгрейд моста. Даёт две клетки переправы, но носится чуть легче тяжёлых вариантов.',
                     bridgeFamily: 'portable',
                     bridgeUpgradeStage: 3,
@@ -1219,6 +1233,7 @@
             bulk: 8,
             sourceRecipeIds: ['absolute-bridge-upgrade'],
             tags: ['crafted', 'tool', 'movement', 'bridge', 'route', 'advanced', 'legendary'],
+            merchantInterest: ['bridgewright', 'collector'],
             inventoryItem: {
                 id: 'absoluteBridge',
                 icon: 'AM',
@@ -1226,8 +1241,9 @@
                 categories: 'legendary tool movement bridge',
                 extra: {
                     chestWeight: 1,
-                    merchantWeight: 0,
-                    baseValue: 70,
+                    merchantWeight: 2,
+                    merchantQuestWeight: 1,
+                    baseValue: 34,
                     rarity: 'legendary',
                     description: 'Крайняя сборка мостовой ветки. Даёт мощную длинную переправу для финальной логистики.',
                     bridgeFamily: 'portable',
@@ -1245,6 +1261,7 @@
             bulk: 4,
             sourceRecipeIds: ['bridge-repair-kit'],
             tags: ['crafted', 'tool', 'repair', 'bridge', 'utility'],
+            merchantInterest: ['bridgewright', 'quartermaster', 'junkDealer'],
             inventoryItem: {
                 id: 'repair_kit_bridge',
                 icon: 'RM',
@@ -1252,8 +1269,9 @@
                 categories: 'tool utility repair bridge',
                 extra: {
                     chestWeight: 0,
-                    merchantWeight: 0,
-                    baseValue: 17,
+                    merchantWeight: 4,
+                    merchantQuestWeight: 3,
+                    baseValue: 12,
                     description: 'Утилитарный комплект для ремонта повреждённых мостов и переправ.',
                     activeEffect: { kind: 'repairStructure', structureKind: 'bridge' }
                 }
@@ -1266,6 +1284,7 @@
             bulk: 7,
             sourceRecipeIds: ['boat'],
             tags: ['crafted', 'tool', 'movement', 'boat', 'water'],
+            merchantInterest: ['fisherman', 'quartermaster', 'collector'],
             inventoryItem: {
                 id: 'boat_ready',
                 icon: 'BL',
@@ -1273,9 +1292,17 @@
                 categories: 'tool utility movement water',
                 extra: {
                     chestWeight: 0,
-                    merchantWeight: 0,
-                    baseValue: 26,
-                    description: 'Собранная лодка для водной фазы и богатых маршрутов.'
+                    merchantWeight: 3,
+                    merchantQuestWeight: 1,
+                    baseValue: 22,
+                    description: 'Собранная лодка для водной фазы и богатых маршрутов.',
+                    boatFamily: 'expedition',
+                    boatUpgradeStage: 1,
+                    boatMaxDurability: 3,
+                    waterTravelMultiplier: 1.34,
+                    waterRouteBand: 'hazard',
+                    waterTraversalLabel: 'вода на лодке',
+                    activeEffect: { kind: 'boatTraversal' }
                 }
             }
         },
@@ -1286,6 +1313,7 @@
             bulk: 4,
             sourceRecipeIds: ['boat-repair-kit'],
             tags: ['crafted', 'tool', 'repair', 'boat', 'water', 'utility'],
+            merchantInterest: ['fisherman', 'quartermaster', 'collector'],
             inventoryItem: {
                 id: 'repair_kit_boat',
                 icon: 'RL',
@@ -1293,8 +1321,9 @@
                 categories: 'tool utility repair water',
                 extra: {
                     chestWeight: 0,
-                    merchantWeight: 0,
-                    baseValue: 19,
+                    merchantWeight: 4,
+                    merchantQuestWeight: 3,
+                    baseValue: 13,
                     description: 'Утилитарный набор для поддержания лодки в рабочем состоянии.',
                     activeEffect: { kind: 'repairStructure', structureKind: 'boat' }
                 }
@@ -1306,7 +1335,8 @@
             aliases: ['Trade Papers', 'tradePapers'],
             bulk: 1,
             sourceRecipeIds: ['wood-plank-to-trade-papers'],
-            tags: ['crafted', 'value', 'trade', 'economy'],
+            tags: ['crafted', 'value', 'trade', 'economy', 'merchant'],
+            merchantInterest: ['merchant', 'exchanger', 'collector', 'quartermaster'],
             inventoryItem: {
                 id: 'trade_papers',
                 icon: 'TP',
@@ -1315,8 +1345,8 @@
                 extra: {
                     stackable: true,
                     chestWeight: 0,
-                    merchantWeight: 0,
-                    merchantQuestWeight: 2,
+                    merchantWeight: 6,
+                    merchantQuestWeight: 4,
                     baseValue: 9,
                     description: 'Дешёвая торговая ценность от писаря. Хороша для продажи и мелких обменов, но не заменяет редкий лут.'
                 }
@@ -1328,7 +1358,8 @@
             aliases: ['Market Seal', 'marketSeal'],
             bulk: 1,
             sourceRecipeIds: ['stone-block-to-market-seal'],
-            tags: ['crafted', 'value', 'trade', 'economy'],
+            tags: ['crafted', 'value', 'trade', 'economy', 'merchant'],
+            merchantInterest: ['merchant', 'exchanger', 'collector'],
             inventoryItem: {
                 id: 'market_seal',
                 icon: 'RP',
@@ -1337,8 +1368,8 @@
                 extra: {
                     stackable: true,
                     chestWeight: 0,
-                    merchantWeight: 0,
-                    merchantQuestWeight: 2,
+                    merchantWeight: 6,
+                    merchantQuestWeight: 4,
                     baseValue: 10,
                     description: 'Недорогая ценность из каменного пакета. Удобно нести к торговцу, если сбор уже пережал маршрут.'
                 }
@@ -1358,7 +1389,7 @@
                 extra: {
                     chestWeight: 2,
                     merchantWeight: 4,
-                    baseValue: 14,
+                    baseValue: 12,
                     description: 'Собранный маршрутный мел. Даёт подсказку по самому дешёвому пути.',
                     activeEffect: { kind: 'cheapestRouteHint' }
                 }
@@ -1379,7 +1410,7 @@
                     stackable: true,
                     chestWeight: 3,
                     merchantWeight: 4,
-                    baseValue: 17,
+                    baseValue: 13,
                     description: 'Собранный маршрутный маркер. Показывает самый дешёвый путь к выбранной цели.',
                     activeEffect: { kind: 'cheapestRouteHint' }
                 }
@@ -1399,7 +1430,7 @@
                 extra: {
                     chestWeight: 2,
                     merchantWeight: 3,
-                    baseValue: 30,
+                    baseValue: 18,
                     description: 'Собранная защитная печать. Один раз спасает от штрафа пустого или опасного дома.',
                     activeEffect: { kind: 'trapWard', charges: 1 }
                 }
@@ -1419,7 +1450,7 @@
                 extra: {
                     chestWeight: 3,
                     merchantWeight: 4,
-                    baseValue: 24,
+                    baseValue: 18,
                     description: 'Масляный фонарь на рыбьем жире. Открывает карту вокруг героя на текущем острове.',
                     activeEffect: { kind: 'revealMap', mode: 'currentViewBoost' }
                 }
@@ -1439,9 +1470,162 @@
                 extra: {
                     chestWeight: 2,
                     merchantWeight: 4,
-                    baseValue: 22,
+                    baseValue: 16,
                     description: 'Сигнальный маяк на рыбьем жире. Показывает координаты торговца текущего острова.',
                     activeEffect: { kind: 'revealMerchant' }
+                }
+            }
+        },
+        {
+            id: 'relicCase',
+            label: 'Футляр реликвий',
+            bulk: 2,
+            sourceRecipeIds: ['relic-case'],
+            tags: ['crafted', 'artifact', 'info', 'trade'],
+            merchantInterest: ['collector', 'merchant', 'exchanger'],
+            inventoryItem: {
+                id: 'relicCase',
+                icon: 'FR',
+                lootTier: 5,
+                categories: 'artifact utility info value',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 2,
+                    merchantQuestWeight: 2,
+                    baseValue: 30,
+                    description: 'Коллекционерский футляр для позднего отрезка. Помогает заранее видеть дорогие точки острова и выгоднее выводить ценности.',
+                    passive: {
+                        showHouseValue: true,
+                        merchantSellMultiplier: 1.16,
+                        chestLuck: 1
+                    }
+                }
+            }
+        },
+        {
+            id: 'toolHolster',
+            label: 'Кобура инструмента',
+            bulk: 2,
+            sourceRecipeIds: ['tool-holster'],
+            tags: ['crafted', 'artifact', 'route', 'utility'],
+            merchantInterest: ['quartermaster', 'collector', 'bridgewright'],
+            inventoryItem: {
+                id: 'toolHolster',
+                icon: 'KI',
+                lootTier: 5,
+                categories: 'artifact utility movement',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 2,
+                    merchantQuestWeight: 2,
+                    baseValue: 28,
+                    description: 'Поздняя ремесленная оснастка для маршрута. Делает старт движения мягче и удобнее для длинных связок с инструментами.',
+                    passive: {
+                        freeOpeningSteps: 1,
+                        routeLengthBonus: 1,
+                        bridgeTravelCostMultiplier: 0.8
+                    }
+                }
+            }
+        },
+        {
+            id: 'anchorLine',
+            label: 'Якорная линия',
+            bulk: 2,
+            sourceRecipeIds: ['anchor-line'],
+            tags: ['crafted', 'tool', 'movement', 'water', 'route'],
+            merchantInterest: ['quartermaster', 'fisherman', 'collector'],
+            inventoryItem: {
+                id: 'anchorLine',
+                icon: 'AL',
+                lootTier: 5,
+                categories: 'tool utility movement water',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 2,
+                    merchantQuestWeight: 1,
+                    baseValue: 26,
+                    description: 'Поздняя страховка маршрута. Один раз уводит к безопасной точке острова, если забег начинает ломаться.',
+                    activeEffect: { kind: 'teleportToSafe' }
+                }
+            }
+        },
+        {
+            id: 'islandDrill',
+            label: 'Островная дрель',
+            bulk: 4,
+            sourceRecipeIds: ['island-drill'],
+            tags: ['crafted', 'tool', 'route', 'heavy'],
+            merchantInterest: ['bridgewright', 'quartermaster', 'junkDealer'],
+            inventoryItem: {
+                id: 'islandDrill',
+                icon: 'OD',
+                lootTier: 5,
+                categories: 'tool utility movement',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 2,
+                    merchantQuestWeight: 1,
+                    baseValue: 30,
+                    description: 'Тяжёлый маршрутный инструмент эндгейма. Сбрасывает часть местного дорожного давления, когда карта уже слишком дорогая.',
+                    activeEffect: { kind: 'clearTravelPenalty' }
+                }
+            }
+        },
+        {
+            id: 'blackCup',
+            label: 'Чёрный кубок',
+            bulk: 1,
+            sourceRecipeIds: ['black-cup'],
+            tags: ['crafted', 'ritual', 'survival', 'risk'],
+            inventoryItem: {
+                id: 'blackCup',
+                icon: 'BK',
+                lootTier: 5,
+                categories: 'consumable survival risk',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 0,
+                    baseValue: 30,
+                    rarity: 'cursed',
+                    description: 'Ситуативный ритуальный напиток финальной подготовки. Даёт островной рывок и лучшее восстановление, но повышает общий drain до конца острова.',
+                    consumable: { hunger: 45, energy: 30, focus: 24, cold: 14 },
+                    activeEffect: {
+                        kind: 'islandBuff',
+                        label: 'Чёрный кубок',
+                        travelCostMultiplier: 0.88,
+                        recoveryMultiplier: 1.18,
+                        foodRecoveryMultiplier: 1.1,
+                        drainMultiplier: 1.12
+                    }
+                }
+            }
+        },
+        {
+            id: 'lastVow',
+            label: 'Последний обет',
+            bulk: 1,
+            sourceRecipeIds: ['last-vow'],
+            tags: ['crafted', 'ritual', 'movement', 'survival', 'risk'],
+            inventoryItem: {
+                id: 'lastVow',
+                icon: 'PO',
+                lootTier: 6,
+                categories: 'consumable survival movement risk',
+                extra: {
+                    chestWeight: 0,
+                    merchantWeight: 0,
+                    baseValue: 34,
+                    rarity: 'cursed',
+                    description: 'Финальный ритуал под проход, а не под greed. Даёт сильный короткий рывок и позволяет проскочить тяжёлые зоны.',
+                    consumable: { energy: 26, focus: 28, cold: 18 },
+                    activeEffect: {
+                        kind: 'travelBuff',
+                        freeSteps: 3,
+                        discountMultiplier: 0.45,
+                        durationSteps: 12,
+                        ignoreTravelZones: ['drainingLowland', 'badSector', 'dangerPass', 'cursedTrail']
+                    }
                 }
             }
         },
@@ -1458,7 +1642,7 @@
                 categories: 'resource material value',
                 extra: {
                     stackable: true,
-                    baseValue: 7,
+                    baseValue: 6,
                     merchantQuestWeight: 2,
                     description: 'Плотный земляной ресурс.'
                 }
@@ -1503,6 +1687,14 @@
             ...cloneValue(output.inventoryItem)
         }));
     const generatedCraftingOutputCatalogItemById = Object.fromEntries(generatedCraftingOutputCatalogItems.map((item) => [item.id, item]));
+    const generatedCraftingOutputByInventoryItemId = Object.fromEntries(generatedCraftingOutputCatalogItems.map((item) => [
+        item.id,
+        cloneValue(generatedCraftingOutputById[item.craftingOutputId])
+    ]));
+    const generatedCraftingOutputByInventoryItemLookupValue = Object.fromEntries(generatedCraftingOutputCatalogItems.map((item) => [
+        normalizeLookupValue(item.id),
+        cloneValue(generatedCraftingOutputById[item.craftingOutputId])
+    ]));
     const generatedCraftingCatalogItems = [
         ...componentCatalogItems,
         ...generatedCraftingOutputCatalogItems
@@ -1577,6 +1769,13 @@
         return Boolean(getCatalogCraftingOutputItemDefinition(itemId));
     }
 
+    function getGeneratedCraftingOutputDefinitionByInventoryItemId(itemId) {
+        const normalizedItemId = normalizeLookupValue(itemId);
+        return generatedCraftingOutputByInventoryItemId[itemId] || generatedCraftingOutputByInventoryItemLookupValue[normalizedItemId]
+            ? cloneValue(generatedCraftingOutputByInventoryItemId[itemId] || generatedCraftingOutputByInventoryItemLookupValue[normalizedItemId])
+            : null;
+    }
+
     function getComponentDefinitionByInventoryItemId(itemId) {
         const normalizedItemId = normalizeLookupValue(itemId);
         return componentByInventoryItemId[itemId] || componentByInventoryItemLookupValue[normalizedItemId]
@@ -1605,7 +1804,9 @@
                 qualityLevel: definition.componentId ? (componentById[definition.componentId] && componentById[definition.componentId].qualityLevel) || '' : '',
                 qualityLabel: definition.componentId ? (componentById[definition.componentId] && componentById[definition.componentId].qualityLabel) || '' : '',
                 craftingTags: definition.componentId ? cloneValue((componentById[definition.componentId] && componentById[definition.componentId].tags) || []) : [],
-                merchantInterest: definition.componentId ? cloneValue((componentById[definition.componentId] && componentById[definition.componentId].merchantInterest) || []) : [],
+                merchantInterest: definition.componentId
+                    ? cloneValue((componentById[definition.componentId] && componentById[definition.componentId].merchantInterest) || [])
+                    : cloneValue(definition.merchantInterest || []),
                 sourceRecipeIds: cloneValue(definition.sourceRecipeIds),
                 ...cloneValue(definition.extra)
             }
@@ -1620,10 +1821,32 @@
             .map((component) => cloneValue(component));
     }
 
+    function getCraftingOutputsByMerchantInterest(merchantRole) {
+        const normalizedMerchantRole = normalizeLookupValue(merchantRole);
+        return generatedCraftingOutputs
+            .filter((output) => Array.isArray(output.merchantInterest)
+                && output.merchantInterest.some((role) => normalizeLookupValue(role) === normalizedMerchantRole))
+            .map((output) => cloneValue(output));
+    }
+
+    function getMerchantInterestedInventoryItemIds(merchantRole) {
+        return [
+            ...getComponentsByMerchantInterest(merchantRole)
+                .map((component) => component && component.inventoryItem ? component.inventoryItem.id : ''),
+            ...getCraftingOutputsByMerchantInterest(merchantRole)
+                .map((output) => output && output.inventoryItem ? output.inventoryItem.id : '')
+        ].filter((itemId, index, collection) => itemId && collection.indexOf(itemId) === index);
+    }
+
     function getMerchantInterestForInventoryItemId(itemId) {
         const componentDefinition = getComponentDefinitionByInventoryItemId(itemId);
-        return componentDefinition && Array.isArray(componentDefinition.merchantInterest)
-            ? cloneValue(componentDefinition.merchantInterest)
+        if (componentDefinition && Array.isArray(componentDefinition.merchantInterest)) {
+            return cloneValue(componentDefinition.merchantInterest);
+        }
+
+        const outputDefinition = getGeneratedCraftingOutputDefinitionByInventoryItemId(itemId);
+        return outputDefinition && Array.isArray(outputDefinition.merchantInterest)
+            ? cloneValue(outputDefinition.merchantInterest)
             : [];
     }
 
@@ -1636,9 +1859,18 @@
         const componentDefinition = getComponentDefinition(itemIdOrComponentId)
             || getComponentDefinitionByInventoryItemId(itemIdOrComponentId);
 
-        return Boolean(componentDefinition
-            && Array.isArray(componentDefinition.merchantInterest)
-            && componentDefinition.merchantInterest.some((role) => normalizeLookupValue(role) === normalizedMerchantRole));
+        if (componentDefinition) {
+            return Boolean(componentDefinition
+                && Array.isArray(componentDefinition.merchantInterest)
+                && componentDefinition.merchantInterest.some((role) => normalizeLookupValue(role) === normalizedMerchantRole));
+        }
+
+        const outputDefinition = getGeneratedCraftingOutputDefinition(itemIdOrComponentId)
+            || getGeneratedCraftingOutputDefinitionByInventoryItemId(itemIdOrComponentId);
+
+        return Boolean(outputDefinition
+            && Array.isArray(outputDefinition.merchantInterest)
+            && outputDefinition.merchantInterest.some((role) => normalizeLookupValue(role) === normalizedMerchantRole));
     }
 
     Object.assign(componentRegistry, {
@@ -1655,8 +1887,11 @@
         getComponentDefinitionByInventoryItemId,
         getComponentDefinitions,
         getComponentsByMerchantInterest,
+        getCraftingOutputsByMerchantInterest,
         getComponentQualityLabel,
         getComponentsByCraftMethod,
+        getGeneratedCraftingOutputDefinitionByInventoryItemId,
+        getMerchantInterestedInventoryItemIds,
         getMerchantInterestForInventoryItemId,
         getComponentsBySourceResource,
         getComponentsByTag,

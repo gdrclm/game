@@ -69,6 +69,18 @@
 
     <canvas id="gameCanvas"></canvas>
     <div id="debugPanel"></div>
+    <aside id="stationPanel" hidden>
+        <p id="stationPanelKicker"></p>
+        <h2 id="stationPanelTitle"></h2>
+        <p id="stationPanelSummary"></p>
+        <p id="stationPanelMeta"></p>
+        <div id="stationPanelContent"></div>
+        <button id="stationPanelClose" type="button">×</button>
+    </aside>
+    <aside id="productionGoalsPanel">
+        <p id="productionGoalsSummary"></p>
+        <div id="productionGoalsList"></div>
+    </aside>
 
     <script>
         (() => {
@@ -125,6 +137,8 @@
     <script src="../js/crafting/station-runtime.js"></script>
     <script src="../js/crafting/container-registry.js"></script>
     <script src="../js/crafting/component-registry.js"></script>
+    <script src="../js/crafting/island-need-profile.js"></script>
+    <script src="../js/crafting/craft-balance-runtime.js"></script>
 	    <script src="../js/crafting/recipe-registry.js"></script>
 	    <script src="../js/crafting/crafting-runtime.js"></script>
 		    <script src="../js/inventory/item-catalog.js"></script>
@@ -134,14 +148,31 @@
 	    <script src="../js/economy/pricing.js"></script>
 	    <script src="../js/economy/reward-scaling.js"></script>
 	    <script src="../js/economy/shop-runtime.js"></script>
+	    <script src="../js/quests/bag-upgrade-data.js"></script>
+	    <script src="../js/quests/bag-upgrade-runtime.js"></script>
+	    <script src="../js/loot-system.js"></script>
+	    <script src="../js/expedition-system.js"></script>
+	    <script src="../js/expedition/expedition-shared.js"></script>
+	    <script src="../js/expedition/shape-builders.js"></script>
+	    <script src="../js/expedition/house-profiles.js"></script>
+	    <script src="../js/expedition/island-layout.js"></script>
+	    <script src="../js/expedition/progression.js"></script>
+	    <script src="../js/map/map-runtime.js"></script>
+	    <script src="../js/map/topology-painter.js"></script>
+	    <script src="../js/map/chunk-generator.js"></script>
 	    <script src="../js/movement.js"></script>
+	    <script src="../js/pathfinding.js"></script>
 	    <script src="../js/interactions/world-spawn-runtime.js"></script>
 	    <script src="../js/render/interaction-renderer.js"></script>
+	    <script src="../js/npc/npc-registry.js"></script>
 	    <script src="crafting-test-bootstrap.js"></script>
 	    <script src="../js/expedition/bridge-runtime.js"></script>
+	    <script src="../js/expedition/boat-runtime.js"></script>
 	    <script src="../js/inventory/item-effects.js"></script>
 	    <script src="../js/ui/action-ui.js"></script>
 	    <script src="../js/ui/inventory-ui.js"></script>
+	    <script src="../js/ui/station-ui.js"></script>
+	    <script src="../js/ui/status-ui.js"></script>
 	    <script src="crafting-tests.js"></script>
 	</body>
 	</html>

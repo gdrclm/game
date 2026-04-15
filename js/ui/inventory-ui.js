@@ -5,6 +5,7 @@
     const MOBILE_BREAKPOINT = 760;
     let panelEventsBound = false;
     let lastMobileSelectionSignature = null;
+    let lastInventoryRenderSignature = null;
 
     const ITEM_CATEGORY_LABELS = {
         consumable: 'расходник',
@@ -57,24 +58,15 @@
                 body.insertBefore(selectionPanel, inventoryGrid);
             }
 
-            if (!document.getElementById('inventorySelectionStationPanel')) {
-                const stationPanel = document.createElement('section');
-                stationPanel.id = 'inventorySelectionStationPanel';
-                stationPanel.className = 'inventory-selection-panel__station';
-                stationPanel.innerHTML = `
-                    <p class="inventory-selection-panel__station-kicker">Текущая станция</p>
-                    <div class="inventory-selection-panel__station-body">
-                        <p id="inventorySelectionStationTitle" class="inventory-selection-panel__station-title">Руки</p>
-                        <p id="inventorySelectionStationSummary" class="inventory-selection-panel__station-summary"></p>
-                    </div>
-                `;
-                const craftPanel = document.getElementById('inventorySelectionCraftPanel');
+            const legacyStationPanel = document.getElementById('inventorySelectionStationPanel');
+            const legacyCraftPanel = document.getElementById('inventorySelectionCraftPanel');
 
-                if (craftPanel && craftPanel.parentNode === selectionPanel) {
-                    selectionPanel.insertBefore(stationPanel, craftPanel);
-                } else {
-                    selectionPanel.appendChild(stationPanel);
-                }
+            if (legacyStationPanel) {
+                legacyStationPanel.remove();
+            }
+
+            if (legacyCraftPanel) {
+                legacyCraftPanel.remove();
             }
 
             return;
@@ -105,20 +97,6 @@
                     Выбросить
                 </button>
             </div>
-            <section id="inventorySelectionStationPanel" class="inventory-selection-panel__station">
-                <p class="inventory-selection-panel__station-kicker">Текущая станция</p>
-                <div class="inventory-selection-panel__station-body">
-                    <p id="inventorySelectionStationTitle" class="inventory-selection-panel__station-title">Руки</p>
-                    <p id="inventorySelectionStationSummary" class="inventory-selection-panel__station-summary"></p>
-                </div>
-            </section>
-            <section id="inventorySelectionCraftPanel" class="inventory-selection-panel__craft" hidden>
-                <div class="inventory-selection-panel__craft-header">
-                    <p id="inventorySelectionCraftLabel" class="inventory-selection-panel__craft-label">Рецепты по станциям</p>
-                    <p id="inventorySelectionCraftHint" class="inventory-selection-panel__craft-hint"></p>
-                </div>
-                <div id="inventorySelectionCraftActions" class="inventory-selection-panel__craft-actions"></div>
-            </section>
         `;
 
         body.insertBefore(selectionPanel, inventoryGrid);
@@ -217,13 +195,6 @@
             inventorySelectionActions: document.getElementById('inventorySelectionActions'),
             inventorySelectionUseButton: document.getElementById('inventorySelectionUseButton'),
             inventorySelectionDropButton: document.getElementById('inventorySelectionDropButton'),
-            inventorySelectionStationPanel: document.getElementById('inventorySelectionStationPanel'),
-            inventorySelectionStationTitle: document.getElementById('inventorySelectionStationTitle'),
-            inventorySelectionStationSummary: document.getElementById('inventorySelectionStationSummary'),
-            inventorySelectionCraftPanel: document.getElementById('inventorySelectionCraftPanel'),
-            inventorySelectionCraftLabel: document.getElementById('inventorySelectionCraftLabel'),
-            inventorySelectionCraftHint: document.getElementById('inventorySelectionCraftHint'),
-            inventorySelectionCraftActions: document.getElementById('inventorySelectionCraftActions'),
             inventoryDetailOverlay: document.getElementById('inventoryDetailOverlay'),
             inventoryDetailBackdrop: document.getElementById('inventoryDetailBackdrop'),
             inventoryDetailClose: document.getElementById('inventoryDetailClose'),
@@ -232,14 +203,7 @@
             inventoryDetailFacts: document.getElementById('inventoryDetailFacts'),
             inventoryDetailDescription: document.getElementById('inventoryDetailDescription'),
             inventoryDetailIcon: document.getElementById('inventoryDetailIcon'),
-            inventoryDetailQuantity: document.getElementById('inventoryDetailQuantity'),
-            inventoryDetailStationPanel: document.getElementById('inventoryDetailStationPanel'),
-            inventoryDetailStationTitle: document.getElementById('inventoryDetailStationTitle'),
-            inventoryDetailStationSummary: document.getElementById('inventoryDetailStationSummary'),
-            inventoryDetailCraftPanel: document.getElementById('inventoryDetailCraftPanel'),
-            inventoryDetailCraftLabel: document.getElementById('inventoryDetailCraftLabel'),
-            inventoryDetailCraftHint: document.getElementById('inventoryDetailCraftHint'),
-            inventoryDetailCraftActions: document.getElementById('inventoryDetailCraftActions')
+            inventoryDetailQuantity: document.getElementById('inventoryDetailQuantity')
         };
     }
 
@@ -256,10 +220,8 @@
             inventoryPanelToggle,
             inventorySelectionUseButton,
             inventorySelectionDropButton,
-            inventorySelectionCraftActions,
             inventoryDetailBackdrop,
-            inventoryDetailClose,
-            inventoryDetailCraftActions
+            inventoryDetailClose
         } = getPanelElements();
 
         if (inventoryPanelToggle) {
@@ -279,27 +241,6 @@
                 triggerInventoryAction('drop');
             });
         }
-
-        [inventorySelectionCraftActions, inventoryDetailCraftActions].forEach((craftActions) => {
-            if (!craftActions) {
-                return;
-            }
-
-            craftActions.addEventListener('click', (event) => {
-                const compressionButton = event.target.closest('[data-compression-recipe-id]');
-                if (compressionButton && !compressionButton.disabled) {
-                    triggerCompressionRecipe(compressionButton.getAttribute('data-compression-recipe-id'));
-                    return;
-                }
-
-                const craftingButton = event.target.closest('[data-crafting-recipe-id]');
-                if (!craftingButton || craftingButton.disabled) {
-                    return;
-                }
-
-                triggerCraftingRecipe(craftingButton.getAttribute('data-crafting-recipe-id'));
-            });
-        });
 
         [inventoryDetailBackdrop, inventoryDetailClose].forEach((button) => {
             if (!button) {
@@ -391,6 +332,10 @@
         return game.systems.craftingRuntime || null;
     }
 
+    function getRecipeRegistry() {
+        return game.systems.recipeRegistry || null;
+    }
+
     function getContainerRegistry() {
         return game.systems.containerRegistry || null;
     }
@@ -401,6 +346,10 @@
 
     function getComponentRegistry() {
         return game.systems.componentRegistry || null;
+    }
+
+    function getBagUpgradeData() {
+        return game.systems.bagUpgradeData || null;
     }
 
     function syncInventoryPanelState() {
@@ -586,6 +535,12 @@
                     : `еда слабее на ${formatPercentDelta(effect.foodRecoveryMultiplier)}%`);
             }
 
+            if (Number.isFinite(effect.recoveryMultiplier) && effect.recoveryMultiplier !== 1) {
+                parts.push(effect.recoveryMultiplier > 1
+                    ? `восстановление сильнее на ${Math.round((effect.recoveryMultiplier - 1) * 100)}%`
+                    : `восстановление слабее на ${formatPercentDelta(effect.recoveryMultiplier)}%`);
+            }
+
             if (Number.isFinite(effect.travelCostMultiplier) && effect.travelCostMultiplier !== 1) {
                 parts.push(effect.travelCostMultiplier > 1
                     ? `путь дороже на ${Math.round((effect.travelCostMultiplier - 1) * 100)}%`
@@ -619,12 +574,18 @@
             return effect.mode === 'halfIsland'
                 ? 'открывает большую часть карты острова'
                 : 'открывает карту острова';
+        case 'teleportToSafe':
+            return 'переносит к безопасной точке острова';
+        case 'teleportToEntry':
+            return 'возвращает ко входу острова';
         case 'cheapestRouteHint':
             return 'подсказывает самый дешёвый маршрут';
         case 'clearTravelPenalty':
             return 'снимает часть дорожных штрафов';
         case 'bridgeBuilder':
             return `строит мост: ${Math.max(1, effect.charges || 1)} кл.`;
+        case 'boatTraversal':
+            return 'подготавливает лодку для маршрута по воде';
         case 'fillContainer':
             return 'наполняет контейнер у подходящего источника';
         case 'startFishing':
@@ -632,7 +593,7 @@
         case 'startGather':
             return 'запускает сбор ближайшего ресурса';
         case 'openCraftPanel':
-            return 'открывает сумку и панель крафта';
+            return 'открывает отдельную панель крафта';
         case 'repairStructure':
             return effect.structureKind === 'bridge'
                 ? 'ремонтирует повреждённый мост'
@@ -691,6 +652,18 @@
             parts.push(passive.drainMultiplier < 1
                 ? `расход ниже на ${formatPercentDelta(passive.drainMultiplier)}%`
                 : `расход выше на ${Math.round((passive.drainMultiplier - 1) * 100)}%`);
+        }
+
+        if (Number.isFinite(passive.merchantSellMultiplier) && passive.merchantSellMultiplier !== 1) {
+            parts.push(passive.merchantSellMultiplier > 1
+                ? `продажа выгоднее на ${Math.round((passive.merchantSellMultiplier - 1) * 100)}%`
+                : `продажа хуже на ${formatPercentDelta(passive.merchantSellMultiplier)}%`);
+        }
+
+        if (Number.isFinite(passive.merchantBuyMultiplier) && passive.merchantBuyMultiplier !== 1) {
+            parts.push(passive.merchantBuyMultiplier < 1
+                ? `покупка дешевле на ${formatPercentDelta(passive.merchantBuyMultiplier)}%`
+                : `покупка дороже на ${Math.round((passive.merchantBuyMultiplier - 1) * 100)}%`);
         }
 
         if (Number.isFinite(passive.routeLengthBonus) && passive.routeLengthBonus > 0) {
@@ -785,6 +758,155 @@
             : '';
     }
 
+    function getCraftingMetadata(item, definition) {
+        const componentRegistry = getComponentRegistry();
+        const itemId = item && item.id
+            ? item.id
+            : (definition && definition.id ? definition.id : '');
+        const componentDefinition = componentRegistry && typeof componentRegistry.getComponentDefinitionByInventoryItemId === 'function'
+            ? componentRegistry.getComponentDefinitionByInventoryItemId(itemId)
+            : null;
+        const craftingOutputDefinition = componentRegistry && typeof componentRegistry.getGeneratedCraftingOutputDefinitionByInventoryItemId === 'function'
+            ? componentRegistry.getGeneratedCraftingOutputDefinitionByInventoryItemId(itemId)
+            : null;
+
+        return {
+            itemId,
+            componentDefinition,
+            craftingOutputDefinition
+        };
+    }
+
+    function getItemSourceRecipeIds(definition, metadata = {}) {
+        const directRecipeIds = Array.isArray(definition && definition.sourceRecipeIds)
+            ? definition.sourceRecipeIds
+            : [];
+        const componentRecipeIds = Array.isArray(metadata.componentDefinition && metadata.componentDefinition.sourceRecipeIds)
+            ? metadata.componentDefinition.sourceRecipeIds
+            : [];
+        const outputRecipeIds = Array.isArray(metadata.craftingOutputDefinition && metadata.craftingOutputDefinition.sourceRecipeIds)
+            ? metadata.craftingOutputDefinition.sourceRecipeIds
+            : [];
+
+        return [...new Set([
+            ...directRecipeIds,
+            ...componentRecipeIds,
+            ...outputRecipeIds
+        ].filter((recipeId) => typeof recipeId === 'string' && recipeId.trim()))];
+    }
+
+    function getItemSourceRecipes(definition, metadata = {}) {
+        const recipeRegistry = getRecipeRegistry();
+        if (!recipeRegistry || typeof recipeRegistry.getRecipeDefinition !== 'function') {
+            return [];
+        }
+
+        return getItemSourceRecipeIds(definition, metadata)
+            .map((recipeId) => recipeRegistry.getRecipeDefinition(recipeId))
+            .filter(Boolean);
+    }
+
+    function isRawInventoryItem(item, definition) {
+        const itemId = item && item.id
+            ? item.id
+            : (definition && definition.id ? definition.id : '');
+        return /^raw_/i.test(itemId);
+    }
+
+    function isStationOnlyInventoryItem(definition, metadata = {}) {
+        if (metadata.componentDefinition && metadata.componentDefinition.craftMethod) {
+            return metadata.componentDefinition.craftMethod !== 'hand';
+        }
+
+        const sourceRecipes = getItemSourceRecipes(definition, metadata);
+        return sourceRecipes.length > 0
+            && sourceRecipes.every((recipe) => recipe && recipe.station && recipe.station !== 'hand');
+    }
+
+    function isRepairOnlyInventoryItem(item, definition) {
+        const categories = new Set(definition && Array.isArray(definition.categories) ? definition.categories : []);
+        const activeEffect = definition && definition.activeEffect && typeof definition.activeEffect === 'object'
+            ? definition.activeEffect
+            : null;
+
+        return categories.has('repair')
+            || (activeEffect && activeEffect.kind === 'repairStructure');
+    }
+
+    function getExplicitBagQuestItemIds() {
+        const bagUpgradeData = getBagUpgradeData();
+        const stages = bagUpgradeData && Array.isArray(bagUpgradeData.bagUpgradeStages)
+            ? bagUpgradeData.bagUpgradeStages
+            : [];
+        const itemIds = new Set();
+
+        stages.forEach((stage) => {
+            const requirements = Array.isArray(stage && stage.requirements) ? stage.requirements : [];
+            requirements.forEach((requirement) => {
+                const rules = Array.isArray(requirement && requirement.matchAny) && requirement.matchAny.length > 0
+                    ? requirement.matchAny
+                    : [requirement];
+                rules.forEach((rule) => {
+                    (Array.isArray(rule && rule.itemIds) ? rule.itemIds : []).forEach((itemId) => {
+                        if (typeof itemId === 'string' && itemId.trim()) {
+                            itemIds.add(itemId.trim());
+                        }
+                    });
+                });
+            });
+        });
+
+        return itemIds;
+    }
+
+    function isBagQuestRelevantInventoryItem(item, definition, metadata = {}) {
+        const craftingTags = new Set([
+            ...(Array.isArray(definition && definition.craftingTags) ? definition.craftingTags : []),
+            ...(Array.isArray(metadata.componentDefinition && metadata.componentDefinition.tags) ? metadata.componentDefinition.tags : []),
+            ...(Array.isArray(metadata.craftingOutputDefinition && metadata.craftingOutputDefinition.tags) ? metadata.craftingOutputDefinition.tags : [])
+        ].map((tag) => String(tag || '').trim()).filter(Boolean));
+
+        if (craftingTags.has('bagQuest')) {
+            return true;
+        }
+
+        const itemId = item && item.id
+            ? item.id
+            : (definition && definition.id ? definition.id : '');
+        return getExplicitBagQuestItemIds().has(itemId);
+    }
+
+    function buildItemFlowMarkerTags(item, definition) {
+        const metadata = getCraftingMetadata(item, definition);
+        const markers = [];
+
+        if (isRawInventoryItem(item, definition)) {
+            markers.push('raw');
+        }
+
+        if (metadata.componentDefinition) {
+            markers.push('component');
+        }
+
+        if (metadata.craftingOutputDefinition) {
+            markers.push('crafted');
+        }
+
+        if (isStationOnlyInventoryItem(definition, metadata)) {
+            markers.push('station-only');
+        }
+
+        if (isRepairOnlyInventoryItem(item, definition)) {
+            markers.push('repair-only');
+        }
+
+        if (isBagQuestRelevantInventoryItem(item, definition, metadata)) {
+            markers.push('bag-quest relevant');
+        }
+
+        return markers;
+    }
+
     function buildSelectedItemFacts(item, definition, description) {
         const containerRegistry = getContainerRegistry();
         const containerState = containerRegistry && typeof containerRegistry.getContainerStateByItemId === 'function'
@@ -797,7 +919,9 @@
         const spoilageParameterSummary = buildSpoilageParameterSummary(item);
         const bulkParameterSummary = buildBulkParameterSummary(item, definition);
         const qualityLabel = getItemQualityLabel(item, definition);
+        const markerTags = buildItemFlowMarkerTags(item, definition);
         const parameterParts = [
+            ...markerTags,
             tierLabel,
             getItemRarityLabel(definition),
             qualityLabel,
@@ -873,14 +997,7 @@
             quantity: refs.inventorySelectionQuantity,
             actions: refs.inventorySelectionActions,
             useButton: refs.inventorySelectionUseButton,
-            dropButton: refs.inventorySelectionDropButton,
-            stationPanel: refs.inventorySelectionStationPanel,
-            stationTitle: refs.inventorySelectionStationTitle,
-            stationSummary: refs.inventorySelectionStationSummary,
-            craftPanel: refs.inventorySelectionCraftPanel,
-            craftLabel: refs.inventorySelectionCraftLabel,
-            craftHint: refs.inventorySelectionCraftHint,
-            craftActions: refs.inventorySelectionCraftActions
+            dropButton: refs.inventorySelectionDropButton
         };
     }
 
@@ -895,14 +1012,7 @@
             quantity: refs.inventoryDetailQuantity,
             actions: null,
             useButton: null,
-            dropButton: null,
-            stationPanel: refs.inventoryDetailStationPanel,
-            stationTitle: refs.inventoryDetailStationTitle,
-            stationSummary: refs.inventoryDetailStationSummary,
-            craftPanel: refs.inventoryDetailCraftPanel,
-            craftLabel: refs.inventoryDetailCraftLabel,
-            craftHint: refs.inventoryDetailCraftHint,
-            craftActions: refs.inventoryDetailCraftActions
+            dropButton: null
         };
     }
 
@@ -957,35 +1067,6 @@
             actionsContainer.classList.toggle('inventory-selection-panel__actions--single', visibleButtons.length <= 1);
         }
 
-        if (refs.stationPanel) {
-            refs.stationPanel.hidden = false;
-        }
-
-        if (refs.stationTitle) {
-            refs.stationTitle.textContent = payload.stationTitle;
-        }
-
-        if (refs.stationSummary) {
-            refs.stationSummary.textContent = payload.stationSummary;
-        }
-
-        if (refs.craftPanel) {
-            refs.craftPanel.hidden = !payload.hasCraftOptions;
-        }
-
-        if (refs.craftLabel) {
-            refs.craftLabel.textContent = 'Рецепты по станциям';
-        }
-
-        if (refs.craftHint) {
-            refs.craftHint.textContent = payload.hasCraftOptions
-                ? 'Список ниже разбит по станциям, чтобы было видно, что собирается руками, в лагере, на верстаке и в мастерской.'
-                : '';
-        }
-
-        if (refs.craftActions) {
-            refs.craftActions.replaceChildren(...payload.craftGroupEntries.map((group) => buildCraftStationGroup(group)));
-        }
     }
 
     function getActiveStationContext() {
@@ -1036,13 +1117,16 @@
 
     function buildOptionStatusFromEvaluation(evaluation, options = {}) {
         const requiredQuantity = Number.isFinite(options.requiredQuantity) ? options.requiredQuantity : 0;
+        const stationDescriptor = options.stationDescriptor || null;
         let statusLabel = options.fallbackStatus || '';
         let disabled = false;
+        let detailMessage = '';
 
         if (!evaluation) {
             return {
                 statusLabel,
-                disabled
+                disabled,
+                detailMessage
             };
         }
 
@@ -1051,27 +1135,40 @@
             statusLabel = requiredQuantity > 0
                 ? `Нужно ${requiredQuantity} шт.`
                 : buildMissingIngredientStatusLabel(evaluation.missingIngredients);
+            detailMessage = buildMissingIngredientDetailLabel(evaluation.missingIngredients);
             disabled = true;
             break;
         case 'wrong-station':
-            statusLabel = 'Станция не активна';
+            statusLabel = stationDescriptor && stationDescriptor.stationLabel
+                ? `Нужна станция: ${stationDescriptor.stationLabel}`
+                : 'Станция не активна';
+            detailMessage = evaluation.message
+                || (stationDescriptor && stationDescriptor.stationLabel
+                    ? `Нужна станция: ${stationDescriptor.stationLabel}.`
+                    : 'Нужна другая станция для этого рецепта.');
             disabled = true;
             break;
         case 'missing-environment':
             statusLabel = buildMissingEnvironmentStatusLabel(evaluation.missingEnvironments);
+            detailMessage = evaluation.message || statusLabel;
             disabled = true;
             break;
         case 'inventory-full':
             statusLabel = evaluation.capacityType === 'bulk'
                 ? 'Не хватает объёма'
                 : 'В сумке нет места';
+            detailMessage = evaluation.message
+                || (evaluation.capacityType === 'bulk'
+                    ? 'Сумка перегружена по объёму. Освободи груз или сократи bulk.'
+                    : 'Освободи слот в сумке, чтобы получить результат.');
             disabled = true;
             break;
         default:
             if (evaluation.success) {
                 statusLabel = 'Готово';
             } else if (evaluation.message) {
-                statusLabel = evaluation.message;
+                statusLabel = 'Недоступно';
+                detailMessage = evaluation.message;
                 disabled = true;
             }
             break;
@@ -1079,7 +1176,8 @@
 
         return {
             statusLabel,
-            disabled
+            disabled,
+            detailMessage
         };
     }
 
@@ -1104,7 +1202,8 @@
                 : 0;
             const optionStatus = buildOptionStatusFromEvaluation(evaluation, {
                 requiredQuantity,
-                fallbackStatus: stationDescriptor.primaryStationLabel ? `Нужен ресурс для "${stationDescriptor.primaryStationLabel}"` : ''
+                fallbackStatus: stationDescriptor.primaryStationLabel ? `Нужен ресурс для "${stationDescriptor.primaryStationLabel}"` : '',
+                stationDescriptor
             });
 
             return {
@@ -1116,7 +1215,7 @@
                 title: recipe.result && recipe.result.label ? recipe.result.label : recipe.label,
                 subtitle: optionStatus.statusLabel,
                 disabled: optionStatus.disabled,
-                message: evaluation && evaluation.message ? evaluation.message : ''
+                message: optionStatus.detailMessage || (evaluation && evaluation.message ? evaluation.message : '')
             };
         });
     }
@@ -1132,6 +1231,22 @@
             ? ` x${missingEntry.required}`
             : '';
         return `Нужно: ${(missingEntry.label || missingEntry.id || 'ингредиент')}${quantity}`;
+    }
+
+    function buildMissingIngredientDetailLabel(missingIngredients = [], maxEntries = 2) {
+        const entries = Array.isArray(missingIngredients) ? missingIngredients.filter(Boolean) : [];
+        if (entries.length === 0) {
+            return 'Не хватает ингредиентов для этого рецепта.';
+        }
+
+        const parts = entries.slice(0, maxEntries).map((entry) => {
+            const label = entry.label || entry.id || 'ингредиент';
+            const required = Number.isFinite(entry.required) ? entry.required : 1;
+            const available = Number.isFinite(entry.available) ? entry.available : 0;
+            return `${label} ${available}/${required}`;
+        });
+
+        return `Не хватает: ${parts.join(', ')}.`;
     }
 
     function buildMissingEnvironmentStatusLabel(missingEnvironments = []) {
@@ -1169,7 +1284,9 @@
                     scanNearbyEnvironment: true
                 });
                 const stationDescriptor = resolveRecipeStationDescriptor(recipe);
-                const optionStatus = buildOptionStatusFromEvaluation(evaluation);
+                const optionStatus = buildOptionStatusFromEvaluation(evaluation, {
+                    stationDescriptor
+                });
 
                 return {
                     recipeId: recipe.recipeId,
@@ -1180,7 +1297,7 @@
                     title: recipe.label || (recipe.result && recipe.result.label) || recipe.recipeId,
                     subtitle: optionStatus.statusLabel,
                     disabled: optionStatus.disabled,
-                    message: evaluation && evaluation.message ? evaluation.message : ''
+                    message: optionStatus.detailMessage || (evaluation && evaluation.message ? evaluation.message : '')
                 };
             });
     }
@@ -1365,15 +1482,7 @@
         const factEntries = buildSelectedItemFacts(selectedItem, definition, description);
         const useSourceButton = getActionSourceButton('use');
         const dropSourceButton = getActionSourceButton('drop');
-        const compressionOptions = getCompressionOptions(selectedItem);
-        const craftingOptions = getCraftingOptions(selectedItem);
-        const craftOptions = [...craftingOptions, ...compressionOptions];
         const showInventorySelectionActions = isMobileInventoryModalActive();
-        const stationContext = getActiveStationContext();
-        const groupedCraftOptions = groupCraftOptionsByStation(craftOptions, stationContext);
-        const availableLabels = Array.isArray(stationContext.availableStationLabels) && stationContext.availableStationLabels.length > 0
-            ? stationContext.availableStationLabels.join(', ')
-            : 'Руки';
         const selectionPayload = {
             meta: `${selectedSlotLabel}${quantityLabel}`,
             title: selectedItem.label,
@@ -1383,11 +1492,7 @@
             quantityLabel: `x${selectedItem.quantity}`,
             showActions: showInventorySelectionActions,
             canUse: Boolean(useSourceButton && !useSourceButton.disabled),
-            canDrop: Boolean(dropSourceButton && !dropSourceButton.disabled),
-            stationTitle: stationContext.activeSourceLabel || stationContext.activeStationLabel || 'Руки',
-            stationSummary: `${stationContext.activeSourceSummary} Доступно сейчас: ${availableLabels}.`,
-            hasCraftOptions: craftOptions.length > 0,
-            craftGroupEntries: groupedCraftOptions
+            canDrop: Boolean(dropSourceButton && !dropSourceButton.disabled)
         };
         const showInlinePanel = isMobileInventoryModalActive();
         const showOverlay = isDesktopInventoryDetailActive();
@@ -1466,12 +1571,32 @@
             inventory.push(null);
         }
 
+        const renderSignature = inventory
+            .slice(0, totalSlots)
+            .map((item, index) => {
+                const normalizedItem = bridge.normalizeInventoryItem(item);
+                const selectedMarker = bridge.getGame().state.selectedInventorySlot === index ? 'selected' : '-';
+
+                if (!normalizedItem || !normalizedItem.id) {
+                    return `${index}:empty:${selectedMarker}`;
+                }
+
+                return `${index}:${normalizedItem.id}:${normalizedItem.quantity || 1}:${selectedMarker}`;
+            })
+            .join('|');
+
+        if (renderSignature === lastInventoryRenderSignature) {
+            syncSelectionPanel();
+            return;
+        }
+
         const fragment = document.createDocumentFragment();
         inventory.slice(0, totalSlots).forEach((item, index) => {
             fragment.append(buildInventorySlot(item, index));
         });
 
         elements.inventoryGrid.replaceChildren(fragment);
+        lastInventoryRenderSignature = renderSignature;
         syncSelectionPanel();
     }
 
@@ -1588,12 +1713,17 @@
 
     Object.assign(inventoryUi, {
         buildInventorySlot,
+        buildOptionStatusFromEvaluation,
+        buildCraftStationGroup,
         renderInventory,
+        resolveRecipeStationDescriptor,
         drawPortrait,
+        groupCraftOptionsByStation,
         selectInventorySlot,
         handleInventoryClick,
         syncInventoryPanelState,
         syncSelectionPanel,
+        triggerCraftingRecipe,
         toggleInventoryPanel
     });
 })();

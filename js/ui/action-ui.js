@@ -61,6 +61,40 @@
             : null;
     }
 
+    function getGridReachDistance(fromX, fromY, toX, toY) {
+        return Math.max(
+            Math.abs(Math.round(toX) - Math.round(fromX)),
+            Math.abs(Math.round(toY) - Math.round(fromY))
+        );
+    }
+
+    function getNearbyGridPositions(originX, originY, options = {}) {
+        const includeOrigin = options.includeOrigin !== false;
+        const positions = includeOrigin
+            ? [{ x: Math.round(originX), y: Math.round(originY) }]
+            : [];
+        const roundedX = Math.round(originX);
+        const roundedY = Math.round(originY);
+
+        [
+            { dx: 1, dy: 0 },
+            { dx: -1, dy: 0 },
+            { dx: 0, dy: 1 },
+            { dx: 0, dy: -1 },
+            { dx: 1, dy: 1 },
+            { dx: 1, dy: -1 },
+            { dx: -1, dy: 1 },
+            { dx: -1, dy: -1 }
+        ].forEach((direction) => {
+            positions.push({
+                x: roundedX + direction.dx,
+                y: roundedY + direction.dy
+            });
+        });
+
+        return positions;
+    }
+
     function buildResourceNodeRequirementMessage(profile, interaction, definition) {
         if (interaction && interaction.nodeStateReason === 'islandLimit' && interaction.islandLimitMax) {
             return `На этом острове лимит на "${interaction.label || definition.label || 'этот ресурс'}" исчерпан: ${interaction.islandLimitConsumed || interaction.islandLimitMax} из ${interaction.islandLimitMax}.`;
@@ -248,8 +282,12 @@
             return `${encounter.label}: ${encounter.summary} Нажми "Говорить", чтобы открыть меню торговли.`;
         }
 
-        if (encounter.kind === 'artisan') {
+        if (encounter.kind === 'craft_merchant' || encounter.kind === 'artisan') {
             return `${encounter.label}: ${encounter.summary} Нажми "Говорить", чтобы открыть заказ на расширение сумки.`;
+        }
+
+        if (encounter.kind === 'station_keeper') {
+            return `${encounter.label}: ${encounter.summary} Нажми "Использовать", чтобы открыть окно станции.`;
         }
 
         if (encounter.kind === 'islandOriginalNpc') {
@@ -584,6 +622,65 @@
         return ` На поздних островах риск сбора около ${riskProfile.chanceLabel}: возможны шум, лишний drain, потеря хода или рост local pressure.`;
     }
 
+    function getResourceNodeYieldFact(profile, interaction) {
+        if (interaction && interaction.resourceNodeKind === 'waterSource') {
+            return 'Что даёт: сырую воду во фляге.';
+        }
+
+        if (profile && profile.collectedLabel) {
+            return `Что даёт: ${profile.collectedLabel}.`;
+        }
+
+        return 'Что даёт: базовое сырьё этого узла.';
+    }
+
+    function getResourceNodeCostFact(profile, interaction, tileInfo = game.state.activeTileInfo) {
+        if (profile && profile.gatherCost) {
+            return getGatherCostSentence(profile, tileInfo);
+        }
+
+        if (interaction && interaction.resourceNodeKind === 'waterSource') {
+            return 'Цена действия: без отдельного расхода, если уже стоишь рядом.';
+        }
+
+        return 'Цена действия: без отдельного расхода поверх подхода к узлу.';
+    }
+
+    function getResourceNodeToolFact(profile, interaction) {
+        if (profile && profile.requiredInventoryItemLabel) {
+            return `Чем собирается: нужна "${profile.requiredInventoryItemLabel}".`;
+        }
+
+        if (interaction && interaction.resourceNodeKind === 'waterSource') {
+            return 'Чем собирается: пустой флягой.';
+        }
+
+        return 'Чем собирается: руками.';
+    }
+
+    function getResourceNodeRiskFact(profile, interaction, tileInfo = game.state.activeTileInfo) {
+        const riskProfile = buildGatherRiskProfile(profile, tileInfo);
+
+        if (riskProfile) {
+            return `Чем рискуешь: на поздних островах шанс около ${riskProfile.chanceLabel} на шум, лишний drain, потерю хода или рост local pressure.`;
+        }
+
+        if (interaction && interaction.resourceNodeKind === 'waterSource') {
+            return 'Чем рискуешь: только темпом маршрута, отдельного штрафа у точки воды нет.';
+        }
+
+        return 'Чем рискуешь: только темпом маршрута, отдельного штрафа на этом окне нет.';
+    }
+
+    function buildResourceNodeFactBlock(profile, interaction, tileInfo = game.state.activeTileInfo) {
+        return [
+            getResourceNodeYieldFact(profile, interaction),
+            getResourceNodeCostFact(profile, interaction, tileInfo),
+            getResourceNodeToolFact(profile, interaction),
+            getResourceNodeRiskFact(profile, interaction, tileInfo)
+        ].join(' ');
+    }
+
     function applyGatherRiskOutcome(target) {
         const tileInfo = game.state.activeTileInfo || target.tileInfo;
         const riskProfile = buildGatherRiskProfile(target && target.profile, tileInfo);
@@ -676,7 +773,23 @@
         const chunk = world.getChunk(chunkX, chunkY, { generateIfMissing: false });
 
         if (chunk) {
-            chunk.renderCache = null;
+            const chunkRenderer = game.systems.chunkRenderer || null;
+            const render = game.systems.render || null;
+
+            if (chunkRenderer && typeof chunkRenderer.invalidateChunkRenderCache === 'function') {
+                chunkRenderer.invalidateChunkRenderCache(chunk, {
+                    overlayChanged: true,
+                    reason: 'harvestedTerrain'
+                });
+            } else {
+                chunk.renderCache = null;
+            }
+
+            if (render && typeof render.markSceneLayersDirty === 'function') {
+                render.markSceneLayersDirty({
+                    world: true
+                });
+            }
         }
     }
 
@@ -740,12 +853,7 @@
             }
         }
 
-        const adjacentPositions = [
-            { x: origin.x + 1, y: origin.y },
-            { x: origin.x - 1, y: origin.y },
-            { x: origin.x, y: origin.y + 1 },
-            { x: origin.x, y: origin.y - 1 }
-        ];
+        const adjacentPositions = getNearbyGridPositions(origin.x, origin.y, { includeOrigin: false });
 
         for (const position of adjacentPositions) {
             const tileInfo = world.getTileInfo(position.x, position.y, { generateIfMissing: false });
@@ -843,7 +951,7 @@
 
         const playerX = Math.round(game.state.playerPos.x);
         const playerY = Math.round(game.state.playerPos.y);
-        const distance = Math.abs(target.tileInfo.x - playerX) + Math.abs(target.tileInfo.y - playerY);
+        const distance = getGridReachDistance(playerX, playerY, target.tileInfo.x, target.tileInfo.y);
 
         if (distance === 0) {
             return true;
@@ -1255,12 +1363,11 @@
             return '';
         }
 
-        const gatherCostHint = target.profile
-            ? ` ${getGatherCostSentence(target.profile, game.state.activeTileInfo || target.tileInfo)}`
-            : '';
-        const gatherRiskHint = target.profile
-            ? getGatherRiskWarning(target.profile, game.state.activeTileInfo || target.tileInfo)
-            : '';
+        const factBlock = buildResourceNodeFactBlock(
+            target.profile,
+            target.interaction || (target.tileInfo ? target.tileInfo.interaction : null),
+            game.state.activeTileInfo || target.tileInfo
+        );
         const conversionHint = target.profile && target.profile.conversionHint
             ? ` ${target.profile.conversionHint}`
             : '';
@@ -1276,14 +1383,14 @@
         }
 
         if (!isTerrainTargetGatherAvailable(target)) {
-            return `${target.profile.requirementMessage || `Рядом есть ${target.profile.sourceLabel}, но сейчас этот ресурс недоступен.`}${gatherCostHint}`;
+            return `${target.profile.requirementMessage || `Рядом есть ${target.profile.sourceLabel}, но сейчас этот ресурс недоступен.`} ${factBlock}${conversionHint}${durabilityHint}${policyHint}`.trim();
         }
 
         if (target.profile.clickToCollect) {
-            return `Рядом есть ${target.profile.sourceLabel}. Кликни по соседнему камню или нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}.${gatherCostHint}${gatherRiskHint}${conversionHint}${durabilityHint}${policyHint}`;
+            return `Рядом есть ${target.profile.sourceLabel}. Кликни по соседнему камню или нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}. ${factBlock}${conversionHint}${durabilityHint}${policyHint}`;
         }
 
-        return `Рядом есть ${target.profile.sourceLabel}. Нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}.${gatherCostHint}${gatherRiskHint}${conversionHint}${durabilityHint}${policyHint}`;
+        return `Рядом есть ${target.profile.sourceLabel}. Нажми "Использовать", чтобы собрать ${target.profile.collectedLabel}. ${factBlock}${conversionHint}${durabilityHint}${policyHint}`;
     }
 
     function getTerrainInspectMessage(target) {
@@ -1299,12 +1406,11 @@
         const positionLabel = tileInfo
             ? `\u043a\u043e\u043e\u0440\u0434\u0438\u043d\u0430\u0442\u044b ${tileInfo.x}, ${tileInfo.y}`
             : '\u044d\u0442\u0430 \u043a\u043b\u0435\u0442\u043a\u0430';
-        const gatherCostHint = target.profile
-            ? ` ${getGatherCostSentence(target.profile, game.state.activeTileInfo || tileInfo)}`
-            : '';
-        const gatherRiskHint = target.profile
-            ? getGatherRiskWarning(target.profile, game.state.activeTileInfo || tileInfo)
-            : '';
+        const factBlock = buildResourceNodeFactBlock(
+            target.profile,
+            target.interaction || (tileInfo ? tileInfo.interaction : null),
+            game.state.activeTileInfo || tileInfo
+        );
         const conversionHint = target.profile && target.profile.conversionHint
             ? ` ${target.profile.conversionHint}`
             : '';
@@ -1320,14 +1426,14 @@
         }
 
         if (!isTerrainTargetGatherAvailable(target)) {
-            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. ${target.profile.requirementMessage || 'Сейчас этот узел недоступен.'}${gatherCostHint}`;
+            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. ${target.profile.requirementMessage || 'Сейчас этот узел недоступен.'} ${factBlock}${conversionHint}${durabilityHint}${policyHint}`.trim();
         }
 
         if (target.profile.clickToCollect) {
-            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. Здесь можно собрать ${target.profile.collectedLabel}.${gatherCostHint}${gatherRiskHint} Кликни по соседнему камню или нажми "Использовать".${conversionHint}${durabilityHint}${policyHint}`;
+            return `Осмотр: ${target.profile.sourceLabel}, ${positionLabel}. Здесь можно собрать ${target.profile.collectedLabel}. ${factBlock} Кликни по соседнему камню или нажми "Использовать".${conversionHint}${durabilityHint}${policyHint}`;
         }
 
-        return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0431\u0440\u0430\u0442\u044c ${target.profile.collectedLabel}.${gatherCostHint}${gatherRiskHint}${conversionHint}${durabilityHint}${policyHint}`;
+        return `\u041e\u0441\u043c\u043e\u0442\u0440: ${target.profile.sourceLabel}, ${positionLabel}. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0431\u0440\u0430\u0442\u044c ${target.profile.collectedLabel}. ${factBlock}${conversionHint}${durabilityHint}${policyHint}`;
     }
 
     getTerrainInspectMessage = getTerrainInspectMessageSafe;
@@ -1361,14 +1467,13 @@
             ? ` Политика: ${syncedInteraction.respawnPolicyLabel}.`
             : '';
         const gatherProfile = buildResourceNodeGatherProfile(syncedInteraction, game.state.activeTileInfo || null);
-        const gatherCostDescription = gatherProfile
-            ? ` ${getGatherCostSentence(gatherProfile, game.state.activeTileInfo || null)}`
-            : '';
-        const gatherRiskDescription = gatherProfile
-            ? getGatherRiskWarning(gatherProfile, game.state.activeTileInfo || null)
-            : '';
+        const factBlock = buildResourceNodeFactBlock(
+            gatherProfile,
+            syncedInteraction,
+            game.state.activeTileInfo || null
+        );
 
-        return `${label}: ${descriptionByResource[syncedInteraction.resourceId] || 'отдельный ресурсный узел для добычи сырья.'}${gatherCostDescription}${gatherRiskDescription}${stateDescription}${policyDescription}`;
+        return `${label}: ${descriptionByResource[syncedInteraction.resourceId] || 'отдельный ресурсный узел для добычи сырья.'} ${factBlock}${stateDescription}${policyDescription}`;
     }
 
     function getResourceNodeInteractionAdvice(interaction) {
@@ -1400,14 +1505,13 @@
             ? ` На острове осталось ${syncedInteraction.islandLimitRemaining} из ${syncedInteraction.islandLimitMax} сборов этого типа.`
             : '';
         const gatherProfile = buildResourceNodeGatherProfile(syncedInteraction, game.state.activeTileInfo || null);
-        const gatherCostSuffix = gatherProfile
-            ? ` ${getGatherCostSentence(gatherProfile, game.state.activeTileInfo || null)}`
-            : '';
-        const gatherRiskSuffix = gatherProfile
-            ? getGatherRiskWarning(gatherProfile, game.state.activeTileInfo || null)
-            : '';
+        const factBlock = buildResourceNodeFactBlock(
+            gatherProfile,
+            syncedInteraction,
+            game.state.activeTileInfo || null
+        );
 
-        return `Изучить: ${label}. Совет: ${adviceByResource[syncedInteraction.resourceId] || 'оценивай узел как часть маршрута, а не как бесплатный клик.'}${gatherCostSuffix}${gatherRiskSuffix}${stateSuffix}${policySuffix}`;
+        return `Изучить: ${label}. Совет: ${adviceByResource[syncedInteraction.resourceId] || 'оценивай узел как часть маршрута, а не как бесплатный клик.'} ${factBlock}${stateSuffix}${policySuffix}`;
     }
 
     function getInteractionDescription(interaction) {
@@ -1418,14 +1522,17 @@
         const expedition = interaction.expedition || {};
         const label = expedition.label || interaction.label || 'объект';
         const workbenchDescription = expedition.stationId === 'workbench'
-            ? 'явная мастерская. Рядом можно открыть сумку и увидеть рецепты мастерской и верстака.'
-            : 'явный верстак. Рядом можно открыть сумку и увидеть рецепты верстака.';
+            ? 'явная мастерская. Рядом открывается отдельное окно станции только с рецептами мастерской.'
+            : 'явный верстак. Рядом открывается отдельное окно станции с рецептами верстака.';
 
         switch (interaction.kind) {
             case 'merchant':
                 return `${label}: странствующий торговец. Здесь можно купить припасы, продать находки и взять поручение.`;
+            case 'craft_merchant':
             case 'artisan':
-                return `${label}: ремесленник по сумкам. Он открывает новые слоты и собирает особые наборы вещей.`;
+                return `${label}: ремесленный торговец. Он ведёт особые заказы, расширяет сумку и не смешивается с обычной торговлей.`;
+            case 'station_keeper':
+                return `${label}: хранитель станции. Он отвечает за отдельное ремесленное место и открывает только станционный крафт.`;
             case 'shelter':
                 return `${label}: укрытие для отдыха. Здесь можно передохнуть и переждать тяжёлый участок пути.`;
             case 'camp':
@@ -1475,18 +1582,21 @@
         const expedition = interaction.expedition || {};
         const label = expedition.label || interaction.label || 'объект';
         const workbenchAdvice = expedition.stationId === 'workbench'
-            ? 'держи рядом сырьё и открывай сумку у мастерской: рецепты там теперь разбиты по станциям и не прячутся в общей куче.'
-            : 'подходи к верстаку с сырьём заранее: так проще увидеть, что собирается именно на верстаке, а не руками.';
+            ? 'держи рядом сырьё и подходи к мастерской заранее: отдельное окно станции сразу покажет только рецепты мастерской.'
+            : 'подходи к верстаку с сырьём заранее: отдельное окно станции сразу покажет, что собирается именно здесь, а не руками.';
 
         switch (interaction.kind) {
             case 'merchant':
                 return `Изучить: ${label}. Совет: продавай лишние ценности, а дорогие припасы бери перед длинным островом или плохой погодой.`;
+            case 'craft_merchant':
             case 'artisan':
-                return `Изучить: ${label}. Совет: держи в сумке разные категории вещей, чтобы быстрее закрывать квесты на новые слоты.`;
+                return `Изучить: ${label}. Совет: держи в сумке разные категории вещей, чтобы быстрее закрывать ремесленные заказы и открывать новые слоты.`;
+            case 'station_keeper':
+                return `Изучить: ${label}. Совет: подходи к хранителю с нужным сырьём заранее: он открывает только станционный крафт и не заменяет обычного торговца.`;
             case 'shelter':
                 return `Изучить: ${label}. Совет: укрытие лучше использовать до полного истощения, чтобы не заходить в снежный ком штрафов.`;
             case 'camp':
-                return `Изучить: ${label}. Совет: подходи к очагу с флягой, топливом и сырьём заранее: лагерные рецепты теперь открываются только у отдельной точки крафта.`;
+                return `Изучить: ${label}. Совет: подходи к очагу с флягой, топливом и сырьём заранее: отдельное окно лагеря сразу покажет доступные походные рецепты.`;
             case 'workbench':
                 return `Изучить: ${label}. Совет: ${workbenchAdvice}`;
             case 'well':
@@ -1679,7 +1789,9 @@
         }
 
         const descriptionByKind = {
+            craft_merchant: '\u0440\u0435\u043c\u0435\u0441\u043b\u0435\u043d\u043d\u044b\u0439 \u0442\u043e\u0440\u0433\u043e\u0432\u0435\u0446. \u041e\u043d \u0432\u0435\u0434\u0451\u0442 \u043e\u0441\u043e\u0431\u044b\u0435 \u0437\u0430\u043a\u0430\u0437\u044b, \u0440\u0430\u0441\u0448\u0438\u0440\u044f\u0435\u0442 \u0441\u0443\u043c\u043a\u0443 \u0438 \u043d\u0435 \u0441\u043c\u0435\u0448\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0441 \u043e\u0431\u044b\u0447\u043d\u043e\u0439 \u043b\u0430\u0432\u043a\u043e\u0439.',
             artisan: '\u0440\u0435\u043c\u0435\u0441\u043b\u0435\u043d\u043d\u0438\u043a \u043f\u043e \u0441\u0443\u043c\u043a\u0430\u043c. \u041e\u043d \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u043d\u043e\u0432\u044b\u0435 \u0441\u043b\u043e\u0442\u044b \u0438 \u0441\u043e\u0431\u0438\u0440\u0430\u0435\u0442 \u043e\u0441\u043e\u0431\u044b\u0435 \u043d\u0430\u0431\u043e\u0440\u044b \u0432\u0435\u0449\u0435\u0439.',
+            station_keeper: '\u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044c \u0441\u0442\u0430\u043d\u0446\u0438\u0438. \u041e\u043d \u043e\u0442\u0432\u0435\u0447\u0430\u0435\u0442 \u0437\u0430 \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u043e\u0435 \u0440\u0435\u043c\u0435\u0441\u043b\u0435\u043d\u043d\u043e\u0435 \u043c\u0435\u0441\u0442\u043e \u0438 \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u0441\u0442\u0430\u043d\u0446\u0438\u043e\u043d\u043d\u044b\u0439 \u043a\u0440\u0430\u0444\u0442.',
             shelter: '\u0443\u043a\u0440\u044b\u0442\u0438\u0435 \u0434\u043b\u044f \u043e\u0442\u0434\u044b\u0445\u0430. \u0417\u0434\u0435\u0441\u044c \u043c\u043e\u0436\u043d\u043e \u043f\u0435\u0440\u0435\u0434\u043e\u0445\u043d\u0443\u0442\u044c \u0438 \u043f\u0435\u0440\u0435\u0436\u0434\u0430\u0442\u044c \u0442\u044f\u0436\u0451\u043b\u044b\u0439 \u0443\u0447\u0430\u0441\u0442\u043e\u043a \u043f\u0443\u0442\u0438.',
             camp: '\u044f\u0432\u043d\u044b\u0439 \u043b\u0430\u0433\u0435\u0440\u043d\u044b\u0439 \u043e\u0447\u0430\u0433. \u0418\u043c\u0435\u043d\u043d\u043e \u0437\u0434\u0435\u0441\u044c \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442\u0441\u044f \u043b\u0430\u0433\u0435\u0440\u043d\u044b\u0439 \u043a\u0440\u0430\u0444\u0442 \u0434\u043b\u044f \u0432\u043e\u0434\u044b, \u0435\u0434\u044b \u0438 \u043f\u043e\u0445\u043e\u0434\u043d\u044b\u0445 \u0440\u0435\u0446\u0435\u043f\u0442\u043e\u0432.',
             workbench: '\u044f\u0432\u043d\u044b\u0439 \u0432\u0435\u0440\u0441\u0442\u0430\u043a \u0438\u043b\u0438 \u043c\u0430\u0441\u0442\u0435\u0440\u0441\u043a\u0430\u044f. \u041e\u0442\u043a\u0440\u043e\u0439 \u0441\u0443\u043c\u043a\u0443 \u0440\u044f\u0434\u043e\u043c, \u0447\u0442\u043e\u0431\u044b \u0443\u0432\u0438\u0434\u0435\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0440\u0435\u0446\u0435\u043f\u0442\u043e\u0432 \u043f\u043e \u0441\u0442\u0430\u043d\u0446\u0438\u044f\u043c.',
@@ -1719,8 +1831,12 @@
             return `\u0418\u0437\u0443\u0447\u0438\u0442\u044c: ${label}. \u0421\u043e\u0432\u0435\u0442: ${expedition.advice || '\u0441\u0442\u043e\u0438\u0442 \u0437\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u0442\u044c \u0442\u0430\u043a\u0438\u0445 \u043b\u044e\u0434\u0435\u0439: \u043e\u043d\u0438 \u0447\u0430\u0441\u0442\u043e \u0434\u0430\u044e\u0442 \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443 \u0438\u043b\u0438 \u0440\u0430\u0437\u043e\u0432\u0443\u044e \u0432\u0435\u0449\u044c, \u043a\u043e\u0442\u043e\u0440\u0430\u044f \u043e\u043a\u0443\u043f\u0430\u0435\u0442 \u0434\u0430\u043b\u044c\u043d\u0438\u0439 \u043c\u0430\u0440\u0448\u0440\u0443\u0442.'}`;
         }
 
-        if (interaction.kind === 'artisan') {
-            return `\u0418\u0437\u0443\u0447\u0438\u0442\u044c: ${label}. \u0421\u043e\u0432\u0435\u0442: \u0434\u0435\u0440\u0436\u0438 \u0432 \u0441\u0443\u043c\u043a\u0435 \u0440\u0430\u0437\u043d\u044b\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438 \u0432\u0435\u0449\u0435\u0439, \u0447\u0442\u043e\u0431\u044b \u0431\u044b\u0441\u0442\u0440\u0435\u0435 \u0437\u0430\u043a\u0440\u044b\u0432\u0430\u0442\u044c \u043a\u0432\u0435\u0441\u0442\u044b \u043d\u0430 \u043d\u043e\u0432\u044b\u0435 \u0441\u043b\u043e\u0442\u044b.`;
+        if (interaction.kind === 'craft_merchant' || interaction.kind === 'artisan') {
+            return `\u0418\u0437\u0443\u0447\u0438\u0442\u044c: ${label}. \u0421\u043e\u0432\u0435\u0442: \u0434\u0435\u0440\u0436\u0438 \u0432 \u0441\u0443\u043c\u043a\u0435 \u0440\u0430\u0437\u043d\u044b\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438 \u0432\u0435\u0449\u0435\u0439, \u0447\u0442\u043e\u0431\u044b \u0431\u044b\u0441\u0442\u0440\u0435\u0435 \u0437\u0430\u043a\u0440\u044b\u0432\u0430\u0442\u044c \u0440\u0435\u043c\u0435\u0441\u043b\u0435\u043d\u043d\u044b\u0435 \u0437\u0430\u043a\u0430\u0437\u044b \u043d\u0430 \u043d\u043e\u0432\u044b\u0435 \u0441\u043b\u043e\u0442\u044b.`;
+        }
+
+        if (interaction.kind === 'station_keeper') {
+            return `\u0418\u0437\u0443\u0447\u0438\u0442\u044c: ${label}. \u0421\u043e\u0432\u0435\u0442: \u0445\u0440\u0430\u043d\u0438 \u0443 \u0442\u0430\u043a\u043e\u0433\u043e NPC \u0438\u043c\u0435\u043d\u043d\u043e \u043f\u0440\u043e\u0444\u0438\u043b\u044c\u043d\u044b\u0435 \u043a\u043e\u043c\u043f\u043e\u043d\u0435\u043d\u0442\u044b: \u043e\u043d \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u0441\u0442\u0430\u043d\u0446\u0438\u043e\u043d\u043d\u044b\u0439 \u043a\u0440\u0430\u0444\u0442, \u0430 \u043d\u0435 \u043e\u0431\u044b\u0447\u043d\u0443\u044e \u0442\u043e\u0440\u0433\u043e\u0432\u043b\u044e.`;
         }
 
         if (interaction.kind === 'groundItem') {
@@ -1769,15 +1885,9 @@
         const world = game.systems.world || null;
         const playerPos = game.state.playerPos || { x: 0, y: 0 };
         const selectedTile = game.state.selectedWorldTile || null;
-        const nearbyPositions = [
-            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) },
-            { x: Math.round(playerPos.x) + 1, y: Math.round(playerPos.y) },
-            { x: Math.round(playerPos.x) - 1, y: Math.round(playerPos.y) },
-            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) + 1 },
-            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) - 1 }
-        ];
+        const nearbyPositions = getNearbyGridPositions(playerPos.x, playerPos.y);
         if (selectedTile) {
-            const selectedDistance = Math.abs(Math.round(selectedTile.x) - Math.round(playerPos.x)) + Math.abs(Math.round(selectedTile.y) - Math.round(playerPos.y));
+            const selectedDistance = getGridReachDistance(playerPos.x, playerPos.y, selectedTile.x, selectedTile.y);
             if (selectedDistance <= 1) {
                 nearbyPositions.unshift({
                     x: Math.round(selectedTile.x),
@@ -1903,11 +2013,16 @@
                 ? ` из ${game.state.routePreviewLength}`
                 : '';
             const totalCost = bridge.formatRouteCost(game.state.routeTotalCost);
-            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
+            const isExactPreview = game.state.routePreviewIsExact !== false;
+            const fullCostSuffix = isExactPreview && game.state.routePreviewLength > game.state.route.length
                 ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
                 : '';
+            const previewPrefix = isExactPreview ? 'Маршрут готов' : 'Быстрый маршрут готов';
+            const previewResolveSuffix = isExactPreview
+                ? ''
+                : ' Можно стартовать сразу: дальняя часть пути догрузится и уточнится по мере движения.';
 
-            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
+            return `${previewPrefix}: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}${previewResolveSuffix}`;
         }
 
         if (groundItem && inventoryRuntime) {
@@ -1928,11 +2043,11 @@
             }
 
             if (encounter.kind === 'camp') {
-                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать", затем открой сумку для лагерного крафта.`;
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную: откроется отдельное окно лагеря. Если закрыл его, нажми "Использовать", чтобы открыть снова.`;
             }
 
             if (encounter.kind === 'workbench') {
-                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать", затем открой сумку, чтобы увидеть рецепты по станциям.`;
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную: откроется отдельное окно станции. Если закрыл его, нажми "Использовать", чтобы открыть снова.`;
             }
 
             if (encounter.kind === 'well') {
@@ -2001,13 +2116,6 @@
 
         if (game.state.isMoving) {
             return;
-        }
-
-        if ((!Array.isArray(game.state.route) || game.state.route.length === 0) && game.systems.input && typeof game.systems.input.planRouteToSelectedTile === 'function') {
-            game.systems.input.planRouteToSelectedTile({
-                showRouteWarning: false,
-                clearActionMessage: false
-            });
         }
 
         if (!Array.isArray(game.state.route) || game.state.route.length === 0) {
@@ -2268,11 +2376,16 @@
                 ? ` из ${game.state.routePreviewLength}`
                 : '';
             const totalCost = bridge.formatRouteCost(game.state.routeTotalCost);
-            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
+            const isExactPreview = game.state.routePreviewIsExact !== false;
+            const fullCostSuffix = isExactPreview && game.state.routePreviewLength > game.state.route.length
                 ? ` Полный путь стоит ${bridge.formatRouteCost(game.state.routePreviewTotalCost)}.`
                 : '';
+            const previewPrefix = isExactPreview ? 'Маршрут готов' : 'Быстрый маршрут готов';
+            const previewResolveSuffix = isExactPreview
+                ? ''
+                : ' Можно стартовать сразу: дальняя часть пути догрузится и уточнится по мере движения.';
 
-            return `Маршрут готов: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}`;
+            return `${previewPrefix}: ${game.state.route.length}${previewSuffix} клеток, цена ${totalCost}. Нажми кнопку движения, пробел или кликни по выбранной клетке ещё раз.${fullCostSuffix}${previewResolveSuffix}`;
         }
 
         if (groundItem && inventoryRuntime) {
@@ -2293,11 +2406,11 @@
             }
 
             if (encounter.kind === 'camp') {
-                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать", затем открой сумку для лагерного крафта.`;
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную: откроется отдельное окно лагеря. Если закрыл его, нажми "Использовать", чтобы открыть снова.`;
             }
 
             if (encounter.kind === 'workbench') {
-                return `${encounter.label}: ${encounter.summary} Подойди вплотную и нажми "Использовать", затем открой сумку, чтобы увидеть рецепты по станциям.`;
+                return `${encounter.label}: ${encounter.summary} Подойди вплотную: откроется отдельное окно станции. Если закрыл его, нажми "Использовать", чтобы открыть снова.`;
             }
 
             if (encounter.kind === 'well') {

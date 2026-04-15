@@ -1,5 +1,60 @@
+const INITIAL_VISIBLE_CHUNK_DETAIL_LEVEL = 'base';
+const INITIAL_SYNC_CHUNK_RADIUS = 0;
+const STARTUP_WARMUP_DELAY_MS = 1200;
+const STARTUP_PREWARM_CHUNK_RADIUS = 1;
+let startupWarmupFrameId = null;
+let startupWarmupTimerId = null;
+let startupWarmupIdleId = null;
+
+function cancelPostFirstRenderStartupWork() {
+    if (startupWarmupFrameId) {
+        cancelAnimationFrame(startupWarmupFrameId);
+        startupWarmupFrameId = null;
+    }
+
+    if (startupWarmupTimerId) {
+        window.clearTimeout(startupWarmupTimerId);
+        startupWarmupTimerId = null;
+    }
+
+    if (startupWarmupIdleId) {
+        if (typeof window.cancelIdleCallback === 'function') {
+            window.cancelIdleCallback(startupWarmupIdleId);
+        } else {
+            window.clearTimeout(startupWarmupIdleId);
+        }
+        startupWarmupIdleId = null;
+    }
+}
+
+function scheduleStartupIdleCallback(callback, timeout = 1500) {
+    if (typeof callback !== 'function') {
+        return null;
+    }
+
+    if (typeof window.requestIdleCallback === 'function') {
+        return window.requestIdleCallback(callback, { timeout });
+    }
+
+    return window.setTimeout(() => {
+        callback({
+            didTimeout: true,
+            timeRemaining: () => 0
+        });
+    }, timeout);
+}
+
 function stopActiveGameLoops() {
     const game = window.Game;
+    const chunkGenerator = game && game.systems ? game.systems.chunkGenerator || null : null;
+
+    cancelPostFirstRenderStartupWork();
+
+    if (chunkGenerator && typeof chunkGenerator.resetGenerationRuntime === 'function') {
+        chunkGenerator.resetGenerationRuntime({
+            clearCaches: true
+        });
+    }
 
     if (!game || !game.state) {
         return;
@@ -17,9 +72,61 @@ function stopActiveGameLoops() {
     }
 }
 
-function initializeUiAndWorldFromCurrentState() {
-    const mapRuntime = window.Game.systems.mapRuntime || null;
+function getChunkCoordinatesAroundPlayer(radius = window.Game.config.viewDistance) {
+    const game = window.Game;
+    const playerChunkX = Math.floor(game.state.playerPos.x / game.config.chunkSize);
+    const playerChunkY = Math.floor(game.state.playerPos.y / game.config.chunkSize);
+    const chunkCoordinates = [];
 
+    for (let dx = -radius; dx <= radius; dx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+            chunkCoordinates.push({
+                chunkX: playerChunkX + dx,
+                chunkY: playerChunkY + dy
+            });
+        }
+    }
+
+    return chunkCoordinates;
+}
+
+function schedulePostFirstRenderStartupWork() {
+    const game = window.Game;
+    const mapRuntime = game.systems.mapRuntime || null;
+    const chunkGenerator = game.systems.chunkGenerator || null;
+
+    cancelPostFirstRenderStartupWork();
+
+    startupWarmupFrameId = requestAnimationFrame(() => {
+        startupWarmupFrameId = null;
+        startupWarmupTimerId = window.setTimeout(() => {
+            startupWarmupTimerId = null;
+            startupWarmupIdleId = scheduleStartupIdleCallback(() => {
+                startupWarmupIdleId = null;
+                const focusChunkX = Math.floor(game.state.playerPos.x / game.config.chunkSize);
+                const focusChunkY = Math.floor(game.state.playerPos.y / game.config.chunkSize);
+
+                if (chunkGenerator && typeof chunkGenerator.prewarmChunks === 'function') {
+                    chunkGenerator.prewarmChunks(
+                        getChunkCoordinatesAroundPlayer(STARTUP_PREWARM_CHUNK_RADIUS),
+                        {
+                            detailLevel: 'base',
+                            priority: 'low'
+                        }
+                    );
+                }
+
+                if (mapRuntime && typeof mapRuntime.captureVisibleWorld === 'function') {
+                    mapRuntime.captureVisibleWorld(focusChunkX, focusChunkY, {
+                        chunkRadius: INITIAL_SYNC_CHUNK_RADIUS
+                    });
+                }
+            });
+        }, STARTUP_WARMUP_DELAY_MS);
+    });
+}
+
+function initializeUiAndWorldFromCurrentState() {
     if (window.Game.systems.playerRenderer) {
         window.Game.systems.playerRenderer.resetFacing();
     }
@@ -34,22 +141,18 @@ function initializeUiAndWorldFromCurrentState() {
         window.Game.systems.ui.initializeLayout();
     }
 
-    generateVisibleChunksAroundPlayer();
+    generateVisibleChunksAroundPlayer({
+        radius: INITIAL_SYNC_CHUNK_RADIUS,
+        detailLevel: INITIAL_VISIBLE_CHUNK_DETAIL_LEVEL,
+        queueDeferred: false,
+        priority: 'high'
+    });
     window.Game.systems.world.updatePlayerContext(window.Game.state.playerPos);
     window.Game.systems.render.centerCameraOn(window.Game.state.playerPos);
 
-    if (mapRuntime && typeof mapRuntime.captureVisibleWorld === 'function') {
-        const focusChunkX = Math.floor(window.Game.state.playerPos.x / window.Game.config.chunkSize);
-        const focusChunkY = Math.floor(window.Game.state.playerPos.y / window.Game.config.chunkSize);
-        mapRuntime.captureVisibleWorld(focusChunkX, focusChunkY);
-    }
-
-    if (mapRuntime && typeof mapRuntime.persistExploration === 'function') {
-        mapRuntime.persistExploration();
-    }
-
     setupEventListeners();
     window.Game.systems.render.render();
+    schedulePostFirstRenderStartupWork();
 }
 
 function applyLoadedSnapshot(snapshot, options = {}) {
@@ -121,9 +224,6 @@ function initGame(options = {}) {
         if (usePersistedWorld && mapRuntime && typeof mapRuntime.restorePersistedExploration === 'function') {
             mapRuntime.restorePersistedExploration();
         }
-        if (mapRuntime && typeof mapRuntime.persistExploration === 'function') {
-            mapRuntime.persistExploration();
-        }
         window.Game.systems.playerRenderer.resetFacing();
         if (window.Game.systems.effects) {
             window.Game.systems.effects.clearAllEffects();
@@ -175,16 +275,17 @@ function loadGameFromSlot(slotId) {
     return true;
 }
 
-function generateVisibleChunksAroundPlayer() {
+function generateVisibleChunksAroundPlayer(options = {}) {
     const game = window.Game;
-    const playerChunkX = Math.floor(game.state.playerPos.x / game.config.chunkSize);
-    const playerChunkY = Math.floor(game.state.playerPos.y / game.config.chunkSize);
 
-    for (let dx = -game.config.viewDistance; dx <= game.config.viewDistance; dx++) {
-        for (let dy = -game.config.viewDistance; dy <= game.config.viewDistance; dy++) {
-            game.systems.world.getChunk(playerChunkX + dx, playerChunkY + dy);
-        }
-    }
+    getChunkCoordinatesAroundPlayer(options.radius).forEach(({ chunkX, chunkY }) => {
+        game.systems.world.getChunk(chunkX, chunkY, {
+            detailLevel: options.detailLevel || INITIAL_VISIBLE_CHUNK_DETAIL_LEVEL,
+            immediate: options.immediate,
+            priority: options.priority || 'normal',
+            queueDeferred: options.queueDeferred
+        });
+    });
 }
 
 function handleWindowResize() {
@@ -218,10 +319,10 @@ function showErrorToUser(message) {
 }
 
 function initializeGame() {
-    if (document.readyState === 'complete') {
+    if (document.readyState !== 'loading') {
         initGame({ usePersistedWorld: false });
     } else {
-        window.addEventListener('load', () => {
+        document.addEventListener('DOMContentLoaded', () => {
             initGame({ usePersistedWorld: false });
         }, { once: true });
     }

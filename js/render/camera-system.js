@@ -2,27 +2,34 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
-function projectIso(x, y) {
+const reusableProjectionPoint = { x: 0, y: 0 };
+
+function projectIsoTo(x, y, out = {}) {
     const { tileWidth, tileHeight } = window.Game.config;
 
-    return {
-        x: (x - y) * tileWidth / 2,
-        y: (x + y) * tileHeight / 2
-    };
+    out.x = (x - y) * tileWidth / 2;
+    out.y = (x + y) * tileHeight / 2;
+    return out;
+}
+
+function projectIso(x, y) {
+    return projectIsoTo(x, y, {});
+}
+
+function isoToScreenTo(x, y, out = {}) {
+    projectIsoTo(x, y, out);
+    out.x += window.Game.camera.offset.x;
+    out.y += window.Game.camera.offset.y;
+    return out;
 }
 
 function isoToScreen(x, y) {
-    const worldPos = projectIso(x, y);
-
-    return {
-        x: worldPos.x + window.Game.camera.offset.x,
-        y: worldPos.y + window.Game.camera.offset.y
-    };
+    return isoToScreenTo(x, y, {});
 }
 
 function centerCameraOn(position) {
     const game = window.Game;
-    const worldPos = projectIso(position.x, position.y);
+    const worldPos = projectIsoTo(position.x, position.y, reusableProjectionPoint);
 
     game.camera.offset.x = game.canvas.width / 2 - worldPos.x;
     game.camera.offset.y = game.canvas.height / 2 - worldPos.y;
@@ -32,7 +39,7 @@ function centerCameraOn(position) {
 
 function updateCamera(focusPos) {
     const game = window.Game;
-    const worldPos = projectIso(focusPos.x, focusPos.y);
+    const worldPos = projectIsoTo(focusPos.x, focusPos.y, reusableProjectionPoint);
 
     game.camera.target.x = game.canvas.width / 2 - worldPos.x;
     game.camera.target.y = game.canvas.height / 2 - worldPos.y;
@@ -80,7 +87,9 @@ function setZoom(zoom) {
 
 window.Game.systems.camera = {
     projectIso,
+    projectIsoTo,
     isoToScreen,
+    isoToScreenTo,
     centerCameraOn,
     updateCamera,
     isCameraSettled,

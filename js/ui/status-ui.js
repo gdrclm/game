@@ -4,6 +4,7 @@
     const PAUSE_MENU_MODE_MAIN = 'main';
     const PAUSE_MENU_MODE_SAVE = 'save';
     const PAUSE_MENU_MODE_LOAD = 'load';
+    const PAUSE_MENU_MODE_TRAVEL = 'travel';
     const TIME_OF_DAY_LABELS = Object.freeze(['Рассвет', 'День', 'Сумерки', 'Ночь']);
     let sleepOverlayAnimationFrameId = null;
     let pauseMenuMode = PAUSE_MENU_MODE_MAIN;
@@ -21,6 +22,118 @@
     function getGameLifecycle() {
         return window.Game && window.Game.systems ? window.Game.systems.gameLifecycle || null : null;
     }
+
+    function getInventoryRuntime() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.inventoryRuntime || null : null;
+    }
+
+    function getItemRegistry() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.itemRegistry || null : null;
+    }
+
+    function getCraftingRuntime() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.craftingRuntime || null : null;
+    }
+
+    function getStationRuntime() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.stationRuntime || null : null;
+    }
+
+    function getBagUpgradeRuntime() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.bagUpgradeRuntime || null : null;
+    }
+
+    function getExpeditionProgression() {
+        const game = bridge.getGame();
+        return game && game.systems
+            ? (game.systems.expeditionProgression || game.systems.expedition || null)
+            : null;
+    }
+
+    function getBoatRuntime() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.boatRuntime || null : null;
+    }
+
+    function getBridgeRuntime() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.bridgeRuntime || null : null;
+    }
+
+    function getIslandNeedProfileSystem() {
+        const game = bridge.getGame();
+        return game && game.systems ? game.systems.islandNeedProfile || null : null;
+    }
+
+    const PRODUCTION_PRIORITY_ORDER = Object.freeze({
+        mandatory: 0,
+        recommended: 1,
+        optional: 2,
+        active: 3,
+        later: 4,
+        complete: 5
+    });
+    const PRODUCTION_STATUS_ORDER = Object.freeze({
+        urgent: 0,
+        ready: 1,
+        craftable: 2,
+        assembling: 3,
+        active: 4,
+        later: 5,
+        missing: 6
+    });
+    const PRODUCTION_GOAL_DEFINITIONS = Object.freeze([
+        {
+            id: 'bridge',
+            label: 'Мост',
+            branchIds: ['first_bridge', 'endgame_route', 'guaranteed_route'],
+            readyItemIds: ['bridge_kit', 'portableBridge', 'reinforcedBridge', 'fieldBridge', 'absoluteBridge'],
+            partialItemIds: ['wood_plank_basic', 'fiber_rope', 'stone_block'],
+            recipeIds: ['portable-bridge', 'portable-bridge-assembly', 'reinforced-bridge-upgrade', 'field-bridge-upgrade', 'absolute-bridge-upgrade'],
+            emptyHint: 'Держи мостовой комплект к разломам и островам переправ.'
+        },
+        {
+            id: 'repair',
+            label: 'Ремонт',
+            branchIds: ['bridge_repair', 'repair_support'],
+            readyItemIds: ['repair_kit_bridge', 'repair_kit_boat'],
+            partialItemIds: ['wood_plank_basic', 'gravel_fill', 'fiber_rope', 'fish_oil'],
+            recipeIds: ['bridge-repair-kit', 'boat-repair-kit'],
+            emptyHint: 'Ремкомплект нужен раньше, чем маршрут окончательно сломается.'
+        },
+        {
+            id: 'boat',
+            label: 'Лодка',
+            branchIds: ['boat_frame', 'boat_ready', 'water_escape'],
+            readyItemIds: ['boat_ready'],
+            partialItemIds: ['boatFrame', 'fish_oil', 'fiber_rope', 'wood_frame_basic', 'wood_plank_basic'],
+            recipeIds: ['boat-frame', 'boat'],
+            emptyHint: 'К водной фазе лодка должна быть уже собрана, а не только задумана.'
+        },
+        {
+            id: 'potion',
+            label: 'Зелье',
+            branchIds: ['cheap_healing', 'tempo_boost', 'strong_survival', 'final_survival'],
+            readyItemIds: ['healingBrew', 'energyTonic', 'secondWind'],
+            partialItemIds: ['healing_base', 'herb_paste', 'flask_water_alchemy'],
+            recipeIds: ['healing-brew', 'energy-tonic', 'second-wind'],
+            emptyHint: 'Хотя бы одна лечебная или темповая варка должна быть под рукой.'
+        },
+        {
+            id: 'bagQuest',
+            label: 'Сумочный квест',
+            branchIds: ['collector_loadout'],
+            readyItemIds: [],
+            partialItemIds: [],
+            recipeIds: [],
+            emptyHint: 'Следи за ремесленным заказом на следующий слот сумки.'
+        }
+    ]);
 
     function canUseSaveSlots() {
         return typeof localStorage !== 'undefined'
@@ -48,6 +161,10 @@
 
         if (pauseMenuMode === PAUSE_MENU_MODE_LOAD) {
             return 'Выбери сохранённый слот, чтобы загрузить прохождение.';
+        }
+
+        if (pauseMenuMode === PAUSE_MENU_MODE_TRAVEL) {
+            return 'Выбери остров, чтобы мгновенно перейти на него.';
         }
 
         return '';
@@ -97,6 +214,630 @@
             `Золото ${metadata.gold || 0}`,
             `Сумка ${metadata.occupiedInventorySlots || 0}`
         ];
+    }
+
+    function normalizeStringList(list) {
+        return Array.isArray(list)
+            ? list
+                .filter((entry) => typeof entry === 'string' && entry.trim())
+                .map((entry) => entry.trim())
+            : [];
+    }
+
+    function countTruthyEntries(record) {
+        if (!record || typeof record !== 'object') {
+            return 0;
+        }
+
+        return Object.values(record).reduce((sum, value) => sum + (value ? 1 : 0), 0);
+    }
+
+    function countInventoryItem(itemId) {
+        const inventoryRuntime = getInventoryRuntime();
+        return inventoryRuntime && typeof inventoryRuntime.countInventoryItem === 'function'
+            ? inventoryRuntime.countInventoryItem(itemId)
+            : 0;
+    }
+
+    function countAnyInventoryItems(itemIds = []) {
+        return (Array.isArray(itemIds) ? itemIds : []).reduce((sum, itemId) => sum + countInventoryItem(itemId), 0);
+    }
+
+    function getItemLabel(itemId, fallback = '') {
+        const itemRegistry = getItemRegistry();
+        const definition = itemRegistry && typeof itemRegistry.getItemDefinition === 'function'
+            ? itemRegistry.getItemDefinition(itemId)
+            : null;
+        return definition && definition.label
+            ? definition.label
+            : (fallback || itemId);
+    }
+
+    function formatInventoryItemSummary(itemIds = []) {
+        const parts = (Array.isArray(itemIds) ? itemIds : [])
+            .map((itemId) => ({
+                itemId,
+                quantity: countInventoryItem(itemId)
+            }))
+            .filter((entry) => entry.quantity > 0)
+            .map((entry) => `${getItemLabel(entry.itemId)} x${entry.quantity}`);
+
+        return parts.join(', ');
+    }
+
+    function getActiveStationContext(activeInteraction = bridge.getGame().state.activeInteraction, activeHouse = bridge.getGame().state.activeHouse) {
+        const stationRuntime = getStationRuntime();
+        if (!stationRuntime || typeof stationRuntime.getActiveStationContext !== 'function') {
+            return {
+                availableStations: ['hand'],
+                availableStationLabels: ['Руки'],
+                activeStationId: 'hand',
+                activeStationLabel: 'Руки'
+            };
+        }
+
+        return stationRuntime.getActiveStationContext({
+            activeInteraction: activeInteraction || null,
+            activeHouse: activeHouse || null
+        });
+    }
+
+    function buildRecipeEvaluationEntries(recipeIds = [], stationContext, activeInteraction = bridge.getGame().state.activeInteraction, activeHouse = bridge.getGame().state.activeHouse) {
+        const craftingRuntime = getCraftingRuntime();
+
+        if (
+            !craftingRuntime
+            || typeof craftingRuntime.getCompiledRecipe !== 'function'
+            || typeof craftingRuntime.evaluateRecipeAgainstInventory !== 'function'
+        ) {
+            return [];
+        }
+
+        return (Array.isArray(recipeIds) ? recipeIds : [])
+            .map((recipeId) => {
+                const recipe = craftingRuntime.getCompiledRecipe(recipeId);
+                if (!recipe) {
+                    return null;
+                }
+
+                return {
+                    recipeId,
+                    recipe,
+                    evaluation: craftingRuntime.evaluateRecipeAgainstInventory(recipeId, {
+                        activeInteraction: activeInteraction || null,
+                        activeHouse: activeHouse || null,
+                        availableStations: stationContext && Array.isArray(stationContext.availableStations)
+                            ? stationContext.availableStations
+                            : undefined,
+                        scanNearbyEnvironment: true
+                    })
+                };
+            })
+            .filter(Boolean);
+    }
+
+    function getGoalPriorityLevel(goalDefinition, craftRequirementSummary, stage) {
+        if (goalDefinition.id === 'bagQuest') {
+            if (stage && Number.isFinite(stage.targetSlots)) {
+                return 'active';
+            }
+
+            return 'later';
+        }
+
+        const mandatoryBranches = new Set(normalizeStringList(craftRequirementSummary && craftRequirementSummary.mandatoryBranches));
+        const recommendedBranches = new Set(normalizeStringList(craftRequirementSummary && craftRequirementSummary.recommendedBranches));
+        const optionalBranches = new Set(normalizeStringList(craftRequirementSummary && craftRequirementSummary.optionalBranches));
+        const branchIds = Array.isArray(goalDefinition && goalDefinition.branchIds) ? goalDefinition.branchIds : [];
+
+        if (branchIds.some((branchId) => mandatoryBranches.has(branchId))) {
+            return 'mandatory';
+        }
+
+        if (branchIds.some((branchId) => recommendedBranches.has(branchId))) {
+            return 'recommended';
+        }
+
+        if (branchIds.some((branchId) => optionalBranches.has(branchId))) {
+            return 'optional';
+        }
+
+        return 'later';
+    }
+
+    function getGoalPriorityLabel(priorityLevel, stage = null) {
+        switch (priorityLevel) {
+        case 'mandatory':
+            return 'Жёстко нужно';
+        case 'recommended':
+            return 'Желательно';
+        case 'optional':
+            return 'Опционально';
+        case 'active':
+            return stage && Number.isFinite(stage.targetSlots)
+                ? `Слот ${stage.targetSlots}`
+                : 'Активно';
+        case 'complete':
+            return 'Закрыто';
+        default:
+            return 'Позже';
+        }
+    }
+
+    function buildGenericGoalState(goalDefinition, recipeEvaluations) {
+        const readySummary = formatInventoryItemSummary(goalDefinition.readyItemIds);
+        const partialSummary = formatInventoryItemSummary(goalDefinition.partialItemIds);
+        const readyCount = countAnyInventoryItems(goalDefinition.readyItemIds);
+        const partialCount = countAnyInventoryItems(goalDefinition.partialItemIds);
+        const successfulRecipe = recipeEvaluations.find((entry) => entry.evaluation && entry.evaluation.success);
+        const stationLockedRecipe = recipeEvaluations.find((entry) => entry.evaluation && entry.evaluation.reason === 'wrong-station');
+
+        if (readyCount > 0) {
+            return {
+                status: 'ready',
+                statusLabel: 'Готово',
+                detail: `В сумке уже есть: ${readySummary}.`
+            };
+        }
+
+        if (successfulRecipe) {
+            return {
+                status: 'craftable',
+                statusLabel: 'Можно собрать',
+                detail: `Сейчас можно собрать: ${successfulRecipe.recipe.label}.`
+            };
+        }
+
+        if (partialCount > 0) {
+            return {
+                status: 'assembling',
+                statusLabel: 'Готовим',
+                detail: `Есть заготовки: ${partialSummary}.`
+            };
+        }
+
+        if (stationLockedRecipe) {
+            return {
+                status: 'later',
+                statusLabel: 'Нужна станция',
+                detail: `Следующий шаг на станции "${stationLockedRecipe.recipe.stationLabel}".`
+            };
+        }
+
+        return {
+            status: 'missing',
+            statusLabel: 'Пока пусто',
+            detail: goalDefinition.emptyHint || 'Эта ветка ещё не подготовлена.'
+        };
+    }
+
+    function buildBridgeGoalState(goalDefinition, recipeEvaluations) {
+        return buildGenericGoalState(goalDefinition, recipeEvaluations);
+    }
+
+    function buildPotionGoalState(goalDefinition, recipeEvaluations) {
+        return buildGenericGoalState(goalDefinition, recipeEvaluations);
+    }
+
+    function buildBoatGoalState(goalDefinition, recipeEvaluations) {
+        const boatRuntime = getBoatRuntime();
+        const activeBoatTraversal = boatRuntime && typeof boatRuntime.hasActiveBoatTraversal === 'function'
+            ? boatRuntime.hasActiveBoatTraversal()
+            : false;
+        const boatDurability = boatRuntime && typeof boatRuntime.getBoatDurability === 'function'
+            ? boatRuntime.getBoatDurability()
+            : 0;
+        const boatMaxDurability = boatRuntime && typeof boatRuntime.getBoatMaxDurability === 'function'
+            ? boatRuntime.getBoatMaxDurability()
+            : 0;
+        const boatReadyCount = countAnyInventoryItems(goalDefinition.readyItemIds);
+        const boatFrameCount = countInventoryItem('boatFrame');
+        const buildBoatEntry = recipeEvaluations.find((entry) => entry.recipeId === 'boat' && entry.evaluation && entry.evaluation.success);
+        const buildFrameEntry = recipeEvaluations.find((entry) => entry.recipeId === 'boat-frame' && entry.evaluation && entry.evaluation.success);
+        const stationLockedEntry = recipeEvaluations.find((entry) => entry.evaluation && entry.evaluation.reason === 'wrong-station');
+        const partialSummary = formatInventoryItemSummary(goalDefinition.partialItemIds);
+
+        if (activeBoatTraversal) {
+            return {
+                status: 'ready',
+                statusLabel: 'На ходу',
+                detail: boatMaxDurability > 0
+                    ? `Лодка уже активна: прочность ${boatDurability}/${boatMaxDurability}.`
+                    : 'Лодка уже активна и даёт проход по воде.'
+            };
+        }
+
+        if (boatReadyCount > 0) {
+            return {
+                status: 'ready',
+                statusLabel: 'Готово',
+                detail: `В сумке уже есть: ${formatInventoryItemSummary(goalDefinition.readyItemIds)}.`
+            };
+        }
+
+        if (buildBoatEntry) {
+            return {
+                status: 'craftable',
+                statusLabel: 'Можно собрать',
+                detail: 'Каркас и компоненты на месте, готовую лодку можно собрать прямо сейчас.'
+            };
+        }
+
+        if (boatFrameCount > 0) {
+            return {
+                status: 'assembling',
+                statusLabel: 'Каркас готов',
+                detail: `Рама лодки уже собрана. Осталось добрать жир и верёвку.`
+            };
+        }
+
+        if (buildFrameEntry) {
+            return {
+                status: 'assembling',
+                statusLabel: 'Можно начать',
+                detail: 'Сейчас можно собрать каркас лодки как первый шаг водной ветки.'
+            };
+        }
+
+        if (countAnyInventoryItems(goalDefinition.partialItemIds) > 0) {
+            return {
+                status: 'assembling',
+                statusLabel: 'Готовим',
+                detail: `Есть заготовки: ${partialSummary}.`
+            };
+        }
+
+        if (stationLockedEntry) {
+            return {
+                status: 'later',
+                statusLabel: 'Нужна станция',
+                detail: `Следующий шаг на станции "${stationLockedEntry.recipe.stationLabel}".`
+            };
+        }
+
+        return {
+            status: 'missing',
+            statusLabel: 'Пока пусто',
+            detail: goalDefinition.emptyHint
+        };
+    }
+
+    function buildRepairGoalState(goalDefinition, recipeEvaluations) {
+        const bridgeRuntime = getBridgeRuntime();
+        const boatRuntime = getBoatRuntime();
+        const weakenedBridgeCount = bridgeRuntime && typeof bridgeRuntime.getWeakenedBridgeState === 'function'
+            ? countTruthyEntries(bridgeRuntime.getWeakenedBridgeState())
+            : 0;
+        const boatNeedsRepair = boatRuntime && typeof boatRuntime.hasRepairableBoatTraversal === 'function'
+            ? boatRuntime.hasRepairableBoatTraversal()
+            : false;
+        const boatDurability = boatRuntime && typeof boatRuntime.getBoatDurability === 'function'
+            ? boatRuntime.getBoatDurability()
+            : 0;
+        const boatMaxDurability = boatRuntime && typeof boatRuntime.getBoatMaxDurability === 'function'
+            ? boatRuntime.getBoatMaxDurability()
+            : 0;
+        const readyCount = countAnyInventoryItems(goalDefinition.readyItemIds);
+        const successfulRecipe = recipeEvaluations.find((entry) => entry.evaluation && entry.evaluation.success);
+        const partialCount = countAnyInventoryItems(goalDefinition.partialItemIds);
+        const activeProblems = [];
+
+        if (weakenedBridgeCount > 0) {
+            activeProblems.push(`мосты ${weakenedBridgeCount}`);
+        }
+
+        if (boatNeedsRepair) {
+            activeProblems.push(
+                boatMaxDurability > 0
+                    ? `лодка ${boatDurability}/${boatMaxDurability}`
+                    : 'лодка'
+            );
+        }
+
+        if (readyCount > 0) {
+            return {
+                status: activeProblems.length > 0 ? 'urgent' : 'ready',
+                statusLabel: activeProblems.length > 0 ? 'Чинить можно' : 'Готово',
+                detail: activeProblems.length > 0
+                    ? `Есть чем чинить: ${activeProblems.join(', ')}.`
+                    : `В сумке уже есть: ${formatInventoryItemSummary(goalDefinition.readyItemIds)}.`
+            };
+        }
+
+        if (activeProblems.length > 0 && successfulRecipe) {
+            return {
+                status: 'craftable',
+                statusLabel: 'Собирай сейчас',
+                detail: `Уже есть что чинить: ${activeProblems.join(', ')}. Ремкомплект можно собрать прямо сейчас.`
+            };
+        }
+
+        if (activeProblems.length > 0 && partialCount > 0) {
+            return {
+                status: 'assembling',
+                statusLabel: 'Срочно готовим',
+                detail: `Есть заготовки под ремонт: ${formatInventoryItemSummary(goalDefinition.partialItemIds)}.`
+            };
+        }
+
+        if (activeProblems.length > 0) {
+            return {
+                status: 'urgent',
+                statusLabel: 'Нет ремнабора',
+                detail: `Есть что чинить, но ремкомплекта нет: ${activeProblems.join(', ')}.`
+            };
+        }
+
+        return buildGenericGoalState(goalDefinition, recipeEvaluations);
+    }
+
+    function buildBagQuestGoalState(goalDefinition, islandIndex) {
+        const bagUpgradeRuntime = getBagUpgradeRuntime();
+        const inventoryRuntime = getInventoryRuntime();
+        const currentSlots = inventoryRuntime && typeof inventoryRuntime.getUnlockedInventorySlots === 'function'
+            ? inventoryRuntime.getUnlockedInventorySlots()
+            : (bridge.getGame().state.unlockedInventorySlots || 4);
+
+        if (
+            !bagUpgradeRuntime
+            || typeof bagUpgradeRuntime.getAvailableStageForIsland !== 'function'
+            || typeof bagUpgradeRuntime.getStageEvaluation !== 'function'
+        ) {
+            return {
+                priorityLevel: 'later',
+                priorityLabel: 'Позже',
+                status: 'later',
+                statusLabel: 'Нет данных',
+                detail: goalDefinition.emptyHint
+            };
+        }
+
+        const stage = bagUpgradeRuntime.getAvailableStageForIsland(islandIndex, {
+            currentSlots
+        });
+
+        if (!stage) {
+            return {
+                priorityLevel: currentSlots >= 10 ? 'complete' : 'later',
+                priorityLabel: currentSlots >= 10 ? 'Закрыто' : 'Позже',
+                status: currentSlots >= 10 ? 'ready' : 'later',
+                statusLabel: currentSlots >= 10 ? 'Максимум' : 'Ещё рано',
+                detail: currentSlots >= 10
+                    ? 'Линия расширения сумки уже доведена до предела.'
+                    : goalDefinition.emptyHint
+            };
+        }
+
+        const evaluation = bagUpgradeRuntime.getStageEvaluation(stage, {
+            currentIslandIndex: islandIndex
+        });
+        const displayState = typeof bagUpgradeRuntime.buildQuestDisplayState === 'function'
+            ? bagUpgradeRuntime.buildQuestDisplayState(stage, evaluation)
+            : null;
+
+        if (evaluation && evaluation.isComplete) {
+            return {
+                priorityLevel: 'active',
+                priorityLabel: `Слот ${stage.targetSlots}`,
+                status: 'ready',
+                statusLabel: 'Можно сдавать',
+                detail: `Комплект ${stage.sourceSlots}→${stage.targetSlots} уже собран.`
+            };
+        }
+
+        if (evaluation && evaluation.progressCurrent > 0) {
+            return {
+                priorityLevel: 'active',
+                priorityLabel: `Слот ${stage.targetSlots}`,
+                status: 'assembling',
+                statusLabel: `${evaluation.progressCurrent}/${evaluation.progressRequired}`,
+                detail: displayState && displayState.missingSummaryLabel
+                    ? displayState.missingSummaryLabel
+                    : `Собираем комплект для слота ${stage.targetSlots}.`
+            };
+        }
+
+        return {
+            priorityLevel: 'active',
+            priorityLabel: `Слот ${stage.targetSlots}`,
+            status: 'active',
+            statusLabel: 'Активен',
+            detail: displayState && displayState.progressHeadline
+                ? displayState.progressHeadline
+                : `Нужно подготовить комплект для расширения сумки до ${stage.targetSlots} слотов.`
+        };
+    }
+
+    function buildProductionGoalState(goalDefinition, context = {}) {
+        if (goalDefinition.id === 'bagQuest') {
+            return buildBagQuestGoalState(goalDefinition, context.islandIndex);
+        }
+
+        const priorityLevel = getGoalPriorityLevel(goalDefinition, context.craftRequirementSummary, null);
+        const priorityLabel = getGoalPriorityLabel(priorityLevel);
+        let goalState = null;
+
+        switch (goalDefinition.id) {
+        case 'bridge':
+            goalState = buildBridgeGoalState(goalDefinition, context.recipeEvaluations);
+            break;
+        case 'repair':
+            goalState = buildRepairGoalState(goalDefinition, context.recipeEvaluations);
+            break;
+        case 'boat':
+            goalState = buildBoatGoalState(goalDefinition, context.recipeEvaluations);
+            break;
+        case 'potion':
+            goalState = buildPotionGoalState(goalDefinition, context.recipeEvaluations);
+            break;
+        default:
+            goalState = buildGenericGoalState(goalDefinition, context.recipeEvaluations);
+            break;
+        }
+
+        return {
+            priorityLevel,
+            priorityLabel,
+            ...goalState
+        };
+    }
+
+    function buildProductionGoalsSummary(goals, craftRequirementSummary) {
+        const windowLabel = craftRequirementSummary && craftRequirementSummary.windowId
+            ? craftRequirementSummary.windowId.replace(/-/g, ' ').replace(/\b([a-z])/g, (match) => match.toUpperCase())
+            : '';
+        const focus = craftRequirementSummary && craftRequirementSummary.focus
+            ? craftRequirementSummary.focus
+            : (craftRequirementSummary && craftRequirementSummary.phaseLabel ? craftRequirementSummary.phaseLabel : 'Текущая фаза');
+        const mandatoryGoals = goals.filter((goal) => goal.priorityLevel === 'mandatory').map((goal) => goal.label.toLowerCase());
+        const recommendedGoals = goals.filter((goal) => goal.priorityLevel === 'recommended').map((goal) => goal.label.toLowerCase());
+        const activeBagGoal = goals.find((goal) => goal.id === 'bagQuest' && goal.priorityLevel === 'active');
+        const parts = [];
+
+        parts.push(windowLabel ? `${windowLabel}: ${focus}.` : `${focus}.`);
+
+        if (mandatoryGoals.length > 0) {
+            parts.push(`Жёстко держи: ${mandatoryGoals.join(', ')}.`);
+        } else if (recommendedGoals.length > 0) {
+            parts.push(`Сейчас важнее держать рядом: ${recommendedGoals.join(', ')}.`);
+        } else {
+            parts.push('Это окно больше про подготовку и перенос заготовок, чем про срочный крафт.');
+        }
+
+        if (activeBagGoal && activeBagGoal.status !== 'ready') {
+            parts.push('Сумочный заказ тоже уже можно вести параллельно.');
+        }
+
+        return parts.join(' ');
+    }
+
+    function buildProductionGoalsState(tileInfo = bridge.getGame().state.activeTileInfo) {
+        const game = bridge.getGame();
+        const progression = bridge.getCurrentProgression(tileInfo);
+        const islandIndex = progression && Number.isFinite(progression.islandIndex)
+            ? Math.max(1, Math.floor(progression.islandIndex))
+            : Math.max(1, Math.floor(Number(game.state.currentIslandIndex) || 1));
+        const expeditionProgression = game.systems.expeditionProgression || null;
+        const craftRequirementSummary = expeditionProgression && typeof expeditionProgression.getIslandCraftRequirementSummary === 'function'
+            ? expeditionProgression.getIslandCraftRequirementSummary(progression || islandIndex)
+            : {
+                islandIndex,
+                focus: progression && progression.craftNeedFocus ? progression.craftNeedFocus : '',
+                phaseLabel: progression && progression.craftRequirementPhaseLabel ? progression.craftRequirementPhaseLabel : '',
+                windowId: progression && progression.craftNeedWindowId ? progression.craftNeedWindowId : '',
+                mandatoryBranches: normalizeStringList(progression && progression.craftNeedMandatoryBranches),
+                recommendedBranches: normalizeStringList(progression && progression.craftNeedRecommendedBranches),
+                optionalBranches: normalizeStringList(progression && progression.craftNeedOptionalBranches)
+            };
+        const islandNeedProfile = getIslandNeedProfileSystem();
+        const expandedNeedWindow = islandNeedProfile && typeof islandNeedProfile.getExpandedNeedWindow === 'function'
+            ? islandNeedProfile.getExpandedNeedWindow(islandIndex)
+            : null;
+        const stationContext = getActiveStationContext(game.state.activeInteraction, game.state.activeHouse);
+        const goals = PRODUCTION_GOAL_DEFINITIONS.map((goalDefinition) => {
+            const recipeEvaluations = buildRecipeEvaluationEntries(
+                goalDefinition.recipeIds,
+                stationContext,
+                game.state.activeInteraction,
+                game.state.activeHouse
+            );
+            const goalState = buildProductionGoalState(goalDefinition, {
+                islandIndex,
+                progression,
+                craftRequirementSummary,
+                expandedNeedWindow,
+                stationContext,
+                recipeEvaluations
+            });
+
+            return {
+                id: goalDefinition.id,
+                label: goalDefinition.label,
+                priorityLevel: goalState.priorityLevel,
+                priorityLabel: goalState.priorityLabel,
+                status: goalState.status,
+                statusLabel: goalState.statusLabel,
+                detail: goalState.detail
+            };
+        });
+
+        goals.sort((left, right) => {
+            const leftPriority = PRODUCTION_PRIORITY_ORDER[left.priorityLevel] ?? 99;
+            const rightPriority = PRODUCTION_PRIORITY_ORDER[right.priorityLevel] ?? 99;
+
+            if (leftPriority !== rightPriority) {
+                return leftPriority - rightPriority;
+            }
+
+            const leftStatus = PRODUCTION_STATUS_ORDER[left.status] ?? 99;
+            const rightStatus = PRODUCTION_STATUS_ORDER[right.status] ?? 99;
+
+            if (leftStatus !== rightStatus) {
+                return leftStatus - rightStatus;
+            }
+
+            return left.label.localeCompare(right.label, 'ru');
+        });
+
+        return {
+            islandIndex,
+            windowId: craftRequirementSummary && craftRequirementSummary.windowId ? craftRequirementSummary.windowId : '',
+            focus: craftRequirementSummary && craftRequirementSummary.focus ? craftRequirementSummary.focus : '',
+            summary: buildProductionGoalsSummary(goals, craftRequirementSummary),
+            goals
+        };
+    }
+
+    function buildProductionGoalNode(goal) {
+        const item = document.createElement('article');
+        item.className = 'production-goals__item';
+        item.classList.add(`production-goals__item--${goal.priorityLevel || 'later'}`);
+        item.classList.add(`production-goals__item--status-${goal.status || 'missing'}`);
+
+        const header = document.createElement('div');
+        header.className = 'production-goals__header';
+
+        const title = document.createElement('h3');
+        title.className = 'production-goals__title';
+        title.textContent = goal.label;
+
+        const badges = document.createElement('div');
+        badges.className = 'production-goals__badges';
+
+        const priorityBadge = document.createElement('span');
+        priorityBadge.className = 'production-goals__badge production-goals__badge--priority';
+        priorityBadge.textContent = goal.priorityLabel;
+
+        const statusBadge = document.createElement('span');
+        statusBadge.className = 'production-goals__badge production-goals__badge--status';
+        statusBadge.textContent = goal.statusLabel;
+
+        badges.append(priorityBadge, statusBadge);
+        header.append(title, badges);
+
+        const detail = document.createElement('p');
+        detail.className = 'production-goals__detail';
+        detail.textContent = goal.detail || '';
+
+        item.append(header, detail);
+        return item;
+    }
+
+    function syncProductionGoalsPanel(tileInfo = bridge.getGame().state.activeTileInfo) {
+        const elements = bridge.getElements();
+        const panelState = buildProductionGoalsState(tileInfo);
+
+        if (elements.productionGoalsSummary) {
+            elements.productionGoalsSummary.textContent = panelState.summary;
+        }
+
+        if (elements.productionGoalsList) {
+            elements.productionGoalsList.replaceChildren(
+                ...panelState.goals.map((goal) => buildProductionGoalNode(goal))
+            );
+        }
+
+        return panelState;
     }
 
     function createPauseSlotCard(slot) {
@@ -157,8 +898,16 @@
         const elements = bridge.getElements();
         const saveLoad = getSaveLoadSystem();
         const isMainMode = pauseMenuMode === PAUSE_MENU_MODE_MAIN;
-        const showSlotMenu = !isMainMode && canUseSaveSlots() && saveLoad && typeof saveLoad.listSaveSlots === 'function';
+        const isTravelMode = pauseMenuMode === PAUSE_MENU_MODE_TRAVEL;
+        const showSlotMenu = (pauseMenuMode === PAUSE_MENU_MODE_SAVE || pauseMenuMode === PAUSE_MENU_MODE_LOAD)
+            && canUseSaveSlots()
+            && saveLoad
+            && typeof saveLoad.listSaveSlots === 'function';
         const slots = showSlotMenu ? saveLoad.listSaveSlots() : [];
+        const expeditionProgression = getExpeditionProgression();
+        const travelEntries = isTravelMode && expeditionProgression && typeof expeditionProgression.getArchipelagoMetadata === 'function'
+            ? expeditionProgression.getArchipelagoMetadata()
+            : [];
 
         if (elements.pauseMainActions) {
             elements.pauseMainActions.hidden = !isMainMode;
@@ -166,6 +915,10 @@
 
         if (elements.pauseSlotMenu) {
             elements.pauseSlotMenu.hidden = !showSlotMenu;
+        }
+
+        if (elements.pauseTravelMenu) {
+            elements.pauseTravelMenu.hidden = !isTravelMode;
         }
 
         if (elements.pwaStatus) {
@@ -182,11 +935,31 @@
             elements.pauseSlotMenuStatus.hidden = !shouldShowStatus;
         }
 
+        if (elements.pauseTravelMenuSummary) {
+            elements.pauseTravelMenuSummary.textContent = getPauseModeSummary();
+        }
+
+        if (elements.pauseTravelMenuStatus) {
+            const shouldShowStatus = typeof pauseMenuStatusMessage === 'string' && pauseMenuStatusMessage.trim() !== '';
+            elements.pauseTravelMenuStatus.textContent = shouldShowStatus ? pauseMenuStatusMessage : '';
+            elements.pauseTravelMenuStatus.hidden = !shouldShowStatus;
+        }
+
         if (elements.pauseSlotList) {
             elements.pauseSlotList.replaceChildren();
             slots.forEach((slot) => {
                 elements.pauseSlotList.appendChild(createPauseSlotCard(slot));
             });
+        }
+
+        if (elements.pauseTravelList) {
+            elements.pauseTravelList.replaceChildren();
+            if (isTravelMode) {
+                const currentIslandIndex = Math.max(1, Math.floor(bridge.getGame().state.currentIslandIndex || 1));
+                travelEntries.forEach((entry) => {
+                    elements.pauseTravelList.appendChild(createPauseTravelCard(entry, currentIslandIndex));
+                });
+            }
         }
     }
 
@@ -196,7 +969,9 @@
         }
 
         setPauseMenuMode(PAUSE_MENU_MODE_SAVE);
-        bridge.renderAfterStateChange(['status']);
+        bridge.renderAfterStateChange(['status'], {
+            sceneChanged: false
+        });
         return true;
     }
 
@@ -206,13 +981,36 @@
         }
 
         setPauseMenuMode(PAUSE_MENU_MODE_LOAD);
-        bridge.renderAfterStateChange(['status']);
+        bridge.renderAfterStateChange(['status'], {
+            sceneChanged: false
+        });
         return true;
     }
 
     function closePauseSlotMenu() {
         resetPauseMenuState();
-        bridge.renderAfterStateChange(['status']);
+        bridge.renderAfterStateChange(['status'], {
+            sceneChanged: false
+        });
+    }
+
+    function openPauseTravelMenu() {
+        setPauseMenuMode(PAUSE_MENU_MODE_TRAVEL);
+        const expeditionProgression = getExpeditionProgression();
+        if (expeditionProgression && typeof expeditionProgression.getArchipelagoMetadata === 'function') {
+            expeditionProgression.getArchipelagoMetadata();
+        }
+        bridge.renderAfterStateChange(['status'], {
+            sceneChanged: false
+        });
+        return true;
+    }
+
+    function closePauseTravelMenu() {
+        resetPauseMenuState();
+        bridge.renderAfterStateChange(['status'], {
+            sceneChanged: false
+        });
     }
 
     function handlePauseSlotListClick(event) {
@@ -236,7 +1034,9 @@
             setPauseMenuStatus(savedRecord
                 ? `Слот ${slotId} сохранён.`
                 : `Не удалось сохранить слот ${slotId}.`);
-            bridge.renderAfterStateChange(['status']);
+            bridge.renderAfterStateChange(['status'], {
+                sceneChanged: false
+            });
             return Boolean(savedRecord);
         }
 
@@ -248,7 +1048,9 @@
 
             if (!loaded) {
                 setPauseMenuStatus(`Слот ${slotId} пуст или повреждён.`);
-                bridge.renderAfterStateChange(['status']);
+                bridge.renderAfterStateChange(['status'], {
+                    sceneChanged: false
+                });
                 return false;
             }
 
@@ -257,6 +1059,91 @@
         }
 
         return false;
+    }
+
+    function createPauseTravelCard(entry, currentIslandIndex) {
+        const islandIndex = entry && Number.isFinite(entry.islandIndex) ? entry.islandIndex : 0;
+        const isCurrent = islandIndex === currentIslandIndex;
+        const article = document.createElement('article');
+        article.className = 'pause-save-slot pause-save-slot--travel';
+
+        if (!entry || !entry.hasVisited) {
+            article.classList.add('pause-save-slot--empty');
+        }
+
+        const top = document.createElement('div');
+        top.className = 'pause-save-slot__top';
+
+        const label = document.createElement('strong');
+        label.className = 'pause-save-slot__label';
+        label.textContent = entry
+            ? `Остров ${islandIndex}: ${entry.label || `Остров ${islandIndex}`}`
+            : 'Неизвестный остров';
+
+        top.appendChild(label);
+
+        const meta = document.createElement('div');
+        meta.className = 'pause-save-slot__meta';
+        const metaLines = [];
+
+        if (entry && entry.craftPhaseLabel) {
+            metaLines.push(entry.craftPhaseLabel);
+        }
+
+        if (entry && entry.craftSummary) {
+            metaLines.push(entry.craftSummary);
+        }
+
+        if (entry && entry.scenario) {
+            metaLines.push(entry.scenario);
+        }
+
+        if (entry && Number.isFinite(entry.chunkCount)) {
+            metaLines.push(`Чанков: ${entry.chunkCount}`);
+        }
+
+        meta.textContent = metaLines.filter(Boolean).join(' · ');
+
+        const note = document.createElement('p');
+        note.className = 'pause-save-slot__note';
+        note.textContent = isCurrent ? 'Текущий остров.' : 'Мгновенный перенос к входу острова.';
+
+        const actionButton = document.createElement('button');
+        actionButton.className = 'hud-button pause-save-slot__action';
+        actionButton.type = 'button';
+        actionButton.textContent = isCurrent ? 'Сейчас здесь' : 'Перейти';
+        actionButton.disabled = isCurrent || !entry;
+        actionButton.setAttribute('data-travel-island-id', String(islandIndex));
+
+        article.append(top, meta, note, actionButton);
+        return article;
+    }
+
+    function handlePauseTravelListClick(event) {
+        const actionButton = event.target.closest('[data-travel-island-id]');
+        const islandIndex = Number(actionButton && actionButton.getAttribute('data-travel-island-id'));
+
+        if (!actionButton || actionButton.disabled || !Number.isInteger(islandIndex)) {
+            return false;
+        }
+
+        const expeditionProgression = getExpeditionProgression();
+        if (!expeditionProgression || typeof expeditionProgression.fastTravelToIsland !== 'function') {
+            return false;
+        }
+
+        const result = expeditionProgression.fastTravelToIsland(islandIndex);
+        setPauseMenuStatus(result && result.message ? result.message : 'Переход выполнен.');
+        bridge.renderAfterStateChange(['status', 'character', 'map', 'actionHint', 'actions'], {
+            sceneChanged: true
+        });
+
+        if (result && result.success) {
+            resetPauseMenuState();
+            togglePause(false);
+        }
+
+        return Boolean(result && result.success);
     }
 
     function ensureSleepOverlay() {
@@ -369,7 +1256,8 @@
             const previewSuffix = game.state.routePreviewLength > game.state.route.length
                 ? ` из ${game.state.routePreviewLength}`
                 : '';
-            const fullCostSuffix = game.state.routePreviewLength > game.state.route.length
+            const isExactPreview = game.state.routePreviewIsExact !== false;
+            const fullCostSuffix = isExactPreview && game.state.routePreviewLength > game.state.route.length
                 ? ` (всего ${bridge.formatRouteCost(game.state.routePreviewTotalCost)})`
                 : '';
             const warningSuffix = warningParts.length > 0
@@ -378,8 +1266,12 @@
             const reasonSuffix = reasonSummary
                 ? ` · ${reasonSummary}`
                 : '';
+            const previewPrefix = isExactPreview ? 'Маршрут' : 'Быстрый маршрут';
+            const previewResolveSuffix = isExactPreview
+                ? ''
+                : ' · можно идти сразу';
 
-            elements.routeSummary.textContent = `Маршрут: ${game.state.route.length}${previewSuffix} клеток · цена ${bridge.formatRouteCost(game.state.routeTotalCost)}${fullCostSuffix}${warningSuffix}${reasonSuffix}`;
+            elements.routeSummary.textContent = `${previewPrefix}: ${game.state.route.length}${previewSuffix} клеток · цена ${bridge.formatRouteCost(game.state.routeTotalCost)}${fullCostSuffix}${warningSuffix}${reasonSuffix}${previewResolveSuffix}`;
             return;
         }
 
@@ -413,7 +1305,7 @@
 
         if (elements.progressSummary) {
             elements.progressSummary.textContent = progression
-                ? `Остров ${progression.islandIndex} из ${finalIslandIndex} · ${progression.chunkCount} чанков · ${timeOfDayLabel} · ${weatherLabel} · ${progression.label}`
+                ? `Остров ${progression.islandIndex} из ${finalIslandIndex} · ${progression.chunkCount} чанков · ${timeOfDayLabel} · ${weatherLabel} · ${progression.label}${progression.craftRequirementSummary ? ` · Фокус: ${progression.craftRequirementSummary}` : ''}`
                 : `Остров 1 из ${finalIslandIndex} · ${timeOfDayLabel}`;
         }
 
@@ -474,6 +1366,7 @@
         const isDefeat = Boolean(!game.state.hasWon && bridge.isAllStatsDepleted());
         const isSaveMode = pauseMenuMode === PAUSE_MENU_MODE_SAVE;
         const isLoadMode = pauseMenuMode === PAUSE_MENU_MODE_LOAD;
+        const isTravelMode = pauseMenuMode === PAUSE_MENU_MODE_TRAVEL;
         const isMainMode = pauseMenuMode === PAUSE_MENU_MODE_MAIN;
         const canUseSlots = canUseSaveSlots();
 
@@ -493,9 +1386,13 @@
                     isLoadMode
                         ? 'Меню загрузки'
                         : (
-                            game.state.hasWon
-                                ? 'Экспедиция'
-                                : (isDefeat ? '' : (game.state.isGameOver ? 'Статус' : 'Пауза'))
+                            isTravelMode
+                                ? 'Быстрый переход'
+                                : (
+                                    game.state.hasWon
+                                        ? 'Экспедиция'
+                                        : (isDefeat ? '' : (game.state.isGameOver ? 'Статус' : 'Пауза'))
+                                )
                         )
                 );
         }
@@ -507,9 +1404,13 @@
                     isLoadMode
                         ? 'Загрузить'
                         : (
-                            game.state.hasWon
-                                ? 'Победа'
-                                : (isDefeat ? 'Ты умер' : 'Пауза')
+                            isTravelMode
+                                ? 'Острова'
+                                : (
+                                    game.state.hasWon
+                                        ? 'Победа'
+                                        : (isDefeat ? 'Ты умер' : 'Пауза')
+                                )
                         )
                 );
         }
@@ -521,15 +1422,19 @@
                     isLoadMode
                         ? 'Загрузка заменит текущее прохождение состоянием выбранного слота.'
                         : (
-                            game.state.hasWon
-                                ? (game.state.victoryMessage || 'Главный сундук найден. Экспедиция завершена.')
+                            isTravelMode
+                                ? 'Выберите остров для мгновенного перехода.'
                                 : (
-                                    isDefeat
-                                        ? ''
+                                    game.state.hasWon
+                                        ? (game.state.victoryMessage || 'Главный сундук найден. Экспедиция завершена.')
                                         : (
-                                            game.state.isGameOver
-                                                ? 'Все характеристики упали до нуля. Нажми "Новая игра", чтобы начать заново.'
-                                                : ''
+                                            isDefeat
+                                                ? ''
+                                                : (
+                                                    game.state.isGameOver
+                                                        ? 'Все характеристики упали до нуля. Нажми "Новая игра", чтобы начать заново.'
+                                                        : ''
+                                                )
                                         )
                                 )
                         )
@@ -616,7 +1521,9 @@
                 'quests',
                 'map',
                 'actionHint'
-            ]);
+            ], {
+                sceneChanged: false
+            });
         }
 
         return nextValue;
@@ -636,6 +1543,12 @@
 
     function applyMovementStepCosts() {
         const game = bridge.getGame();
+
+        if (game.state.suppressFastTravelCosts) {
+            game.state.suppressFastTravelCosts = false;
+            return;
+        }
+
         const tileInfo = game.state.activeTileInfo;
         const routeStep = Array.isArray(game.state.route) ? game.state.route[game.state.currentTargetIndex] : null;
         const focusMultiplier = bridge.getFocusMultiplier();
@@ -668,6 +1581,12 @@
 
     function applyPathCompletionCosts() {
         const game = bridge.getGame();
+
+        if (game.state.suppressFastTravelCosts) {
+            game.state.suppressFastTravelCosts = false;
+            return;
+        }
+
         const focusMultiplier = bridge.getFocusMultiplier();
         const sleepDrain = Math.max(1, bridge.scaleDrain(focusMultiplier) * bridge.getSleepDrainMultiplier(game.state.activeTileInfo));
 
@@ -683,12 +1602,17 @@
 
     Object.assign(statusUi, {
         closePauseSlotMenu,
+        closePauseTravelMenu,
         handlePauseSlotListClick,
+        handlePauseTravelListClick,
         openPauseLoadMenu,
         openPauseSaveMenu,
+        openPauseTravelMenu,
         updateStats,
         updateLocationSummaries,
         updateProgressSummaries,
+        buildProductionGoalsState,
+        syncProductionGoalsPanel,
         updateCharacterCard,
         syncStatusOverlay,
         syncConditionOverlay,

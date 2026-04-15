@@ -65,12 +65,25 @@
         renderAfterStateChange() {
             this.renderCallCount += 1;
         },
+        getGame() {
+            return game;
+        },
+        getUi() {
+            if (!game.state || typeof game.state !== 'object') {
+                return {};
+            }
+
+            game.state.ui = game.state.ui || {};
+            return game.state.ui;
+        },
         applyPathCompletionCosts() {
             this.pathCompletionCostCount += 1;
             return true;
         },
         getElements() {
             return {
+                productionGoalsSummary: document.getElementById('productionGoalsSummary'),
+                productionGoalsList: document.getElementById('productionGoalsList'),
                 actionButtons: []
             };
         },

@@ -45,6 +45,32 @@
             dialogueId: 'artisanGreeting'
         }
     };
+    const craftedLoadoutProfiles = {
+        survivorKit: {
+            profileId: 'survivorKit',
+            label: 'Комплект выжившего',
+            description: 'Подойдёт любой собранный рецепт выживания: лечение, еда, вода или стабилизация.',
+            matchAny: [
+                { sourceRecipeTags: ['survival', 'healing', 'food', 'water'] }
+            ]
+        },
+        bridgeKit: {
+            profileId: 'bridgeKit',
+            label: 'Мостовой набор',
+            description: 'Подойдёт любая собранная мостовая, ремонтная или строительная заготовка под переправу.',
+            matchAny: [
+                { sourceRecipeTags: ['bridge', 'construction', 'repair', 'movement'] }
+            ]
+        },
+        longRouteKit: {
+            profileId: 'longRouteKit',
+            label: 'Комплект дальнего маршрута',
+            description: 'Подойдёт собранный предмет под длинный путь: навигация, свет, темп или маршрутная утилита.',
+            matchAny: [
+                { sourceRecipeTags: ['route', 'movement', 'info', 'light'] }
+            ]
+        }
+    };
 
     const bagUpgradeStages = [
         {
@@ -74,11 +100,10 @@
                     ]
                 },
                 {
-                    requirementId: 'value',
-                    label: 'Ценность',
-                    description: 'Нужна хотя бы одна ценность.',
+                    requirementId: 'survivorLoadout',
+                    craftedLoadoutProfileId: 'survivorKit',
                     matchAny: [
-                        { questCategories: ['value'] }
+                        { itemIds: ['healing_base', 'fuel_bundle'] }
                     ]
                 }
             ]
@@ -118,11 +143,11 @@
                     ]
                 },
                 {
-                    requirementId: 'rareConsumable',
-                    label: 'Редкий расходник',
-                    description: 'Нужен хотя бы один редкий расходник.',
+                    requirementId: 'bridgeLoadout',
+                    craftedLoadoutProfileId: 'bridgeKit',
                     matchAny: [
-                        { questCategories: ['consumable'], minTier: 2 }
+                        { questCategories: ['consumable'], minTier: 2 },
+                        { itemIds: ['fiber_rope', 'wood_plank_basic', 'bridge_kit', 'repair_kit_bridge'] }
                     ]
                 }
             ]
@@ -163,10 +188,12 @@
                 },
                 {
                     requirementId: 'rareValue',
-                    label: 'Редкая ценность',
-                    description: 'Нужна редкая ценность не ниже T3.',
+                    craftedLoadoutProfileId: 'longRouteKit',
+                    label: 'Редкая ценность или комплект дальнего маршрута',
+                    description: 'Нужна редкая ценность не ниже T3 или собранный набор под длинный путь.',
                     matchAny: [
-                        { questCategories: ['value'], minTier: 3 }
+                        { questCategories: ['value'], minTier: 3 },
+                        { itemIds: ['fish_oil', 'wood_frame_basic', 'boatFrame', 'flask_water_full', 'repair_kit_boat'] }
                     ]
                 },
                 {
@@ -224,10 +251,10 @@
                 },
                 {
                     requirementId: 'tool',
-                    label: 'Инструмент',
-                    description: 'Нужен инструмент.',
+                    label: 'Собранный маршрутный узел',
+                    description: 'Нужен готовый мостовой, лодочный или ремонтный комплект.',
                     matchAny: [
-                        { questCategories: ['tool'] }
+                        { itemIds: ['bridge_kit', 'repair_kit_bridge', 'repair_kit_boat', 'boat_ready', 'reinforcedBridge', 'fieldBridge'] }
                     ]
                 }
             ]
@@ -368,6 +395,10 @@
         return artisanDefinitions[npcKind] || null;
     }
 
+    function getCraftedLoadoutProfile(profileId) {
+        return craftedLoadoutProfiles[profileId] || null;
+    }
+
     function getBagUpgradeStage(stageId) {
         return bagUpgradeStages.find((stage) => stage.stageId === stageId) || null;
     }
@@ -378,8 +409,10 @@
 
     Object.assign(bagUpgradeData, {
         artisanDefinitions,
+        craftedLoadoutProfiles,
         bagUpgradeStages,
         getArtisanDefinition,
+        getCraftedLoadoutProfile,
         getBagUpgradeStage,
         getBagUpgradeStageForIsland
     });

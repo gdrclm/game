@@ -311,41 +311,554 @@ function drawWeatherOverlay(progression) {
     weatherRuntime.drawCurrentWeatherOverlay(progression);
 }
 
-function drawWorld(playerPos, focusChunkX, focusChunkY, activeHouse) {
-    const game = window.Game;
-
-    for (let cy = focusChunkY - game.config.viewDistance; cy <= focusChunkY + game.config.viewDistance; cy++) {
-        for (let cx = focusChunkX - game.config.viewDistance; cx <= focusChunkX + game.config.viewDistance; cx++) {
-            const chunk = game.state.loadedChunks[`${cx},${cy}`];
-            if (chunk) {
-                game.systems.chunkRenderer.drawChunk(chunk);
-            }
-        }
+function rectsIntersect(first, second) {
+    if (!first || !second) {
+        return false;
     }
 
-    game.systems.entityRenderer.drawSceneEntities(playerPos, focusChunkX, focusChunkY, activeHouse);
+    return (
+        first.x < (second.x + second.width)
+        && (first.x + first.width) > second.x
+        && first.y < (second.y + second.height)
+        && (first.y + first.height) > second.y
+    );
 }
 
-function drawZoomedWorld(playerPos, focusChunkX, focusChunkY, activeHouse) {
+function createLayerState() {
+    return {
+        canvas: null,
+        ctx: null,
+        dirty: true,
+        signature: ''
+    };
+}
+
+const sceneLayers = {
+    staticWorld: createLayerState(),
+    dynamicEntities: createLayerState(),
+    canvasOverlay: createLayerState(),
+    combinedWorld: {
+        canvas: null,
+        ctx: null,
+        signature: '',
+        originX: 0,
+        originY: 0,
+        drawnChunkCount: 0,
+        visibleSignature: ''
+    }
+};
+
+function createLayerCanvas(width, height) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+}
+
+function ensureLayerCanvas(layer) {
     const game = window.Game;
-    const zoom = game.systems.camera && typeof game.systems.camera.getZoom === 'function'
+
+    if (
+        !layer.canvas
+        || !layer.ctx
+        || layer.canvas.width !== game.canvas.width
+        || layer.canvas.height !== game.canvas.height
+    ) {
+        layer.canvas = createLayerCanvas(game.canvas.width, game.canvas.height);
+        layer.ctx = layer.canvas.getContext('2d');
+        layer.dirty = true;
+        layer.signature = '';
+        sceneLayers.combinedWorld.signature = '';
+    }
+
+    return layer;
+}
+
+function markSceneLayersDirty(options = {}) {
+    const {
+        world = false,
+        entities = false,
+        overlay = false,
+        combinedWorld = false,
+        all = false
+    } = options;
+
+    if (all || world) {
+        sceneLayers.staticWorld.dirty = true;
+        sceneLayers.staticWorld.signature = '';
+    }
+
+    if (all || entities) {
+        sceneLayers.dynamicEntities.dirty = true;
+        sceneLayers.dynamicEntities.signature = '';
+    }
+
+    if (all || overlay) {
+        sceneLayers.canvasOverlay.dirty = true;
+        sceneLayers.canvasOverlay.signature = '';
+    }
+
+    if (all || combinedWorld) {
+        sceneLayers.combinedWorld.signature = '';
+    }
+}
+
+function withRenderContext(context, callback) {
+    const game = window.Game;
+    const previousContext = game.ctx;
+    game.ctx = context;
+
+    try {
+        return callback();
+    } finally {
+        game.ctx = previousContext;
+    }
+}
+
+function getRenderZoom() {
+    const game = window.Game;
+    return game.systems.camera && typeof game.systems.camera.getZoom === 'function'
         ? game.systems.camera.getZoom()
         : 1;
+}
+
+function withZoomTransform(context, callback) {
+    const game = window.Game;
+    const zoom = getRenderZoom();
 
     if (Math.abs(zoom - 1) <= 0.001) {
-        drawWorld(playerPos, focusChunkX, focusChunkY, activeHouse);
-        return;
+        return callback();
     }
 
     const centerX = game.canvas.width / 2;
     const centerY = game.canvas.height / 2;
 
-    game.ctx.save();
-    game.ctx.translate(centerX, centerY);
-    game.ctx.scale(zoom, zoom);
-    game.ctx.translate(-centerX, -centerY);
-    drawWorld(playerPos, focusChunkX, focusChunkY, activeHouse);
-    game.ctx.restore();
+    context.save();
+    context.translate(centerX, centerY);
+    context.scale(zoom, zoom);
+    context.translate(-centerX, -centerY);
+
+    try {
+        return callback();
+    } finally {
+        context.restore();
+    }
+}
+
+function getChunkViewportBounds() {
+    const game = window.Game;
+    return {
+        x: -game.canvas.width,
+        y: -game.canvas.height,
+        width: game.canvas.width * 3,
+        height: game.canvas.height * 3
+    };
+}
+
+function isChunkVisibleOnScreen(worldBounds) {
+    if (!worldBounds) {
+        return false;
+    }
+
+    const screenBounds = {
+        x: worldBounds.x + window.Game.camera.offset.x,
+        y: worldBounds.y + window.Game.camera.offset.y,
+        width: worldBounds.width,
+        height: worldBounds.height
+    };
+
+    return rectsIntersect(screenBounds, getChunkViewportBounds());
+}
+
+function collectVisibleChunkEntries(focusChunkX, focusChunkY) {
+    const game = window.Game;
+    const chunkRenderer = game.systems.chunkRenderer;
+    const result = [];
+
+    for (let chunkY = focusChunkY - game.config.viewDistance; chunkY <= focusChunkY + game.config.viewDistance; chunkY++) {
+        for (let chunkX = focusChunkX - game.config.viewDistance; chunkX <= focusChunkX + game.config.viewDistance; chunkX++) {
+            const chunk = game.state.loadedChunks[`${chunkX},${chunkY}`];
+
+            if (!chunk) {
+                continue;
+            }
+
+            const worldBounds = chunkRenderer.getChunkWorldBounds(chunk);
+
+            if (!isChunkVisibleOnScreen(worldBounds)) {
+                continue;
+            }
+
+            result.push({
+                key: `${chunkX},${chunkY}`,
+                chunk,
+                worldBounds,
+                renderSignature: chunkRenderer.getChunkRenderSignature(chunk)
+            });
+        }
+    }
+
+    return result.sort((left, right) => {
+        if (left.chunk.y !== right.chunk.y) {
+            return left.chunk.y - right.chunk.y;
+        }
+
+        return left.chunk.x - right.chunk.x;
+    });
+}
+
+function buildVisibleChunkSignature(entries = []) {
+    return entries.map((entry) => `${entry.key}:${entry.renderSignature}`).join('|');
+}
+
+function buildVisibleEntitySignature(focusChunkX, focusChunkY) {
+    const game = window.Game;
+    const result = [];
+
+    for (let chunkY = focusChunkY - game.config.viewDistance; chunkY <= focusChunkY + game.config.viewDistance; chunkY++) {
+        for (let chunkX = focusChunkX - game.config.viewDistance; chunkX <= focusChunkX + game.config.viewDistance; chunkX++) {
+            const chunk = game.state.loadedChunks[`${chunkX},${chunkY}`];
+
+            if (!chunk) {
+                continue;
+            }
+
+            const worldBounds = game.systems.chunkRenderer.getChunkWorldBounds(chunk);
+
+            if (!isChunkVisibleOnScreen(worldBounds)) {
+                continue;
+            }
+
+            result.push([
+                `${chunkX},${chunkY}`,
+                Number(chunk.entityVersion || 0),
+                Array.isArray(chunk.interactions) ? chunk.interactions.length : 0,
+                Array.isArray(chunk.houses) ? chunk.houses.length : 0
+            ].join(':'));
+        }
+    }
+
+    return result.join('|');
+}
+
+function rebuildCombinedWorldCache(entries) {
+    const chunkRenderer = window.Game.systems.chunkRenderer;
+
+    if (!entries.length) {
+        sceneLayers.combinedWorld.canvas = createLayerCanvas(1, 1);
+        sceneLayers.combinedWorld.ctx = sceneLayers.combinedWorld.canvas.getContext('2d');
+        sceneLayers.combinedWorld.originX = 0;
+        sceneLayers.combinedWorld.originY = 0;
+        sceneLayers.combinedWorld.drawnChunkCount = 0;
+        return sceneLayers.combinedWorld;
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    entries.forEach((entry) => {
+        minX = Math.min(minX, entry.worldBounds.x);
+        minY = Math.min(minY, entry.worldBounds.y);
+        maxX = Math.max(maxX, entry.worldBounds.x + entry.worldBounds.width);
+        maxY = Math.max(maxY, entry.worldBounds.y + entry.worldBounds.height);
+    });
+
+    const width = Math.max(1, Math.ceil(maxX - minX));
+    const height = Math.max(1, Math.ceil(maxY - minY));
+    const canvas = createLayerCanvas(width, height);
+    const context = canvas.getContext('2d');
+
+    entries.forEach((entry) => {
+        chunkRenderer.drawChunkLayers(
+            entry.chunk,
+            context,
+            entry.worldBounds.x - minX,
+            entry.worldBounds.y - minY
+        );
+    });
+
+    sceneLayers.combinedWorld.canvas = canvas;
+    sceneLayers.combinedWorld.ctx = context;
+    sceneLayers.combinedWorld.originX = minX;
+    sceneLayers.combinedWorld.originY = minY;
+    sceneLayers.combinedWorld.drawnChunkCount = entries.length;
+    return sceneLayers.combinedWorld;
+}
+
+function ensureCombinedWorldCache(focusChunkX, focusChunkY) {
+    const entries = collectVisibleChunkEntries(focusChunkX, focusChunkY);
+    const visibleSignature = buildVisibleChunkSignature(entries);
+    const signature = `${focusChunkX},${focusChunkY}|${visibleSignature}`;
+
+    sceneLayers.combinedWorld.drawnChunkCount = entries.length;
+    sceneLayers.combinedWorld.visibleSignature = visibleSignature;
+
+    if (sceneLayers.combinedWorld.signature !== signature || !sceneLayers.combinedWorld.canvas) {
+        rebuildCombinedWorldCache(entries);
+        sceneLayers.combinedWorld.signature = signature;
+        sceneLayers.staticWorld.dirty = true;
+    }
+
+    return sceneLayers.combinedWorld;
+}
+
+function getCameraSignature() {
+    return [
+        window.Game.camera.offset.x.toFixed(2),
+        window.Game.camera.offset.y.toFixed(2),
+        getRenderZoom().toFixed(3)
+    ].join(':');
+}
+
+function buildPositionSignature(position) {
+    if (!position) {
+        return 'none';
+    }
+
+    return `${Number(position.x || 0).toFixed(2)},${Number(position.y || 0).toFixed(2)}`;
+}
+
+function buildRouteSignature() {
+    const game = window.Game;
+    const route = Array.isArray(game.state.route) ? game.state.route : [];
+
+    if (!route.length) {
+        return 'route:none';
+    }
+
+    const sampleStride = Math.max(1, Math.floor(route.length / 6));
+    const samples = [];
+
+    for (let index = 0; index < route.length; index += sampleStride) {
+        const point = route[index];
+        samples.push(`${index}:${point.x},${point.y}:${point.travelBand || 'normal'}`);
+    }
+
+    const lastPoint = route[route.length - 1];
+
+    if (!samples.length || !samples[samples.length - 1].startsWith(`${route.length - 1}:`)) {
+        samples.push(`${route.length - 1}:${lastPoint.x},${lastPoint.y}:${lastPoint.travelBand || 'normal'}`);
+    }
+
+    return [
+        `route:${route.length}`,
+        `cost:${Number(game.state.routeTotalCost || 0).toFixed(2)}`,
+        `preview:${Number(game.state.routePreviewLength || 0)}`,
+        `previewCost:${Number(game.state.routePreviewTotalCost || 0).toFixed(2)}`,
+        samples.join('|')
+    ].join('|');
+}
+
+function buildSelectionSignature() {
+    const selectedTile = window.Game.state.selectedWorldTile;
+
+    if (!selectedTile) {
+        return 'selection:none';
+    }
+
+    return `selection:${selectedTile.x},${selectedTile.y}`;
+}
+
+function buildEffectsSignature(activeEffects = []) {
+    if (!activeEffects.length) {
+        return 'effects:none';
+    }
+
+    return activeEffects.map((effect) => [
+        effect.type || 'effect',
+        Number(effect.startTime || 0).toFixed(1),
+        Number(effect.duration || 0).toFixed(1),
+        effect.interaction ? `${effect.interaction.worldX},${effect.interaction.worldY}` : 'none'
+    ].join(':')).join('|');
+}
+
+function getWeatherOverlayKey(progression) {
+    const weatherRuntime = window.Game.systems.weatherRuntime || null;
+
+    if (!weatherRuntime) {
+        return 'clear';
+    }
+
+    const weather = progression && Number.isFinite(progression.islandIndex) && typeof weatherRuntime.getWeatherForIsland === 'function'
+        ? weatherRuntime.getWeatherForIsland(progression.islandIndex)
+        : (typeof weatherRuntime.getWeather === 'function'
+            ? weatherRuntime.getWeather(window.Game.state.activeTileInfo || null)
+            : null);
+    return weather && weather.overlayKey ? weather.overlayKey : 'clear';
+}
+
+function hasAnimatedWeatherOverlay(progression) {
+    return getWeatherOverlayKey(progression) !== 'clear';
+}
+
+function buildStaticWorldSignature(activeProgression, focusChunkX, focusChunkY, timestamp) {
+    const timeSignature = isTimeOfDayTransitionActive(timestamp)
+        ? `time:anim:${Math.round(timestamp / 16)}`
+        : `time:${getTimeOfDayIndex()}`;
+
+    return [
+        `camera:${getCameraSignature()}`,
+        `focus:${focusChunkX},${focusChunkY}`,
+        `world:${sceneLayers.combinedWorld.signature}`,
+        `island:${activeProgression && Number.isFinite(activeProgression.islandIndex) ? activeProgression.islandIndex : 0}`,
+        timeSignature
+    ].join('|');
+}
+
+function buildEntityLayerSignature(playerPos, focusChunkX, focusChunkY, activeHouse = null) {
+    return [
+        `camera:${getCameraSignature()}`,
+        `player:${buildPositionSignature(playerPos)}`,
+        `focus:${focusChunkX},${focusChunkY}`,
+        `house:${activeHouse ? activeHouse.id : 'outside'}`,
+        `world:${sceneLayers.combinedWorld.visibleSignature}`,
+        `entities:${buildVisibleEntitySignature(focusChunkX, focusChunkY)}`,
+        `activeInteraction:${window.Game.state.activeInteractionId || 'none'}`,
+        `resolved:${Object.keys(window.Game.state.resolvedHouseIds || {}).length}`
+    ].join('|');
+}
+
+function buildOverlayLayerSignature(activeProgression, activeEffects, timestamp) {
+    const game = window.Game;
+    const timeSignature = isTimeOfDayTransitionActive(timestamp)
+        ? `time:anim:${Math.round(timestamp / 16)}`
+        : `time:${getTimeOfDayIndex()}`;
+    const weatherOverlayKey = getWeatherOverlayKey(activeProgression);
+    const weatherSignature = hasAnimatedWeatherOverlay(activeProgression)
+        ? `weather:${weatherOverlayKey}:${Math.round(timestamp / 16)}`
+        : `weather:${weatherOverlayKey}`;
+    const effectsAnimationSignature = activeEffects && activeEffects.length > 0
+        ? `effectsFrame:${Math.round(timestamp / 16)}`
+        : 'effectsFrame:static';
+
+    const debugSignature = game && game.debug && game.debug.enabled
+        ? `debug:${Math.round(timestamp / 250)}`
+        : 'debug:off';
+
+    return [
+        `camera:${getCameraSignature()}`,
+        buildRouteSignature(),
+        buildSelectionSignature(),
+        buildEffectsSignature(activeEffects),
+        effectsAnimationSignature,
+        timeSignature,
+        weatherSignature,
+        debugSignature
+    ].join('|');
+}
+
+function drawStaticWorldLayer(activeProgression, focusChunkX, focusChunkY, timestamp) {
+    const game = window.Game;
+    const perf = game.systems.perf || null;
+    const layer = ensureLayerCanvas(sceneLayers.staticWorld);
+    const combinedWorld = ensureCombinedWorldCache(focusChunkX, focusChunkY);
+    const signature = buildStaticWorldSignature(activeProgression, focusChunkX, focusChunkY, timestamp);
+
+    if (!layer.dirty && layer.signature === signature) {
+        return false;
+    }
+
+    const draw = () => {
+        layer.ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+
+        withRenderContext(layer.ctx, () => {
+            drawIslandBackdrop(activeProgression, timestamp);
+        });
+
+        withZoomTransform(layer.ctx, () => {
+            layer.ctx.drawImage(
+                combinedWorld.canvas,
+                combinedWorld.originX + game.camera.offset.x,
+                combinedWorld.originY + game.camera.offset.y
+            );
+        });
+
+        layer.signature = signature;
+        layer.dirty = false;
+        return true;
+    };
+
+    if (perf && typeof perf.measure === 'function') {
+        return perf.measure('drawWorld', draw);
+    }
+
+    return draw();
+}
+
+function drawDynamicEntityLayer(playerPos, focusChunkX, focusChunkY, activeHouse) {
+    const game = window.Game;
+    const perf = game.systems.perf || null;
+    const layer = ensureLayerCanvas(sceneLayers.dynamicEntities);
+    const signature = buildEntityLayerSignature(playerPos, focusChunkX, focusChunkY, activeHouse);
+
+    if (!layer.dirty && layer.signature === signature) {
+        return false;
+    }
+
+    const draw = () => {
+        layer.ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+
+        withRenderContext(layer.ctx, () => {
+            withZoomTransform(layer.ctx, () => {
+                game.systems.entityRenderer.drawWorldEntities(playerPos, focusChunkX, focusChunkY, activeHouse);
+            });
+        });
+
+        layer.signature = signature;
+        layer.dirty = false;
+        return true;
+    };
+
+    if (perf && typeof perf.measure === 'function') {
+        return perf.measure('drawSceneEntities', draw);
+    }
+
+    return draw();
+}
+
+function drawCanvasOverlayLayer(activeProgression, activeEffects, timestamp, focusChunkX, focusChunkY, activeHouse) {
+    const game = window.Game;
+    const layer = ensureLayerCanvas(sceneLayers.canvasOverlay);
+    const signature = buildOverlayLayerSignature(activeProgression, activeEffects, timestamp);
+
+    if (!layer.dirty && layer.signature === signature) {
+        return false;
+    }
+
+    layer.ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+
+    withRenderContext(layer.ctx, () => {
+        if (game.systems.entityRenderer && typeof game.systems.entityRenderer.hasOverlayContent === 'function'
+            && game.systems.entityRenderer.hasOverlayContent()) {
+            withZoomTransform(layer.ctx, () => {
+                game.systems.entityRenderer.drawWorldOverlays();
+            });
+        }
+
+        if (game.systems.debugRenderer && typeof game.systems.debugRenderer.drawDebugOverlay === 'function') {
+            withZoomTransform(layer.ctx, () => {
+                game.systems.debugRenderer.drawDebugOverlay(focusChunkX, focusChunkY, activeHouse ? activeHouse.id : null);
+            });
+        }
+
+        drawTimeOfDayOverlay(timestamp);
+        drawWeatherOverlay(activeProgression);
+    });
+
+    layer.signature = signature;
+    layer.dirty = false;
+    return true;
+}
+
+function compositeLayers() {
+    const game = window.Game;
+
+    game.ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
+    game.ctx.drawImage(sceneLayers.staticWorld.canvas, 0, 0);
+    game.ctx.drawImage(sceneLayers.dynamicEntities.canvas, 0, 0);
+    game.ctx.drawImage(sceneLayers.canvasOverlay.canvas, 0, 0);
 }
 
 let renderRequestId = null;
@@ -355,29 +868,50 @@ let cameraSettling = false;
 
 function renderScene(playerPos, options = {}) {
     const game = window.Game;
+    const perf = game.systems.perf || null;
     const {
         cameraFocusPos = playerPos,
         shouldUpdateCamera = false,
-        timestamp = getNow()
+        timestamp = getNow(),
+        activeEffects = []
     } = options;
-    const activeHouse = game.state.activeHouse;
-    const activeInteraction = game.state.activeInteraction;
-    const activeProgression = game.state.activeTileInfo && game.state.activeTileInfo.progression
-        ? game.state.activeTileInfo.progression
-        : null;
-    const focusChunkX = Math.floor(cameraFocusPos.x / game.config.chunkSize);
-    const focusChunkY = Math.floor(cameraFocusPos.y / game.config.chunkSize);
 
-    game.ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
-    drawIslandBackdrop(activeProgression, timestamp);
-    if (shouldUpdateCamera) {
-        game.systems.camera.updateCamera(cameraFocusPos);
+    const draw = () => {
+        const activeHouse = game.state.activeHouse;
+        const activeInteraction = game.state.activeInteraction;
+        const activeProgression = game.state.activeTileInfo && game.state.activeTileInfo.progression
+            ? game.state.activeTileInfo.progression
+            : null;
+
+        if (shouldUpdateCamera) {
+            game.systems.camera.updateCamera(cameraFocusPos);
+            markSceneLayersDirty({
+                world: true,
+                entities: true,
+                overlay: true
+            });
+        }
+
+        const focusChunkX = Math.floor(cameraFocusPos.x / game.config.chunkSize);
+        const focusChunkY = Math.floor(cameraFocusPos.y / game.config.chunkSize);
+        const combinedWorld = ensureCombinedWorldCache(focusChunkX, focusChunkY);
+
+        if (perf && typeof perf.setFrameStat === 'function') {
+            perf.setFrameStat('drawnChunks', combinedWorld.drawnChunkCount);
+        }
+
+        drawStaticWorldLayer(activeProgression, focusChunkX, focusChunkY, timestamp);
+        drawDynamicEntityLayer(playerPos, focusChunkX, focusChunkY, activeHouse);
+        drawCanvasOverlayLayer(activeProgression, activeEffects, timestamp, focusChunkX, focusChunkY, activeHouse);
+        compositeLayers();
+        game.systems.debugRenderer.updateDebugPanel(playerPos, activeHouse, activeInteraction, focusChunkX, focusChunkY);
+    };
+
+    if (perf && typeof perf.measure === 'function') {
+        return perf.measure('renderScene', draw);
     }
 
-    drawZoomedWorld(playerPos, focusChunkX, focusChunkY, activeHouse);
-    drawTimeOfDayOverlay(timestamp);
-    drawWeatherOverlay(activeProgression);
-    game.systems.debugRenderer.updateDebugPanel(playerPos, activeHouse, activeInteraction);
+    return draw();
 }
 
 function resolveRenderOptions() {
@@ -390,7 +924,8 @@ function resolveRenderOptions() {
     return {
         playerPos,
         cameraFocusPos: options.cameraFocusPos || playerPos,
-        shouldUpdateCamera: Boolean(options.shouldUpdateCamera)
+        shouldUpdateCamera: Boolean(options.shouldUpdateCamera),
+        shouldRenderScene: options.shouldRenderScene !== false
     };
 }
 
@@ -405,52 +940,75 @@ function queueNextFrame() {
 function flushRender(timestamp) {
     const game = window.Game;
     const effects = game.systems.effects || null;
+    const perf = game.systems.perf || null;
     const ui = game.systems.ui || null;
     const resolvedOptions = resolveRenderOptions();
     const activeHouse = game.state.activeHouse;
     const activeInteraction = game.state.activeInteraction;
+    const activeProgression = game.state.activeTileInfo && game.state.activeTileInfo.progression
+        ? game.state.activeTileInfo.progression
+        : null;
     const activeEffects = effects && typeof effects.pruneExpiredEffects === 'function'
         ? effects.pruneExpiredEffects(timestamp)
         : [];
+    const shouldAnimateWeather = hasAnimatedWeatherOverlay(activeProgression);
 
     renderRequestId = null;
     pendingRenderOptions = null;
     lastRenderOptions = resolvedOptions;
 
-    renderScene(resolvedOptions.playerPos, {
-        ...resolvedOptions,
-        timestamp
-    });
-
-    if (ui && typeof ui.refreshDirty === 'function') {
-        ui.refreshDirty(resolvedOptions.playerPos, activeHouse, activeInteraction);
+    if (perf && typeof perf.recordFrame === 'function') {
+        perf.recordFrame(timestamp);
     }
 
-    if (cameraSettling && game.systems.camera.isCameraSettled()) {
-        game.camera.offset.x = game.camera.target.x;
-        game.camera.offset.y = game.camera.target.y;
-        cameraSettling = false;
-        requestRender({
-            playerPos: game.state.playerPos
-        });
-        return;
-    }
+    try {
+        if (resolvedOptions.shouldRenderScene) {
+            renderScene(resolvedOptions.playerPos, {
+                ...resolvedOptions,
+                timestamp,
+                activeEffects
+            });
+        }
 
-    if (cameraSettling) {
-        requestRender({
-            playerPos: game.state.playerPos,
-            cameraFocusPos: game.state.playerPos,
-            shouldUpdateCamera: true
-        });
-        return;
-    }
+        if (ui && typeof ui.refreshDirty === 'function') {
+            ui.refreshDirty(resolvedOptions.playerPos, activeHouse, activeInteraction);
+        }
 
-    if (activeEffects.length > 0 || isTimeOfDayTransitionActive(timestamp)) {
-        requestRender({
-            playerPos: resolvedOptions.playerPos,
-            cameraFocusPos: resolvedOptions.cameraFocusPos,
-            shouldUpdateCamera: resolvedOptions.shouldUpdateCamera
-        });
+        if (cameraSettling && game.systems.camera.isCameraSettled()) {
+            game.camera.offset.x = game.camera.target.x;
+            game.camera.offset.y = game.camera.target.y;
+            cameraSettling = false;
+            requestRender({
+                playerPos: game.state.playerPos
+            });
+            return;
+        }
+
+        if (cameraSettling) {
+            requestRender({
+                playerPos: game.state.playerPos,
+                cameraFocusPos: game.state.playerPos,
+                shouldUpdateCamera: true
+            });
+            return;
+        }
+
+        if (activeEffects.length > 0 || isTimeOfDayTransitionActive(timestamp) || shouldAnimateWeather) {
+            requestRender({
+                playerPos: resolvedOptions.playerPos,
+                cameraFocusPos: resolvedOptions.cameraFocusPos,
+                shouldUpdateCamera: resolvedOptions.shouldUpdateCamera,
+                shouldRenderScene: true
+            });
+        }
+    } finally {
+        if (perf && typeof perf.finishFrame === 'function') {
+            perf.finishFrame();
+        }
+
+        if (perf && typeof perf.updatePanel === 'function') {
+            perf.updatePanel();
+        }
     }
 }
 
@@ -459,18 +1017,24 @@ function requestRender(options = {}) {
     const nextOptions = {
         playerPos: options.playerPos || game.state.playerPos,
         cameraFocusPos: options.cameraFocusPos || options.playerPos || game.state.playerPos,
-        shouldUpdateCamera: Boolean(options.shouldUpdateCamera)
+        shouldUpdateCamera: Boolean(options.shouldUpdateCamera),
+        shouldRenderScene: options.shouldRenderScene !== false
     };
 
     pendingRenderOptions = pendingRenderOptions
         ? {
             playerPos: nextOptions.playerPos,
             cameraFocusPos: nextOptions.cameraFocusPos,
-            shouldUpdateCamera: pendingRenderOptions.shouldUpdateCamera || nextOptions.shouldUpdateCamera
+            shouldUpdateCamera: pendingRenderOptions.shouldUpdateCamera || nextOptions.shouldUpdateCamera,
+            shouldRenderScene: pendingRenderOptions.shouldRenderScene || nextOptions.shouldRenderScene
         }
         : nextOptions;
 
     queueNextFrame();
+}
+
+function hasPendingRender() {
+    return Boolean(renderRequestId || pendingRenderOptions);
 }
 
 function render() {
@@ -517,11 +1081,13 @@ window.Game.systems.render = {
     render,
     renderWithInterpolation,
     requestRender,
+    hasPendingRender,
     timeOfDayCycle: TIME_OF_DAY_CYCLE,
     getTimeOfDayDefinition,
     advanceTimeOfDay,
     isoToScreen: window.Game.systems.camera.isoToScreen,
     centerCameraOn: window.Game.systems.camera.centerCameraOn,
     settleCameraOnPlayer,
-    stopCameraAnimation
+    stopCameraAnimation,
+    markSceneLayersDirty
 };

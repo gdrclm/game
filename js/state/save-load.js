@@ -14,6 +14,7 @@
     const CANONICAL_COMPONENT_ITEM_IDS_SAVE_VERSION = 7;
     const CANONICAL_CRAFT_OUTPUT_ITEM_IDS_SAVE_VERSION = 8;
     const BRIDGE_BUILDER_LINK_SAVE_VERSION = 9;
+    const BOAT_TRAVERSAL_STATE_SAVE_VERSION = 10;
     const LEGACY_RAW_RESOURCE_ITEM_MIGRATIONS = Object.freeze({
         lowlandGrass: {
             itemId: 'raw_reeds',
@@ -50,7 +51,11 @@
     });
     const LEGACY_CRAFT_OUTPUT_ITEM_MIGRATIONS = Object.freeze({
         bridgeRepairKit: { itemId: 'repair_kit_bridge', label: 'Ремкомплект моста', icon: 'RM' },
-        boatRepairKit: { itemId: 'repair_kit_boat', label: 'Ремкомплект лодки', icon: 'RL' }
+        boatRepairKit: { itemId: 'repair_kit_boat', label: 'Ремкомплект лодки', icon: 'RL' },
+        ferryBoard: { itemId: 'portableBridge', label: 'Переносной мост', icon: 'PM' },
+        roughBridge: { itemId: 'reinforcedBridge', label: 'Усиленный мост', icon: 'UM' },
+        lightBoat: { itemId: 'boat_ready', label: 'Готовая лодка', icon: 'BL' },
+        foldingBoat: { itemId: 'boat_ready', label: 'Готовая лодка', icon: 'BL' }
     });
     const RAW_STACKABLE_ITEM_IDS = new Set([
         'raw_grass',
@@ -778,6 +783,24 @@
         };
     }
 
+    function migrateSnapshotToVersion10(snapshot) {
+        const player = isPlainObject(snapshot.player) ? cloneValue(snapshot.player) : {};
+        const world = isPlainObject(snapshot.world) ? cloneValue(snapshot.world) : {};
+
+        if (!isPlainObject(player.boatTraversalState)) {
+            player.boatTraversalState = null;
+        }
+
+        return {
+            saveVersion: BOAT_TRAVERSAL_STATE_SAVE_VERSION,
+            player,
+            craftingState: buildMigratedCraftingState(snapshot),
+            world,
+            narrative: isPlainObject(snapshot.narrative) ? cloneValue(snapshot.narrative) : {},
+            ui: isPlainObject(snapshot.ui) ? cloneValue(snapshot.ui) : {}
+        };
+    }
+
     function normalizeSnapshot(snapshot) {
         const normalizedDomains = stateSchema.normalizeDomains({
             meta: {
@@ -871,6 +894,12 @@
 
             if (version === CANONICAL_CRAFT_OUTPUT_ITEM_IDS_SAVE_VERSION) {
                 snapshot = migrateSnapshotToVersion9(snapshot);
+                version = snapshot.saveVersion;
+                continue;
+            }
+
+            if (version === BRIDGE_BUILDER_LINK_SAVE_VERSION) {
+                snapshot = migrateSnapshotToVersion10(snapshot);
                 version = snapshot.saveVersion;
                 continue;
             }
@@ -980,6 +1009,7 @@
         migrateSnapshotToVersion7,
         migrateSnapshotToVersion8,
         migrateSnapshotToVersion9,
+        migrateSnapshotToVersion10,
         migrateSnapshot,
         parseState,
         resetRuntimeState,

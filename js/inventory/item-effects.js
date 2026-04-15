@@ -44,8 +44,44 @@
         return game.systems.inventoryUi || null;
     }
 
+    function getGridReachDistance(fromX, fromY, toX, toY) {
+        return Math.max(
+            Math.abs(Math.round(toX) - Math.round(fromX)),
+            Math.abs(Math.round(toY) - Math.round(fromY))
+        );
+    }
+
+    function getNearbyGridPositions(originX, originY, options = {}) {
+        const includeOrigin = options.includeOrigin !== false;
+        const roundedX = Math.round(originX);
+        const roundedY = Math.round(originY);
+        const positions = includeOrigin ? [{ x: roundedX, y: roundedY }] : [];
+
+        [
+            { dx: 1, dy: 0 },
+            { dx: -1, dy: 0 },
+            { dx: 0, dy: 1 },
+            { dx: 0, dy: -1 },
+            { dx: 1, dy: 1 },
+            { dx: 1, dy: -1 },
+            { dx: -1, dy: 1 },
+            { dx: -1, dy: -1 }
+        ].forEach((direction) => {
+            positions.push({
+                x: roundedX + direction.dx,
+                y: roundedY + direction.dy
+            });
+        });
+
+        return positions;
+    }
+
     function getExpedition() {
         return game.systems.expedition || null;
+    }
+
+    function getBoatRuntime() {
+        return game.systems.boatRuntime || getExpedition() || null;
     }
 
     function getActiveEffectsState() {
@@ -298,7 +334,7 @@
         const activeEffect = getActiveEffectForUse({ id: itemId });
         return Boolean(
             activeEffect && activeEffect.kind === 'bridgeBuilder'
-        ) || itemId === 'ferryBoard' || itemId === 'roughBridge';
+        );
     }
 
     function getContainerStateForItem(itemOrId) {
@@ -330,16 +366,10 @@
     function findNearbyWaterSourceInteraction() {
         const playerPos = game.state.playerPos || { x: 0, y: 0 };
         const selectedTile = game.state.selectedWorldTile || null;
-        const positions = [
-            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) },
-            { x: Math.round(playerPos.x) + 1, y: Math.round(playerPos.y) },
-            { x: Math.round(playerPos.x) - 1, y: Math.round(playerPos.y) },
-            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) + 1 },
-            { x: Math.round(playerPos.x), y: Math.round(playerPos.y) - 1 }
-        ];
+        const positions = getNearbyGridPositions(playerPos.x, playerPos.y);
 
         if (selectedTile) {
-            const selectedDistance = Math.abs(Math.round(selectedTile.x) - Math.round(playerPos.x)) + Math.abs(Math.round(selectedTile.y) - Math.round(playerPos.y));
+            const selectedDistance = getGridReachDistance(playerPos.x, playerPos.y, selectedTile.x, selectedTile.y);
             if (selectedDistance <= 1) {
                 positions.unshift({
                     x: Math.round(selectedTile.x),
@@ -583,7 +613,25 @@
         tileInfo.travelZoneKey = 'none';
         if (tileInfo.chunk && tileInfo.chunk.travelZones && tileInfo.chunk.travelZones[tileInfo.localY]) {
             tileInfo.chunk.travelZones[tileInfo.localY][tileInfo.localX] = 'none';
-            tileInfo.chunk.renderCache = null;
+            const chunkRenderer = game.systems.chunkRenderer || null;
+            const render = game.systems.render || null;
+
+            if (chunkRenderer && typeof chunkRenderer.invalidateChunkRenderCache === 'function') {
+                chunkRenderer.invalidateChunkRenderCache(tileInfo.chunk, {
+                    overlayChanged: true,
+                    reason: 'bridgeRepaired'
+                });
+            } else {
+                tileInfo.chunk.renderCache = null;
+            }
+
+            if (render && typeof render.markSceneLayersDirty === 'function') {
+                render.markSceneLayersDirty({
+                    world: true,
+                    entities: true,
+                    overlay: true
+                });
+            }
         }
 
         const world = getWorld();
@@ -594,6 +642,58 @@
         return {
             success: true,
             message: `Мост у клетки ${tileInfo.x},${tileInfo.y} укреплён и снова держит полный проход.`,
+            effectDrops: []
+        };
+    }
+
+    function getRepairableBoatTarget() {
+        const boatRuntime = getBoatRuntime();
+        return boatRuntime && typeof boatRuntime.getActiveBoatRecord === 'function'
+            ? boatRuntime.getActiveBoatRecord()
+            : null;
+    }
+
+    function repairBoatAtTarget(boatRecord) {
+        const boatRuntime = getBoatRuntime();
+
+        if (!boatRecord) {
+            return {
+                success: false,
+                message: 'Сейчас нет лодки, которую можно ремонтировать.',
+                effectDrops: []
+            };
+        }
+
+        const maxDurability = boatRuntime && typeof boatRuntime.getBoatMaxDurability === 'function'
+            ? boatRuntime.getBoatMaxDurability()
+            : Math.max(1, boatRecord.maxDurability || 0);
+        const currentDurability = boatRuntime && typeof boatRuntime.getBoatDurability === 'function'
+            ? boatRuntime.getBoatDurability()
+            : Math.max(0, boatRecord.currentDurability || 0);
+
+        if (currentDurability >= Math.max(1, maxDurability)) {
+            return {
+                success: false,
+                message: 'Лодка уже в рабочем состоянии.',
+                effectDrops: []
+            };
+        }
+
+        const repairedRecord = boatRuntime && typeof boatRuntime.repairBoatTraversal === 'function'
+            ? boatRuntime.repairBoatTraversal()
+            : null;
+
+        if (!repairedRecord) {
+            return {
+                success: false,
+                message: 'Лодку не удалось восстановить.',
+                effectDrops: []
+            };
+        }
+
+        return {
+            success: true,
+            message: `Лодка "${repairedRecord.label}" восстановлена до ${repairedRecord.currentDurability} из ${repairedRecord.maxDurability} переходов по воде.`,
             effectDrops: []
         };
     }
@@ -661,6 +761,50 @@
         };
     }
 
+    function getBoatTraversalProfile(item, activeEffect = {}) {
+        const boatRuntime = getBoatRuntime();
+        const itemId = item && typeof item.id === 'string' && item.id
+            ? item.id
+            : (typeof activeEffect.sourceItemId === 'string' ? activeEffect.sourceItemId : '');
+        const definition = itemId ? getItemDefinition(itemId) : null;
+        const extra = definition && definition.extra && typeof definition.extra === 'object'
+            ? definition.extra
+            : {};
+        const overrides = {
+            sourceItemId: itemId || activeEffect.sourceItemId,
+            label: item && item.label
+                ? item.label
+                : (definition && definition.label) || activeEffect.label || '',
+            boatFamily: activeEffect.boatFamily || extra.boatFamily || '',
+            boatUpgradeStage: Number.isFinite(activeEffect.boatUpgradeStage)
+                ? activeEffect.boatUpgradeStage
+                : extra.boatUpgradeStage,
+            maxDurability: Number.isFinite(activeEffect.boatMaxDurability)
+                ? activeEffect.boatMaxDurability
+                : extra.boatMaxDurability,
+            waterTravelMultiplier: Number.isFinite(activeEffect.waterTravelMultiplier)
+                ? activeEffect.waterTravelMultiplier
+                : extra.waterTravelMultiplier,
+            waterRouteBand: activeEffect.waterRouteBand || extra.waterRouteBand || '',
+            waterTraversalLabel: activeEffect.waterTraversalLabel || extra.waterTraversalLabel || ''
+        };
+
+        if (boatRuntime && typeof boatRuntime.buildBoatTraversalProfile === 'function') {
+            return boatRuntime.buildBoatTraversalProfile(itemId, overrides);
+        }
+
+        return {
+            sourceItemId: overrides.sourceItemId || 'boat_ready',
+            label: overrides.label || 'Готовая лодка',
+            boatFamily: overrides.boatFamily || 'expedition',
+            boatUpgradeStage: Number.isFinite(overrides.boatUpgradeStage) ? overrides.boatUpgradeStage : 1,
+            maxDurability: Number.isFinite(overrides.maxDurability) ? Math.max(1, Math.floor(overrides.maxDurability)) : 3,
+            waterTravelMultiplier: Number.isFinite(overrides.waterTravelMultiplier) ? overrides.waterTravelMultiplier : 1.34,
+            waterRouteBand: overrides.waterRouteBand || 'hazard',
+            waterTraversalLabel: overrides.waterTraversalLabel || 'вода на лодке'
+        };
+    }
+
     function canActivateEffectFromItem(item, activeEffect) {
         if (!activeEffect || !activeEffect.kind) {
             return false;
@@ -692,13 +836,34 @@
         }
 
         if (activeEffect.kind === 'openCraftPanel') {
-            return Boolean(getInventoryUi() && typeof getInventoryUi().toggleInventoryPanel === 'function');
+            const craftPanelUi = game.systems.stationUi || null;
+            return Boolean(
+                (craftPanelUi && typeof craftPanelUi.openCraftPanel === 'function')
+                || (getInventoryUi() && typeof getInventoryUi().toggleInventoryPanel === 'function')
+            );
+        }
+
+        if (activeEffect.kind === 'boatTraversal') {
+            const boatRuntime = getBoatRuntime();
+            return boatRuntime && typeof boatRuntime.canActivateBoatTraversal === 'function'
+                ? boatRuntime.canActivateBoatTraversal()
+                : true;
         }
 
         if (activeEffect.kind === 'repairStructure') {
-            return inferRepairStructureKind(item, activeEffect) === 'bridge'
-                ? Boolean(getRepairableBridgeTarget())
-                : false;
+            const structureKind = inferRepairStructureKind(item, activeEffect);
+            if (structureKind === 'bridge') {
+                return Boolean(getRepairableBridgeTarget());
+            }
+
+            if (structureKind === 'boat') {
+                const boatRuntime = getBoatRuntime();
+                return boatRuntime && typeof boatRuntime.hasRepairableBoatTraversal === 'function'
+                    ? boatRuntime.hasRepairableBoatTraversal()
+                    : Boolean(getRepairableBoatTarget());
+            }
+
+            return false;
         }
 
         return true;
@@ -1325,7 +1490,13 @@
         }
 
         const safeChunk = island.chunks.find((chunkRecord) => Array.isArray(chunkRecord.houseProfiles) && chunkRecord.houseProfiles.some((profile) => profile && (
-            profile.kind === 'shelter' || profile.kind === 'well' || profile.kind === 'forage' || profile.kind === 'merchant' || profile.kind === 'artisan'
+            profile.kind === 'shelter'
+            || profile.kind === 'well'
+            || profile.kind === 'forage'
+            || profile.kind === 'merchant'
+            || profile.kind === 'craft_merchant'
+            || profile.kind === 'station_keeper'
+            || profile.kind === 'artisan'
         )));
 
         return findChunkCenterLanding(safeChunk || island.chunks[0]);
@@ -1354,6 +1525,7 @@
         game.state.routeTotalCost = 0;
         game.state.routePreviewLength = 0;
         game.state.routePreviewTotalCost = 0;
+        game.state.routePreviewIsExact = true;
         game.state.isMoving = false;
         game.state.playerPos = { x: target.x, y: target.y };
         game.systems.world.updatePlayerContext(game.state.playerPos);
@@ -1440,9 +1612,13 @@
 
     function handleCheapestRouteHint() {
         if (game.state.routePreviewLength > 0) {
+            const routeSummary = game.state.routePreviewIsExact === false
+                ? `Текущий маршрут пока показан как быстрый preview: ${bridge.formatRouteCost(game.state.routePreviewTotalCost)} за ${game.state.routePreviewLength} клеток. Двигаться можно сразу, а дальняя часть пути будет уточняться по мере продвижения.`
+                : `Текущий маршрут уже пересчитан по полной стоимости: ${bridge.formatRouteCost(game.state.routePreviewTotalCost)} за ${game.state.routePreviewLength} клеток.`;
+
             return {
                 success: true,
-                message: `Текущий маршрут уже пересчитан по полной стоимости: ${bridge.formatRouteCost(game.state.routePreviewTotalCost)} за ${game.state.routePreviewLength} клеток.`,
+                message: routeSummary,
                 effectDrops: []
             };
         }
@@ -1611,6 +1787,49 @@
             };
         }
 
+        if (activeEffect.kind === 'boatTraversal') {
+            const boatRuntime = getBoatRuntime();
+            if (!boatRuntime || typeof boatRuntime.activateBoatTraversal !== 'function') {
+                return {
+                    success: false,
+                    message: 'Лодочный runtime сейчас недоступен.',
+                    effectDrops: [],
+                    consumeItem: false
+                };
+            }
+
+            if (typeof boatRuntime.canActivateBoatTraversal === 'function' && !boatRuntime.canActivateBoatTraversal()) {
+                const activeBoatRecord = typeof boatRuntime.getActiveBoatRecord === 'function'
+                    ? boatRuntime.getActiveBoatRecord()
+                    : null;
+                return {
+                    success: false,
+                    message: activeBoatRecord
+                        ? `Лодка "${activeBoatRecord.label}" уже подготовлена и ещё пригодна для воды. Сначала износи её до конца или отремонтируй.`
+                        : 'Лодка уже подготовлена к водному переходу.',
+                    effectDrops: [],
+                    consumeItem: false
+                };
+            }
+
+            const boatProfile = getBoatTraversalProfile(item, activeEffect);
+            const activeBoatRecord = boatRuntime.activateBoatTraversal(boatProfile);
+
+            return activeBoatRecord
+                ? {
+                    success: true,
+                    message: `Лодка "${activeBoatRecord.label}" подготовлена к воде. Прочность: ${activeBoatRecord.currentDurability} из ${activeBoatRecord.maxDurability}. Теперь маршрут можно прокладывать через воду.`,
+                    effectDrops: [],
+                    consumeItem: true
+                }
+                : {
+                    success: false,
+                    message: 'Не удалось подготовить лодку к маршруту.',
+                    effectDrops: [],
+                    consumeItem: false
+                };
+        }
+
         if (activeEffect.kind === 'revealMap') {
             return {
                 ...handleRevealMapEffect(activeEffect),
@@ -1745,9 +1964,18 @@
 
         if (activeEffect.kind === 'openCraftPanel') {
             const inventoryUi = getInventoryUi();
+            const craftPanelUi = game.systems.stationUi || null;
             let opened = false;
 
-            if (inventoryUi && typeof inventoryUi.toggleInventoryPanel === 'function') {
+            if (craftPanelUi && typeof craftPanelUi.openCraftPanel === 'function') {
+                try {
+                    opened = Boolean(craftPanelUi.openCraftPanel({ silent: true }));
+                } catch (error) {
+                    opened = false;
+                }
+            }
+
+            if (!opened && inventoryUi && typeof inventoryUi.toggleInventoryPanel === 'function') {
                 try {
                     inventoryUi.toggleInventoryPanel(false);
                     opened = true;
@@ -1770,10 +1998,14 @@
                 };
             }
 
+            if (game && game.state) {
+                game.state.isInventoryPanelCollapsed = false;
+            }
+
             bridge.renderAfterStateChange();
             return {
                 success: true,
-                message: 'Сумка и панель крафта открыты. Выбери предмет, чтобы увидеть доступные рецепты по текущей станции.',
+                message: 'Открыта отдельная панель крафта. Можно фильтровать рецепты по станциям и ролям.',
                 effectDrops: [],
                 consumeItem: false
             };
@@ -1791,11 +2023,10 @@
             }
 
             if (structureKind === 'boat') {
+                const repairOutcome = repairBoatAtTarget(getRepairableBoatTarget());
                 return {
-                    success: false,
-                    message: 'Ремонт лодки уже выделен как отдельный предмет, но world-runtime для него пока не подключён.',
-                    effectDrops: [],
-                    consumeItem: false
+                    ...repairOutcome,
+                    consumeItem: repairOutcome.success
                 };
             }
 

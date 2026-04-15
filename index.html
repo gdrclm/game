@@ -74,6 +74,9 @@
                     <button id="zoomOutButton" class="hud-button scene-toolbar__button scene-toolbar__zoom-button" type="button" aria-label="Отдалить камеру" title="Отдалить камеру">-</button>
                     <button id="zoomInButton" class="hud-button scene-toolbar__button scene-toolbar__zoom-button" type="button" aria-label="Приблизить камеру" title="Приблизить камеру">+</button>
                     <button id="mapButton" class="hud-button scene-toolbar__button" type="button" aria-label="Карта" title="Карта">Карта</button>
+                    <button id="mobileQuestDockButton" class="mobile-dock__button mobile-dock__button--quests map-quest-button scene-toolbar__button" type="button" aria-label="Квесты" title="Квесты">
+                        <span class="mobile-dock__label">Квесты</span>
+                    </button>
                 </div>
                 <div class="mobile-hud" aria-label="Мобильный интерфейс" hidden>
                     <div class="mobile-status-strip">
@@ -133,7 +136,7 @@
                     </div>
                 </div>
                 <div id="instructions" class="overlay-card overlay-card--dismissible">
-                    <button id="instructionsClose" class="overlay-card__close" type="button" aria-label="Закрыть обучение">Закрыть</button>
+                    <button id="instructionsClose" class="overlay-card__close" type="button" aria-label="Закрыть обучение">×</button>
                     <p id="instructionsText" class="overlay-card__text">
                         Кликайте по клеткам, чтобы выбрать маршрут. Нажмите кнопку движения или кликните по той же клетке ещё раз.
                         Камни блокируют путь, а мосты помогают пересекать воду.
@@ -151,6 +154,7 @@
                             <button id="pauseResumeButton" class="hud-button hud-button--pause" type="button">Продолжить</button>
                             <button id="pauseSaveButton" class="hud-button" type="button">Сохранить</button>
                             <button id="pauseLoadButton" class="hud-button" type="button">Загрузить</button>
+                            <button id="pauseTravelButton" class="hud-button" type="button">Быстрый переход</button>
                             <button id="newGameButton" class="hud-button hud-button--new-game" type="button">Новая игра</button>
                             <button id="installButton" class="hud-button hud-button--install" type="button" hidden>Установить</button>
                         </div>
@@ -160,6 +164,14 @@
                             <div id="pauseSlotList" class="pause-overlay__slot-list"></div>
                             <div class="pause-overlay__slot-actions">
                                 <button id="pauseBackButton" class="hud-button" type="button">Назад</button>
+                            </div>
+                        </section>
+                        <section id="pauseTravelMenu" class="pause-overlay__slot-menu" hidden aria-live="polite">
+                            <p id="pauseTravelMenuSummary" class="panel-copy pause-overlay__slot-summary">Выбери остров для мгновенного перехода.</p>
+                            <p id="pauseTravelMenuStatus" class="panel-copy pause-overlay__slot-status" hidden></p>
+                            <div id="pauseTravelList" class="pause-overlay__slot-list"></div>
+                            <div class="pause-overlay__slot-actions">
+                                <button id="pauseTravelBackButton" class="hud-button" type="button">Назад</button>
                             </div>
                         </section>
                         <p id="pwaStatus" class="panel-copy pwa-status" aria-live="polite">
@@ -201,20 +213,6 @@
                                     <span id="inventoryDetailQuantity" class="inventory-selection-panel__quantity" hidden>x1</span>
                                 </div>
                             </div>
-                            <section id="inventoryDetailStationPanel" class="inventory-selection-panel__station">
-                                <p class="inventory-selection-panel__station-kicker">Текущая станция</p>
-                                <div class="inventory-selection-panel__station-body">
-                                    <p id="inventoryDetailStationTitle" class="inventory-selection-panel__station-title">Руки</p>
-                                    <p id="inventoryDetailStationSummary" class="inventory-selection-panel__station-summary"></p>
-                                </div>
-                            </section>
-                            <section id="inventoryDetailCraftPanel" class="inventory-selection-panel__craft" hidden>
-                                <div class="inventory-selection-panel__craft-header">
-                                    <p id="inventoryDetailCraftLabel" class="inventory-selection-panel__craft-label">Рецепты по станциям</p>
-                                    <p id="inventoryDetailCraftHint" class="inventory-selection-panel__craft-hint"></p>
-                                </div>
-                                <div id="inventoryDetailCraftActions" class="inventory-selection-panel__craft-actions"></div>
-                            </section>
                         </div>
                     </section>
                 </div>
@@ -230,6 +228,18 @@
                     <p id="merchantPanelGold" class="panel-copy merchant-panel__gold"></p>
                     <div id="merchantPanelContent" class="merchant-panel__content"></div>
                 </aside>
+                <aside id="stationPanel" class="station-panel" hidden aria-live="polite">
+                    <div class="station-panel__header">
+                        <div>
+                            <p id="stationPanelKicker" class="hud-kicker">Станция</p>
+                            <h2 id="stationPanelTitle" class="hud-title hud-title--compact">Верстак</h2>
+                        </div>
+                        <button id="stationPanelClose" class="hud-button merchant-panel__close" type="button" aria-label="Закрыть">×</button>
+                    </div>
+                    <p id="stationPanelSummary" class="panel-copy station-panel__summary"></p>
+                    <p id="stationPanelMeta" class="panel-copy station-panel__meta"></p>
+                    <div id="stationPanelContent" class="station-panel__content"></div>
+                </aside>
                 <aside id="mapPanel" class="map-panel" hidden aria-live="polite">
                     <div class="map-panel__header">
                         <div>
@@ -242,6 +252,11 @@
                                 <span id="mapZoomValue" class="map-panel__zoom-value">100%</span>
                                 <button id="mapZoomIn" class="hud-button map-panel__zoom-button" type="button" aria-label="Приблизить карту">+</button>
                             </div>
+                            <div id="mapModeControls" class="map-panel__mode-controls" hidden aria-label="Инструменты карты">
+                                <button id="mapModeSelectIsland" class="hud-button map-panel__mode-button" type="button" aria-pressed="true">Остров</button>
+                                <button id="mapModeBookmark" class="hud-button map-panel__mode-button" type="button" aria-pressed="false">Маяк</button>
+                                <button id="mapModePan" class="hud-button map-panel__mode-button" type="button" aria-pressed="false">Рука</button>
+                            </div>
                             <button id="mapPanelClose" class="hud-button merchant-panel__close" type="button" aria-label="Закрыть">×</button>
                         </div>
                     </div>
@@ -252,6 +267,8 @@
                         <div id="mapHoverCard" class="map-panel__hover-card" hidden aria-hidden="true">
                             <p id="mapHoverCardTile" class="map-panel__hover-line map-panel__hover-line--tile">Клетка</p>
                             <p id="mapHoverCardIsland" class="map-panel__hover-line map-panel__hover-line--island">Остров</p>
+                            <p id="mapHoverCardResource" class="map-panel__hover-line map-panel__hover-line--detail" hidden>Ресурсная зона</p>
+                            <p id="mapHoverCardStation" class="map-panel__hover-line map-panel__hover-line--detail" hidden>Станция</p>
                         </div>
                     </div>
                     <div class="map-panel__legend">
@@ -261,6 +278,7 @@
                         <span><i class="map-legend__swatch map-legend__swatch--quest"></i>Квестодатель</span>
                         <span><i class="map-legend__swatch map-legend__swatch--bookmark"></i>Закладки</span>
                         <span><i class="map-legend__swatch map-legend__swatch--resource"></i>Ресурсы</span>
+                        <span><i class="map-legend__swatch map-legend__swatch--station"></i>Станции</span>
                     </div>
                 </aside>
                 <canvas id="gameCanvas"></canvas>
@@ -312,11 +330,51 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/perf/runtime-profiler.js"></script>
     <script src="js/state/game-state-schema.js"></script>
     <script src="js/game-state.js"></script>
     <script src="js/state/save-load.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/events/game-events.js"></script>
+    <script src="js/worldgen/phase0/shared.js"></script>
+    <script src="js/worldgen/phase0/deterministic-rng.js"></script>
+    <script src="js/worldgen/phase0/contracts.js"></script>
+    <script src="js/worldgen/phase0/validation.js"></script>
+    <script src="js/worldgen/phase0/debug/index.js"></script>
+    <script src="js/worldgen/phase0/adapters/index.js"></script>
+    <script src="js/worldgen/phase0/world-profile-synthesizer.js"></script>
+    <script src="js/worldgen/phase0/world-tone-synthesizer.js"></script>
+    <script src="js/worldgen/phase0/derived-tendencies.js"></script>
+    <script src="js/worldgen/phase0/subseed-deriver.js"></script>
+    <script src="js/worldgen/phase0/master-seed-generator.js"></script>
+    <script src="js/worldgen/phase0/index.js"></script>
+    <script src="js/worldgen/macro/shared.js"></script>
+    <script src="js/worldgen/macro/deterministic-rng.js"></script>
+    <script src="js/worldgen/macro/macro-seed-profile.js"></script>
+    <script src="js/worldgen/macro/scalar-field.js"></script>
+    <script src="js/worldgen/macro/directional-field.js"></script>
+    <script src="js/worldgen/macro/mask-field.js"></script>
+    <script src="js/worldgen/macro/field-composer.js"></script>
+    <script src="js/worldgen/macro/field-normalizer.js"></script>
+    <script src="js/worldgen/macro/contracts.js"></script>
+    <script src="js/worldgen/macro/region-contracts.js"></script>
+    <script src="js/worldgen/macro/macro-types.js"></script>
+    <script src="js/worldgen/macro/macro-geography-package-builder.js"></script>
+    <script src="js/worldgen/macro/validation-report-builder.js"></script>
+    <script src="js/worldgen/macro/debug/index.js"></script>
+    <script src="js/worldgen/macro/master-constraints-intake.js"></script>
+    <script src="js/worldgen/macro/tectonic-skeleton-generator.js"></script>
+    <script src="js/worldgen/macro/marine-carving-generator.js"></script>
+    <script src="js/worldgen/macro/climate-pressure-generator.js"></script>
+    <script src="js/worldgen/macro/continental-cohesion-analyzer.js"></script>
+    <script src="js/worldgen/macro/coastal-opportunity-analyzer.js"></script>
+    <script src="js/worldgen/macro/flow-route-analyzer.js"></script>
+    <script src="js/worldgen/macro/chokepoint-analyzer.js"></script>
+    <script src="js/worldgen/macro/isolation-periphery-analyzer.js"></script>
+    <script src="js/worldgen/macro/archipelago-significance-generator.js"></script>
+    <script src="js/worldgen/macro/macro-validation-and-rebalance.js"></script>
+    <script src="js/worldgen/macro/macro-geography-generator.js"></script>
+    <script src="js/worldgen/macro/index.js"></script>
     <script src="js/content-registry.js"></script>
     <script src="js/world/chunk-store.js"></script>
     <script src="js/world/tile-query.js"></script>
@@ -325,6 +383,8 @@
     <script src="js/crafting/station-runtime.js"></script>
     <script src="js/crafting/container-registry.js"></script>
     <script src="js/crafting/component-registry.js"></script>
+    <script src="js/crafting/island-need-profile.js"></script>
+    <script src="js/crafting/craft-balance-runtime.js"></script>
     <script src="js/crafting/recipe-registry.js"></script>
     <script src="js/crafting/crafting-runtime.js"></script>
     <script src="js/inventory/item-catalog.js"></script>
@@ -346,6 +406,7 @@
     <script src="js/expedition/progression.js"></script>
     <script src="js/expedition/weather-runtime.js"></script>
     <script src="js/expedition/bridge-runtime.js"></script>
+    <script src="js/expedition/boat-runtime.js"></script>
     <script src="js/effects-system.js"></script>
     <script src="js/houses/layout/house-layout-core.js"></script>
     <script src="js/houses/layout/house-footprints.js"></script>
@@ -390,6 +451,7 @@
     <script src="js/dialogue/dialogue-runtime.js"></script>
     <script src="js/ui/action-ui.js"></script>
     <script src="js/ui/merchant-ui.js"></script>
+    <script src="js/ui/station-ui.js"></script>
     <script src="js/ui/dialogue-ui.js"></script>
     <script src="js/ui/quest-ui.js"></script>
     <script src="js/ui/map-ui.js"></script>

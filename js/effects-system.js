@@ -1,6 +1,7 @@
 (() => {
     const game = window.Game;
     const effects = game.systems.effects = game.systems.effects || {};
+    const activeEffectsBuffer = [];
 
     function getNow() {
         if (window.performance && typeof window.performance.now === 'function') {
@@ -16,8 +17,22 @@
     }
 
     function pruneExpiredEffects(timestamp = getNow()) {
-        game.state.transientEffects = getEffectList().filter((effect) => timestamp < effect.startTime + effect.duration);
-        return game.state.transientEffects;
+        const effectList = getEffectList();
+        let writeIndex = 0;
+
+        for (let readIndex = 0; readIndex < effectList.length; readIndex++) {
+            const effect = effectList[readIndex];
+
+            if (!effect || timestamp >= effect.startTime + effect.duration) {
+                continue;
+            }
+
+            effectList[writeIndex] = effect;
+            writeIndex += 1;
+        }
+
+        effectList.length = writeIndex;
+        return effectList;
     }
 
     function stopEffectLoop() {
@@ -94,11 +109,24 @@
     }
 
     function getActiveEffects(timestamp = getNow()) {
-        return getEffectList().filter((effect) => timestamp >= effect.startTime && timestamp < effect.startTime + effect.duration);
+        const effectList = pruneExpiredEffects(timestamp);
+        activeEffectsBuffer.length = 0;
+
+        for (let index = 0; index < effectList.length; index++) {
+            const effect = effectList[index];
+
+            if (timestamp >= effect.startTime) {
+                activeEffectsBuffer.push(effect);
+            }
+        }
+
+        return activeEffectsBuffer;
     }
 
     function clearAllEffects() {
-        game.state.transientEffects = [];
+        const effectList = getEffectList();
+        effectList.length = 0;
+        activeEffectsBuffer.length = 0;
         stopEffectLoop();
     }
 

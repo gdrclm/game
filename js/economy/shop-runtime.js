@@ -42,6 +42,10 @@
         return game.systems.uiBridge || null;
     }
 
+    function getExpeditionProgressionSystem() {
+        return game.systems.expeditionProgression || game.systems.expedition || null;
+    }
+
     const COMPONENT_INTEREST_SELL_MULTIPLIERS = Object.freeze({
         ordinary: 1.08,
         enhanced: 1.18,
@@ -59,6 +63,25 @@
         return registry && typeof registry.getTierByIsland === 'function'
             ? registry.getTierByIsland(islandIndex)
             : 0;
+    }
+
+    function getIslandScenario(islandIndex = game.state.currentIslandIndex || 1, fallbackScenario = '') {
+        if (typeof fallbackScenario === 'string' && fallbackScenario.trim()) {
+            return fallbackScenario.trim();
+        }
+
+        const expedition = getExpeditionProgressionSystem();
+        const islandRecord = expedition && typeof expedition.getIslandRecord === 'function'
+            ? expedition.getIslandRecord(islandIndex)
+            : null;
+        const progression = islandRecord && islandRecord.progression ? islandRecord.progression : null;
+        return progression && typeof progression.scenario === 'string' && progression.scenario.trim()
+            ? progression.scenario.trim()
+            : 'normal';
+    }
+
+    function isTradeIslandEconomyScenario(islandIndex = game.state.currentIslandIndex || 1, scenario = '') {
+        return getIslandScenario(islandIndex, scenario) === 'tradeIsland' && Math.max(1, Math.floor(islandIndex || 1)) >= 10;
     }
 
     function getItemDefinition(itemId) {
@@ -171,29 +194,91 @@
         }
     };
 
+    const merchantIslandWindowProfiles = Object.freeze({
+        quartermaster: [
+            {
+                windowId: 'early-sustain',
+                label: 'Ранний интендант',
+                islandFrom: 1,
+                islandTo: 6,
+                preferredCategories: ['survival', 'consumable', 'utility'],
+                preferredItemIds: ['fuel_bundle', 'flask_empty', 'flask_water_full'],
+                guaranteedItemIds: ['fuel_bundle', 'flask_water_full', 'flask_empty'],
+                summary: 'Держит воду, пустые фляги и топливо для стартовой стабилизации.'
+            },
+            {
+                windowId: 'mid-route',
+                label: 'Средний интендант',
+                islandFrom: 7,
+                islandTo: 18,
+                preferredCategories: ['movement', 'utility', 'building'],
+                preferredItemIds: ['wood_plank_basic', 'fiber_rope', 'stone_block', 'gravel_fill'],
+                guaranteedItemIds: ['wood_plank_basic', 'fiber_rope'],
+                summary: 'Смещается в маршрутные заготовки: доски, верёвки и стройпакеты под мосты, воду и ремонт.'
+            },
+            {
+                windowId: 'late-catalyst',
+                label: 'Поздний интендант',
+                islandFrom: 19,
+                islandTo: 30,
+                preferredCategories: ['utility', 'value', 'building'],
+                preferredItemIds: ['fish_oil', 'wood_frame_basic', 'boatFrame'],
+                guaranteedItemIds: ['fish_oil', 'wood_frame_basic', 'boatFrame'],
+                summary: 'Переходит в редкие катализаторы и качественные компоненты для поздней логистики и снижения риска.'
+            }
+        ]
+    });
+
     function getMerchantRoleProfile(merchantRole = 'merchant') {
         return merchantRoleProfiles[merchantRole] || merchantRoleProfiles.merchant;
     }
 
-    function getMerchantPreferredComponentItemIds(merchantRole = 'merchant') {
-        const componentRegistry = getComponentRegistry();
-        const componentDefinitions = componentRegistry && typeof componentRegistry.getComponentsByMerchantInterest === 'function'
-            ? componentRegistry.getComponentsByMerchantInterest(merchantRole)
-            : [];
+    function getMerchantIslandWindowProfile(merchantRole = 'merchant', islandIndex = game.state.currentIslandIndex || 1) {
+        const normalizedIslandIndex = Math.max(1, Math.floor(islandIndex || 1));
+        const windows = merchantIslandWindowProfiles[merchantRole];
 
-        return componentDefinitions
-            .map((component) => component && component.inventoryItem ? component.inventoryItem.id : '')
-            .filter(Boolean);
+        if (!Array.isArray(windows) || windows.length === 0) {
+            return null;
+        }
+
+        return windows.find((windowProfile) => (
+            Number.isFinite(windowProfile.islandFrom)
+            && Number.isFinite(windowProfile.islandTo)
+            && normalizedIslandIndex >= windowProfile.islandFrom
+            && normalizedIslandIndex <= windowProfile.islandTo
+        )) || null;
     }
 
-    function getMerchantAdviceTemplate(merchantRole = 'merchant') {
+    function getMerchantPreferredComponentItemIds(merchantRole = 'merchant', islandIndex = game.state.currentIslandIndex || 1) {
+        const componentRegistry = getComponentRegistry();
+        const islandWindowProfile = getMerchantIslandWindowProfile(merchantRole, islandIndex);
+        const preferredWindowItemIds = islandWindowProfile && Array.isArray(islandWindowProfile.preferredItemIds)
+            ? islandWindowProfile.preferredItemIds
+            : [];
+
+        if (
+            preferredWindowItemIds.length > 0
+            && componentRegistry
+            && typeof componentRegistry.getMerchantInterestForInventoryItemId === 'function'
+        ) {
+            return preferredWindowItemIds.filter((itemId, index, list) => (
+                itemId
+                && list.indexOf(itemId) === index
+                && componentRegistry.getMerchantInterestForInventoryItemId(itemId).length > 0
+            ));
+        }
+
+        return componentRegistry && typeof componentRegistry.getMerchantInterestedInventoryItemIds === 'function'
+            ? componentRegistry.getMerchantInterestedInventoryItemIds(merchantRole)
+            : [];
+    }
+
+    function getMerchantAdviceTemplate(merchantRole = 'merchant', islandIndex = game.state.currentIslandIndex || 1) {
         const bridgeKitLabel = getItemLabel('bridge_kit', 'Мост-комплект');
         const portableBridgeLabel = getItemLabel('portableBridge', 'Переносной мост');
         const reinforcedBridgeLabel = getItemLabel('reinforcedBridge', 'Усиленный мост');
         const fieldBridgeLabel = getItemLabel('fieldBridge', 'Полевой мостик');
         const absoluteBridgeLabel = getItemLabel('absoluteBridge', 'Абсолютный мост');
-        const ferryBoardLabel = getItemLabel('ferryBoard', 'Доска переправы');
-        const roughBridgeLabel = getItemLabel('roughBridge', 'Грубый мостик');
         const signalWhistleLabel = getItemLabel('signalWhistle', 'Сигнальный свисток');
         const pathMarkerLabel = getItemLabel('pathMarker', 'Маркер пути');
         const fishingRodLabel = getItemLabel('fishingRod', 'Удочка путника');
@@ -204,6 +289,18 @@
         const rawFishLabel = getItemLabel('raw_fish', 'Рыба');
         const soilClodLabel = getItemLabel('soilClod', 'Комья земли');
         const soilResourceLabel = getItemLabel('soilResource', 'Земляной ресурс');
+        const quartermasterWindow = getMerchantIslandWindowProfile('quartermaster', islandIndex);
+        const earlyQuartermaster = quartermasterWindow && quartermasterWindow.windowId === 'early-sustain';
+        const midQuartermaster = quartermasterWindow && quartermasterWindow.windowId === 'mid-route';
+        const lateQuartermaster = quartermasterWindow && quartermasterWindow.windowId === 'late-catalyst';
+        const fuelBundleLabel = getItemLabel('fuel_bundle', 'Топливная связка');
+        const fullFlaskLabel = getItemLabel('flask_water_full', 'Фляга кипячёной воды');
+        const emptyFlaskLabel = getItemLabel('flask_empty', 'Пустая фляга');
+        const plankLabel = getItemLabel('wood_plank_basic', 'Доска');
+        const ropeLabel = getItemLabel('fiber_rope', 'Верёвка');
+        const fishOilLabel = getItemLabel('fish_oil', 'Рыбий жир');
+        const frameLabel = getItemLabel('wood_frame_basic', 'Каркас');
+        const boatFrameLabel = getItemLabel('boatFrame', 'Рама лодки');
 
         const adviceByRole = {
             merchant: {
@@ -223,9 +320,9 @@
             bridgewright: {
                 id: 'bridgewright:bridges',
                 title: 'Где брать мосты',
-                hook: 'Про переправы, старые версии мостов и честный ответ про крафт.',
+                hook: 'Про переправы и честный ответ про крафт.',
                 basePrice: 8,
-                text: `На верстаке сначала собирается "${bridgeKitLabel}", а затем из него можно довести предмет до "${portableBridgeLabel}". Дальше мостовая ветка уже апгрейдится: "${reinforcedBridgeLabel}" и "${fieldBridgeLabel}" собираются поверх базового моста, а поздний "${absoluteBridgeLabel}" — это уже отдельная тяжёлая сборка. Старые ready-made версии всё ещё можно найти у мостовиков, у торговцев движения и у некоторых NPC; помни, что обычный мост стареет после первого прохода и рушится после второго.`
+                text: `На верстаке сначала собирается "${bridgeKitLabel}", а затем из него можно довести предмет до "${portableBridgeLabel}". Дальше мостовая ветка уже апгрейдится: "${reinforcedBridgeLabel}" и "${fieldBridgeLabel}" собираются поверх базового моста, а поздний "${absoluteBridgeLabel}" — это отдельная тяжёлая сборка. Так переправы становятся частью крафтовой цепочки, а не случайным лутом.`
             },
             junkDealer: {
                 id: 'junkDealer:risky-loot',
@@ -250,10 +347,20 @@
             },
             quartermaster: {
                 id: 'quartermaster:working-build',
-                title: 'Рабочий комплект',
-                hook: 'Как собирать сумку под длинный маршрут, а не под красивую витрину.',
+                title: earlyQuartermaster
+                    ? 'Стартовый комплект'
+                    : (midQuartermaster ? 'Маршрутные заготовки' : 'Поздний комплект'),
+                hook: earlyQuartermaster
+                    ? 'На ранних островах интендант полезен не роскошью, а водой и топливом под первую стабилизацию.'
+                    : (midQuartermaster
+                        ? 'В середине архипелага интендант должен помогать не едой, а мостовыми заготовками.'
+                        : 'На поздних островах интендант уже работает как поставщик редких и качественных компонентов.'),
                 basePrice: 8,
-                text: 'У интенданта чаще всего лежат вещи на выживание, инструменты и движение. Перед длинным маршрутом лучше покупать то, что держит темп острова и цену шага, а не просто дорогие ценности, которые не помогают идти.'
+                text: earlyQuartermaster
+                    ? `Ранний интендант должен стабилизировать забег: смотри на "${fuelBundleLabel}", "${fullFlaskLabel}" и "${emptyFlaskLabel}". Это не красивый лут, а прямой способ пережить стартовые острова и не сорвать темп на воде и лагере.`
+                    : (midQuartermaster
+                        ? `Средний интендант уже полезен как склад заготовок. Если в продаже видишь "${plankLabel}" и "${ropeLabel}", бери их под окно первого моста, воды и ремонта: они экономят сбор и быстрее переводят дерево с травой в готовый маршрутный инструмент.`
+                        : `Поздний интендант должен держать не стартовые расходники, а "${fishOilLabel}", "${frameLabel}" и "${boatFrameLabel}". Это уже не просто товар, а редкие катализаторы и качественные компоненты под лодку, фонари, ремонт и позднюю логистику.`)
             },
             collector: {
                 id: 'collector:late-value',
@@ -273,8 +380,8 @@
     }
 
     function buildMerchantAdvice(encounter, savedAdvice = null) {
-        const template = getMerchantAdviceTemplate(encounter && encounter.merchantRole ? encounter.merchantRole : 'merchant');
         const islandIndex = Math.max(1, encounter && encounter.islandIndex ? encounter.islandIndex : (game.state.currentIslandIndex || 1));
+        const template = getMerchantAdviceTemplate(encounter && encounter.merchantRole ? encounter.merchantRole : 'merchant', islandIndex);
 
         return {
             adviceId: template.id,
@@ -334,7 +441,7 @@
                 'fogLantern',
                 'merchantBeacon',
                 'returnMarker',
-                'lightBoat'
+                'boat_ready'
             );
         }
 
@@ -344,7 +451,6 @@
                 'crossingCable',
                 'climberHook',
                 'bypassCompass',
-                'foldingBoat',
                 'emergencyTeleport'
             );
         }
@@ -500,7 +606,12 @@
         const islandTier = Math.max(1, getTierByIsland(islandIndex));
         const bagUpgradeRuntime = getBagUpgradeRuntime();
         const roleProfile = getMerchantRoleProfile(options.merchantRole);
-        const preferredItemIds = getMerchantPreferredComponentItemIds(options.merchantRole);
+        const islandWindowProfile = getMerchantIslandWindowProfile(options.merchantRole, islandIndex);
+        const islandScenario = getIslandScenario(islandIndex, options.scenario);
+        const preferredItemIds = [
+            ...getMerchantPreferredComponentItemIds(options.merchantRole, islandIndex),
+            ...(islandWindowProfile && Array.isArray(islandWindowProfile.preferredItemIds) ? islandWindowProfile.preferredItemIds : [])
+        ].filter((itemId, index, list) => itemId && list.indexOf(itemId) === index);
         const activeQuestBias = bagUpgradeRuntime && typeof bagUpgradeRuntime.getActiveBagQuestGenerationBias === 'function'
             ? bagUpgradeRuntime.getActiveBagQuestGenerationBias(islandIndex)
             : null;
@@ -508,6 +619,9 @@
             ...(weightKey === 'merchantQuestWeight'
                 ? roleProfile.questCategories || []
                 : roleProfile.stockCategories || []),
+            ...(islandWindowProfile && Array.isArray(islandWindowProfile.preferredCategories)
+                ? islandWindowProfile.preferredCategories
+                : []),
             ...(weightKey === 'merchantQuestWeight' ? getMerchantQuestBias(islandTier) : getMerchantCategoryBias(islandTier)),
             ...(activeQuestBias ? activeQuestBias.preferredCategories : [])
         ].filter((category, index, list) => category && list.indexOf(category) === index);
@@ -517,18 +631,63 @@
         const activeQuestMinTier = activeQuestBias && Number.isFinite(activeQuestBias.minTier)
             ? Math.min(activeQuestBias.minTier, islandTier)
             : undefined;
+        const includeTierZero = weightKey === 'merchantQuestWeight'
+            || preferredItemIds.length > 0;
+
+        if (isTradeIslandEconomyScenario(islandIndex, islandScenario)) {
+            preferredCategories.push('value', 'trade', 'utility', 'info');
+            preferredItemIds.push('trade_papers', 'market_seal', 'roadChalk', 'pathMarker', 'safeHouseSeal');
+
+            if (islandIndex >= 18) {
+                preferredItemIds.push('merchantBeacon');
+            }
+        }
+
+        const preferredRequirements = [
+            ...(activeQuestBias && Array.isArray(activeQuestBias.preferredRequirements)
+                ? activeQuestBias.preferredRequirements
+                : [])
+        ];
+
+        if (isTradeIslandEconomyScenario(islandIndex, islandScenario)) {
+            preferredRequirements.push(
+                { sourceRecipeTags: ['economy', 'trade'] },
+                { sourceRecipeTags: ['route', 'info'] },
+                { craftingTags: ['merchant', 'route'] }
+            );
+        }
 
         return {
-            includeTierZero: weightKey === 'merchantQuestWeight',
-            preferredCategories,
-            preferredItemIds,
-            preferredRequirements: activeQuestBias && Array.isArray(activeQuestBias.preferredRequirements)
-                ? activeQuestBias.preferredRequirements
-                : [],
+            includeTierZero,
+            preferredCategories: preferredCategories.filter((category, index, list) => category && list.indexOf(category) === index),
+            preferredItemIds: preferredItemIds.filter((itemId, index, list) => itemId && list.indexOf(itemId) === index),
+            preferredRequirements,
             minTier: Number.isFinite(activeQuestMinTier)
                 ? Math.max(activeQuestMinTier, roleMinTier || 0)
-                : roleMinTier
+                : roleMinTier,
+            islandWindowProfile,
+            islandScenario
         };
+    }
+
+    function pickMerchantWindowAnchor(weightKey, islandIndex, random, selectorOptions = {}) {
+        const registry = getItemRegistry();
+        const islandWindowProfile = selectorOptions && selectorOptions.islandWindowProfile;
+
+        if (
+            !registry
+            || typeof registry.pickWeightedCatalogDefinition !== 'function'
+            || !islandWindowProfile
+            || !Array.isArray(islandWindowProfile.guaranteedItemIds)
+            || islandWindowProfile.guaranteedItemIds.length === 0
+        ) {
+            return null;
+        }
+
+        return registry.pickWeightedCatalogDefinition(weightKey, islandIndex, random, {
+            ...selectorOptions,
+            includeItemIds: islandWindowProfile.guaranteedItemIds
+        });
     }
 
     function buildLegacyPool(weightKey) {
@@ -607,9 +766,30 @@
             2,
             Math.min(7, 3 + Math.floor((Math.max(1, islandIndex) - 1) / 6) + (roleProfile.stockCountDelta || 0))
         );
-        const definitions = registry && typeof registry.pickUniqueWeightedCatalogDefinitions === 'function'
-            ? registry.pickUniqueWeightedCatalogDefinitions('merchantWeight', islandIndex, random, stockCount, selectorOptions)
+        const anchorDefinition = pickMerchantWindowAnchor('merchantWeight', islandIndex, random, selectorOptions);
+        const definitions = [];
+
+        if (anchorDefinition) {
+            definitions.push(anchorDefinition);
+        }
+
+        const remainingDefinitions = registry && typeof registry.pickUniqueWeightedCatalogDefinitions === 'function'
+            ? registry.pickUniqueWeightedCatalogDefinitions(
+                'merchantWeight',
+                islandIndex,
+                random,
+                Math.max(0, stockCount - definitions.length),
+                {
+                    ...selectorOptions,
+                    excludeItemIds: [
+                        ...(anchorDefinition ? [anchorDefinition.id] : []),
+                        ...(Array.isArray(selectorOptions.excludeItemIds) ? selectorOptions.excludeItemIds : [])
+                    ]
+                }
+            )
             : [];
+
+        definitions.push(...remainingDefinitions);
 
         return definitions.map((definition, index) => ({
             stockId: `merchant:stock:${islandIndex}:${index}:${definition.id}`,
@@ -619,7 +799,10 @@
             quantity: getBaseQuantityForDefinition(definition, islandTier, random),
             price: pricing && typeof pricing.getMerchantBuyPrice === 'function'
                 ? pricing.getMerchantBuyPrice(definition.id, islandIndex)
-                : Math.max(1, definition.baseValue || 1)
+                : Math.max(1, definition.baseValue || 1),
+            islandWindowLabel: selectorOptions && selectorOptions.islandWindowProfile
+                ? selectorOptions.islandWindowProfile.label
+                : ''
         }));
     }
 
@@ -665,6 +848,7 @@
             kind: 'merchant',
             islandIndex,
             merchantRole,
+            scenario: options.scenario || getIslandScenario(islandIndex),
             label: options.label || 'Странствующий торговец',
             summary: options.summary || 'Торговец принимает заказы, скупает находки и продаёт полезные припасы для переходов.',
             tradeCost: 10 + islandIndex * 4,
@@ -674,8 +858,14 @@
                 sleep: 6 + Math.floor(islandIndex * 0.5),
                 focus: 4 + Math.floor(islandIndex * 0.4)
             },
-            stock: createMerchantStock(islandIndex, random, { merchantRole }),
-            quest: createMerchantQuest(islandIndex, random, { merchantRole })
+            stock: createMerchantStock(islandIndex, random, {
+                merchantRole,
+                scenario: options.scenario || getIslandScenario(islandIndex)
+            }),
+            quest: createMerchantQuest(islandIndex, random, {
+                merchantRole,
+                scenario: options.scenario || getIslandScenario(islandIndex)
+            })
         };
 
         profile.advice = buildMerchantAdvice(profile);
@@ -775,6 +965,54 @@
         return COMPONENT_INTEREST_SELL_MULTIPLIERS[componentDefinition.qualityLevel] || 1.12;
     }
 
+    function getMerchantCraftingOutputSellMultiplier(itemDefinition) {
+        const categories = Array.isArray(itemDefinition && itemDefinition.categories) ? itemDefinition.categories : [];
+
+        if (categories.includes('value') || categories.includes('trade')) {
+            return 1.22;
+        }
+
+        if (categories.includes('repair') || categories.includes('movement') || categories.includes('bridge') || categories.includes('water')) {
+            return 1.16;
+        }
+
+        return 1.12;
+    }
+
+    function getTradeIslandCraftingSellMultiplier({ islandIndex = 1, scenario = '', merchantRole = 'merchant', itemDefinition = null, componentDefinition = null, craftingOutputDefinition = null } = {}) {
+        if (!isTradeIslandEconomyScenario(islandIndex, scenario)) {
+            return 1;
+        }
+
+        const normalizedIslandIndex = Math.max(1, Math.floor(islandIndex || 1));
+        const categories = new Set(Array.isArray(itemDefinition && itemDefinition.categories) ? itemDefinition.categories : []);
+        const craftingTags = new Set([
+            ...(Array.isArray(componentDefinition && componentDefinition.tags) ? componentDefinition.tags : []),
+            ...(Array.isArray(itemDefinition && itemDefinition.craftingTags) ? itemDefinition.craftingTags : [])
+        ]);
+        let multiplier = 1;
+
+        if (craftingOutputDefinition) {
+            if (categories.has('value') || categories.has('trade')) {
+                multiplier *= normalizedIslandIndex >= 19 ? 1.26 : 1.18;
+            } else if (categories.has('utility') || categories.has('info') || craftingTags.has('route')) {
+                multiplier *= normalizedIslandIndex >= 19 ? 1.14 : 1.08;
+            }
+        } else if (componentDefinition) {
+            if (craftingTags.has('merchant') || craftingTags.has('bagQuest')) {
+                multiplier *= normalizedIslandIndex >= 19 ? 1.18 : 1.1;
+            } else if (craftingTags.has('route')) {
+                multiplier *= 1.08;
+            }
+        }
+
+        if (merchantRole === 'exchanger' || merchantRole === 'collector') {
+            multiplier *= 1.04;
+        }
+
+        return multiplier;
+    }
+
     function getMerchantSellOffer(encounterOrSource, itemId, options = {}) {
         const encounter = encounterOrSource && encounterOrSource.kind === 'merchant'
             ? encounterOrSource
@@ -790,6 +1028,13 @@
         const componentDefinition = componentRegistry && typeof componentRegistry.getComponentDefinitionByInventoryItemId === 'function'
             ? componentRegistry.getComponentDefinitionByInventoryItemId(itemId)
             : null;
+        const craftingOutputDefinition = componentRegistry && typeof componentRegistry.getGeneratedCraftingOutputDefinitionByInventoryItemId === 'function'
+            ? componentRegistry.getGeneratedCraftingOutputDefinitionByInventoryItemId(itemId)
+            : null;
+        const itemDefinition = getItemDefinition(itemId);
+        const islandScenario = encounter && typeof encounter.scenario === 'string'
+            ? encounter.scenario
+            : getIslandScenario(islandIndex);
 
         if (!encounter) {
             return {
@@ -797,57 +1042,111 @@
                 price: 0,
                 itemId,
                 isComponent: Boolean(componentDefinition),
+                isCraftedOutput: Boolean(craftingOutputDefinition),
                 matchedInterest: false,
                 componentDefinition,
+                craftingOutputDefinition,
                 message: 'Рядом нет торговца.'
             };
         }
 
-        if (!componentDefinition) {
+        if (!componentDefinition && !craftingOutputDefinition) {
             return {
                 accepted: true,
                 price: basePrice,
                 itemId,
                 isComponent: false,
+                isCraftedOutput: false,
                 matchedInterest: false,
                 componentDefinition: null,
+                craftingOutputDefinition: null,
                 merchantRole: encounter.merchantRole || 'merchant',
                 message: ''
             };
         }
 
-        const componentInterest = Array.isArray(componentDefinition.merchantInterest)
-            ? componentDefinition.merchantInterest
+        const craftingDefinition = componentDefinition || craftingOutputDefinition;
+        const componentInterest = Array.isArray(craftingDefinition.merchantInterest)
+            ? craftingDefinition.merchantInterest
             : [];
         const merchantRole = encounter.merchantRole || 'merchant';
         const matchedInterest = componentInterest.includes(merchantRole);
 
-        if (!matchedInterest) {
+        if (componentDefinition && !matchedInterest) {
             return {
                 accepted: false,
                 price: 0,
                 itemId,
                 isComponent: true,
+                isCraftedOutput: false,
                 matchedInterest: false,
                 componentDefinition,
+                craftingOutputDefinition: null,
                 merchantRole,
                 message: 'Этого торговца такая заготовка не интересует.'
             };
         }
 
-        const sellMultiplier = getMerchantComponentSellMultiplier(componentDefinition);
-        const sellPrice = Math.max(basePrice, Math.round(basePrice * sellMultiplier));
+        if (craftingOutputDefinition && !matchedInterest) {
+            const scenarioSellMultiplier = getTradeIslandCraftingSellMultiplier({
+                islandIndex,
+                scenario: islandScenario,
+                merchantRole,
+                itemDefinition,
+                componentDefinition: null,
+                craftingOutputDefinition
+            });
+            const sellPrice = scenarioSellMultiplier > 1
+                ? Math.max(basePrice, Math.round(basePrice * scenarioSellMultiplier))
+                : basePrice;
+            return {
+                accepted: true,
+                price: sellPrice,
+                itemId,
+                isComponent: false,
+                isCraftedOutput: true,
+                matchedInterest: false,
+                componentDefinition: null,
+                craftingOutputDefinition,
+                merchantRole,
+                message: scenarioSellMultiplier > 1
+                    ? 'На торговом острове эта сборка ценится выше обычного.'
+                    : 'Этот торговец купит сборку, но без особой наценки.'
+            };
+        }
+
+        const sellMultiplier = componentDefinition
+            ? getMerchantComponentSellMultiplier(componentDefinition)
+            : getMerchantCraftingOutputSellMultiplier(itemDefinition);
+        const scenarioSellMultiplier = getTradeIslandCraftingSellMultiplier({
+            islandIndex,
+            scenario: islandScenario,
+            merchantRole,
+            itemDefinition,
+            componentDefinition,
+            craftingOutputDefinition
+        });
+        const totalSellMultiplier = sellMultiplier * scenarioSellMultiplier;
+        const sellPrice = Math.max(basePrice, Math.round(basePrice * totalSellMultiplier));
 
         return {
             accepted: true,
             price: sellPrice,
             itemId,
-            isComponent: true,
+            isComponent: Boolean(componentDefinition),
+            isCraftedOutput: Boolean(craftingOutputDefinition),
             matchedInterest: true,
-            componentDefinition,
+            componentDefinition: componentDefinition || null,
+            craftingOutputDefinition: craftingOutputDefinition || null,
             merchantRole,
-            sellMultiplier,
-            message: 'Торговца интересует эта заготовка.'
+            sellMultiplier: totalSellMultiplier,
+            message: componentDefinition
+                ? (scenarioSellMultiplier > 1
+                    ? 'На торговом острове эта заготовка особенно ценится.'
+                    : 'Торговца интересует эта заготовка.')
+                : (scenarioSellMultiplier > 1
+                    ? 'На торговом острове эта сборка особенно ценится.'
+                    : 'Торговца интересует эта сборка.')
         };
     }
 
@@ -1080,6 +1379,7 @@
         applySavedMerchantState,
         persistMerchantState,
         prepareMerchantEncounter,
+        getMerchantIslandWindowProfile,
         getMerchantPreferredComponentItemIds,
         getMerchantSellOffer,
         completeMerchantQuest,

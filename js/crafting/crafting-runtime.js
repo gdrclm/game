@@ -304,6 +304,16 @@
         return craftingState.knownRecipes;
     }
 
+    function getStationUnlocksStore() {
+        const craftingState = getCraftingStateStore();
+
+        if (!craftingState.stationUnlocks || typeof craftingState.stationUnlocks !== 'object') {
+            craftingState.stationUnlocks = {};
+        }
+
+        return craftingState.stationUnlocks;
+    }
+
     function normalizeEntryQuantity(quantity) {
         return Math.max(1, Number.isFinite(quantity) ? quantity : 1);
     }
@@ -516,8 +526,15 @@
             stations.add('camp');
         }
 
-        if (houseKind === 'artisan' || buildingType === 'workbench' || buildingType === 'bridgehouse') {
+        if (houseKind === 'artisan' || houseKind === 'station_keeper') {
             stations.add('bench');
+        }
+
+        if (buildingType === 'workbench') {
+            stations.add('bench');
+        }
+
+        if (buildingType === 'workshop' || buildingType === 'bridgehouse') {
             stations.add('workbench');
         }
 
@@ -904,6 +921,9 @@
 
     function buildStationError(recipe, availableStations) {
         const stationRuntime = getStationRuntime();
+        const stationOptions = Array.isArray(recipe && recipe.stationOptions) && recipe.stationOptions.length > 0
+            ? recipe.stationOptions
+            : [recipe && recipe.station];
         const stationLabels = (Array.isArray(availableStations) ? availableStations : [])
             .map((station) => normalizeStationId(station))
             .filter(Boolean)
@@ -911,14 +931,25 @@
                 ? stationRuntime.getStationLabel(station, station)
                 : station)
             .join(', ');
+        const progressionLock = stationRuntime && typeof stationRuntime.buildStationProgressionStatus === 'function'
+            ? stationOptions
+                .map((stationId) => stationRuntime.buildStationProgressionStatus(stationId))
+                .find((entry) => entry && entry.reason === 'progression-locked')
+            : null;
+        const message = progressionLock
+            ? (stationLabels
+                ? `${progressionLock.message} Сейчас доступны: ${stationLabels}.`
+                : progressionLock.message)
+            : (stationLabels
+                ? `Здесь нельзя собрать "${recipe.label}". Нужна станция: ${recipe.stationLabel}. Сейчас доступны: ${stationLabels}.`
+                : `Здесь нельзя собрать "${recipe.label}". Нужна станция: ${recipe.stationLabel}.`);
 
         return {
             success: false,
             reason: 'wrong-station',
             recipe,
-            message: stationLabels
-                ? `Здесь нельзя собрать "${recipe.label}". Нужна станция: ${recipe.stationLabel}. Сейчас доступны: ${stationLabels}.`
-                : `Здесь нельзя собрать "${recipe.label}". Нужна станция: ${recipe.stationLabel}.`
+            progressionLockedStationId: progressionLock ? progressionLock.stationId : '',
+            message
         };
     }
 
@@ -1613,6 +1644,15 @@
         return Object.keys(getKnownRecipesStore());
     }
 
+    function isStationUnlocked(stationId) {
+        const normalizedStationId = normalizeStationId(stationId);
+        return Boolean(normalizedStationId && getStationUnlocksStore()[normalizedStationId]);
+    }
+
+    function getUnlockedStationIds() {
+        return Object.keys(getStationUnlocksStore());
+    }
+
     function unlockRecipe(recipeId, options = {}) {
         const recipe = getCompiledRecipe(recipeId);
 
@@ -1656,6 +1696,45 @@
         };
     }
 
+    function unlockStation(stationId, options = {}) {
+        const stationRuntime = getStationRuntime();
+        const normalizedStationId = normalizeStationId(stationId);
+        const station = stationRuntime && typeof stationRuntime.getStationDefinition === 'function'
+            ? stationRuntime.getStationDefinition(normalizedStationId)
+            : null;
+
+        if (!station || !normalizedStationId) {
+            return {
+                success: false,
+                reason: 'missing-station',
+                stationId: normalizedStationId || stationId || ''
+            };
+        }
+
+        const stationUnlocks = getStationUnlocksStore();
+        if (stationUnlocks[normalizedStationId]) {
+            return {
+                success: true,
+                stationId: normalizedStationId,
+                alreadyUnlocked: true,
+                entry: cloneValue(stationUnlocks[normalizedStationId])
+            };
+        }
+
+        const entry = {
+            stationId: normalizedStationId,
+            unlockedAtIslandIndex: Math.max(1, options.islandIndex || game.state.currentIslandIndex || 1)
+        };
+
+        stationUnlocks[normalizedStationId] = entry;
+        return {
+            success: true,
+            stationId: normalizedStationId,
+            alreadyUnlocked: false,
+            entry: cloneValue(entry)
+        };
+    }
+
     Object.assign(craftingRuntime, {
         buildStockEntry,
         normalizeCraftStockEntries,
@@ -1671,7 +1750,10 @@
         evaluateRecipe,
         craftRecipe,
         getUnlockedRecipeIds,
+        getUnlockedStationIds,
         isRecipeUnlocked,
-        unlockRecipe
+        isStationUnlocked,
+        unlockRecipe,
+        unlockStation
     });
 })();

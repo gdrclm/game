@@ -67,7 +67,7 @@ const gameConfig = {
                 sourceHeight: 840,
                 footX: 342,
                 footY: 758,
-                flipX: false
+                flipX: true
             },
             northEast: {
                 src: 'assets/hero/top_side.png',
@@ -77,7 +77,7 @@ const gameConfig = {
                 sourceHeight: 840,
                 footX: 342,
                 footY: 758,
-                flipX: true
+                flipX: false
             },
             southEast: {
                 src: 'assets/hero/side_bottom.png',

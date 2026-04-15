@@ -57,6 +57,9 @@
             : [];
     }
 
+    const baseResourceCatalogEntries = getBaseResourceCatalogEntries();
+    const craftingGeneratedCatalogEntries = getCraftingGeneratedCatalogEntries();
+
     const items = [
         makeItem('ration', 'Сухпаёк путника', 'SP', 1, 'consumable survival food', {
             stackable: true,
@@ -247,18 +250,6 @@
             baseValue: 26,
             description: 'Усиленная кирка для поздних островов.'
         }),
-        makeItem('lightBoat', 'Лёгкая лодка', 'LL', 3, 'tool utility movement', {
-            chestWeight: 2,
-            merchantWeight: 3,
-            baseValue: 26,
-            description: 'Редкий походный инструмент для поздних квестов и обменов.'
-        }),
-        makeItem('foldingBoat', 'Складная лодка', 'SL', 4, 'tool utility movement', {
-            chestWeight: 2,
-            merchantWeight: 3,
-            baseValue: 34,
-            description: 'Продвинутый инструмент для поздней игры.'
-        }),
         makeItem('returnMarker', 'Метка возврата', 'MV', 3, 'tool utility movement', {
             chestWeight: 3,
             merchantWeight: 3,
@@ -337,8 +328,13 @@
             chestWeight: 2,
             merchantWeight: 1,
             baseValue: 44,
-            description: 'Очень сильные сапоги с небольшим риском истощения.',
-            passive: { travelCostMultiplier: 0.75, drainMultiplier: 1.05 }
+            sourceRecipeIds: ['storm-boots'],
+            description: 'Поздние сапоги под тяжёлый маршрут: удешевляют движение и позволяют игнорировать часть плохих зон, но поднимают общий расход.',
+            passive: {
+                travelCostMultiplier: 0.78,
+                drainMultiplier: 1.06,
+                ignoreTravelZones: ['drainingLowland', 'badSector', 'dangerPass']
+            }
         }),
         makeItem('trailCloak', 'Плащ троп', 'PT', 3, 'artifact movement', {
             chestWeight: 2,
@@ -746,27 +742,8 @@
             merchantWeight: 0,
             merchantQuestWeight: 0
         }),
-        ...getBaseResourceCatalogEntries(),
-        ...getCraftingGeneratedCatalogEntries(),
-        makeItem('soilClod', 'Комья земли', 'KZ', 0, 'resource material', {
-            stackable: true,
-            baseValue: 2,
-            description: 'Сырьё из плохих секторов. Пять комьев можно сжать руками в земляной ресурс.'
-        }),
-        makeItem('ferryBoard', 'Доска переправы', 'DP', 2, 'tool utility movement', {
-            chestWeight: 3,
-            merchantWeight: 4,
-            baseValue: 16,
-            description: 'Старая версия переносного моста. Укладывает одну клетку моста.',
-            activeEffect: { kind: 'bridgeBuilder', charges: 1 }
-        }),
-        makeItem('roughBridge', 'Грубый мостик', 'GM', 3, 'tool utility movement', {
-            chestWeight: 2,
-            merchantWeight: 3,
-            baseValue: 20,
-            description: 'Старая версия усиленного моста. Укладывает две клетки моста.',
-            activeEffect: { kind: 'bridgeBuilder', charges: 2 }
-        }),
+        ...baseResourceCatalogEntries,
+        ...craftingGeneratedCatalogEntries,
         makeItem('leather', 'Кожа', 'KG', 1, 'material value', {
             stackable: true,
             chestWeight: 5,
@@ -842,6 +819,69 @@
         })
     ];
 
+    const itemStatusOverrides = {
+        spoiledFish: 'raw'
+    };
+    const itemStatusById = Object.create(null);
+    const rawItemIds = new Set(baseResourceCatalogEntries.map((entry) => entry.id).filter(Boolean));
+    const allowedStatuses = new Set([
+        'raw',
+        'component',
+        'crafted',
+        'loot-only',
+        'merchant-only',
+        'quest-only',
+        'deprecated'
+    ]);
+
+    function resolveItemStatus(definition) {
+        if (!definition || !definition.id) {
+            return 'loot-only';
+        }
+
+        const overrideStatus = itemStatusOverrides[definition.id];
+        if (overrideStatus) {
+            return overrideStatus;
+        }
+
+        if (rawItemIds.has(definition.id)) {
+            return 'raw';
+        }
+
+        if (componentRegistry && typeof componentRegistry.getComponentDefinitionByInventoryItemId === 'function') {
+            if (componentRegistry.getComponentDefinitionByInventoryItemId(definition.id)) {
+                return 'component';
+            }
+        }
+
+        if (componentRegistry && typeof componentRegistry.isGeneratedCraftingOutputItem === 'function') {
+            if (componentRegistry.isGeneratedCraftingOutputItem(definition.id)) {
+                return 'crafted';
+            }
+        }
+
+        if (Array.isArray(definition.sourceRecipeIds) && definition.sourceRecipeIds.length > 0) {
+            return 'crafted';
+        }
+
+        if ((definition.merchantWeight || 0) > 0 && (definition.chestWeight || 0) === 0) {
+            return 'merchant-only';
+        }
+
+        if ((definition.merchantQuestWeight || 0) > 0 && (definition.chestWeight || 0) === 0 && (definition.merchantWeight || 0) === 0) {
+            return 'quest-only';
+        }
+
+        return 'loot-only';
+    }
+
+    items.forEach((definition) => {
+        const resolvedStatus = resolveItemStatus(definition);
+        const normalizedStatus = allowedStatuses.has(resolvedStatus) ? resolvedStatus : 'loot-only';
+        definition.status = normalizedStatus;
+        itemStatusById[definition.id] = normalizedStatus;
+    });
+
     const itemById = Object.create(null);
 
     function getTierByIsland(islandIndex = 1) {
@@ -874,6 +914,7 @@
         questCategoryLabels,
         items,
         itemById,
+        itemStatusById,
         getTierByIsland,
         rebuildItemMap
     });
