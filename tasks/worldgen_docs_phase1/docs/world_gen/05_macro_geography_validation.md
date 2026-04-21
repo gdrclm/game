@@ -9,10 +9,16 @@
 
 ## 1. Validation targets
 
+### 1.0. Prepared upstream inputs
+- `landmassShapeInterestScores` may feed later diversity/history-potential/rebalance checks for major landmasses.
+- This layer is advisory input only and must not be treated as completed world validation by itself.
+- `reliefRegions` may feed later diversity checks for broad mountain/plateau/plain/basin/coastal-belt coverage.
+- This physical record layer still does not perform climate classification, whole-world validation, rebalance, or history-facing interpretation by itself.
+
 ### 1.1. Diversity target
 В мире должны быть:
-- минимум 2 разных continent strategic profiles;
-- минимум 2 разных sea region historical roles;
+- минимум 2 разных continent physical profiles по shape + relief/climate references;
+- минимум 2 разных sea region physical basin profiles по basin type + climate references;
 - заметный contrast между ядром и периферией.
 
 ### 1.2. Route target
@@ -46,6 +52,9 @@
 ## 2. Debug exports
 Для каждого seed должны экспортироваться:
 - plate pressure heatmap
+- relief/elevation heatmaps
+- land/water and cleanup mask heatmaps
+- relief-region type-mask heatmap
 - marine invasion heatmap
 - cohesion map
 - climate stress map
@@ -61,7 +70,7 @@
 
 ```json
 {
-  "isValid": true,
+  "isValid": false,
   "scores": {
     "diversity": 0.0,
     "routeRichness": 0.0,
@@ -70,10 +79,25 @@
     "centerPeripheryContrast": 0.0,
     "historyPotential": 0.0
   },
-  "failReasons": [],
-  "rebalanceActions": []
+  "failReasons": ["route_target_below_threshold"],
+  "rebalanceActions": ["reweight_route_choke_layers"],
+  "diagnostics": {
+    "warnings": ["archipelago_significance_borderline"],
+    "blockedDownstreamPhases": ["historyPhase"]
+  },
+  "selectiveRerollRecommendations": [
+    {
+      "targetLayerIds": ["macroRoutes", "chokepoints"],
+      "recommendationType": "partial_reroll",
+      "priority": "recommended",
+      "reason": "Route/choke structure is below target while physical layers remain usable."
+    }
+  ]
 }
 ```
+
+`selectiveRerollRecommendations` is advisory contract output only.
+It may recommend partial rerolls of selected late layers, but it must not execute rerolls or orchestration directly.
 
 ---
 

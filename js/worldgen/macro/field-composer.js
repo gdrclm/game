@@ -232,7 +232,10 @@
                 range: range.slice(),
                 defaultRule,
                 defaultValue,
-                supportedRules: SUPPORTED_RULES.slice()
+                supportedRules: SUPPORTED_RULES.slice(),
+                outputType: 'ScalarField',
+                supportedInputContract: 'field.sample(x, y, sampleOptions) -> finite number',
+                deterministicComposition: true
             };
         }
 
@@ -253,10 +256,21 @@
     const FIELD_COMPOSER_DESCRIPTOR = deepFreeze({
         type: 'FieldComposer',
         deterministic: true,
+        intendedLayers: [
+            'physical',
+            'macro'
+        ],
         supportedRules: SUPPORTED_RULES.slice(),
         defaultRule: DEFAULT_RULE,
         outputType: 'ScalarField',
-        supportedInputContract: 'field.sample(x, y, sampleOptions) -> finite number'
+        supportedInputContract: 'field.sample(x, y, sampleOptions) -> finite number',
+        entryTransformStages: [
+            'sample',
+            'gain',
+            'bias',
+            'weight'
+        ],
+        deterministicComposition: true
     });
 
     function getFieldComposerDescriptor() {
@@ -267,7 +281,7 @@
         macro.registerModule('fieldComposer', {
             entry: 'createFieldComposer',
             file: 'js/worldgen/macro/field-composer.js',
-            description: 'Generic deterministic field compositing helpers for scalar-compatible fields.',
+            description: 'Base deterministic FieldComposer for Phase 1 physical + macro scalar-compatible field composition.',
             stub: false
         });
     }

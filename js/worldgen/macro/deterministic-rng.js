@@ -89,19 +89,60 @@
         return stepIds.map((stepId) => buildMacroSubSeedNamespace(stepId));
     }
 
+    function getMacroSubSeedNamespaceCatalog() {
+        return Object.freeze({
+            layerRoots: Object.freeze([
+                buildMacroSubSeedNamespace('physical'),
+                buildMacroSubSeedNamespace('macroLayer'),
+                buildMacroSubSeedNamespace('validation'),
+                buildMacroSubSeedNamespace('debug'),
+                buildMacroSubSeedNamespace('contracts'),
+                buildMacroSubSeedNamespace('orchestration')
+            ]),
+            physicalOutputs: Object.freeze([
+                buildMacroSubSeedNamespace('physical', 'plates'),
+                buildMacroSubSeedNamespace('physical', 'continents'),
+                buildMacroSubSeedNamespace('physical', 'seaRegions'),
+                buildMacroSubSeedNamespace('physical', 'mountainSystems'),
+                buildMacroSubSeedNamespace('physical', 'volcanicZones'),
+                buildMacroSubSeedNamespace('physical', 'riverBasins'),
+                buildMacroSubSeedNamespace('physical', 'climateBands'),
+                buildMacroSubSeedNamespace('physical', 'reliefRegions')
+            ]),
+            strategicOutputs: Object.freeze([
+                buildMacroSubSeedNamespace('macroLayer', 'archipelagoRegions'),
+                buildMacroSubSeedNamespace('macroLayer', 'chokepoints'),
+                buildMacroSubSeedNamespace('macroLayer', 'macroRoutes'),
+                buildMacroSubSeedNamespace('macroLayer', 'strategicRegions'),
+                buildMacroSubSeedNamespace('macroLayer', 'validationReport')
+            ]),
+            utilityScopes: Object.freeze([
+                buildMacroSubSeedNamespace('validation'),
+                buildMacroSubSeedNamespace('debug'),
+                buildMacroSubSeedNamespace('contracts'),
+                buildMacroSubSeedNamespace('orchestration')
+            ])
+        });
+    }
+
     function getMacroSubSeedConventions() {
+        const namespaceCatalog = getMacroSubSeedNamespaceCatalog();
+
         return Object.freeze({
             rootNamespace: NAMESPACE_ROOT,
             separator: NAMESPACE_SEPARATOR,
             segmentPattern: NAMESPACE_SEGMENT_PATTERN.source,
             style: 'dot-separated lowerCamelCase segments under the macro root namespace',
-            reservedNamespaces: Object.freeze([
-                buildMacroSubSeedNamespace('contracts'),
-                buildMacroSubSeedNamespace('validation'),
-                buildMacroSubSeedNamespace('debug')
-            ]),
+            reservedNamespaces: namespaceCatalog.utilityScopes,
+            layerRoots: namespaceCatalog.layerRoots,
+            outputNamespaces: Object.freeze({
+                physical: namespaceCatalog.physicalOutputs,
+                strategic: namespaceCatalog.strategicOutputs
+            }),
             pipelineNamespaces: Object.freeze(getMacroPipelineSubSeedNamespaces()),
             examples: Object.freeze([
+                buildMacroSubSeedNamespace('physical', 'plates'),
+                buildMacroSubSeedNamespace('macroLayer', 'macroRoutes'),
                 buildMacroSubSeedNamespace('tectonicSkeleton'),
                 buildMacroSubSeedNamespace('marineCarving'),
                 buildMacroSubSeedNamespace('tectonicSkeleton', 'ridgePass')
@@ -156,6 +197,37 @@
         }
 
         return {};
+    }
+
+    function getMacroRngDescriptor() {
+        return Object.freeze({
+            moduleId: 'deterministicRng',
+            canonicalEntry: 'createMacroRng',
+            auxiliaryEntries: Object.freeze([
+                'createMacroSeedScope',
+                'buildMacroSubSeedNamespace',
+                'getMacroSubSeedNamespaceCatalog',
+                'getMacroSubSeedConventions',
+                'deriveMacroSubSeed',
+                'deriveMacroSubSeedMap'
+            ]),
+            purpose: 'Deterministic RNG wrapper for Phase 1 Physical + Macro Geography subgenerators.',
+            deterministicBy: 'seed',
+            convenienceMethods: Object.freeze([
+                'next',
+                'nextFloat',
+                'nextRange',
+                'nextInt',
+                'nextBool',
+                'nextIndex',
+                'pick',
+                'shuffle',
+                'getSeed',
+                'getState',
+                'getDrawCount',
+                'snapshot'
+            ])
+        });
     }
 
     function createMacroRng(seed, options = {}) {
@@ -333,17 +405,19 @@
 
     if (typeof macro.registerModule === 'function') {
         macro.registerModule('deterministicRng', {
-            entry: 'createMacroSeedScope',
+            entry: 'createMacroRng',
             file: 'js/worldgen/macro/deterministic-rng.js',
-            description: 'Deterministic RNG wrapper and sub-seed derivation layer for Phase 1 macro worldgen.',
+            description: 'Deterministic RNG wrapper for Phase 1 Physical + Macro Geography generation.',
             stub: false
         });
     }
 
     Object.assign(macro, {
+        getMacroRngDescriptor,
         createMacroRng,
         createMacroSeedScope,
         buildMacroSubSeedNamespace,
+        getMacroSubSeedNamespaceCatalog,
         getMacroSubSeedConventions,
         deriveMacroSubSeed,
         deriveMacroSubSeedMap

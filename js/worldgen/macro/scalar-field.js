@@ -238,10 +238,13 @@
                 width,
                 height,
                 size,
+                storageType: 'Float32Array',
                 range: range.slice(),
                 defaultValue,
                 defaultSampleMode,
-                defaultEdgeMode
+                defaultEdgeMode,
+                supportedSampleModes: SUPPORTED_SAMPLE_MODES.slice(),
+                supportedEdgeModes: SUPPORTED_EDGE_MODES.slice()
             };
         }
 
@@ -269,6 +272,12 @@
     const SCALAR_FIELD_DESCRIPTOR = deepFreeze({
         type: 'ScalarField',
         deterministic: true,
+        storageType: 'Float32Array',
+        intendedLayers: [
+            'physical',
+            'macro'
+        ],
+        valueNormalization: 'clampToRange',
         defaultRange: DEFAULT_RANGE.slice(),
         defaultSampleMode: DEFAULT_SAMPLE_MODE,
         defaultEdgeMode: DEFAULT_EDGE_MODE,
@@ -290,7 +299,7 @@
         macro.registerModule('scalarField', {
             entry: 'createScalarField',
             file: 'js/worldgen/macro/scalar-field.js',
-            description: 'Basic ScalarField abstraction for Phase 1 field read/write/sample operations.',
+            description: 'Base ScalarField abstraction for Phase 1 physical + macro field read/write/sample operations.',
             stub: false
         });
     }

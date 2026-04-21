@@ -73,3 +73,4 @@ buildFrozenPhase0OutputWrappers(phase0Bundle)
 4. outputs must match the official contracts.
 5. Phase 1-safe summary exports may expose upstream-ready Phase 0 inputs for PHASE 1, but may not contain generated macro geography.
 6. frozen output wrappers may add immutable handoff metadata, but may not rewrite the wrapped exports.
+7. `phase1Input.derivedWorldTendencies` is the official descriptive-tendency payload for Phase 1 seed/profile intake; the `summary` section is readability-oriented and must not replace the full contract.

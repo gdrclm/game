@@ -5,7 +5,11 @@
     const expectedPipelineStepIds = Object.freeze([
         'masterConstraintsIntake',
         'tectonicSkeleton',
+        'reliefElevation',
+        'hydrosphere',
+        'riverSystem',
         'marineCarving',
+        'climateEnvelope',
         'climatePressure',
         'continentalCohesion',
         'coastalOpportunity',

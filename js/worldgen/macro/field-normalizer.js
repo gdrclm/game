@@ -260,7 +260,10 @@
                 sourceRange: sourceRange.slice(),
                 targetRange: targetRange.slice(),
                 defaultMode,
-                supportedModes: SUPPORTED_MODES.slice()
+                supportedModes: SUPPORTED_MODES.slice(),
+                outputType: 'ScalarField',
+                supportedInputContract: 'field.sample(x, y, sampleOptions) -> finite number',
+                deterministicNormalization: true
             };
         }
 
@@ -290,11 +293,23 @@
     const FIELD_NORMALIZER_DESCRIPTOR = deepFreeze({
         type: 'FieldNormalizer',
         deterministic: true,
+        intendedLayers: [
+            'physical',
+            'macro'
+        ],
         supportedModes: SUPPORTED_MODES.slice(),
         defaultMode: DEFAULT_MODE,
         defaultSourceRange: DEFAULT_SOURCE_RANGE.slice(),
         defaultTargetRange: DEFAULT_TARGET_RANGE.slice(),
-        outputType: 'ScalarField'
+        outputType: 'ScalarField',
+        supportedInputContract: 'field.sample(x, y, sampleOptions) -> finite number',
+        normalizationStages: [
+            'read',
+            'resolveSourceRange',
+            'normalizeMode',
+            'mapOrClamp'
+        ],
+        deterministicNormalization: true
     });
 
     function getFieldNormalizerDescriptor() {
@@ -305,7 +320,7 @@
         macro.registerModule('fieldNormalizer', {
             entry: 'createFieldNormalizer',
             file: 'js/worldgen/macro/field-normalizer.js',
-            description: 'Generic deterministic field range normalization helpers for scalar-compatible fields.',
+            description: 'Base deterministic FieldNormalizer for Phase 1 physical + macro scalar-compatible field range normalization.',
             stub: false
         });
     }

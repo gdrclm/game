@@ -251,15 +251,26 @@
         function describe() {
             return {
                 type: 'MaskField',
+                aliases: [
+                    'ConstraintField'
+                ],
                 fieldId,
                 width,
                 height,
                 size,
+                storageType: 'Float32Array',
                 range: range.slice(),
+                semantics: {
+                    allowed: range[1],
+                    blocked: range[0]
+                },
+                filteringSemantics: 'thresholdedMask',
                 defaultValue,
                 threshold,
                 defaultSampleMode,
-                defaultEdgeMode
+                defaultEdgeMode,
+                supportedSampleModes: SUPPORTED_SAMPLE_MODES.slice(),
+                supportedEdgeModes: SUPPORTED_EDGE_MODES.slice()
             };
         }
 
@@ -295,11 +306,22 @@
             'ConstraintField'
         ],
         deterministic: true,
+        storageType: 'Float32Array',
+        intendedLayers: [
+            'physical',
+            'macro'
+        ],
         range: DEFAULT_RANGE.slice(),
         semantics: {
             allowed: 1,
             blocked: 0
         },
+        filteringSemantics: 'thresholdedMask',
+        futureCompatibleOperations: [
+            'filter',
+            'gate',
+            'exclude'
+        ],
         defaultThreshold: DEFAULT_THRESHOLD,
         defaultSampleMode: DEFAULT_SAMPLE_MODE,
         defaultEdgeMode: DEFAULT_EDGE_MODE,
@@ -333,7 +355,7 @@
         macro.registerModule('maskField', {
             entry: 'createMaskField',
             file: 'js/worldgen/macro/mask-field.js',
-            description: 'Basic MaskField/ConstraintField abstraction for Phase 1 mask and restriction layers.',
+            description: 'Base MaskField/ConstraintField abstraction for Phase 1 physical + macro filtering and restriction layers.',
             stub: false
         });
     }

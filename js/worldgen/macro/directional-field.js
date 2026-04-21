@@ -266,9 +266,13 @@
                 width,
                 height,
                 size,
+                storageType: 'Float32ArrayPair',
+                vectorNormalization: 'unitVectorOrZero',
                 defaultDirection: cloneValue(defaultDirection),
                 defaultSampleMode,
-                defaultEdgeMode
+                defaultEdgeMode,
+                supportedSampleModes: SUPPORTED_SAMPLE_MODES.slice(),
+                supportedEdgeModes: SUPPORTED_EDGE_MODES.slice()
             };
         }
 
@@ -297,6 +301,17 @@
         type: 'DirectionalField',
         deterministic: true,
         storage: 'normalized xy vector pair',
+        storageType: 'Float32ArrayPair',
+        intendedLayers: [
+            'physical',
+            'macro'
+        ],
+        futureCompatibleLayers: [
+            'wind',
+            'current',
+            'plateMotion'
+        ],
+        vectorNormalization: 'unitVectorOrZero',
         defaultSampleMode: DEFAULT_SAMPLE_MODE,
         defaultEdgeMode: DEFAULT_EDGE_MODE,
         supportedSampleModes: SUPPORTED_SAMPLE_MODES.slice(),
@@ -317,7 +332,7 @@
         macro.registerModule('directionalField', {
             entry: 'createDirectionalField',
             file: 'js/worldgen/macro/directional-field.js',
-            description: 'Basic DirectionalField abstraction for Phase 1 vector direction storage and sampling.',
+            description: 'Base DirectionalField abstraction for Phase 1 physical + macro vector direction storage and sampling.',
             stub: false
         });
     }

@@ -20,11 +20,20 @@
 
     function getMacroTypeContracts() {
         return freezeSection({
+            physicalWorldDebugBundle: getContractSnapshot('getPhysicalWorldDebugBundleContract'),
+            scalarFieldHeatmapArtifact: getContractSnapshot('getScalarFieldHeatmapArtifactContract'),
+            directionalFieldVectorArtifact: getContractSnapshot('getDirectionalFieldVectorArtifactContract'),
             macroSeedProfile: getContractSnapshot('getMacroSeedProfileContract'),
             macroGeographyPackage: getContractSnapshot('getMacroGeographyPackageContract'),
             validationReport: getContractSnapshot('getValidationReportContract'),
+            plateRecord: getContractSnapshot('getPlateRecordContract'),
             continentRecord: getContractSnapshot('getContinentRecordContract'),
             seaRegionRecord: getContractSnapshot('getSeaRegionRecordContract'),
+            mountainSystemRecord: getContractSnapshot('getMountainSystemRecordContract'),
+            volcanicZoneRecord: getContractSnapshot('getVolcanicZoneRecordContract'),
+            riverBasinRecord: getContractSnapshot('getRiverBasinRecordContract'),
+            climateBandRecord: getContractSnapshot('getClimateBandRecordContract'),
+            reliefRegionRecord: getContractSnapshot('getReliefRegionRecordContract'),
             archipelagoRegionRecord: getContractSnapshot('getArchipelagoRegionRecordContract'),
             chokepointRecord: getContractSnapshot('getChokepointRecordContract'),
             macroRouteRecord: getContractSnapshot('getMacroRouteRecordContract'),
@@ -34,11 +43,20 @@
 
     function getMacroTypeFactories() {
         return freezeSection({
+            physicalWorldDebugBundle: getRequiredFunction('createPhysicalWorldDebugBundleSkeleton'),
+            scalarFieldHeatmapArtifact: getRequiredFunction('createScalarFieldHeatmapArtifactSkeleton'),
+            directionalFieldVectorArtifact: getRequiredFunction('createDirectionalFieldVectorArtifactSkeleton'),
             macroSeedProfile: getRequiredFunction('createMacroSeedProfileSkeleton'),
             macroGeographyPackage: getRequiredFunction('createMacroGeographyPackageSkeleton'),
             validationReport: getRequiredFunction('createValidationReportSkeleton'),
+            plateRecord: getRequiredFunction('createPlateRecordSkeleton'),
             continentRecord: getRequiredFunction('createContinentRecordSkeleton'),
             seaRegionRecord: getRequiredFunction('createSeaRegionRecordSkeleton'),
+            mountainSystemRecord: getRequiredFunction('createMountainSystemRecordSkeleton'),
+            volcanicZoneRecord: getRequiredFunction('createVolcanicZoneRecordSkeleton'),
+            riverBasinRecord: getRequiredFunction('createRiverBasinRecordSkeleton'),
+            climateBandRecord: getRequiredFunction('createClimateBandRecordSkeleton'),
+            reliefRegionRecord: getRequiredFunction('createReliefRegionRecordSkeleton'),
             archipelagoRegionRecord: getRequiredFunction('createArchipelagoRegionRecordSkeleton'),
             chokepointRecord: getRequiredFunction('createChokepointRecordSkeleton'),
             macroRouteRecord: getRequiredFunction('createMacroRouteRecordSkeleton'),
@@ -48,11 +66,20 @@
 
     function getMacroTypeValidators() {
         return freezeSection({
+            physicalWorldDebugBundle: getRequiredFunction('validatePhysicalWorldDebugBundle'),
+            scalarFieldHeatmapArtifact: getRequiredFunction('validateScalarFieldHeatmapArtifact'),
+            directionalFieldVectorArtifact: getRequiredFunction('validateDirectionalFieldVectorArtifact'),
             macroSeedProfile: getRequiredFunction('validateMacroSeedProfile'),
             macroGeographyPackage: getRequiredFunction('validateMacroGeographyPackage'),
             validationReport: getRequiredFunction('validateValidationReport'),
+            plateRecord: getRequiredFunction('validatePlateRecord'),
             continentRecord: getRequiredFunction('validateContinentRecord'),
             seaRegionRecord: getRequiredFunction('validateSeaRegionRecord'),
+            mountainSystemRecord: getRequiredFunction('validateMountainSystemRecord'),
+            volcanicZoneRecord: getRequiredFunction('validateVolcanicZoneRecord'),
+            riverBasinRecord: getRequiredFunction('validateRiverBasinRecord'),
+            climateBandRecord: getRequiredFunction('validateClimateBandRecord'),
+            reliefRegionRecord: getRequiredFunction('validateReliefRegionRecord'),
             archipelagoRegionRecord: getRequiredFunction('validateArchipelagoRegionRecord'),
             chokepointRecord: getRequiredFunction('validateChokepointRecord'),
             macroRouteRecord: getRequiredFunction('validateMacroRouteRecord'),
@@ -62,11 +89,20 @@
 
     function getMacroTypeAssertions() {
         return freezeSection({
+            physicalWorldDebugBundle: getRequiredFunction('assertPhysicalWorldDebugBundle'),
+            scalarFieldHeatmapArtifact: getRequiredFunction('assertScalarFieldHeatmapArtifact'),
+            directionalFieldVectorArtifact: getRequiredFunction('assertDirectionalFieldVectorArtifact'),
             macroSeedProfile: getRequiredFunction('assertMacroSeedProfile'),
             macroGeographyPackage: getRequiredFunction('assertMacroGeographyPackage'),
             validationReport: getRequiredFunction('assertValidationReport'),
+            plateRecord: getRequiredFunction('assertPlateRecord'),
             continentRecord: getRequiredFunction('assertContinentRecord'),
             seaRegionRecord: getRequiredFunction('assertSeaRegionRecord'),
+            mountainSystemRecord: getRequiredFunction('assertMountainSystemRecord'),
+            volcanicZoneRecord: getRequiredFunction('assertVolcanicZoneRecord'),
+            riverBasinRecord: getRequiredFunction('assertRiverBasinRecord'),
+            climateBandRecord: getRequiredFunction('assertClimateBandRecord'),
+            reliefRegionRecord: getRequiredFunction('assertReliefRegionRecord'),
             archipelagoRegionRecord: getRequiredFunction('assertArchipelagoRegionRecord'),
             chokepointRecord: getRequiredFunction('assertChokepointRecord'),
             macroRouteRecord: getRequiredFunction('assertMacroRouteRecord'),
@@ -84,6 +120,9 @@
                 : {},
             regionEntryPoints: typeof macro.getRegionRecordEntryPoints === 'function'
                 ? macro.getRegionRecordEntryPoints()
+                : {},
+            fieldDebugLayers: typeof macro.getFieldDebugLayerRegistry === 'function'
+                ? macro.getFieldDebugLayerRegistry()
                 : {}
         });
     }

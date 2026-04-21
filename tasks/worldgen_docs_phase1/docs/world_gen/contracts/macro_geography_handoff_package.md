@@ -160,6 +160,16 @@ This section exists so later phases can detect whether:
 
 `MacroGeographyHandoffPackage` is the official extracted downstream interface.
 
+Sea-region strategic meaning should be expressed here as derived handoff, not embedded directly into root `seaRegions[]` records. Root `SeaRegionRecord` entries remain physical basin summaries with climate references and preliminary navigability only.
+
+`archipelagoRegions[]` may carry physical morphology references and strategic-significance references, but historical interpretation still graduates into this handoff package. Downstream phases should treat root archipelago records as structured inputs, while `archipelagoRoleSeeds` remains the official converged handoff for later historical and archipelago-role logic.
+
+`chokepoints[]` may carry structural control/dependency summaries, but politics-facing escalation, collapse propagation meaning, and coalition pressure should still be expressed here as derived handoff rather than expanded ad hoc inside root `ChokepointRecord` entries.
+
+`macroRoutes[]` may carry structural corridor summaries, but history-facing route meaning, political dependency summaries, and collapse-cascade interpretation should still be expressed here as derived handoff rather than expanded ad hoc inside root `MacroRouteRecord` entries.
+
+`strategicRegions[]` may carry structural strategic summaries, but empire-candidate meaning, fragile-periphery interpretation, and politics-facing rivalry hints should still be expressed here as derived handoff rather than expanded ad hoc inside root `StrategicRegionRecord` entries.
+
 Phase 1 code may generate both from the same internal analysis, but downstream phases should consume the handoff package when they need:
 - historical summaries;
 - politics-facing hints;

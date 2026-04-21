@@ -16,40 +16,88 @@
         'failReasons',
         'rebalanceActions'
     ]);
-    const ROOT_REQUIRED_KEYS = Object.freeze([
-        'macroSeed',
-        'version',
+    const VALIDATION_DIAGNOSTICS_SECTION_KEYS = Object.freeze([
+        'warnings',
+        'blockedDownstreamPhases'
+    ]);
+    const VALIDATION_SELECTIVE_REROLL_RECOMMENDATION_KEYS = Object.freeze([
+        'targetLayerIds',
+        'recommendationType',
+        'priority',
+        'reason'
+    ]);
+    const PHYSICAL_REQUIRED_ARRAY_KEYS = Object.freeze([
+        'plates',
         'continents',
         'seaRegions',
+        'mountainSystems',
+        'volcanicZones',
+        'riverBasins',
+        'climateBands',
+        'reliefRegions'
+    ]);
+    const STRATEGIC_REQUIRED_ARRAY_KEYS = Object.freeze([
         'archipelagoRegions',
         'chokepoints',
         'macroRoutes',
-        'strategicRegions',
+        'strategicRegions'
+    ]);
+    const STRATEGIC_OPTIONAL_ARRAY_KEYS = Object.freeze([
+        'coastalOpportunityMap',
+        'isolatedZones'
+    ]);
+    const ROOT_REQUIRED_KEYS = Object.freeze([
+        'macroSeed',
+        'version',
+        ...PHYSICAL_REQUIRED_ARRAY_KEYS,
+        ...STRATEGIC_REQUIRED_ARRAY_KEYS,
         'validationReport'
     ]);
     const ROOT_OPTIONAL_KEYS = Object.freeze([
         'worldBounds',
-        'climateBands',
-        'coastalOpportunityMap',
-        'isolatedZones',
+        ...STRATEGIC_OPTIONAL_ARRAY_KEYS,
         'debugArtifacts'
     ]);
     const ROOT_ARRAY_KEYS = Object.freeze([
-        'continents',
-        'seaRegions',
-        'archipelagoRegions',
-        'climateBands',
-        'coastalOpportunityMap',
-        'chokepoints',
-        'macroRoutes',
-        'isolatedZones',
-        'strategicRegions'
+        ...PHYSICAL_REQUIRED_ARRAY_KEYS,
+        ...STRATEGIC_REQUIRED_ARRAY_KEYS,
+        ...STRATEGIC_OPTIONAL_ARRAY_KEYS
     ]);
     const SEMANTIC_CONSTRAINTS = Object.freeze([
+        Object.freeze({
+            key: 'plates',
+            minLength: 1,
+            reason: 'World should expose at least one tectonic plate record.'
+        }),
         Object.freeze({
             key: 'continents',
             minLength: 2,
             reason: 'World should expose at least two continent records.'
+        }),
+        Object.freeze({
+            key: 'seaRegions',
+            minLength: 1,
+            reason: 'World should expose at least one sea region.'
+        }),
+        Object.freeze({
+            key: 'mountainSystems',
+            minLength: 1,
+            reason: 'World should expose at least one mountain system.'
+        }),
+        Object.freeze({
+            key: 'riverBasins',
+            minLength: 1,
+            reason: 'World should expose at least one river basin.'
+        }),
+        Object.freeze({
+            key: 'climateBands',
+            minLength: 1,
+            reason: 'World should expose at least one climate band.'
+        }),
+        Object.freeze({
+            key: 'reliefRegions',
+            minLength: 1,
+            reason: 'World should expose at least one relief region.'
         }),
         Object.freeze({
             key: 'archipelagoRegions',
@@ -65,6 +113,11 @@
             key: 'macroRoutes',
             minLength: 1,
             reason: 'World should expose at least one macro route.'
+        }),
+        Object.freeze({
+            key: 'strategicRegions',
+            minLength: 1,
+            reason: 'World should expose at least one strategic region.'
         })
     ]);
 
@@ -137,6 +190,34 @@
         };
     }
 
+    function createArrayFieldDescriptor({
+        layerId,
+        recordContractId = null,
+        optional = false,
+        itemContractStatus = ''
+    } = {}) {
+        const descriptor = {
+            type: 'array',
+            layerId: typeof layerId === 'string' && layerId.trim()
+                ? layerId.trim()
+                : 'macro'
+        };
+
+        if (recordContractId) {
+            descriptor.recordContractId = recordContractId;
+        }
+
+        if (optional) {
+            descriptor.optional = true;
+        }
+
+        if (itemContractStatus) {
+            descriptor.itemContractStatus = itemContractStatus;
+        }
+
+        return descriptor;
+    }
+
     function createValidationScores(overrides = {}) {
         return VALIDATION_SCORE_KEYS.reduce((scores, scoreKey) => {
             scores[scoreKey] = clampUnitInterval(overrides[scoreKey]);
@@ -144,17 +225,51 @@
         }, {});
     }
 
+    function normalizeStringArray(values) {
+        return Array.isArray(values)
+            ? values.map((value) => `${value}`)
+            : [];
+    }
+
+    function createValidationDiagnostics(diagnostics = {}) {
+        const normalizedDiagnostics = isPlainObject(diagnostics) ? diagnostics : {};
+        return {
+            warnings: normalizeStringArray(normalizedDiagnostics.warnings),
+            blockedDownstreamPhases: normalizeStringArray(normalizedDiagnostics.blockedDownstreamPhases)
+        };
+    }
+
+    function createSelectiveRerollRecommendations(recommendations = []) {
+        return Array.isArray(recommendations)
+            ? recommendations.map((recommendation) => {
+                const normalizedRecommendation = isPlainObject(recommendation) ? recommendation : {};
+                return {
+                    targetLayerIds: normalizeStringArray(normalizedRecommendation.targetLayerIds),
+                    recommendationType: typeof normalizedRecommendation.recommendationType === 'string'
+                        ? normalizedRecommendation.recommendationType.trim()
+                        : '',
+                    priority: typeof normalizedRecommendation.priority === 'string'
+                        ? normalizedRecommendation.priority.trim()
+                        : '',
+                    reason: typeof normalizedRecommendation.reason === 'string'
+                        ? normalizedRecommendation.reason.trim()
+                        : ''
+                };
+            })
+            : [];
+    }
+
     function createValidationReportSkeleton(validationReport = {}) {
         const normalizedReport = isPlainObject(validationReport) ? validationReport : {};
         return {
             isValid: normalizedReport.isValid === true,
             scores: createValidationScores(normalizedReport.scores),
-            failReasons: Array.isArray(normalizedReport.failReasons)
-                ? normalizedReport.failReasons.map((reason) => `${reason}`)
-                : [],
-            rebalanceActions: Array.isArray(normalizedReport.rebalanceActions)
-                ? normalizedReport.rebalanceActions.map((action) => `${action}`)
-                : []
+            failReasons: normalizeStringArray(normalizedReport.failReasons),
+            rebalanceActions: normalizeStringArray(normalizedReport.rebalanceActions),
+            diagnostics: createValidationDiagnostics(normalizedReport.diagnostics),
+            selectiveRerollRecommendations: createSelectiveRerollRecommendations(
+                normalizedReport.selectiveRerollRecommendations
+            )
         };
     }
 
@@ -166,15 +281,23 @@
             'isValid',
             'scores',
             'failReasons',
-            'rebalanceActions'
+            'rebalanceActions',
+            'diagnostics',
+            'selectiveRerollRecommendations'
         ],
         scores: {
             requiredKeys: VALIDATION_SCORE_KEYS.slice(),
             range: [0, 1]
         },
         diagnostics: {
-            requiredKeys: VALIDATION_DIAGNOSTIC_KEYS.slice(),
+            compatibilityKeys: VALIDATION_DIAGNOSTIC_KEYS.slice(),
+            requiredKeys: VALIDATION_DIAGNOSTICS_SECTION_KEYS.slice(),
             itemType: 'string'
+        },
+        selectiveRerollRecommendations: {
+            type: 'array',
+            itemType: 'object',
+            requiredKeys: VALIDATION_SELECTIVE_REROLL_RECOMMENDATION_KEYS.slice()
         }
     });
 
@@ -194,10 +317,15 @@
                 ? normalizedInput.version.trim()
                 : PHASE_VERSION,
             worldBounds: normalizeWorldBounds(normalizedInput.worldBounds),
+            plates: normalizeArray(normalizedInput.plates),
             continents: normalizeArray(normalizedInput.continents),
             seaRegions: normalizeArray(normalizedInput.seaRegions),
-            archipelagoRegions: normalizeArray(normalizedInput.archipelagoRegions),
+            mountainSystems: normalizeArray(normalizedInput.mountainSystems),
+            volcanicZones: normalizeArray(normalizedInput.volcanicZones),
+            riverBasins: normalizeArray(normalizedInput.riverBasins),
             climateBands: normalizeArray(normalizedInput.climateBands),
+            reliefRegions: normalizeArray(normalizedInput.reliefRegions),
+            archipelagoRegions: normalizeArray(normalizedInput.archipelagoRegions),
             coastalOpportunityMap: normalizeArray(normalizedInput.coastalOpportunityMap),
             chokepoints: normalizeArray(normalizedInput.chokepoints),
             macroRoutes: normalizeArray(normalizedInput.macroRoutes),
@@ -229,45 +357,96 @@
                     type: 'object',
                     keys: ['width', 'height']
                 },
-                continents: {
-                    type: 'array'
-                },
-                seaRegions: {
-                    type: 'array'
-                },
-                archipelagoRegions: {
-                    type: 'array'
-                },
-                climateBands: {
-                    type: 'array',
+                plates: createArrayFieldDescriptor({
+                    layerId: 'physical',
+                    recordContractId: 'plateRecord'
+                }),
+                continents: createArrayFieldDescriptor({
+                    layerId: 'physical',
+                    recordContractId: 'continentRecord'
+                }),
+                seaRegions: createArrayFieldDescriptor({
+                    layerId: 'physical',
+                    recordContractId: 'seaRegionRecord'
+                }),
+                mountainSystems: createArrayFieldDescriptor({
+                    layerId: 'physical',
+                    recordContractId: 'mountainSystemRecord'
+                }),
+                volcanicZones: createArrayFieldDescriptor({
+                    layerId: 'physical',
+                    recordContractId: 'volcanicZoneRecord'
+                }),
+                riverBasins: createArrayFieldDescriptor({
+                    layerId: 'physical',
+                    recordContractId: 'riverBasinRecord'
+                }),
+                climateBands: createArrayFieldDescriptor({
+                    layerId: 'physical',
+                    recordContractId: 'climateBandRecord'
+                }),
+                reliefRegions: createArrayFieldDescriptor({
+                    layerId: 'physical',
+                    recordContractId: 'reliefRegionRecord'
+                }),
+                archipelagoRegions: createArrayFieldDescriptor({
+                    layerId: 'strategic',
+                    recordContractId: 'archipelagoRegionRecord'
+                }),
+                coastalOpportunityMap: createArrayFieldDescriptor({
+                    layerId: 'strategic',
                     optional: true
-                },
-                coastalOpportunityMap: {
-                    type: 'array',
-                    optional: true
-                },
-                chokepoints: {
-                    type: 'array'
-                },
-                macroRoutes: {
-                    type: 'array'
-                },
-                isolatedZones: {
-                    type: 'array',
-                    optional: true
-                },
-                strategicRegions: {
-                    type: 'array'
-                },
+                }),
+                chokepoints: createArrayFieldDescriptor({
+                    layerId: 'strategic',
+                    recordContractId: 'chokepointRecord'
+                }),
+                macroRoutes: createArrayFieldDescriptor({
+                    layerId: 'strategic',
+                    recordContractId: 'macroRouteRecord'
+                }),
+                isolatedZones: createArrayFieldDescriptor({
+                    layerId: 'strategic',
+                    recordContractId: 'isolatedZoneRecord',
+                    optional: true,
+                    itemContractStatus: macro.todoContractedCode || 'TODO_CONTRACTED'
+                }),
+                strategicRegions: createArrayFieldDescriptor({
+                    layerId: 'strategic',
+                    recordContractId: 'strategicRegionRecord'
+                }),
                 debugArtifacts: {
                     type: 'object',
-                    optional: true
+                    optional: true,
+                    fields: {
+                        physicalWorldDebugBundle: {
+                            type: 'object',
+                            contract: 'physicalWorldDebugBundle',
+                            optional: true
+                        }
+                    }
                 },
                 validationReport: {
                     type: 'object',
                     contract: VALIDATION_REPORT_CONTRACT_ID,
-                    requiredKeys: ['isValid', 'scores', 'failReasons', 'rebalanceActions']
+                    requiredKeys: [
+                        'isValid',
+                        'scores',
+                        'failReasons',
+                        'rebalanceActions',
+                        'diagnostics',
+                        'selectiveRerollRecommendations'
+                    ]
                 }
+            }
+        },
+        outputGroups: {
+            physical: {
+                requiredKeys: PHYSICAL_REQUIRED_ARRAY_KEYS.slice()
+            },
+            strategic: {
+                requiredKeys: STRATEGIC_REQUIRED_ARRAY_KEYS.slice(),
+                optionalKeys: STRATEGIC_OPTIONAL_ARRAY_KEYS.slice()
             }
         },
         validationReport: {
@@ -279,6 +458,24 @@
     const BASE_CONTRACT_REGISTRY = deepFreeze({
         macroGeographyPackage: MACRO_GEOGRAPHY_PACKAGE_CONTRACT,
         validationReport: VALIDATION_REPORT_CONTRACT,
+        physicalWorldDebugBundle: typeof macro.getPhysicalWorldDebugBundleContract === 'function'
+            ? macro.getPhysicalWorldDebugBundleContract()
+            : {
+                contractId: 'physicalWorldDebugBundle',
+                status: macro.todoContractedCode || 'TODO_CONTRACTED'
+            },
+        scalarFieldHeatmapArtifact: typeof macro.getScalarFieldHeatmapArtifactContract === 'function'
+            ? macro.getScalarFieldHeatmapArtifactContract()
+            : {
+                contractId: 'scalarFieldHeatmapArtifact',
+                status: macro.todoContractedCode || 'TODO_CONTRACTED'
+            },
+        directionalFieldVectorArtifact: typeof macro.getDirectionalFieldVectorArtifactContract === 'function'
+            ? macro.getDirectionalFieldVectorArtifactContract()
+            : {
+                contractId: 'directionalFieldVectorArtifact',
+                status: macro.todoContractedCode || 'TODO_CONTRACTED'
+            },
         fieldContracts: {
             contractId: 'fieldContracts',
             status: macro.todoContractedCode || 'TODO_CONTRACTED'
@@ -372,6 +569,55 @@
                 if (typeof action !== 'string') {
                     errors.push(`"${path}.rebalanceActions[${index}]" must be a string.`);
                 }
+            });
+        }
+
+        if (!isPlainObject(validationReport.diagnostics)) {
+            errors.push(`"${path}.diagnostics" must be an object.`);
+        } else {
+            VALIDATION_DIAGNOSTICS_SECTION_KEYS.forEach((diagnosticKey) => {
+                if (!Array.isArray(validationReport.diagnostics[diagnosticKey])) {
+                    errors.push(`"${path}.diagnostics.${diagnosticKey}" must be an array.`);
+                    return;
+                }
+
+                validationReport.diagnostics[diagnosticKey].forEach((entry, index) => {
+                    if (typeof entry !== 'string') {
+                        errors.push(`"${path}.diagnostics.${diagnosticKey}[${index}]" must be a string.`);
+                    }
+                });
+            });
+        }
+
+        if (!Array.isArray(validationReport.selectiveRerollRecommendations)) {
+            errors.push(`"${path}.selectiveRerollRecommendations" must be an array.`);
+        } else {
+            validationReport.selectiveRerollRecommendations.forEach((recommendation, index) => {
+                const recommendationPath = `${path}.selectiveRerollRecommendations[${index}]`;
+                if (!isPlainObject(recommendation)) {
+                    errors.push(`"${recommendationPath}" must be an object.`);
+                    return;
+                }
+
+                if (!Array.isArray(recommendation.targetLayerIds)) {
+                    errors.push(`"${recommendationPath}.targetLayerIds" must be an array.`);
+                } else {
+                    if (recommendation.targetLayerIds.length < 1) {
+                        errors.push(`"${recommendationPath}.targetLayerIds" must contain at least 1 item.`);
+                    }
+
+                    recommendation.targetLayerIds.forEach((layerId, layerIndex) => {
+                        if (typeof layerId !== 'string') {
+                            errors.push(`"${recommendationPath}.targetLayerIds[${layerIndex}]" must be a string.`);
+                        }
+                    });
+                }
+
+                ['recommendationType', 'priority', 'reason'].forEach((key) => {
+                    if (typeof recommendation[key] !== 'string' || !recommendation[key].trim()) {
+                        errors.push(`"${recommendationPath}.${key}" must be a non-empty string.`);
+                    }
+                });
             });
         }
     }
@@ -470,6 +716,20 @@
 
         if (hasOwn(candidate, 'debugArtifacts') && !isPlainObject(candidate.debugArtifacts)) {
             pushError(errors, '"debugArtifacts" must be a plain object when present.');
+        } else if (
+            hasOwn(candidate, 'debugArtifacts') &&
+            isPlainObject(candidate.debugArtifacts) &&
+            hasOwn(candidate.debugArtifacts, 'physicalWorldDebugBundle') &&
+            typeof macro.validatePhysicalWorldDebugBundle === 'function'
+        ) {
+            const debugBundleValidation = macro.validatePhysicalWorldDebugBundle(
+                candidate.debugArtifacts.physicalWorldDebugBundle
+            );
+            if (!debugBundleValidation.isValid) {
+                debugBundleValidation.errors.forEach((message) => {
+                    pushError(errors, message);
+                });
+            }
         }
 
         if (hasOwn(candidate, 'validationReport')) {

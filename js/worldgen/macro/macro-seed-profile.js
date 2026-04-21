@@ -7,9 +7,16 @@
         'conflictPressure',
         'maritimeDependence',
         'environmentalVolatility',
+        'coastJaggedness',
         'collapseIntensity'
     ]);
-    const DEFAULT_CONSTRAINT_MIDPOINT = 0.5;
+    const WORLD_TENDENCY_FIELDS = Object.freeze([
+        'likelyWorldPattern',
+        'likelyConflictMode',
+        'likelyCollapseMode',
+        'likelyReligiousPattern',
+        'likelyArchipelagoRole'
+    ]);
     const ROOT_SEED_ALIAS_KEYS = Object.freeze([
         'worldSeed',
         'seed',
@@ -24,51 +31,46 @@
         'macroSeedNamespace',
         'namespace'
     ]);
+    const PHASE1_INPUT_KEYS = Object.freeze([
+        'phase1Input'
+    ]);
     const NESTED_PROFILE_KEYS = Object.freeze([
         'worldSeedProfile',
         'seedProfile',
         'profile'
+    ]);
+    const WORLD_TENDENCY_CONTAINER_KEYS = Object.freeze([
+        'derivedWorldTendencies',
+        'worldTendencies'
+    ]);
+    const SUMMARY_CONTAINER_KEYS = Object.freeze([
+        'summary'
+    ]);
+    const OUTPUTS_CONTAINER_KEYS = Object.freeze([
+        'outputs'
+    ]);
+    const PHASE0_BUNDLE_KEYS = Object.freeze([
+        'phase0Bundle'
+    ]);
+    const PHASE1_SUMMARY_BUNDLE_KEYS = Object.freeze([
+        'phase1SafeSummaryBundle'
     ]);
     const REQUIRED_KEYS = Object.freeze([
         'worldSeed',
         'macroSeed',
         'seedNamespace',
         'worldTone',
+        'worldTendencies',
         'conflictPressure',
         'maritimeDependence',
         'environmentalVolatility',
+        'coastJaggedness',
         'collapseIntensity'
     ]);
     const DEBUG_ARTIFACT_KIND = 'seedProfileSnapshot';
     const DEFAULT_NAMESPACE = typeof macro.buildMacroSubSeedNamespace === 'function'
         ? macro.buildMacroSubSeedNamespace()
         : 'macro';
-    const DEFAULT_WORLD_SEED_CONSTRAINT_BOUNDS = deepFreeze({
-        conflictPressure: {
-            min: 0,
-            max: 1,
-            defaultValue: DEFAULT_CONSTRAINT_MIDPOINT,
-            normalization: 'clamp'
-        },
-        maritimeDependence: {
-            min: 0,
-            max: 1,
-            defaultValue: DEFAULT_CONSTRAINT_MIDPOINT,
-            normalization: 'clamp'
-        },
-        environmentalVolatility: {
-            min: 0,
-            max: 1,
-            defaultValue: DEFAULT_CONSTRAINT_MIDPOINT,
-            normalization: 'clamp'
-        },
-        collapseIntensity: {
-            min: 0,
-            max: 1,
-            defaultValue: DEFAULT_CONSTRAINT_MIDPOINT,
-            normalization: 'clamp'
-        }
-    });
 
     function deepFreeze(value) {
         if (!value || typeof value !== 'object' || Object.isFrozen(value)) {
@@ -127,22 +129,47 @@
     }
 
     function getWorldSeedConstraintFieldIds() {
+        if (typeof macro.getPhase1SeedConstraintFieldIds === 'function') {
+            return macro.getPhase1SeedConstraintFieldIds();
+        }
+
         return PRESSURE_FIELDS.slice();
     }
 
     function getConstraintBoundsDescriptor(fieldId) {
-        if (!hasOwn(DEFAULT_WORLD_SEED_CONSTRAINT_BOUNDS, fieldId)) {
+        if (typeof macro.getPhase1SeedConstraintDescriptor === 'function') {
+            return macro.getPhase1SeedConstraintDescriptor(fieldId);
+        }
+
+        if (!PRESSURE_FIELDS.includes(fieldId)) {
             throw new Error(`[worldgen/macro] Unknown world seed constraint field "${fieldId}".`);
         }
 
-        return DEFAULT_WORLD_SEED_CONSTRAINT_BOUNDS[fieldId];
+        return {
+            min: 0,
+            max: 1,
+            defaultValue: 0.5,
+            normalization: 'clamp',
+            affectsLayers: ['physical', 'macro']
+        };
     }
 
     function getDefaultWorldSeedConstraintBounds() {
-        return cloneValue(DEFAULT_WORLD_SEED_CONSTRAINT_BOUNDS);
+        if (typeof macro.getPhase1SeedConstraintBounds === 'function') {
+            return macro.getPhase1SeedConstraintBounds();
+        }
+
+        return getWorldSeedConstraintFieldIds().reduce((bounds, fieldId) => {
+            bounds[fieldId] = cloneValue(getConstraintBoundsDescriptor(fieldId));
+            return bounds;
+        }, {});
     }
 
     function normalizeWorldSeedConstraintValue(fieldId, value, boundsOverride = {}) {
+        if (typeof macro.normalizePhase1SeedConstraintValue === 'function') {
+            return macro.normalizePhase1SeedConstraintValue(fieldId, value, boundsOverride);
+        }
+
         const baseDescriptor = getConstraintBoundsDescriptor(fieldId);
         const normalizedBoundsOverride = isPlainObject(boundsOverride) ? boundsOverride : {};
         const min = Number.isFinite(normalizedBoundsOverride.min)
@@ -164,9 +191,13 @@
     }
 
     function createDefaultWorldSeedConstraints(overrides = {}) {
+        if (typeof macro.createDefaultPhase1SeedConstraints === 'function') {
+            return macro.createDefaultPhase1SeedConstraints(overrides);
+        }
+
         const normalizedOverrides = isPlainObject(overrides) ? overrides : {};
 
-        return PRESSURE_FIELDS.reduce((constraints, fieldId) => {
+        return getWorldSeedConstraintFieldIds().reduce((constraints, fieldId) => {
             constraints[fieldId] = normalizeWorldSeedConstraintValue(
                 fieldId,
                 normalizedOverrides[fieldId]
@@ -176,13 +207,17 @@
     }
 
     function normalizeWorldSeedConstraints(input = {}, options = {}) {
+        if (typeof macro.normalizePhase1SeedConstraints === 'function') {
+            return macro.normalizePhase1SeedConstraints(input, options);
+        }
+
         const normalizedInput = isPlainObject(input) ? input : {};
         const normalizedOptions = isPlainObject(options) ? options : {};
         const boundsOverrides = isPlainObject(normalizedOptions.bounds)
             ? normalizedOptions.bounds
             : {};
 
-        return PRESSURE_FIELDS.reduce((constraints, fieldId) => {
+        return getWorldSeedConstraintFieldIds().reduce((constraints, fieldId) => {
             constraints[fieldId] = normalizeWorldSeedConstraintValue(
                 fieldId,
                 normalizedInput[fieldId],
@@ -221,6 +256,74 @@
         }
 
         return {};
+    }
+
+    function extractNestedObject(input = {}, keys = []) {
+        const normalizedInput = isPlainObject(input) ? input : {};
+
+        for (let index = 0; index < keys.length; index += 1) {
+            const key = keys[index];
+            if (isPlainObject(normalizedInput[key])) {
+                return normalizedInput[key];
+            }
+        }
+
+        return {};
+    }
+
+    function getMacroSeedTendencyFieldIds() {
+        return WORLD_TENDENCY_FIELDS.slice();
+    }
+
+    function createDefaultWorldTendencies(overrides = {}) {
+        const normalizedOverrides = isPlainObject(overrides) ? overrides : {};
+
+        return WORLD_TENDENCY_FIELDS.reduce((tendencies, fieldId) => {
+            tendencies[fieldId] = normalizeString(normalizedOverrides[fieldId], '');
+            return tendencies;
+        }, {});
+    }
+
+    function normalizeWorldTendencies(...sources) {
+        const normalizedSources = sources.filter(isPlainObject);
+
+        return WORLD_TENDENCY_FIELDS.reduce((tendencies, fieldId) => {
+            tendencies[fieldId] = normalizeString(
+                pickFirstDefined(normalizedSources, [fieldId]),
+                ''
+            );
+            return tendencies;
+        }, {});
+    }
+
+    function resolveMacroSeedProfileContext(input = {}) {
+        const envelope = isPlainObject(input) ? input : {};
+        const outputsEnvelope = extractNestedObject(envelope, OUTPUTS_CONTAINER_KEYS);
+        const phase0Bundle = extractNestedObject(outputsEnvelope, PHASE0_BUNDLE_KEYS);
+        const directPhase1SafeSummaryBundle = extractNestedObject(envelope, PHASE1_SUMMARY_BUNDLE_KEYS);
+        const phase1SafeSummaryBundle = isPlainObject(directPhase1SafeSummaryBundle) && Object.keys(directPhase1SafeSummaryBundle).length
+            ? directPhase1SafeSummaryBundle
+            : extractNestedObject(outputsEnvelope, PHASE1_SUMMARY_BUNDLE_KEYS);
+        const directPhase1Input = extractNestedObject(envelope, PHASE1_INPUT_KEYS);
+        const phase1Input = isPlainObject(directPhase1Input) && Object.keys(directPhase1Input).length
+            ? directPhase1Input
+            : extractNestedObject(phase1SafeSummaryBundle, PHASE1_INPUT_KEYS);
+        const summary = extractNestedObject(phase1SafeSummaryBundle, SUMMARY_CONTAINER_KEYS);
+
+        return {
+            envelope,
+            outputsEnvelope,
+            phase0Bundle,
+            phase1SafeSummaryBundle,
+            phase1Input,
+            summary,
+            rootNestedProfile: extractNestedProfile(envelope),
+            phase0NestedProfile: extractNestedProfile(phase0Bundle),
+            phase1InputProfile: extractNestedProfile(phase1Input),
+            rootTendencies: extractNestedObject(envelope, WORLD_TENDENCY_CONTAINER_KEYS),
+            phase0BundleTendencies: extractNestedObject(phase0Bundle, WORLD_TENDENCY_CONTAINER_KEYS),
+            phase1InputTendencies: extractNestedObject(phase1Input, WORLD_TENDENCY_CONTAINER_KEYS)
+        };
     }
 
     function normalizeSeedNamespace(seedNamespace) {
@@ -267,6 +370,7 @@
             macroSeed: resolveMacroSeed(normalizedInput, worldSeed, seedNamespace),
             seedNamespace,
             worldTone: normalizeString(normalizedInput.worldTone, ''),
+            worldTendencies: createDefaultWorldTendencies(normalizedInput.worldTendencies),
             conflictPressure: normalizedConstraints.conflictPressure,
             maritimeDependence: normalizedConstraints.maritimeDependence,
             environmentalVolatility: normalizedConstraints.environmentalVolatility,
@@ -282,17 +386,38 @@
         }
 
         const envelope = isPlainObject(input) ? input : {};
-        const nestedProfile = extractNestedProfile(envelope);
+        const context = resolveMacroSeedProfileContext(envelope);
+        const profileSources = [
+            context.envelope,
+            context.rootNestedProfile,
+            context.phase0Bundle,
+            context.phase0NestedProfile,
+            context.phase1SafeSummaryBundle,
+            context.phase1Input,
+            context.phase1InputProfile,
+            context.summary
+        ];
+        const tendencySources = [
+            context.phase1InputTendencies,
+            context.rootTendencies,
+            context.phase0BundleTendencies,
+            context.phase1Input,
+            context.summary,
+            context.envelope,
+            context.phase0Bundle
+        ];
+        const normalizedWorldTendencies = normalizeWorldTendencies(...tendencySources);
 
         return deepFreeze(createMacroSeedProfileSkeleton({
-            worldSeed: pickFirstDefined([envelope, nestedProfile], ROOT_SEED_ALIAS_KEYS),
-            macroSeed: pickFirstDefined([envelope, nestedProfile], MACRO_SEED_ALIAS_KEYS),
-            seedNamespace: pickFirstDefined([envelope, nestedProfile], NAMESPACE_ALIAS_KEYS),
-            worldTone: pickFirstDefined([envelope, nestedProfile], ['worldTone']),
-            conflictPressure: pickFirstDefined([envelope, nestedProfile], ['conflictPressure']),
-            maritimeDependence: pickFirstDefined([envelope, nestedProfile], ['maritimeDependence']),
-            environmentalVolatility: pickFirstDefined([envelope, nestedProfile], ['environmentalVolatility']),
-            collapseIntensity: pickFirstDefined([envelope, nestedProfile], ['collapseIntensity'])
+            worldSeed: pickFirstDefined(profileSources, ROOT_SEED_ALIAS_KEYS),
+            macroSeed: pickFirstDefined(profileSources, MACRO_SEED_ALIAS_KEYS),
+            seedNamespace: pickFirstDefined(profileSources, NAMESPACE_ALIAS_KEYS),
+            worldTone: pickFirstDefined(profileSources, ['worldTone']),
+            worldTendencies: normalizedWorldTendencies,
+            conflictPressure: pickFirstDefined(profileSources, ['conflictPressure']),
+            maritimeDependence: pickFirstDefined(profileSources, ['maritimeDependence']),
+            environmentalVolatility: pickFirstDefined(profileSources, ['environmentalVolatility']),
+            collapseIntensity: pickFirstDefined(profileSources, ['collapseIntensity'])
         }));
     }
 
@@ -362,6 +487,23 @@
             }
         }
 
+        if (hasOwn(candidate, 'worldTendencies')) {
+            if (!isPlainObject(candidate.worldTendencies)) {
+                pushError(errors, '"worldTendencies" must be a plain object.');
+            } else {
+                WORLD_TENDENCY_FIELDS.forEach((fieldId) => {
+                    if (!hasOwn(candidate.worldTendencies, fieldId)) {
+                        pushError(errors, `"worldTendencies.${fieldId}" is required.`);
+                        return;
+                    }
+
+                    if (typeof candidate.worldTendencies[fieldId] !== 'string' || !candidate.worldTendencies[fieldId].trim()) {
+                        pushError(errors, `"worldTendencies.${fieldId}" must be a non-empty string.`);
+                    }
+                });
+            }
+        }
+
         PRESSURE_FIELDS.forEach((field) => {
             if (!hasOwn(candidate, field)) {
                 return;
@@ -393,8 +535,7 @@
         return candidate;
     }
 
-    function buildMacroSeedProfileDebugExport(input = {}, options = {}) {
-        const normalizedOptions = isPlainObject(options) ? options : {};
+    function createMacroSeedProfileSnapshot(input = {}) {
         const normalizedProfile = ingestMacroSeedProfile(input);
         const validationResult = validateMacroSeedProfile(normalizedProfile);
 
@@ -410,10 +551,21 @@
                 worldSeed: normalizedProfile.worldSeed,
                 macroSeed: normalizedProfile.macroSeed,
                 seedNamespace: normalizedProfile.seedNamespace,
-                worldTone: normalizedProfile.worldTone
+                worldTone: normalizedProfile.worldTone,
+                worldTendencies: cloneValue(normalizedProfile.worldTendencies)
             },
-            validation: cloneValue(validationResult),
-            serializedProfile: serializeMacroSeedProfile(normalizedProfile, normalizedOptions)
+            validation: cloneValue(validationResult)
+        });
+    }
+
+    function buildMacroSeedProfileDebugExport(input = {}, options = {}) {
+        const normalizedOptions = isPlainObject(options) ? options : {};
+        const snapshot = createMacroSeedProfileSnapshot(input);
+
+        return deepFreeze({
+            ...cloneValue(snapshot),
+            exportKind: 'macro.seedProfile.debugExport',
+            serializedProfile: serializeMacroSeedProfile(snapshot.profile, normalizedOptions)
         });
     }
 
@@ -422,9 +574,13 @@
         version: PHASE_VERSION,
         deterministic: true,
         immutableAfterIngest: true,
-        sourceContract: 'WorldSeedProfile',
+        sourceContracts: [
+            'WorldSeedProfile',
+            'DerivedWorldTendencies'
+        ],
         requiredKeys: REQUIRED_KEYS.slice(),
-        constraintBounds: cloneValue(DEFAULT_WORLD_SEED_CONSTRAINT_BOUNDS),
+        constraintBounds: getDefaultWorldSeedConstraintBounds(),
+        constraintBoundsModule: 'seedConstraintBounds',
         fields: {
             worldSeed: {
                 type: 'uint32',
@@ -443,6 +599,29 @@
                 type: 'string',
                 description: 'Summary world-tone label forwarded from Phase 0.'
             },
+            worldTendencies: {
+                type: 'object',
+                sourceContract: 'DerivedWorldTendencies',
+                requiredKeys: WORLD_TENDENCY_FIELDS.slice(),
+                fields: {
+                    likelyWorldPattern: {
+                        type: 'string'
+                    },
+                    likelyConflictMode: {
+                        type: 'string'
+                    },
+                    likelyCollapseMode: {
+                        type: 'string'
+                    },
+                    likelyReligiousPattern: {
+                        type: 'string'
+                    },
+                    likelyArchipelagoRole: {
+                        type: 'string'
+                    }
+                },
+                description: 'Descriptive Phase 0 world tendencies normalized from the official DerivedWorldTendencies contract.'
+            },
             conflictPressure: {
                 type: 'number',
                 range: [0, 1]
@@ -455,21 +634,32 @@
                 type: 'number',
                 range: [0, 1]
             },
+            coastJaggedness: {
+                type: 'number',
+                range: [0, 1]
+            },
             collapseIntensity: {
                 type: 'number',
                 range: [0, 1]
             }
         },
         ingestion: {
+            phase1InputKeys: PHASE1_INPUT_KEYS.slice(),
             nestedProfileKeys: NESTED_PROFILE_KEYS.slice(),
+            worldTendencyContainerKeys: WORLD_TENDENCY_CONTAINER_KEYS.slice(),
+            outputsContainerKeys: OUTPUTS_CONTAINER_KEYS.slice(),
+            phase0BundleKeys: PHASE0_BUNDLE_KEYS.slice(),
+            phase1SummaryBundleKeys: PHASE1_SUMMARY_BUNDLE_KEYS.slice(),
             rootSeedAliasKeys: ROOT_SEED_ALIAS_KEYS.slice(),
             macroSeedAliasKeys: MACRO_SEED_ALIAS_KEYS.slice(),
             namespaceAliasKeys: NAMESPACE_ALIAS_KEYS.slice(),
+            tendencyFieldIds: WORLD_TENDENCY_FIELDS.slice(),
             passthroughFields: [
                 'worldTone',
                 'conflictPressure',
                 'maritimeDependence',
                 'environmentalVolatility',
+                'coastJaggedness',
                 'collapseIntensity'
             ]
         }
@@ -490,13 +680,17 @@
 
     Object.assign(macro, {
         getWorldSeedConstraintFieldIds,
+        getMacroSeedTendencyFieldIds,
         getDefaultWorldSeedConstraintBounds,
+        createDefaultWorldTendencies,
         createDefaultWorldSeedConstraints,
+        normalizeWorldTendencies,
         normalizeWorldSeedConstraintValue,
         normalizeWorldSeedConstraints,
         getMacroSeedProfileContract,
         createMacroSeedProfileSkeleton,
         ingestMacroSeedProfile,
+        createMacroSeedProfileSnapshot,
         serializeMacroSeedProfile,
         buildMacroSeedProfileDebugExport,
         validateMacroSeedProfile,

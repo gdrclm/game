@@ -1,0 +1,178 @@
+PHASE 2 — PRESSURE & RHYTHM PIPELINE (REPO-READY)
+INPUT
+MacroGeographyPackage
++ Physical Layers:
+  - elevation / relief
+  - mountain barriers
+  - hydrology (rivers, basins)
+  - coastal morphology
+  - volcanic zones
+  - climate envelopes
+  - ocean influence
+  - route graph
+  - chokepoints
+  - isolation fields
+PIPELINE (ЖЁСТКАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ)
+0. Normalization Layer
+
+Задача: привести все поля к единому масштабу
+
+normalize(field, 0..1)
+
+Выход:
+
+normalizedElevation
+normalizedMoisture
+normalizedAccessCost
+normalizedIsolation
+1. Climate Hostility Generator
+
+Алгоритмы:
+
+latitude bands
+elevation penalty
+ocean smoothing
+wind exposure (если есть)
+cold = f(latitude, elevation)
+heat = f(latitude)
+humidityStress = f(moisture variance)
+
+Выход:
+
+coldPressure
+heatPressure
+humidityPressure
+2. Terrain Harshness Generator
+harshness = slope + rockiness + fragmentation
+
+Выход:
+
+terrainPressure
+3. Hydrology Stress Generator
+waterAccess = riverDensity + basinPresence
+variability = flood + drought cycles
+
+Выход:
+
+waterReliability
+waterStress
+4. Food Reliability Generator
+fertility = soil + moisture + flatness
+seasonalLoss = climate variance
+
+Выход:
+
+foodReliability
+foodStress
+5. Travel Exposure Generator
+exposure =
+  routeCost
++ terrainDifficulty
++ stormCorridors
++ chokepointDependency
+
+Выход:
+
+travelPressure
+6. Isolation Burden Generator
+isolation =
+  accessCost
++ routeFragility
++ distanceToCore
+
+Выход:
+
+isolationPressure
+7. Chokepoint Stress Generator
+stress =
+  trafficDensity
+* routeDependency
+* failureImpact
+
+Выход:
+
+chokepointPressure
+8. Ecological Stability Generator
+stability =
+  regenerationRate
+- extractionPressure
+- climateVolatility
+
+Выход:
+
+ecologicalStability
+ecologicalFragility
+9. Catastrophe Susceptibility
+catastrophe =
+  volcanicRisk
++ stormFrequency
++ floodZones
++ droughtZones
+
+Выход:
+
+catastrophePressure
+СБОРКА PRESSURE
+10. Pressure Field Synthesis
+PressureField = {
+  survivabilityPressure,
+  mobilityPressure,
+  supplyPressure,
+  isolationPressure,
+  fragilityPressure,
+  catastrophePressure
+}
+RHYTHM ЧАСТЬ
+11. Seasonality Generator
+seasonality =
+  latitude
++ oceanInfluence
++ elevation
+12. Storm Cadence Generator
+stormCycle =
+  ocean + wind + pressure gradients
+13. Navigation Window Generator
+navigation =
+  inverse(stormCycle + ice + waves)
+14. Scarcity Cycle Generator
+scarcity =
+  foodReliability fluctuation
++ water variability
+15. Predictability Analyzer
+predictability =
+  variance of all cycles
+16. Recovery Tempo Generator (КРИТИЧНО)
+recovery =
+  regenerationRate
+- pressure load
+17. Rhythm Synthesis
+RhythmField = {
+  seasonalityStrength,
+  predictability,
+  ruptureFrequency,
+  scarcityCadence,
+  navigationCadence,
+  recoveryTempo
+}
+VALIDATION
+18. Validation Layer
+
+Проверки:
+
+❌ нет равномерного давления
+❌ нет одного ритма везде
+❌ нет отсутствия recovery зон
+❌ нет сломанной корреляции с географией
+19. Selective Rebalance
+
+Пересчитываются только:
+
+climate
+routes
+cadence
+OUTPUT
+{
+  PressureFieldPackage,
+  EnvironmentalRhythmPackage,
+  summaries
+}
