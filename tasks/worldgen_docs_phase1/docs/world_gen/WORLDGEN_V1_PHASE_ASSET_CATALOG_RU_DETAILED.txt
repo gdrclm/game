@@ -1,0 +1,2208 @@
+WORLDGEN_V1_PHASE_ASSET_CATALOG_RU_DETAILED.txt
+
+Статус:
+Детальный каталог визуальных ассетов V1 по фазам 0–26.
+
+Назначение:
+Этот документ НЕ является обзором фаз.
+Это каталог конкретных визуальных ассетов, тайлов, объектов, prop-clusters, debug-панелей и placeholder-носителей, необходимых для визуального тестирования каждой фазы V1.
+
+Каждая запись должна отвечать:
+- что это;
+- тип ассета;
+- где используется;
+- как выглядит;
+- какую роль играет;
+- когда появляется;
+- из какой фазы получает причину;
+- в какой фазе материализуется;
+- чего НЕ делает.
+
+Жёсткое правило:
+Phase 0–2 не создают человеческую инфраструктуру. Они создают физическую основу и debug/terrain-предпосылки.
+Phase 18–26 закрывают материализацию визуальных ассетов через wrappers.
+
+Типы ассетов:
+DEBUG_PANEL — таблица/карточка/отчёт для разработчика.
+DEBUG_OVERLAY — отладочный слой карты, heatmap, линии, зоны.
+MAP_SYMBOL — символ на debug/manual map, не игровой floating marker.
+GAME_TILE — изометрический тайл поверхности.
+EDGE_TILE — край/переход тайла.
+WORLD_OBJECT — физический объект в мире.
+PROP_CLUSTER — группа props, читаемых как один смысловой объект.
+NPC_PLACEHOLDER — временный NPC-спрайт/силуэт для теста.
+TEXT_CARRIER — письмо друга, дневник, заметка, текст осмотра, диалог.
+VALIDATION_REPORT — отчёт Phase 26.
+V2_SLOT — зарезервировано под V2, не требуется как готовый арт в V1.
+
+============================================================
+PHASE 0 — MASTER SEED: ASSET PACK
+============================================================
+
+PHASE0_ASSET_001 — WORLD_PROFILE_PANEL
+Тип: DEBUG_PANEL
+Где используется: manual test export, seed comparison export.
+Что это: карточка профиля мира.
+Как выглядит: прямоугольная таблица с крупными строками: maritimeDependence, routeFragility, environmentalVolatility, collapseIntensity, conflictPressure, culturalPermeability, archipelagoPotential.
+Роль: позволяет увидеть, какие базовые тенденции seed задаёт всему миру.
+Когда появляется: всегда при генерации V1.
+Причина: Phase 0 master seed.
+Материализация: debug export, не игровой мир.
+Не делает: не создаёт тайлы, острова, здания, NPC.
+
+PHASE0_ASSET_002 — SEED_AXIS_ICON_ROW
+Тип: DEBUG_PANEL / MAP_SYMBOL
+Где используется: WorldProfilePanel, three-seed comparison.
+Что это: строка маленьких условных символов для осей seed.
+Как выглядит: простые пиктограммы: волна для maritime, треснувшая линия для routeFragility, молния/облако для volatility, обрыв/руина для collapse.
+Роль: ускоряет ручное сравнение seed-профилей.
+Когда появляется: всегда в debug.
+Причина: Phase 0 tendencies.
+Материализация: debug only.
+Не делает: не является игровым UI и не появляется над картой.
+
+PHASE0_ASSET_003 — SUBSEED_NAMESPACE_TABLE
+Тип: DEBUG_PANEL
+Где используется: debug export.
+Что это: таблица phaseId / namespace / seedFragment.
+Как выглядит: техническая таблица с phase rows 0–26.
+Роль: проверяет детерминированность генерации.
+Когда появляется: всегда.
+Причина: Phase 0 sub-seed allocation.
+Материализация: debug export.
+Не делает: не влияет визуально на gameplay.
+
+PHASE0_ASSET_004 — SEED_TO_PHASE_INFLUENCE_ARROWS
+Тип: DEBUG_PANEL / DEBUG_GRAPH
+Где используется: manual visual test.
+Что это: схема влияния Phase 0 на поздние фазы.
+Как выглядит: стрелки от seed axis к Phase 1, 2, 11, 13, 15, 17.5.
+Роль: показывает причинное наследование.
+Когда появляется: всегда в readiness/export.
+Причина: Phase 0 causal contract.
+Материализация: debug graph.
+Не делает: не создаёт конкретные ассеты мира.
+
+============================================================
+PHASE 1 — MACRO GEOGRAPHY: ASSET PACK
+============================================================
+
+PHASE1_ASSET_001 — PLATE_BOUNDARY_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: macro geography atlas.
+Что это: карта границ тектонических плит.
+Как выглядит: линии границ плит поверх карты мира; разные типы линий для collision/rift/subduction.
+Роль: проверяет, что горы, вулканизм и рельеф имеют причину.
+Когда появляется: всегда, если Phase 1 создаёт plates.
+Причина: Phase 1 tectonicSkeleton.
+Материализация: Phase 1 debug overlay.
+Не делает: не является игровым тайлом.
+
+PHASE1_ASSET_002 — TECTONIC_STRESS_HEATMAP
+Тип: DEBUG_OVERLAY
+Где используется: macro atlas.
+Что это: тепловая карта тектонического напряжения.
+Как выглядит: зоны разной интенсивности, привязанные к plate boundaries.
+Роль: объясняет будущие mountainSystems, volcanicZones, unstable regions.
+Когда появляется: если есть tectonic stress data.
+Причина: Phase 1 plates + boundary interactions.
+Материализация: debug overlay.
+Не делает: не создаёт lava/volcano props напрямую.
+
+PHASE1_ASSET_003 — RELIEF_ELEVATION_TILE_MAP
+Тип: DEBUG_OVERLAY / GAME_TILE prerequisite
+Где используется: atlas export.
+Что это: карта высот.
+Как выглядит: lowland/upland/highland/mountain bands; читается крупными пятнами.
+Роль: проверяет рельеф как основу рек, маршрутов, островных барьеров.
+Когда появляется: всегда.
+Причина: Phase 1 reliefElevation.
+Материализация: debug overlay; позднее Phase 19 terrain anchors.
+Не делает: не ставит финальные cliffs автоматически.
+
+PHASE1_ASSET_004 — LOWLAND_GROUND_TILE_FAMILY
+Тип: GAME_TILE
+Где используется: playable terrain placeholder.
+Что это: семейство низинных тайлов.
+Как выглядит: плоский грунт, мягкая форма, меньше камня, возможна влажность.
+Роль: базовая поверхность низин, settlement candidate, river/floodplain context.
+Когда появляется: если reliefRegion = lowland.
+Причина: Phase 1 relief regions.
+Материализация: Phase 19 terrain, Phase 25 placement.
+Не делает: не означает автоматически “трава”.
+
+PHASE1_ASSET_005 — HIGHLAND_GROUND_TILE_FAMILY
+Тип: GAME_TILE
+Где используется: playable terrain placeholder.
+Что это: семейство высокогорных поверхностей.
+Как выглядит: более жёсткий каменистый грунт, холодная палитра, крупные каменные пятна.
+Роль: показывает повышенную трудность terrain и источник маршрутов/барьеров.
+Когда появляется: если reliefRegion = upland/highland.
+Причина: Phase 1 relief.
+Материализация: Phase 19 terrain anchors.
+Не делает: не является полноценной горной системой.
+
+PHASE1_ASSET_006 — MOUNTAIN_PROXY_TILE
+Тип: GAME_TILE / WORLD_OBJECT
+Где используется: placeholder blocked/high-cost terrain.
+Что это: условный горный блокер V1.
+Как выглядит: крупная изометрическая масса камня с тёмным контуром; без мелкого шума.
+Роль: визуально показывает mountainSystem как непроходимый/дорогой барьер.
+Когда появляется: если mountainSystem intersects playable island/region.
+Причина: Phase 1 mountainSystems.
+Материализация: Phase 19 terrain transformation, Phase 25 placement.
+Не делает: не создаёт детальную V2 горную экосистему.
+
+PHASE1_ASSET_007 — CLIFF_EDGE_TILE_FAMILY
+Тип: EDGE_TILE
+Где используется: переход высот, coast cliff, ravine edge.
+Что это: набор краёв уступа.
+Как выглядит: тёмная грань, крупная читаемая плоскость, контур без мелкой штриховки.
+Роль: показывает высоту и барьеры.
+Когда появляется: если relief/slope requires edge.
+Причина: Phase 1 reliefElevation, Phase 19 terrain anchors.
+Материализация: Phase 19/25.
+Не делает: не требует 3D height system в V1.
+
+PHASE1_ASSET_008 — VOLCANIC_ASH_GROUND_TILE
+Тип: GAME_TILE
+Где используется: volcanic zone terrain placeholder.
+Что это: пепельная поверхность.
+Как выглядит: тёмный серо-чёрный грунт, редкие крупные трещины, сухие пятна.
+Роль: визуально отделяет volcanicZone от обычного камня.
+Когда появляется: если volcanicZone affects playable region.
+Причина: Phase 1 volcanicZones.
+Материализация: Phase 19 terrain, Phase 25 placement.
+Не делает: не создаёт lava animation.
+
+PHASE1_ASSET_009 — BASALT_ROCK_TILE_FAMILY
+Тип: GAME_TILE / WORLD_OBJECT
+Где используется: volcanic cliffs, rocky coast, outcrops.
+Что это: тёмный базальтовый камень.
+Как выглядит: крупные тёмные плоскости, ломаные формы, чёткий контур.
+Роль: material family для volcanic/geology readability.
+Когда появляется: volcanicZone / basalt material hint.
+Причина: Phase 1 material family hints.
+Материализация: Phase 19/23/25.
+Не делает: не заменяет все камни.
+
+PHASE1_ASSET_010 — LIMESTONE_ROCK_TILE_FAMILY
+Тип: GAME_TILE / WORLD_OBJECT
+Где используется: pale cliffs, shore, sediment regions.
+Что это: светлый осадочный камень.
+Как выглядит: тёплый бледный камень, мягкие эродированные края.
+Роль: отличает sedimentary/coastal/river basin contexts.
+Когда появляется: sedimentary material hint.
+Причина: Phase 1 geology/material family.
+Материализация: Phase 19/25.
+Не делает: не является generic stone.
+
+PHASE1_ASSET_011 — RIVER_BASIN_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: hydrology atlas.
+Что это: карта речных бассейнов.
+Как выглядит: границы basin areas + main river lines.
+Роль: проверяет гидрологическую причинность поселений, фильтров, болезней.
+Когда появляется: всегда, если riverBasins exist.
+Причина: Phase 1 hydrosphere.
+Материализация: debug; downstream Phase 20/23 water infrastructure carriers.
+Не делает: не создаёт колодец/фильтр напрямую.
+
+PHASE1_ASSET_012 — RIVER_WATER_TILE_FAMILY
+Тип: GAME_TILE
+Где используется: playable river segments.
+Что это: речная вода.
+Как выглядит: уже и направленнее моря, с читаемой лентой потока.
+Роль: отделяет river от sea и wetland.
+Когда появляется: если playable area intersects river system.
+Причина: Phase 1 riverBasins.
+Материализация: Phase 19/25.
+Не делает: не задаёт качество воды.
+
+PHASE1_ASSET_013 — RIVERBANK_EDGE_TILE_FAMILY
+Тип: EDGE_TILE
+Где используется: переход река/суша.
+Что это: берег реки.
+Как выглядит: mud/grass/stone variants, читаемый край воды.
+Роль: показывает hydrology, ford/crossing potential.
+Когда появляется: river tile adjacency.
+Причина: Phase 1 hydrology + Phase 19 terrain.
+Материализация: Phase 25.
+Не делает: не создаёт мост автоматически.
+
+PHASE1_ASSET_014 — DEEP_SEA_TILE
+Тип: GAME_TILE
+Где используется: море вокруг островов.
+Что это: глубокая морская вода.
+Как выглядит: тёмная широкая водная плоскость, большие декоративные волны/потоки.
+Роль: отличает deep sea от coast/shallow water.
+Когда появляется: seaRegion = deep.
+Причина: Phase 1 seaRegions.
+Материализация: Phase 25.
+Не делает: не создаёт route.
+
+PHASE1_ASSET_015 — SHALLOW_COASTAL_WATER_TILE
+Тип: GAME_TILE
+Где используется: у берегов, бухт, мелководья.
+Что это: мелкая прибрежная вода.
+Как выглядит: светлее моря, видимый береговой переход, мягкий контур.
+Роль: показывает landing potential and coastal readability.
+Когда появляется: coastal shallow zones.
+Причина: Phase 1 seaRegions + marineCarving.
+Материализация: Phase 25.
+Не делает: не является портом.
+
+PHASE1_ASSET_016 — ROCKY_SHORE_EDGE_TILE
+Тип: EDGE_TILE
+Где используется: скалистые берега.
+Что это: каменистый край острова.
+Как выглядит: крупные каменные выступы, dark contour, salt-worn detail.
+Роль: показывает опасный/жёсткий берег, lower landing suitability.
+Когда появляется: coastType = rocky / volcanic / exposed.
+Причина: Phase 1 marineCarving + material hints.
+Материализация: Phase 25.
+Не делает: не создаёт пристань.
+
+PHASE1_ASSET_017 — SANDY_SHORE_EDGE_TILE
+Тип: EDGE_TILE
+Где используется: мягкие берега, бухты, landing zones.
+Что это: песчаная/осадочная кромка берега.
+Как выглядит: светлая мягкая полоса, плавный переход в shallow water.
+Роль: показывает потенциальную высадку/settlement candidate.
+Когда появляется: coastType = sediment/beach/safe cove.
+Причина: Phase 1 coastalOpportunity.
+Материализация: Phase 20/25.
+Не делает: не создаёт причал.
+
+PHASE1_ASSET_018 — ARCHIPELAGO_REGION_BOUNDARY_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: macro map.
+Что это: граница playable archipelago region.
+Как выглядит: крупная область вокруг island chain.
+Роль: доказывает, что архипелаг встроен в macro geography.
+Когда появляется: always for archipelago world.
+Причина: Phase 1 archipelagoRegions.
+Материализация: debug export.
+Не делает: не размещает островные объекты.
+
+PHASE1_ASSET_019 — COASTAL_OPPORTUNITY_HEATMAP
+Тип: DEBUG_OVERLAY
+Где используется: atlas/debug.
+Что это: карта потенциальных береговых возможностей.
+Как выглядит: зоны safe cove / exposed landing / harbor candidate / resource coast.
+Роль: upstream context for later landing, dock, port-like zones.
+Когда появляется: when coastalOpportunityMap exists.
+Причина: Phase 1 marineCarving + seaRoutes + coastType.
+Материализация: Phase 20 waterfront/landing zones; Phase 23 dock/pier carriers if required.
+Не делает: не создаёт порт.
+
+PHASE1_ASSET_020 — MACRO_ROUTE_LINE_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: route atlas.
+Что это: линии macro routes land/sea/hybrid.
+Как выглядит: line graph over map, thickness = route importance/cost.
+Роль: показывает connectivity and future trade/travel/history context.
+Когда появляется: if macroRoutes exist.
+Причина: Phase 1 connectivityGraph.
+Материализация: Phase 15/16 roles, Phase 25 route hints.
+Не делает: не создаёт roads/ships.
+
+PHASE1_ASSET_021 — CHOKEPOINT_MARKER_OVERLAY
+Тип: DEBUG_OVERLAY / MAP_SYMBOL
+Где используется: route atlas.
+Что это: marker strategic bottlenecks.
+Как выглядит: ring/crossing symbol at pass/strait/bridge candidate.
+Роль: shows why future conflict/route repair/checkpoint may exist.
+Когда появляется: if chokepoints exist.
+Причина: Phase 1 chokepoint synthesis.
+Материализация: Phase 22 route zone, Phase 23 bridge/checkpoint carrier.
+Не делает: не создаёт bridge/checkpoint directly.
+
+PHASE1_ASSET_022 — ISOLATED_ZONE_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: macro map.
+Что это: зоны изоляции.
+Как выглядит: remote/peripheral regions shaded or outlined.
+Роль: explains survival difficulty, delayed help, local culture divergence.
+Когда появляется: if isolatedZones exist.
+Причина: Phase 1 connectivity.
+Материализация: Phase 2 isolation pressure, Phase 16 island roles.
+Не делает: не создаёт settlement.
+
+============================================================
+PHASE 2 — PRESSURE / RHYTHM: ASSET PACK
+============================================================
+
+PHASE2_ASSET_001 — CLIMATE_PRESSURE_HEATMAP
+Тип: DEBUG_OVERLAY
+Где используется: pressure atlas.
+Что это: карта климатической тяжести.
+Как выглядит: zones for cold/heat/humidity exposure.
+Роль: explains survival pressure and biome/ground variants.
+Когда появляется: always.
+Причина: Phase 1 climateBands + relief/sea influence.
+Материализация: Phase 19 terrain states, Phase 25 tile hints.
+Не делает: не создаёт weather animation.
+
+PHASE2_ASSET_002 — WET_HUMID_GROUND_OVERLAY
+Тип: GAME_TILE / OVERLAY
+Где используется: humid lowlands, wetlands, storage risk zones.
+Что это: влажное состояние поверхности.
+Как выглядит: тёмные пятна влаги, блеск/лужи крупными формами.
+Роль: визуально показывает humidity pressure.
+Когда появляется: high humidityPressure / wetland context.
+Причина: Phase 2 climate/hydrology pressure.
+Материализация: Phase 19/25.
+Не делает: не означает disease automatically.
+
+PHASE2_ASSET_003 — DRY_DROUGHT_CRACK_OVERLAY
+Тип: GAME_TILE / OVERLAY
+Где используется: dry zones, failed fields, drought pressure.
+Что это: оверлей засухи.
+Как выглядит: крупные трещины на грунте, не мелкая сетка.
+Роль: shows drought/food/water stress.
+Когда появляется: high droughtPressure.
+Причина: Phase 2 hydrology/climate pressure.
+Материализация: Phase 19/25.
+Не делает: не создаёт famine event directly.
+
+PHASE2_ASSET_004 — HYDROLOGY_PRESSURE_HEATMAP
+Тип: DEBUG_OVERLAY
+Где используется: pressure atlas.
+Что это: карта водного риска.
+Как выглядит: basin-linked risk values: dry/flood/unsafe/unreliable.
+Роль: upstream basis for wells, filters, contaminated sources.
+Когда появляется: if hydrology package exists.
+Причина: Phase 1 riverBasins + Phase 2 pressure.
+Материализация: Phase 20 water zones, Phase 23 filter/well carriers if required.
+Не делает: не создаёт фильтр.
+
+PHASE2_ASSET_005 — FLOODED_PATH_TILE
+Тип: GAME_TILE
+Где используется: roads/trails in flood-prone lowlands.
+Что это: затопленный путь.
+Как выглядит: trail partially under water/mud, broken edges.
+Роль: shows travel exposure from hydrology pressure.
+Когда появляется: route intersects floodInstability zone.
+Причина: Phase 2 hydrology + route exposure.
+Материализация: Phase 19/25.
+Не делает: не creates quest by itself.
+
+PHASE2_ASSET_006 — RESOURCE_STRESS_HEATMAP
+Тип: DEBUG_OVERLAY
+Где используется: pressure atlas.
+Что это: карта food/resource stress.
+Как выглядит: zones of scarcity/reliability.
+Роль: explains survival conflict and island variety.
+Когда появляется: always.
+Причина: Phase 2 resource pressure.
+Материализация: Phase 17.5 survival projection, Phase 21 social tension.
+Не делает: not a loot map for player.
+
+PHASE2_ASSET_007 — POOR_FORAGE_TILE
+Тип: GAME_TILE / WORLD_OBJECT
+Где используется: scarce resource zones.
+Что это: бедный forage spot.
+Как выглядит: редкие сухие кусты/травы, слабый силуэт ресурса.
+Роль: tests low gathering efficiency/resource pressure.
+Когда появляется: high foodStress + forage allowed.
+Причина: Phase 2 resource pressure.
+Материализация: Phase 25 resource placement hints.
+Не делает: no automatic inventory item list.
+
+PHASE2_ASSET_008 — GOOD_FORAGE_TILE
+Тип: GAME_TILE / WORLD_OBJECT
+Где используется: resource-support zones.
+Что это: читаемая зона сбора.
+Как выглядит: крупные пучки трав/ягод/растений, не микродетали.
+Роль: contrasts scarcity vs support.
+Когда появляется: low foodStress or recovery zone.
+Причина: Phase 2 resource pressure.
+Материализация: Phase 25.
+Не делает: no final art polish required.
+
+PHASE2_ASSET_009 — ROUTE_EXPOSURE_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: route atlas.
+Что это: overlay опасности маршрутов.
+Как выглядит: route lines with intensity bands.
+Роль: explains why crossing to next island is costly/unsafe.
+Когда появляется: if macroRoutes exist.
+Причина: Phase 2 travelExposure.
+Материализация: Phase 17.5 travelPressure, Phase 25 route hints.
+Не делает: not a player-facing route UI by default.
+
+PHASE2_ASSET_010 — DANGEROUS_ROUTE_TILE_VARIANT
+Тип: GAME_TILE
+Где используется: route segments in high exposure areas.
+Что это: опасный участок пути.
+Как выглядит: broken stones, mud, exposed edge, storm debris.
+Роль: gives visual carrier for route danger in playable testing.
+Когда появляется: high routeExposure in placement area.
+Причина: Phase 2 route exposure.
+Материализация: Phase 19/25.
+Не делает: no tooltip.
+
+PHASE2_ASSET_011 — CHOKEPOINT_PRESSURE_RING
+Тип: DEBUG_OVERLAY
+Где используется: chokepoint atlas.
+Что это: weight/ring around chokepoints.
+Как выглядит: circle/ring intensity over bottleneck.
+Роль: shows route dependence and future conflict/repair points.
+Когда появляется: if chokepointPressure > threshold.
+Причина: Phase 2 chokepoint pressure.
+Материализация: Phase 22 route zones, Phase 23 bridge/checkpoint.
+Не делает: no physical bridge yet.
+
+PHASE2_ASSET_012 — ISOLATION_PRESSURE_ZONE
+Тип: DEBUG_OVERLAY
+Где используется: pressure atlas.
+Что это: remote/support delay zone.
+Как выглядит: shaded isolated area with support delay value.
+Роль: informs island survival difficulty and social divergence.
+Когда появляется: isolatedZones + pressure.
+Причина: Phase 2 isolation pressure.
+Материализация: Phase 16/17.5 island projection.
+Не делает: no settlement directly.
+
+PHASE2_ASSET_013 — CATASTROPHE_RISK_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: pressure atlas.
+Что это: storm/flood/drought/volcanic risk map.
+Как выглядит: separate risk category layer.
+Роль: provides later tragedy and tile state context.
+Когда появляется: always if catastrophe model exists.
+Причина: Phase 2 catastrophe pressure.
+Материализация: Phase 13 tragedy, Phase 18/19 damage traces.
+Не делает: no animated disaster event.
+
+PHASE2_ASSET_014 — STORM_DAMAGE_TILE_OVERLAY
+Тип: GAME_TILE / OVERLAY
+Где используется: exposed coast/routes/docks later.
+Что это: visual state of storm damage.
+Как выглядит: driftwood, broken edge, wet debris, large shapes.
+Роль: physical carrier for catastrophe pressure.
+Когда появляется: if stormBreakRisk affects realized zone.
+Причина: Phase 2 catastrophe/rhythm.
+Материализация: Phase 18/23/25.
+Не делает: not an event simulation.
+
+PHASE2_ASSET_015 — NAVIGATION_WINDOW_TIMELINE
+Тип: DEBUG_PANEL
+Где используется: rhythm export.
+Что это: таблица safe/blocked travel periods.
+Как выглядит: rows: routeId / safeWindow / stormWindow / reliability.
+Роль: validates rhythm separate from pressure.
+Когда появляется: if maritime routes exist.
+Причина: Phase 2 environmental rhythm.
+Материализация: Phase 17.5 travel objectives.
+Не делает: no calendar UI.
+
+============================================================
+PHASE 3 — PROTO-COSMOLOGY: ASSET PACK
+============================================================
+
+PHASE3_ASSET_001 — COSMOLOGY_SUMMARY_CARD
+Тип: DEBUG_PANEL
+Где используется: meaning debug export.
+Что это: карточка proto-cosmology.
+Как выглядит: table fields: orderVsChaos, timeModel, natureRelation, moralFaultModel, sacredDistribution.
+Роль: shows how environmental pressure becomes worldview.
+Когда появляется: always.
+Причина: Phase 2 pressures/rhythms.
+Материализация: debug; future Phase 4/6.
+Не делает: no world prop.
+
+PHASE3_ASSET_002 — WORLDVIEW_SYMBOL_SET_DEBUG
+Тип: MAP_SYMBOL / DEBUG_PANEL
+Где используется: manual test export.
+Что это: условный symbol set for worldview categories.
+Как выглядит: abstract shapes, monochrome/debug, not game icons.
+Роль: quick visual review.
+Когда появляется: always in debug if configured.
+Причина: Phase 3 records.
+Материализация: debug only.
+Не делает: no player-facing UI.
+
+PHASE3_ASSET_003 — SACREDNESS_DISTRIBUTION_DEBUG_MAP
+Тип: DEBUG_OVERLAY
+Где используется: society debug map.
+Что это: map of centralized/distributed sacredness tendencies.
+Как выглядит: zones/points showing sacred focus density.
+Роль: prepares Phase 4 sacred centers.
+Когда появляется: if sacredDistribution exists.
+Причина: Phase 3 proto-cosmology.
+Материализация: Phase 4 religion, Phase 22 sacred zones.
+Не делает: no shrine placement.
+
+PHASE3_ASSET_004 — FUTURE_ROUTE_GATE_SYMBOL_HINT
+Тип: V2_SLOT / MAP_SYMBOL
+Где используется: carrier hints table.
+Что это: hint that route chokepoints may become sacred/ritualized later.
+Как выглядит: debug symbol only.
+Роль: prevents losing route-cosmology link.
+Когда появляется: if cosmology ties danger/route to sacred logic.
+Причина: Phase 3 + Phase 1/2 route pressure.
+Материализация: Phase 22/23 if later phases require physical boundary.
+Не делает: not a gate object yet.
+
+============================================================
+PHASE 4 — RELIGION: ASSET PACK
+============================================================
+
+PHASE4_ASSET_001 — RELIGION_LINEAGE_CARD
+Тип: DEBUG_PANEL
+Где используется: religion debug export.
+Что это: карточка religious/cultural lineage.
+Как выглядит: religionId, sourceCosmologyRef, sacredCenterRefs, tabooSeeds, authorityLegitimacy.
+Роль: shows religion is derived.
+Когда появляется: each religion lineage.
+Причина: Phase 3 + Phase 5/6 dependencies.
+Материализация: debug; future props/zones.
+Не делает: no temple building.
+
+PHASE4_ASSET_002 — TABOO_RULE_TABLE
+Тип: DEBUG_PANEL
+Где используется: religion/social debug.
+Что это: list of taboos.
+Как выглядит: tabooId / objectType / actionType / restriction / downstream effect.
+Роль: drives future physical taboo carriers.
+Когда появляется: if taboos exist.
+Причина: Phase 4 religion wrapper.
+Материализация: Phase 22 sacred zones, Phase 23 taboo props.
+Не делает: no UI prohibition marker.
+
+PHASE4_ASSET_003 — SACRED_CENTER_DEBUG_SYMBOL
+Тип: MAP_SYMBOL
+Где используется: debug map.
+Что это: symbolic sacred center marker.
+Как выглядит: simple cross/stone/circle debug marker, not game art.
+Роль: shows where religion may spatialize.
+Когда появляется: sacredCenterRefs exist.
+Причина: Phase 4.
+Материализация: Phase 20/22/23 shrine/boundary if required.
+Не делает: not a shrine yet.
+
+PHASE4_ASSET_004 — SHRINE_SMALL_PLACEHOLDER_FAMILY
+Тип: WORLD_OBJECT / PLACEHOLDER_ASSET
+Где используется: later Phase 23 if required.
+Что это: малое святилище.
+Как выглядит: low altar/stone/post, bold silhouette, not ornate V2 temple.
+Роль: physical carrier for sacred zone or taboo.
+Когда появляется: only Phase 23 if sacredZone/buildingNarrative needs it.
+Причина: Phase 4 religion + Phase 22 sacred zone.
+Материализация: Phase 23/25.
+Не делает: Phase 4 does not place it.
+
+PHASE4_ASSET_005 — RITUAL_CORD_BARRIER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later sacred boundaries.
+Что это: физическая граница табу.
+Как выглядит: rope/ribbon with knots between stones/posts.
+Роль: shows cultural prohibition as physical object.
+Когда появляется: Phase 23 if tabooAccess requires physical carrier.
+Причина: Phase 4 taboo + Phase 6 norms.
+Материализация: Phase 23/25.
+Не делает: no hover warning.
+
+PHASE4_ASSET_006 — OLD_BAN_TABLET_FAMILY
+Тип: WORLD_OBJECT
+Где используется: shrine, well, storage, saltworks, archive.
+Что это: старая табличка запрета.
+Как выглядит: stone/wood plaque with large symbolic marks, text not literally readable in tile.
+Роль: carrier for old prohibition and disease/social clue.
+Когда появляется: Phase 23 if old ban evidence or taboo exists.
+Причина: Phase 4/10/17/17.5.
+Материализация: Phase 23/25.
+Не делает: no popup text by itself.
+
+============================================================
+PHASE 5 — MENTAL MODELS: ASSET PACK
+============================================================
+
+PHASE5_ASSET_001 — MENTAL_MODEL_MATRIX
+Тип: DEBUG_PANEL
+Где используется: society debug export.
+Что это: matrix of perception/risk/authority patterns.
+Как выглядит: rows by region/group with outsiderPerception, riskHandling, authorityPreference.
+Роль: links environment and future social behavior.
+Когда появляется: always.
+Причина: Phase 5 wrapper.
+Материализация: debug; informs Phase 21/24.
+Не делает: no NPC icons.
+
+PHASE5_ASSET_002 — OUTSIDER_SUSPICION_CARRIER_HINT
+Тип: DEBUG_PANEL / TEXT_CARRIER hint
+Где используется: handoff table.
+Что это: future carrier requirement for closed communities.
+Как выглядит: debug row: group -> possible physical carrier.
+Роль: makes sure suspicion can later become door/gate/dialogue condition.
+Когда появляется: if outsiderPerception = suspicious/hostile.
+Причина: Phase 5.
+Материализация: Phase 20 gates, Phase 23 signs, Phase 24 NPC dialogue skeleton.
+Не делает: no floating suspicion marker.
+
+PHASE5_ASSET_003 — WARNING_NOTICE_PLACEHOLDER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later public signs.
+Что это: предупреждающая табличка.
+Как выглядит: wooden board/paper sign with bold symbol.
+Роль: physical carrier for cautious/risk-avoidant culture.
+Когда появляется: Phase 23 if mentalModel/norm/history requires warning.
+Причина: Phase 5 + Phase 6.
+Материализация: Phase 23/25.
+Не делает: not a tooltip.
+
+PHASE5_ASSET_004 — CLOSED_GATE_OR_BOUNDARY_HINT_FAMILY
+Тип: WORLD_OBJECT / V2_SLOT
+Где используется: later settlement boundaries.
+Что это: physical sign that settlement is cautious/closed.
+Как выглядит: rope/low fence/gate sign, not UI.
+Роль: carrier for outsider handling.
+Когда появляется: Phase 20/23 if settlement social state supports it.
+Причина: Phase 5/6/21.
+Материализация: Phase 20/23/25.
+Не делает: Phase 5 does not create actual gate.
+
+============================================================
+PHASE 6 — SOCIAL NORMS: ASSET PACK
+============================================================
+
+PHASE6_ASSET_001 — SOCIAL_NORMS_TABLE
+Тип: DEBUG_PANEL
+Где используется: social debug export.
+Что это: table of norms.
+Как выглядит: normId / groupRef / property / inheritance / outsider / taboo / duty.
+Роль: source of future access and ownership carriers.
+Когда появляется: always.
+Причина: Phase 6 wrapper.
+Материализация: debug; future Phase 20–24.
+Не делает: no gameplay UI.
+
+PHASE6_ASSET_002 — PROPERTY_BOUNDARY_POST_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later settlement/field/storage boundaries.
+Что это: physical property marker.
+Как выглядит: low post/stone with simple owner mark.
+Роль: visualizes property as physical social rule.
+Когда появляется: Phase 23/25 if propertyNorms require carrier.
+Причина: Phase 6 norms + Phase 17 ownership.
+Материализация: Phase 22/23/25.
+Не делает: not an automatic map overlay.
+
+PHASE6_ASSET_003 — COMMUNAL_LOCKED_STORE_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later communal resource stores.
+Что это: общинное закрытое хранилище.
+Как выглядит: simple store door/crate with shared mark, not loot chest.
+Роль: carrier for shared property and moral/survival conflict.
+Когда появляется: Phase 23 if sharedResourceGate exists.
+Причина: Phase 6 norms + Phase 17.5 objective/survival conflict.
+Материализация: Phase 23/25.
+Не делает: no trust tooltip.
+
+PHASE6_ASSET_004 — AUTHORITY_SEAL_FAMILY
+Тип: WORLD_OBJECT / OVERLAY_ON_OBJECT
+Где используется: doors, ledgers, crates, authority documents.
+Что это: печать местной власти.
+Как выглядит: large readable seal/wooden plaque/rope tag.
+Роль: physical carrier for authority-controlled access.
+Когда появляется: Phase 23 if authorityAccessGate exists.
+Причина: Phase 6 norms + Phase 8 power + Phase 17 history.
+Материализация: Phase 23/25.
+Не делает: no floating icon.
+
+PHASE6_ASSET_005 — FORBIDDEN_OBJECT_CLOTH_FAMILY
+Тип: WORLD_OBJECT / OVERLAY_ON_OBJECT
+Где используется: forbidden sample, shrine object, archive item.
+Что это: object hidden/protected by cultural rule.
+Как выглядит: cloth cover, tied rope, taboo mark.
+Роль: makes taboo visible through physical state.
+Когда появляется: Phase 23 if tabooObject/evidence carrier exists.
+Причина: Phase 4 taboo + Phase 6 norms.
+Материализация: Phase 23/25.
+Не делает: no popup explanation.
+
+PHASE6_ASSET_006 — PUBLIC_NOTICE_BOARD_FAMILY
+Тип: WORLD_OBJECT
+Где используется: settlement center, authority house, market, shrine.
+Что это: physical board for public rules.
+Как выглядит: board with large paper strips or carved plaques.
+Роль: carrier for bans, instructions, social order.
+Когда появляется: Phase 23 if publicRule/ban/economic order exists.
+Причина: Phase 6/10/17/17.5.
+Материализация: Phase 23/25.
+Не делает: no readable small text required in tile.
+
+============================================================
+PHASE 7 — CIVILIZATION: ASSET PACK
+============================================================
+
+PHASE7_ASSET_001 — CIVILIZATION_REGION_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: history atlas.
+Что это: области civilization/cultural-political blocs.
+Как выглядит: large colored/labelled regions in debug.
+Роль: proves civilizations derive from geography/pressure/norms.
+Когда появляется: if civilizations exist.
+Причина: Phase 7.
+Материализация: debug; future visual styles.
+Не делает: no city placement.
+
+PHASE7_ASSET_002 — CIVILIZATION_CARD
+Тип: DEBUG_PANEL
+Где используется: history export.
+Что это: summary card per civilization.
+Как выглядит: civilizationId, polityType, maritimeDependence, expansionBias, survivalBias, source refs.
+Роль: inspection of cultural-political context.
+Когда появляется: each civilization.
+Причина: Phase 7.
+Материализация: debug.
+Не делает: no final art.
+
+PHASE7_ASSET_003 — OLD_BORDER_STONE_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later border/old influence traces.
+Что это: physical remnant of old territory.
+Как выглядит: stone marker with worn symbol.
+Роль: carrier for former civilization influence.
+Когда появляется: Phase 23 if island history has border/old system trace.
+Причина: Phase 7 civilization + Phase 17 history.
+Материализация: Phase 23/25.
+Не делает: Phase 7 does not place it.
+
+PHASE7_ASSET_004 — CULTURAL_BANNER_PLACEHOLDER_FAMILY
+Тип: WORLD_OBJECT / V2_SLOT
+Где используется: authority/market/shrine/settlement spaces later.
+Что это: simple cultural/faction banner placeholder.
+Как выглядит: cloth flag/wooden sign with large pattern.
+Роль: visual carrier for civilization/faction identity.
+Когда появляется: Phase 23/25 if needed.
+Причина: Phase 7 + Phase 8/21.
+Материализация: Phase 23/25.
+Не делает: no full pattern library.
+
+PHASE7_ASSET_005 — TRADE_ROUTE_MARKER_FAMILY
+Тип: WORLD_OBJECT / MAP_SYMBOL
+Где используется: old roads, sea route debug, milestones.
+Что это: physical marker of old route.
+Как выглядит: post/stone/milestone with worn route symbol.
+Роль: carrier for civilization trade connectivity.
+Когда появляется: Phase 23 if old route/history requires.
+Причина: Phase 7 + Phase 10/15/16.
+Материализация: Phase 23/25.
+Не делает: not full road system.
+
+============================================================
+PHASE 8 — POWER STRUCTURE: ASSET PACK
+============================================================
+
+PHASE8_ASSET_001 — POWER_GRAPH
+Тип: DEBUG_GRAPH
+Где используется: power debug export.
+Что это: graph of power nodes and relations.
+Как выглядит: nodes: merchant/priest/local/military/dynasty; edges conflict/support/control.
+Роль: shows authority structure.
+Когда появляется: always if power nodes exist.
+Причина: Phase 8.
+Материализация: debug.
+Не делает: no NPC/buildings directly.
+
+PHASE8_ASSET_002 — POWER_NODE_TYPE_SYMBOLS_DEBUG
+Тип: MAP_SYMBOL / DEBUG_PANEL
+Где используется: debug power map.
+Что это: symbols for power types.
+Как выглядит: simple icons, not in-game markers.
+Роль: quick map inspection.
+Когда появляется: debug only.
+Причина: Phase 8 power node types.
+Материализация: debug.
+Не делает: no floating marker.
+
+PHASE8_ASSET_003 — AUTHORITY_HOUSE_SIGN_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later authority building.
+Что это: visible sign of local authority building.
+Как выглядит: wooden plaque/banner/seal near entrance.
+Роль: identifies authority space physically.
+Когда появляется: Phase 23/25 if Phase 20 creates authority house/zone.
+Причина: Phase 8 power + Phase 20 settlement authority.
+Материализация: Phase 23/25.
+Не делает: Phase 8 does not build house.
+
+PHASE8_ASSET_004 — CUSTOMS_POST_PLACEHOLDER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: route/port/landing/checkpoint zone later.
+Что это: simple customs/checkpoint structure.
+Как выглядит: small booth/post/barrier with trade mark.
+Роль: carrier for route control/trade power.
+Когда появляется: Phase 23 if upstream routeControl/customsContext exists.
+Причина: Phase 8 power + Phase 10 route/trade decision + Phase 15 archipelago role.
+Материализация: Phase 23/25.
+Не делает: no full port.
+
+PHASE8_ASSET_005 — GUARD_POST_EMPTY_FAMILY
+Тип: WORLD_OBJECT
+Где используется: controlled storehouse/road/pass.
+Что это: empty guard/control post.
+Как выглядит: small shelter/stool/post/lantern/barrier.
+Роль: physical carrier of controlled access without requiring NPC.
+Когда появляется: Phase 23 if controlledAccess exists.
+Причина: Phase 8 power + Phase 22 spatial zone.
+Материализация: Phase 23/25.
+Не делает: no combat system.
+
+============================================================
+PHASE 9 — DYNASTY / ELITE: ASSET PACK
+============================================================
+
+PHASE9_ASSET_001 — DYNASTY_ELITE_TABLE
+Тип: DEBUG_PANEL
+Где используется: history debug.
+Что это: records of elite/dynasty lines.
+Как выглядит: dynastyId / powerRefs / legitimacy / successionRisk / lineageId.
+Роль: provides lineage refs for later ownership/NPC.
+Когда появляется: if dynasty/elite records exist.
+Причина: Phase 9.
+Материализация: debug.
+Не делает: no family portraits.
+
+PHASE9_ASSET_002 — LINEAGE_SEAL_PLACEHOLDER_FAMILY
+Тип: WORLD_OBJECT / OVERLAY_ON_OBJECT
+Где используется: documents, doors, inherited stores, old houses.
+Что это: simple crest/seal.
+Как выглядит: крупный знак на печати/плашке, не сложная геральдика.
+Роль: physical carrier for ownership lineage.
+Когда появляется: Phase 23 if ownershipLayer/lineageRef needs carrier.
+Причина: Phase 9 + Phase 17 ownershipLayers.
+Материализация: Phase 23/25.
+Не делает: no full heraldry set.
+
+PHASE9_ASSET_003 — ELITE_HOUSE_MARKER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later house/ruin/authority zone.
+Что это: physical trace that building belonged to elite.
+Как выглядит: worn plaque, better stone threshold, old seal.
+Роль: distinguishes elite ownership in world.
+Когда появляется: Phase 23 if building narrative includes elite/lineage past.
+Причина: Phase 9 + Phase 17 history.
+Материализация: Phase 23/25.
+Не делает: no full elite building variant required.
+
+PHASE9_ASSET_004 — INHERITED_STORAGE_SEAL_FAMILY
+Тип: OVERLAY_ON_OBJECT
+Где используется: storehouse/warehouse/ledger/chest.
+Что это: inherited ownership seal.
+Как выглядит: old seal partially broken or layered under newer sign.
+Роль: shows ownership layers and conflict.
+Когда появляется: Phase 23 if storage has oldOwner/currentUse conflict.
+Причина: Phase 9 + Phase 17 ownershipLayers.
+Материализация: Phase 23/25.
+Не делает: no UI label.
+
+============================================================
+PHASE 10 — STRATEGIC DECISIONS: ASSET PACK
+============================================================
+
+PHASE10_ASSET_001 — STRATEGIC_DECISION_TRACE_TABLE
+Тип: DEBUG_PANEL
+Где используется: history export.
+Что это: decision trace records.
+Как выглядит: actorRef / pressureRefs / chosenDecision / rejectedOptions / consequenceSeeds.
+Роль: verifies decisions are generated and causal.
+Когда появляется: always.
+Причина: Phase 10.
+Материализация: debug.
+Не делает: no props directly.
+
+PHASE10_ASSET_002 — DECISION_TO_PROP_CARRIER_TABLE
+Тип: DEBUG_PANEL
+Где используется: asset handoff.
+Что это: mapping decisionType -> future physical carriers.
+Как выглядит: trade_control -> ledger/customs; suppression -> ban notice; route_fortification -> checkpoint remnant.
+Роль: prevents historical decisions from staying invisible.
+Когда появляется: always.
+Причина: Phase 10.
+Материализация: Phase 17/23.
+Не делает: no object placement.
+
+PHASE10_ASSET_003 — OLD_DECREE_NOTICE_FAMILY
+Тип: WORLD_OBJECT
+Где используется: public board, archive, authority house.
+Что это: old decree/notice physical object.
+Как выглядит: paper/wooden notice with large seal/mark.
+Роль: carrier for decisions like bans, route closures, work restrictions.
+Когда появляется: Phase 23 if decision/evidence requires.
+Причина: Phase 10 + Phase 17.5 evidence.
+Материализация: Phase 23/25.
+Не делает: no readable tiny text.
+
+PHASE10_ASSET_004 — MONOPOLY_LEDGER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: merchant storehouse/archive/table.
+Что это: trade/economic ledger.
+Как выглядит: open/closed book, tags, small crates; clear accounting silhouette.
+Роль: evidence carrier for economy/monopoly disease chain.
+Когда появляется: Phase 23 if EvidenceSlot trade/economy requires ledger.
+Причина: Phase 10 decision + Phase 17.5 disease/economy.
+Материализация: Phase 23/25.
+Не делает: no automatic quest marker.
+
+PHASE10_ASSET_005 — ROUTE_FORTIFICATION_REMNANT_FAMILY
+Тип: WORLD_OBJECT / PROP_CLUSTER
+Где используется: pass, bridge, old road, coast landing.
+Что это: remnant of fortified route decision.
+Как выглядит: broken post, stone base, old barrier, collapsed sign.
+Роль: shows historical route control.
+Когда появляется: Phase 23 if route_fortification decision affected island.
+Причина: Phase 10 + Phase 15/16.
+Материализация: Phase 23/25.
+Не делает: no military gameplay.
+
+============================================================
+PHASE 11 — ERA SIMULATION: ASSET PACK
+============================================================
+
+PHASE11_ASSET_001 — ERA_TIMELINE_PANEL
+Тип: DEBUG_PANEL
+Где используется: history export.
+Что это: 200-year timeline.
+Как выглядит: three eras with major event nodes.
+Роль: validates compressed history.
+Когда появляется: always.
+Причина: Phase 11.
+Материализация: debug.
+Не делает: no full yearly calendar.
+
+PHASE11_ASSET_002 — MAJOR_EVENT_CAUSE_GRAPH
+Тип: DEBUG_GRAPH
+Где используется: history export.
+Что это: graph of events and causes.
+Как выглядит: event nodes linked to decision/power/pressure refs.
+Роль: shows events are causal.
+Когда появляется: always.
+Причина: Phase 11.
+Материализация: debug.
+Не делает: no event art.
+
+PHASE11_ASSET_003 — ABANDONED_TRADE_MARKER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: old road/shore/storehouse.
+Что это: old trade route remnant.
+Как выглядит: worn milestone, broken trade sign, faded goods mark.
+Роль: carrier for historical route shift/trade decline.
+Когда появляется: Phase 23 if major event route shift/trade decline affects island.
+Причина: Phase 11 event + Phase 15/16 role.
+Материализация: Phase 23/25.
+Не делает: no active market.
+
+PHASE11_ASSET_004 — MIGRATION_CAMP_REMNANT_FAMILY
+Тип: PROP_CLUSTER
+Где используется: abandoned districts, shore, forest edge.
+Что это: remnant of migration/displacement.
+Как выглядит: old fire pit, torn cloth, abandoned bundle, simple shelter remains.
+Роль: physical carrier for population movement.
+Когда появляется: Phase 23 if migration event tied to island history.
+Причина: Phase 11 + Phase 17 migrationSummary.
+Материализация: Phase 23/25.
+Не делает: no crowd simulation.
+
+PHASE11_ASSET_005 — SUCCESSION_CRISIS_ARCHIVE_PROP
+Тип: WORLD_OBJECT
+Где используется: archive/authority house/elite ruin.
+Что это: document/ledger connected to succession crisis.
+Как выглядит: sealed bundle, broken lineage seal, old papers.
+Роль: carrier for dynasty event evidence/context.
+Когда появляется: Phase 23 if succession event informs island/NPC/power conflict.
+Причина: Phase 11 + Phase 9.
+Материализация: Phase 23/25.
+Не делает: no family tree UI.
+
+============================================================
+PHASE 12 — MEMORY / TRAUMA: ASSET PACK
+============================================================
+
+PHASE12_ASSET_001 — MEMORY_TRAUMA_GRAPH
+Тип: DEBUG_GRAPH
+Где используется: memory export.
+Что это: event -> memory -> group behavior graph.
+Как выглядит: nodes sourceEventId, memoryId, affectedGroup, downstream effect.
+Роль: validates memory propagation.
+Когда появляется: always if memory records exist.
+Причина: Phase 12.
+Материализация: debug.
+Не делает: no cutscene.
+
+PHASE12_ASSET_002 — TRAUMA_INTENSITY_MAP
+Тип: DEBUG_OVERLAY
+Где используется: history/spatial debug.
+Что это: trauma intensity by region/island.
+Как выглядит: heatmap/labels.
+Роль: informs social fear, taboos, NPC wounds.
+Когда появляется: if trauma records exist.
+Причина: Phase 12.
+Материализация: Phase 17/21/24.
+Не делает: no player-facing mood overlay.
+
+PHASE12_ASSET_003 — MEMORIAL_MARKER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: settlement center, road, ruined area, cemetery-like spot.
+Что это: physical memory object.
+Как выглядит: stone/wood marker, cloth, carved sign; large silhouette.
+Роль: carrier for trauma/memory in world.
+Когда появляется: Phase 23 if memory/trauma needs carrier.
+Причина: Phase 12 + Phase 17 local crisis.
+Материализация: Phase 23/25.
+Не делает: no cinematic scene.
+
+PHASE12_ASSET_004 — WARNING_MURAL_OR_TABOO_INSCRIPTION_FAMILY
+Тип: WORLD_OBJECT / OVERLAY_ON_WALL
+Где используется: walls, shrine, storehouse, well, route gate.
+Что это: visible cultural warning from past trauma.
+Как выглядит: large symbol/mural/inscription, not readable small text.
+Роль: carrier for memory hardening into taboo.
+Когда появляется: Phase 23 if memory->taboo influence exists.
+Причина: Phase 12 + Phase 4/6.
+Материализация: Phase 23/25.
+Не делает: no UI warning.
+
+PHASE12_ASSET_005 — BROKEN_COMMUNAL_OBJECT_FAMILY
+Тип: PROP_CLUSTER
+Где используется: communal space, old storage, work area.
+Что это: broken shared object left as memory trace.
+Как выглядит: broken table/wheel/tool rack/water vessel, large shapes.
+Роль: shows social trauma through object state.
+Когда появляется: Phase 23 if communal trauma exists.
+Причина: Phase 12 + Phase 14 collapse.
+Материализация: Phase 23/25.
+Не делает: not generic clutter.
+
+============================================================
+PHASE 13 — GLOBAL TRAGEDY: ASSET PACK
+============================================================
+
+PHASE13_ASSET_001 — TRAGEDY_CAUSE_CHAIN_GRAPH
+Тип: DEBUG_GRAPH
+Где используется: tragedy export.
+Что это: full cause chain of the tragedy.
+Как выглядит: geographic/power/memory/religion roots -> trigger -> structural break.
+Роль: verifies tragedy is not random.
+Когда появляется: always.
+Причина: Phase 13.
+Материализация: debug.
+Не делает: no world damage directly.
+
+PHASE13_ASSET_002 — ROOT_DRIVER_TABLE
+Тип: DEBUG_PANEL
+Где используется: tragedy export.
+Что это: table of root drivers.
+Как выглядит: driverId / type / upstreamRefs / severity.
+Роль: inspection of tragedy causes.
+Когда появляется: always.
+Причина: Phase 13.
+Материализация: debug.
+Не делает: no props directly.
+
+PHASE13_ASSET_003 — TRAGEDY_SCAR_MARKER_FAMILY
+Тип: WORLD_OBJECT / PROP_CLUSTER
+Где используется: later affected islands/routes/settlements.
+Что это: generic physical scar of global tragedy.
+Как выглядит: broken monument, burned route sign, cracked communal stone.
+Роль: material carrier for tragedy aftermath.
+Когда появляется: Phase 23 if island history needs visible tragedy trace.
+Причина: Phase 13 + Phase 17 history.
+Материализация: Phase 23/25.
+Не делает: no full disaster scene.
+
+PHASE13_ASSET_004 — FAILED_PREVENTION_RECORD_PROP
+Тип: WORLD_OBJECT
+Где используется: archive, authority office, healer space.
+Что это: record showing someone tried to prevent crisis.
+Как выглядит: sealed document bundle, damaged ledger, old warning page.
+Роль: evidence/context carrier for tragedy.
+Когда появляется: Phase 23 if tragedy/prevention evidence required.
+Причина: Phase 13 + Phase 10/11.
+Материализация: Phase 23/25.
+Не делает: no narrative cutscene.
+
+============================================================
+PHASE 14 — COLLAPSE CASCADE: ASSET PACK
+============================================================
+
+PHASE14_ASSET_001 — COLLAPSE_CASCADE_GRAPH
+Тип: DEBUG_GRAPH
+Где используется: collapse export.
+Что это: collapse cascade graph.
+Как выглядит: routeLoss -> specialistLoss -> institutionalHollowing -> settlement fragmentation.
+Роль: validates collapse as chain.
+Когда появляется: always.
+Причина: Phase 14.
+Материализация: debug.
+Не делает: no objects directly.
+
+PHASE14_ASSET_002 — ROUTE_LOSS_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: macro/archipelago map.
+Что это: routes lost or weakened by collapse.
+Как выглядит: broken/dashed route lines.
+Роль: explains later island isolation and travel pressure.
+Когда появляется: if routeCollapseRefs exist.
+Причина: Phase 14.
+Материализация: Phase 16/17.5/25.
+Не делает: no actual road breaking tile by itself.
+
+PHASE14_ASSET_003 — ABANDONED_DOCK_OR_PORT_REMAINS_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later waterfront/landing/old port zones.
+Что это: physical carrier for port abandonment.
+Как выглядит: broken planks, tilted posts, empty mooring, storm wear.
+Роль: materializes collapse of maritime infrastructure.
+Когда появляется: Phase 23 if portAbandonmentRefs and Phase 20 waterfront zone exist.
+Причина: Phase 14 + Phase 15/16.
+Материализация: Phase 23/25.
+Не делает: Phase 14 does not place a port.
+
+PHASE14_ASSET_004 — RUINED_WORKSHOP_FAMILY
+Тип: WORLD_OBJECT / PROP_CLUSTER
+Где используется: settlement work zones.
+Что это: abandoned specialist/craft space.
+Как выглядит: broken bench, missing tools, collapsed roof/wall.
+Роль: carrier for specialistLossRefs.
+Когда появляется: Phase 23 if specialistLoss affects island.
+Причина: Phase 14.
+Материализация: Phase 23/25.
+Не делает: no crafting system changes by itself.
+
+PHASE14_ASSET_005 — EMPTY_OFFICE_OR_HOLLOW_AUTHORITY_PROP
+Тип: WORLD_OBJECT / PROP_CLUSTER
+Где используется: authority house, archive, customs.
+Что это: sign of institutional hollowing.
+Как выглядит: empty desk, broken seal, missing records, abandoned chair.
+Роль: carrier for hollow institutions.
+Когда появляется: Phase 23 if institutionalHollowingRefs exist.
+Причина: Phase 14 + Phase 8.
+Материализация: Phase 23/25.
+Не делает: no NPC behavior directly.
+
+PHASE14_ASSET_006 — COLLAPSED_STORAGE_FAMILY
+Тип: WORLD_OBJECT
+Где используется: warehouse/storehouse/communal store.
+Что это: collapsed storage object/building.
+Как выглядит: fallen roof, broken crates, spilled barrels.
+Роль: carrier for supply chain collapse and disease/storage context.
+Когда появляется: Phase 23 if storage collapse/evidence carrier required.
+Причина: Phase 14 + Phase 17.5.
+Материализация: Phase 23/25.
+Не делает: no random loot.
+
+============================================================
+PHASE 15 — ARCHIPELAGO ROLE: ASSET PACK
+============================================================
+
+PHASE15_ASSET_001 — ARCHIPELAGO_ROLE_CARD
+Тип: DEBUG_PANEL
+Где используется: archipelago export.
+Что это: card of archipelago oldSystemRole.
+Как выглядит: role, strategicSignificance, routeCentrality, collapseScarType.
+Роль: validates archipelago identity.
+Когда появляется: always.
+Причина: Phase 15.
+Материализация: debug.
+Не делает: no map props.
+
+PHASE15_ASSET_002 — OLD_SYSTEM_NETWORK_DIAGRAM
+Тип: DEBUG_GRAPH / DEBUG_OVERLAY
+Где используется: archipelago map.
+Что это: network of dependencies/routes/former system.
+Как выглядит: nodes/islands/routes with oldSystem links.
+Роль: shows why islands are connected.
+Когда появляется: always.
+Причина: Phase 15.
+Материализация: debug.
+Не делает: no playable route UI by default.
+
+PHASE15_ASSET_003 — OLD_CUSTOMS_MARKER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: old landing, route hub, storehouse, checkpoint.
+Что это: physical trace of former administrative route control.
+Как выглядит: post/sign/seal with old customs symbol.
+Роль: carrier for archipelago as old system node.
+Когда появляется: Phase 23 if island role/history needs old customs carrier.
+Причина: Phase 15 + Phase 16/17.
+Материализация: Phase 23/25.
+Не делает: no active customs NPC.
+
+PHASE15_ASSET_004 — SEA_ROUTE_MILESTONE_FAMILY
+Тип: WORLD_OBJECT / MAP_SYMBOL
+Где используется: shore/landing/map debug.
+Что это: marker of old sea route.
+Как выглядит: shore stone/post with faded sea-route mark.
+Роль: shows archipelago route continuity.
+Когда появляется: Phase 23 if old route trace needed.
+Причина: Phase 15 + Phase 1 sea routes.
+Материализация: Phase 23/25.
+Не делает: no boat system.
+
+PHASE15_ASSET_005 — FINAL_ISLAND_FORESHADOW_OBJECT_FAMILY
+Тип: WORLD_OBJECT / V2_SLOT
+Где используется: late progression islands.
+Что это: subtle object hinting final systemic center.
+Как выглядит: repeated seal, unusual marker, broken route sign, not magical glow.
+Роль: supports progression gradient.
+Когда появляется: Phase 23/25 if pressureGradientToFinalIsland requires.
+Причина: Phase 15 + Phase 17.5.
+Материализация: Phase 23/25.
+Не делает: no explicit final quest marker.
+
+============================================================
+PHASE 16 — ISLAND ROLES: ASSET PACK
+============================================================
+
+PHASE16_ASSET_001 — ISLAND_ROLE_TABLE_30
+Тип: DEBUG_PANEL
+Где используется: island export.
+Что это: table of 30 island roles.
+Как выглядит: islandIndex / role / routePosition / resourceFunction / socialFunction / collapseFunction.
+Роль: verifies all islands have roles.
+Когда появляется: always.
+Причина: Phase 16.
+Материализация: debug.
+Не делает: no terrain placement by itself.
+
+PHASE16_ASSET_002 — ISLAND_ROLE_MAP_SYMBOLS
+Тип: MAP_SYMBOL / DEBUG_OVERLAY
+Где используется: archipelago debug map.
+Что это: symbolic role markers per island.
+Как выглядит: simple labels/icons in debug map.
+Роль: lets tester see island variety.
+Когда появляется: always.
+Причина: Phase 16.
+Материализация: debug/manual map.
+Не делает: no player-facing icons by default.
+
+PHASE16_ASSET_003 — NEIGHBOR_DEPENDENCY_GRAPH
+Тип: DEBUG_GRAPH
+Где используется: island export.
+Что это: island dependency graph.
+Как выглядит: directed edges island-to-island.
+Роль: shows route/resource/social dependencies.
+Когда появляется: always.
+Причина: Phase 16.
+Материализация: debug.
+Не делает: no travel UI.
+
+PHASE16_ASSET_004 — ROLE_FUNCTION_PHYSICAL_CARRIER_HINTS
+Тип: DEBUG_PANEL
+Где используется: asset handoff.
+Что это: mapping islandRole -> future carrier families.
+Как выглядит: fishing_role -> fish storage/net/dock; repair_role -> workshop/tools; refuge_role -> shelter.
+Роль: ensures island role becomes visual later.
+Когда появляется: always.
+Причина: Phase 16.
+Материализация: Phase 20/23/25.
+Не делает: no objects yet.
+
+============================================================
+PHASE 17 — ISLAND HISTORIES: ASSET PACK
+============================================================
+
+PHASE17_ASSET_001 — ISLAND_HISTORY_TABLE_30
+Тип: DEBUG_PANEL
+Где используется: island history export.
+Что это: table of 30 IslandHistoryRecord.
+Как выглядит: islandIndex / foundingCause / ownershipLayers / faithShift / localCrisis / declineReason / presentContradiction.
+Роль: verifies every island has history.
+Когда появляется: always.
+Причина: Phase 17.
+Материализация: debug.
+Не делает: no prop placement.
+
+PHASE17_ASSET_002 — PER_ISLAND_HISTORY_CARD
+Тип: DEBUG_PANEL
+Где используется: manual test.
+Что это: card for a single island.
+Как выглядит: 3–6 history beats + upstream refs + future visual carriers.
+Роль: detailed review of narrative causality.
+Когда появляется: per island.
+Причина: Phase 17.
+Материализация: debug/manual.
+Не делает: no playable object.
+
+PHASE17_ASSET_003 — OWNERSHIP_LAYER_SEAL_HINTS
+Тип: DEBUG_PANEL / WORLD_OBJECT future family
+Где используется: asset handoff.
+Что это: list of ownership-related future seals/marks.
+Как выглядит: oldOwner/currentOwner/conflict -> seal family.
+Роль: prepares Phase 23 physical ownership carriers.
+Когда появляется: if ownershipLayers exist.
+Причина: Phase 17 + Phase 9.
+Материализация: Phase 23/25.
+Не делает: no actual seal until Phase 23.
+
+PHASE17_ASSET_004 — ABANDONED_WORKSITE_FAMILY
+Тип: PROP_CLUSTER
+Где используется: later old work zones.
+Что это: visual carrier of decline/growth period.
+Как выглядит: unfinished repair, broken tools, abandoned work surface.
+Роль: materializes island decline history.
+Когда появляется: Phase 23 if history includes abandoned labor/site.
+Причина: Phase 17.
+Материализация: Phase 23/25.
+Не делает: not generic clutter.
+
+PHASE17_ASSET_005 — OVERWRITTEN_SYMBOL_FAMILY
+Тип: WORLD_OBJECT / OVERLAY_ON_OBJECT
+Где используется: shrine, door, sign, storage.
+Что это: one cultural/religious mark overwritten by another.
+Как выглядит: old symbol scratched/covered by newer mark.
+Роль: shows faithShift/ownership change.
+Когда появляется: Phase 23 if faithShiftSummary requires visible carrier.
+Причина: Phase 17 + Phase 4.
+Материализация: Phase 23/25.
+Не делает: no UI explanation.
+
+PHASE17_ASSET_006 — LOCAL_CRISIS_MEMORIAL_FAMILY
+Тип: WORLD_OBJECT
+Где используется: settlement center, road, ruined area.
+Что это: memorial/trace of island local crisis.
+Как выглядит: simple marker, broken communal object, small monument.
+Роль: materializes localCrisisRefs.
+Когда появляется: Phase 23 if localCrisis must be visible.
+Причина: Phase 17 + Phase 12.
+Материализация: Phase 23/25.
+Не делает: no cutscene.
+
+============================================================
+PHASE 17.5 — GAMEPLAY / DISEASE PROJECTION: ASSET PACK
+============================================================
+
+PHASE17_5_ASSET_001 — GAMEPLAY_PROJECTION_TABLE
+Тип: DEBUG_PANEL
+Где используется: projection export.
+Что это: table for all islands.
+Как выглядит: islandIndex / progressionBand / travelPressure / survivalPressure / settlementPresence / merchantLikelihood / refugeLikelihood / hazardBias.
+Роль: validates gameplay differentiation.
+Когда появляется: always.
+Причина: Phase 17.5.
+Материализация: debug; Phase 18–25 handoff.
+Не делает: no playable level by itself.
+
+PHASE17_5_ASSET_002 — DISEASE_PROJECTION_TABLE
+Тип: DEBUG_PANEL
+Где используется: disease export.
+Что это: disease chain by important island.
+Как выглядит: geography / infrastructure / economy / politics / culture / medicine / repair columns.
+Роль: validates disease as systemic diagnosis.
+Когда появляется: important islands.
+Причина: Phase 17.5.
+Материализация: Phase 23 evidence/repair carriers.
+Не делает: no physical props yet.
+
+PHASE17_5_ASSET_003 — EVIDENCE_TRIANGULATION_GRAPH
+Тип: DEBUG_GRAPH
+Где используется: disease debug export.
+Что это: graph of evidence slots to truth profile.
+Как выглядит: evidence nodes connected to causal chain.
+Роль: validates that not all evidence is required but independent confirmations exist.
+Когда появляется: if evidence slots exist.
+Причина: Phase 17.5 diagnosis projection.
+Материализация: debug; Phase 23 physical evidence props.
+Не делает: no hypothesis board UI.
+
+PHASE17_5_ASSET_004 — FRIEND_LETTER_OBJECTIVE_RECORDS
+Тип: TEXT_CARRIER / DEBUG_PANEL
+Где используется: friend letter generation/debug.
+Что это: records of objectives from friend.
+Как выглядит: objectiveId / island / request / conflict / required clue.
+Роль: links narrative objective with survival/disease.
+Когда появляется: important islands.
+Причина: Phase 17.5.
+Материализация: future letter text, not new UI.
+Не делает: no floating quest marker.
+
+PHASE17_5_ASSET_005 — SAMPLE_VIAL_FAMILY
+Тип: WORLD_OBJECT
+Где используется: later evidence/medicine collection points.
+Что это: sample vial/container.
+Как выглядит: small but readable vial/container, large silhouette in tile scale.
+Роль: physical carrier for medical sample.
+Когда появляется: Phase 23 if EvidenceSlot requires sample collection.
+Причина: Phase 17.5 medical readiness chain.
+Материализация: Phase 23/25.
+Не делает: no inventory implementation by itself.
+
+PHASE17_5_ASSET_006 — DISEASED_FOOD_OR_FISH_FAMILY
+Тип: WORLD_OBJECT
+Где используется: fish storage, market, shore, sick supply.
+Что это: diseased/contaminated food evidence.
+Как выглядит: fish/food with abnormal stain/shape, readable not grotesque noise.
+Роль: evidence carrier for symptom/source link.
+Когда появляется: Phase 23 if evidence type sick fish/food.
+Причина: Phase 17.5 disease projection.
+Материализация: Phase 23/25.
+Не делает: no disease simulation.
+
+PHASE17_5_ASSET_007 — CONTAMINATED_STORAGE_FAMILY
+Тип: WORLD_OBJECT / PROP_CLUSTER
+Где используется: salt barrel, warehouse, wet wall, food storage.
+Что это: contaminated storage evidence.
+Как выглядит: barrels/crates with salt crust/wet crystals/stain.
+Роль: carrier for infrastructure/economy disease chain.
+Когда появляется: Phase 23 if disease chain includes storage contamination.
+Причина: Phase 17.5 + Phase 10/14/17.
+Материализация: Phase 23/25.
+Не делает: no automatic infection UI.
+
+PHASE17_5_ASSET_008 — BROKEN_FILTER_OR_WELL_REPAIR_TARGET_FAMILY
+Тип: WORLD_OBJECT
+Где используется: water point, filter station, well, river intake.
+Что это: repair target for systemic repair.
+Как выглядит: broken filter slats/pipes/basin/well part, strong silhouette.
+Роль: physical carrier for SystemicRepair.
+Когда появляется: Phase 23 if repair chain requires water infrastructure.
+Причина: Phase 17.5 + Phase 2 hydrology pressure.
+Материализация: Phase 23/25.
+Не делает: no repair minigame by itself.
+
+PHASE17_5_ASSET_009 — ENDING_MATRIX_PANEL
+Тип: DEBUG_PANEL
+Где используется: projection export.
+Что это: matrix DiagnosisCompleteness / MedicalReadiness / SocialTrust / SystemicRepair.
+Как выглядит: table of ending conditions.
+Роль: validates systemic ending logic.
+Когда появляется: always.
+Причина: Phase 17.5 ending wrapper.
+Материализация: debug.
+Не делает: no final cutscenes.
+
+============================================================
+PHASE 18 — NATURAL EVOLUTION: ASSET PACK
+============================================================
+
+PHASE18_ASSET_001 — NATURAL_EVOLUTION_TABLE
+Тип: DEBUG_PANEL
+Где используется: realization export.
+Что это: table of rewilding/exploitation traces per island.
+Как выглядит: islandIndex / rewildingState / exploitationTraceRefs / marshExpansion / coastalCollapse.
+Роль: validates natural memory of history.
+Когда появляется: relevant islands.
+Причина: Phase 18.
+Материализация: debug + future terrain props.
+Не делает: no full ecology sim.
+
+PHASE18_ASSET_002 — OVERGROWN_FIELD_TILE_FAMILY
+Тип: GAME_TILE
+Где используется: old agricultural zones.
+Что это: заросшее старое поле.
+Как выглядит: old furrow rhythm under grass/shrubs; large lines, not micro texture.
+Роль: materializes human history reclaimed by nature.
+Когда появляется: if fieldRemnantRefs / abandoned agriculture.
+Причина: Phase 17 history + Phase 18 rewilding.
+Материализация: Phase 18/19/25.
+Не делает: no crop system.
+
+PHASE18_ASSET_003 — LOGGING_SCAR_STUMP_CLUSTER
+Тип: PROP_CLUSTER
+Где используется: forest/wood resource zones.
+Что это: след вырубки.
+Как выглядит: few large stumps, cut logs, bare ground patch.
+Роль: visual carrier for exploitation trace.
+Когда появляется: if loggingScarRefs exist.
+Причина: Phase 18 exploitationTrace.
+Материализация: Phase 25.
+Не делает: not random decoration.
+
+PHASE18_ASSET_004 — MARSH_EXPANSION_EDGE_TILE
+Тип: EDGE_TILE / GAME_TILE
+Где используется: wet lowlands, abandoned routes/fields.
+Что это: край расширяющегося болота.
+Как выглядит: wet mud + reeds creeping into former ground.
+Роль: shows environmental transformation after collapse.
+Когда появляется: if marshExpansionRefs exist.
+Причина: Phase 18 + Phase 2 hydrology.
+Материализация: Phase 19/25.
+Не делает: no water physics.
+
+PHASE18_ASSET_005 — RECLAIMED_RUIN_VEGETATION_CLUSTER
+Тип: PROP_CLUSTER
+Где используется: ruins/abandoned buildings.
+Что это: vegetation over ruin.
+Как выглядит: large plants/roots/grass over stone or wood remains.
+Роль: carrier for time and abandonment.
+Когда появляется: if reclaimedRuinRefs exist.
+Причина: Phase 18 + Phase 14/17 collapse/history.
+Материализация: Phase 23/25.
+Не делает: no detailed ruin variant required.
+
+PHASE18_ASSET_006 — COASTAL_COLLAPSE_EDGE_TILE
+Тип: EDGE_TILE
+Где используется: shore/coastal routes.
+Что это: broken/collapsed coastline.
+Как выглядит: eroded edge, fallen stones, water biting land.
+Роль: materializes coastalCollapseRefs and route fragility.
+Когда появляется: if coastalCollapseRefs exist.
+Причина: Phase 18 + Phase 1 marineCarving + Phase 2 storm.
+Материализация: Phase 19/25.
+Не делает: no dynamic erosion.
+
+============================================================
+PHASE 19 — TERRAIN TRANSFORMATION: ASSET PACK
+============================================================
+
+PHASE19_ASSET_001 — TERRAIN_ANCHOR_ZONE_MAP
+Тип: DEBUG_OVERLAY
+Где используется: realization map.
+Что это: map of terrain anchor zones.
+Как выглядит: zone polygons/labels: rockOutcrop, oldRoad, collapseField, drownedPath.
+Роль: validates terrain placement logic.
+Когда появляется: always if terrain wrappers run.
+Причина: Phase 19.
+Материализация: debug.
+Не делает: no final tile placement by itself.
+
+PHASE19_ASSET_002 — ROCK_OUTCROP_ANCHOR_FAMILY
+Тип: WORLD_OBJECT / GAME_TILE
+Где используется: highland, coast, route obstruction.
+Что это: rock outcrop physical anchor.
+Как выглядит: material-specific rock mass: basalt/limestone/granite based on Phase 1.
+Роль: visual carrier for geology and terrain constraint.
+Когда появляется: rockOutcropHints.
+Причина: Phase 1 material family + Phase 19 terrain anchor.
+Материализация: Phase 25.
+Не делает: not generic stone.
+
+PHASE19_ASSET_003 — SCREE_TALUS_FIELD_TILE
+Тип: GAME_TILE
+Где используется: slopes, cliffs, mountain passes.
+Что это: каменная осыпь.
+Как выглядит: large angular stones, readable movement difficulty.
+Роль: visual carrier for slope/terrain pressure.
+Когда появляется: steep slope / mountain transition.
+Причина: Phase 1 relief + Phase 2 terrain pressure.
+Материализация: Phase 25.
+Не делает: no physics.
+
+PHASE19_ASSET_004 — OLD_ROAD_REMNANT_TILE
+Тип: GAME_TILE
+Где используется: historical routes.
+Что это: old road trace.
+Как выглядит: broken stone/path fragments, overgrown edges.
+Роль: materializes route history.
+Когда появляется: oldRoadHints.
+Причина: Phase 11/15/16/17 route history.
+Материализация: Phase 25.
+Не делает: no active navigation UI.
+
+PHASE19_ASSET_005 — DROWNED_PATH_TILE
+Тип: GAME_TILE
+Где используется: wetlands, coast, floodplain.
+Что это: path under water/mud.
+Как выглядит: visible old route fragments submerged.
+Роль: carrier for hydrology/collapse route loss.
+Когда появляется: drownedPathHints.
+Причина: Phase 2 hydrology + Phase 14 route loss.
+Материализация: Phase 25.
+Не делает: no water simulation.
+
+PHASE19_ASSET_006 — SHRUB_MASS_TILE_FAMILY
+Тип: GAME_TILE / PROP_CLUSTER
+Где используется: abandoned zones, scrubland, old fields.
+Что это: large readable shrub clusters.
+Как выглядит: stylized bushes, strong silhouette, low noise.
+Роль: terrain filler with meaning: abandonment/rewilding/dryness.
+Когда появляется: shrubMassHints.
+Причина: Phase 18/19.
+Материализация: Phase 25.
+Не делает: no generic clutter.
+
+PHASE19_ASSET_007 — COLLAPSE_FIELD_TILE_FAMILY
+Тип: GAME_TILE / PROP_CLUSTER
+Где используется: ruins, old infrastructure, slope collapse.
+Что это: field of rubble/collapse.
+Как выглядит: grouped large rubble pieces, broken planks/stone depending context.
+Роль: terrain and history carrier.
+Когда появляется: collapseFieldHints.
+Причина: Phase 14/18/19.
+Материализация: Phase 25.
+Не делает: no random debris everywhere.
+
+============================================================
+PHASE 20 — SETTLEMENT: ASSET PACK
+============================================================
+
+PHASE20_ASSET_001 — SETTLEMENT_GRAPH_TABLE
+Тип: DEBUG_PANEL
+Где используется: settlement export.
+Что это: table of settlements per island.
+Как выглядит: settlementId / islandIndex / state / role / currentCenter / deadCenter.
+Роль: verifies settlements exist nominally.
+Когда появляется: if settlement generated.
+Причина: Phase 20.
+Материализация: debug.
+Не делает: no final layout.
+
+PHASE20_ASSET_002 — DISTRICT_ZONE_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: settlement map.
+Что это: zone map of districts.
+Как выглядит: zones: living center, dead center, authority, waterfront, work, sacred.
+Роль: provides placement framework for buildings/props.
+Когда появляется: if settlement exists.
+Причина: Phase 20.
+Материализация: debug; Phase 22/23/25.
+Не делает: no final art.
+
+PHASE20_ASSET_003 — BASIC_HOUSE_PLACEHOLDER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: living settlement zones.
+Что это: placeholder houses.
+Как выглядит: simple isometric house, project style, readable roof/walls.
+Роль: establishes settlement presence.
+Когда появляется: living/mixed settlement.
+Причина: Phase 20 settlement record.
+Материализация: Phase 25.
+Не делает: no full procedural house variants required here.
+
+PHASE20_ASSET_004 — ABANDONED_HOUSE_PLACEHOLDER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: dead center/abandoned district.
+Что это: abandoned house placeholder.
+Как выглядит: broken roof/walls, dark doorway, overgrowth.
+Роль: materializes settlement decline.
+Когда появляется: collapsed/abandoned settlement state.
+Причина: Phase 20 + Phase 14/17.
+Материализация: Phase 25.
+Не делает: no detailed interior required.
+
+PHASE20_ASSET_005 — WATERFRONT_LANDING_ZONE_PLACEHOLDER
+Тип: WORLD_OBJECT / PROP_CLUSTER
+Где используется: coast/river settlement edge.
+Что это: simple landing zone, not full port.
+Как выглядит: compact shore transition, a few planks/posts, worn path to water.
+Роль: materializes coastalOpportunity as minimal human use.
+Когда появляется: if upstream coastalOpportunity + settlement/route need.
+Причина: Phase 1 coastalOpportunity + Phase 15/16 route role.
+Материализация: Phase 20/25; can feed Phase 23 dock/pier.
+Не делает: not automatically a port.
+
+PHASE20_ASSET_006 — LOCAL_AUTHORITY_ZONE_MARKER_PHYSICAL_HINT
+Тип: WORLD_OBJECT future hint
+Где используется: settlement authority area.
+Что это: physical carrier need for authority zone.
+Как выглядит: sign/seal/boundary post family used later.
+Роль: prepares authority building/props.
+Когда появляется: if LocalAuthorityPackage exists.
+Причина: Phase 20 + Phase 8.
+Материализация: Phase 23/25.
+Не делает: no UI marker.
+
+PHASE20_ASSET_007 — SAFE_REFUGE_PLACEHOLDER
+Тип: WORLD_OBJECT
+Где используется: refuge/shelter zone.
+Что это: safe sleep/shelter visual carrier.
+Как выглядит: bedroll/small covered corner/lamp/simple shelter.
+Роль: gameplay carrier for refugeLikelihood and survival conflict.
+Когда появляется: if refugeLikelihood or settlement offers shelter.
+Причина: Phase 17.5 gameplay projection + Phase 20 settlement.
+Материализация: Phase 25.
+Не делает: no full sleep system.
+
+============================================================
+PHASE 21 — SOCIAL AI: ASSET PACK
+============================================================
+
+PHASE21_ASSET_001 — SOCIAL_AI_STATE_TABLE
+Тип: DEBUG_PANEL
+Где используется: social export.
+Что это: local social motives table.
+Как выглядит: factionGoalRefs / resourcePriorities / tensions / alliances.
+Роль: verifies social motives exist.
+Когда появляется: if social AI wrapper runs.
+Причина: Phase 21.
+Материализация: debug.
+Не делает: no NPC schedule.
+
+PHASE21_ASSET_002 — DISPUTED_RESOURCE_SITE_FAMILY
+Тип: PROP_CLUSTER
+Где используется: contested resource zone.
+Что это: physical site of social tension.
+Как выглядит: resource pile + conflicting marks, rope, disturbed props.
+Роль: materializes resource conflict.
+Когда появляется: if pressureDrivenTensions around resource.
+Причина: Phase 21 + Phase 2 resource pressure.
+Материализация: Phase 23/25.
+Не делает: no social overlay.
+
+PHASE21_ASSET_003 — COMMUNITY_SUPPLY_CRATE_FAMILY
+Тип: WORLD_OBJECT
+Где используется: communal store/lazaret/settlement center.
+Что это: shared survival resource crate.
+Как выглядит: crate/cloth/bundle with community mark.
+Роль: physical carrier for moral/survival conflict.
+Когда появляется: if resourcePriority sharedGoods exists.
+Причина: Phase 21 + Phase 6 norms + Phase 17.5 conflict.
+Материализация: Phase 23/25.
+Не делает: no tooltip about trust loss.
+
+PHASE21_ASSET_004 — CONFLICT_TRACE_CLUSTER_FAMILY
+Тип: PROP_CLUSTER
+Где используется: contested zone, public board, storehouse front.
+Что это: physical trace of argument/conflict.
+Как выглядит: broken sign, moved crates, torn rope, muddy footprints.
+Роль: shows social tension without UI.
+Когда появляется: if conflictTendencies high/recent dispute.
+Причина: Phase 21.
+Материализация: Phase 23/25.
+Не делает: not decorative clutter.
+
+PHASE21_ASSET_005 — ALLIANCE_OR_COOPERATION_WORK_PILE
+Тип: PROP_CLUSTER
+Где используется: repair site, shared project, route fixing.
+Что это: materials staged by cooperative social group.
+Как выглядит: orderly planks/tools/rope beside work area.
+Роль: materializes social support for repair.
+Когда появляется: if alliance/cooperation supports SystemicRepair.
+Причина: Phase 21 + Phase 17.5 repair.
+Материализация: Phase 23/25.
+Не делает: no relationship UI.
+
+============================================================
+PHASE 22 — SPATIAL CONSEQUENCE: ASSET PACK
+============================================================
+
+PHASE22_ASSET_001 — SPATIAL_ZONE_OVERLAY
+Тип: DEBUG_OVERLAY
+Где используется: realization map.
+Что это: map of alive/dead/contested/sacred/work/route zones.
+Как выглядит: labelled polygons/areas.
+Роль: validates spatialization of social/history/terrain.
+Когда появляется: if spatial wrapper runs.
+Причина: Phase 22.
+Материализация: debug; Phase 23/25.
+Не делает: no player-facing colored overlay.
+
+PHASE22_ASSET_002 — ALIVE_DISTRICT_PROP_DENSITY_SET
+Тип: PROP_CLUSTER
+Где используется: aliveZones.
+Что это: maintained district visual set.
+Как выглядит: repaired path, usable crates, lamp/sign, cleaner ground.
+Роль: shows lived-in zone.
+Когда появляется: if aliveZone exists.
+Причина: Phase 22 + Phase 20.
+Материализация: Phase 25.
+Не делает: no NPC crowds.
+
+PHASE22_ASSET_003 — DEAD_DISTRICT_PROP_DENSITY_SET
+Тип: PROP_CLUSTER
+Где используется: deadZones/abandonedDistricts.
+Что это: abandoned district visual set.
+Как выглядит: broken props, overgrowth, empty doorways, collapsed floor patches.
+Роль: shows dead/abandoned space.
+Когда появляется: if deadZone exists.
+Причина: Phase 22 + Phase 14/17.
+Материализация: Phase 25.
+Не делает: not random noise.
+
+PHASE22_ASSET_004 — CONTESTED_BARRICADE_LOW_FAMILY
+Тип: WORLD_OBJECT
+Где используется: contestedZones.
+Что это: low community barricade.
+Как выглядит: crates, planks, rope, sign; бытовой, не военный.
+Роль: physical carrier of contested zone.
+Когда появляется: contestedZone exists.
+Причина: Phase 22 + Phase 21.
+Материализация: Phase 25.
+Не делает: no combat system.
+
+PHASE22_ASSET_005 — SACRED_BOUNDARY_OBJECTS_FAMILY
+Тип: WORLD_OBJECT
+Где используется: sacredZones.
+Что это: physical sacred boundary set.
+Как выглядит: stones, cords, ribbons, taboo marks.
+Роль: materializes religious/cultural spatial restrictions.
+Когда появляется: sacredZone exists.
+Причина: Phase 22 + Phase 4/6.
+Материализация: Phase 23/25.
+Не делает: no tooltip.
+
+PHASE22_ASSET_006 — WORK_ZONE_CLUTTER_MEANINGFUL_SET
+Тип: PROP_CLUSTER
+Где используется: workZones.
+Что это: purposeful work props.
+Как выглядит: workbench, tools, materials, footprints, arranged by function.
+Роль: shows labor/economy/infrastructure context.
+Когда появляется: if workZone exists.
+Причина: Phase 22 + Phase 16/20/21.
+Материализация: Phase 23/25.
+Не делает: no micro clutter.
+
+============================================================
+PHASE 23 — BUILDING / PROP NARRATIVE: ASSET PACK
+============================================================
+
+PHASE23_ASSET_001 — BUILDING_NARRATIVE_TABLE
+Тип: DEBUG_PANEL
+Где используется: building/prop export.
+Что это: list of generated building carriers.
+Как выглядит: buildingId / originalFunction / currentFunction / historyDamageState / evidenceCarrierRole.
+Роль: validates building carriers are grounded.
+Когда появляется: if buildings generated.
+Причина: Phase 23.
+Материализация: debug.
+Не делает: no final art.
+
+PHASE23_ASSET_002 — PROP_NARRATIVE_TABLE
+Тип: DEBUG_PANEL
+Где используется: prop export.
+Что это: list of generated prop carriers.
+Как выглядит: propId / economicMeaning / religiousMeaning / collapseTrace / evidenceCarrierRole.
+Роль: validates props are meaningful.
+Когда появляется: if props generated.
+Причина: Phase 23.
+Материализация: debug.
+Не делает: not random prop list.
+
+PHASE23_ASSET_003 — STOREHOUSE_BUILDING_FAMILY
+Тип: WORLD_OBJECT
+Где используется: storage/economy/disease evidence zones.
+Что это: storehouse/warehouse placeholder.
+Как выглядит: simple isometric building, large door, visible crates/barrels, strong silhouette.
+Роль: carrier for storage, trade, evidence, supply chain.
+Когда появляется: if upstream requires storage carrier.
+Причина: Phase 10/14/16/17/17.5 + Phase 20/22.
+Материализация: Phase 23/25.
+Не делает: no final interior unless separate.
+
+PHASE23_ASSET_004 — DOCK_PIER_BUILDING_FAMILY
+Тип: WORLD_OBJECT
+Где используется: waterfront/landing/old port zones.
+Что это: dock/pier placeholder.
+Как выглядит: wooden planks/posts into water; broken/repaired variants.
+Роль: carrier for maritime route, old port, landing, collapse.
+Когда появляется: if coastalOpportunity + route/role/history requires.
+Причина: Phase 1/15/16/17 + Phase 20.
+Материализация: Phase 23/25.
+Не делает: Phase 1 does not create this.
+
+PHASE23_ASSET_005 — WELL_OR_WATER_POINT_FAMILY
+Тип: WORLD_OBJECT
+Где используется: water zones, settlements, sacred water, disease source.
+Что это: well/source/water point placeholder.
+Как выглядит: stone/wood ring, bucket, wet ground; variants safe/unsafe/sacred.
+Роль: carrier for water access and disease/repair context.
+Когда появляется: if water infrastructure or diagnosis requires.
+Причина: Phase 1 hydrology + Phase 2 pressure + Phase 17.5.
+Материализация: Phase 23/25.
+Не делает: no water quality UI.
+
+PHASE23_ASSET_006 — BROKEN_FILTER_FAMILY
+Тип: WORLD_OBJECT
+Где используется: water infrastructure zone.
+Что это: filter/repair target placeholder.
+Как выглядит: broken slats/pipes/basin/sieve-like structure; contaminated stain optional.
+Роль: carrier for SystemicRepair and medical hypothesis.
+Когда появляется: if disease/repair projection requires filter.
+Причина: Phase 17.5 + Phase 2 hydrology.
+Материализация: Phase 23/25.
+Не делает: not Phase 0–2 direct asset.
+
+PHASE23_ASSET_007 — ARCHIVE_LEDGER_PROP_FAMILY
+Тип: WORLD_OBJECT
+Где используется: archive, authority house, merchant table, storehouse.
+Что это: ledger/document bundle evidence carrier.
+Как выглядит: book/papers tied with seal/string; readable as record.
+Роль: carrier for evidence and historical/political truth.
+Когда появляется: if EvidenceSlot requires record/ledger/ban.
+Причина: Phase 10/11/17/17.5.
+Материализация: Phase 23/25.
+Не делает: no readable text inside tile.
+
+PHASE23_ASSET_008 — SEALED_DOOR_FAMILY_AUTHORITY_TEMPLE_MERCHANT
+Тип: WORLD_OBJECT
+Где используется: doors to storehouse/archive/shrine/merchant storage.
+Что это: locked/sealed social access carrier.
+Как выглядит: door + seal/rope/tag; variant by authority/temple/merchant/community.
+Роль: makes access gate physical without new UI.
+Когда появляется: if socialAccessGate exists.
+Причина: Phase 6/8/17.5 + Phase 20/22.
+Материализация: Phase 23/25.
+Не делает: no hover tooltip.
+
+PHASE23_ASSET_009 — LIVING_LAZARET_OR_SICK_SHELTER_FAMILY
+Тип: WORLD_OBJECT / PROP_CLUSTER
+Где используется: settlement medicine/sick zones.
+Что это: sick shelter/lazaret placeholder.
+Как выглядит: bedrolls, cloth screens, simple medical shelf, muted palette.
+Роль: carrier for medicine/disease/social care.
+Когда появляется: if disease projection or healer NPC requires sick place.
+Причина: Phase 17.5 + Phase 24 healer/sick resident.
+Материализация: Phase 23/25.
+Не делает: no hospital system.
+
+PHASE23_ASSET_010 — REPAIR_TARGET_OBJECT_FAMILY
+Тип: WORLD_OBJECT
+Где используется: bridge, filter, well, dock, route, storage.
+Что это: object that can become systemic repair target.
+Как выглядит: broken structure with clear repairable parts.
+Роль: carrier for SystemicRepair.
+Когда появляется: if repair objective exists.
+Причина: Phase 17.5 + Phase 21/22.
+Материализация: Phase 23/25.
+Не делает: no minigame.
+
+============================================================
+PHASE 24 — LOCAL NPC: ASSET PACK
+============================================================
+
+PHASE24_ASSET_001 — NPC_ROSTER_TABLE
+Тип: DEBUG_PANEL
+Где используется: NPC export.
+Что это: table of local NPCs.
+Как выглядит: npcId / islandIndex / role / lineageRef / powerRef / memoryRef / buildingRef / diseaseRole.
+Роль: validates NPC grounding.
+Когда появляется: if NPCs generated.
+Причина: Phase 24.
+Материализация: debug.
+Не делает: no dialogue tree.
+
+PHASE24_ASSET_002 — NPC_GROUNDING_CARD
+Тип: DEBUG_PANEL
+Где используется: manual NPC review.
+Что это: card showing why NPC exists.
+Как выглядит: origin / function / woundOrNeed / secretOrBlindspot / diseaseRelation.
+Роль: prevents generic quest NPCs.
+Когда появляется: key NPCs.
+Причина: Phase 24.
+Материализация: debug/text.
+Не делает: no portrait set required.
+
+PHASE24_ASSET_003 — NPC_FISHERMAN_PLACEHOLDER
+Тип: NPC_PLACEHOLDER
+Где используется: shore/dock/fish storage.
+Что это: fisherman witness/resource role.
+Как выглядит: simple sprite silhouette with net/rod/fish crate; not over-detailed.
+Роль: carrier for fishing economy/witness/disease clue.
+Когда появляется: npcRole fisherman/fish witness.
+Причина: Phase 24 + Phase 16/17.5.
+Материализация: Phase 25.
+Не делает: no full animation pack required.
+
+PHASE24_ASSET_004 — NPC_MERCHANT_PLACEHOLDER
+Тип: NPC_PLACEHOLDER
+Где используется: market/storehouse/trade zone.
+Что это: merchant/trader role.
+Как выглядит: bag/ledger/crate silhouette.
+Роль: carrier for economy/monopoly/supply chain.
+Когда появляется: npcRole merchant/trader.
+Причина: Phase 24 + Phase 8/10/17.5.
+Материализация: Phase 25.
+Не делает: no shop UI.
+
+PHASE24_ASSET_005 — NPC_HEALER_PLACEHOLDER
+Тип: NPC_PLACEHOLDER
+Где используется: lazaret/healer house/sick zone.
+Что это: healer/doctor role.
+Как выглядит: satchel/herb/cloth silhouette.
+Роль: carrier for medicine knowledge and MedicalReadiness.
+Когда появляется: npcRole healer/doctor.
+Причина: Phase 24 + Phase 17.5.
+Материализация: Phase 25.
+Не делает: no full medical crafting UI.
+
+PHASE24_ASSET_006 — NPC_ELDER_AUTHORITY_PLACEHOLDER
+Тип: NPC_PLACEHOLDER
+Где используется: authority house/public center/storehouse.
+Что это: starosta/elder/local authority role.
+Как выглядит: upright posture, key/ledger/staff silhouette.
+Роль: carrier for authority access/social conflict.
+Когда появляется: npcRole elder/local authority.
+Причина: Phase 24 + Phase 8/20/21.
+Материализация: Phase 25.
+Не делает: no trust meter.
+
+PHASE24_ASSET_007 — NPC_RELIGIOUS_KEEPER_PLACEHOLDER
+Тип: NPC_PLACEHOLDER
+Где используется: shrine/sacred zone/old ban object.
+Что это: religious keeper/taboo gate role.
+Как выглядит: simple robe/cord/symbol silhouette.
+Роль: carrier for taboo and sacred access.
+Когда появляется: npcRole religious keeper.
+Причина: Phase 24 + Phase 4/6/22.
+Материализация: Phase 25.
+Не делает: no priest system.
+
+PHASE24_ASSET_008 — NPC_WORKER_WITNESS_PLACEHOLDER
+Тип: NPC_PLACEHOLDER
+Где используется: workshop/filter/storehouse/dock.
+Что это: worker/labor witness role.
+Как выглядит: gloves/tool/rough clothing, simple silhouette.
+Роль: carrier for witness/evidence/repair context.
+Когда появляется: npcRole worker/witness/repair helper.
+Причина: Phase 24 + Phase 17.5/21/23.
+Материализация: Phase 25.
+Не делает: no worker schedule.
+
+PHASE24_ASSET_009 — NPC_SICK_RESIDENT_PLACEHOLDER
+Тип: NPC_PLACEHOLDER
+Где используется: lazaret/home/sick zone.
+Что это: sick resident role.
+Как выглядит: hunched posture, blanket/cloth, visible symptom carrier.
+Роль: physical/social carrier for disease consequences.
+Когда появляется: npcRole sick resident/victim.
+Причина: Phase 24 + Phase 17.5 disease.
+Материализация: Phase 25.
+Не делает: no health simulation.
+
+============================================================
+PHASE 25 — PLAYABLE WORLD ASSEMBLY: ASSET PACK
+============================================================
+
+PHASE25_ASSET_001 — PLAYABLE_WORLD_DEBUG_MAP
+Тип: DEBUG_OVERLAY / DEBUG_PANEL
+Где используется: final manual export.
+Что это: assembled world placement debug map.
+Как выглядит: chunks/zones with terrain/structure/prop/NPC/interaction refs.
+Роль: validates that all wrappers reached placement hints.
+Когда появляется: always after Phase 25.
+Причина: Phase 25.
+Материализация: debug.
+Не делает: no polished level design.
+
+PHASE25_ASSET_002 — TILE_GENERATION_HINT_TABLE
+Тип: DEBUG_PANEL
+Где используется: Phase 25 export.
+Что это: table of tile families requested per zone/chunk.
+Как выглядит: zoneId / tileFamily / sourceRefs / placeholderStatus.
+Роль: validates tile-level visual needs.
+Когда появляется: always.
+Причина: Phase 25.
+Материализация: debug.
+Не делает: no asset drawing.
+
+PHASE25_ASSET_003 — STRUCTURE_PLACEMENT_HINT_TABLE
+Тип: DEBUG_PANEL
+Где используется: Phase 25 export.
+Что это: table of structures to place.
+Как выглядит: structureFamily / island / zone / sourceRefs / placeholderAvailable.
+Роль: validates buildings are grounded.
+Когда появляется: if structures required.
+Причина: Phase 25 + Phase 23.
+Материализация: debug.
+Не делает: no final building generator rewrite.
+
+PHASE25_ASSET_004 — PROP_PLACEMENT_HINT_TABLE
+Тип: DEBUG_PANEL
+Где используется: Phase 25 export.
+Что это: evidence/resource/repair/social prop placement hints.
+Как выглядит: propFamily / role / zone / evidenceRef / sourceRefs.
+Роль: validates props connect to gameplay/disease/history.
+Когда появляется: if props required.
+Причина: Phase 25 + Phase 23.
+Материализация: debug.
+Не делает: no inventory behavior.
+
+PHASE25_ASSET_005 — NPC_PLACEMENT_HINT_TABLE
+Тип: DEBUG_PANEL
+Где используется: Phase 25 export.
+Что это: placement hints for NPC placeholders.
+Как выглядит: npcId / visualFamily / zone / sourceRefs.
+Роль: validates NPCs are placeable.
+Когда появляется: if NPC roster exists.
+Причина: Phase 25 + Phase 24.
+Материализация: debug.
+Не делает: no pathing/schedules.
+
+PHASE25_ASSET_006 — INTERACTION_POINT_HINT_TABLE
+Тип: DEBUG_PANEL
+Где используется: Phase 25 export.
+Что это: inspect/use/talk/collect/sleep/repair point hints.
+Как выглядит: interactionType / objectRef / zone / sourceRefs.
+Роль: connects visual carriers to mechanics without inventing UI.
+Когда появляется: if interaction points required.
+Причина: Phase 25 + Phase 17.5/23/24.
+Материализация: debug/runtime hints.
+Не делает: no new interaction system.
+
+============================================================
+PHASE 26 — VALIDATION / REBALANCE: ASSET PACK
+============================================================
+
+PHASE26_ASSET_001 — WORLD_VALIDATION_REPORT
+Тип: VALIDATION_REPORT
+Где используется: final readiness export.
+Что это: pass/fail report by phase.
+Как выглядит: phaseId / status / blockers / warnings / asset gaps.
+Роль: determines V1 readiness.
+Когда появляется: always after Phase 26.
+Причина: Phase 26.
+Материализация: report.
+Не делает: no gameplay.
+
+PHASE26_ASSET_002 — CAUSAL_CHAIN_TRACE_VIEW
+Тип: DEBUG_GRAPH
+Где используется: final validation export.
+Что это: graph from Phase 0 to Phase 25.
+Как выглядит: seed -> geography -> pressure -> society -> history -> tragedy -> island -> projection -> realization -> placement.
+Роль: validates causal continuity.
+Когда появляется: always.
+Причина: Phase 26.
+Материализация: debug graph.
+Не делает: no player-facing story graph.
+
+PHASE26_ASSET_003 — ASSET_GAP_REPORT
+Тип: VALIDATION_REPORT
+Где используется: final export.
+Что это: list of missing required asset families.
+Как выглядит: assetFamily / requiredByPhase / sourceRefs / placeholderExists / status / V2 slot.
+Роль: identifies missing visual implementation.
+Когда появляется: always.
+Причина: Phase 26 + all visualRealizationPacks.
+Материализация: report.
+Не делает: no automatic asset creation.
+
+PHASE26_ASSET_004 — PREMATURE_ASSET_VIOLATION_REPORT
+Тип: VALIDATION_REPORT
+Где используется: validation export.
+Что это: report for incorrect phase ownership.
+Как выглядит: violation: Phase 1 created port, Phase 2 created filter, etc.
+Роль: prevents early phases from materializing human infrastructure.
+Когда появляется: only if violation exists, otherwise pass entry.
+Причина: Phase 26 rules.
+Материализация: report.
+Не делает: no code patch automatically.
+
+PHASE26_ASSET_005 — VISUAL_READABILITY_CHECKLIST
+Тип: VALIDATION_REPORT
+Где используется: manual visual test.
+Что это: checklist for human review.
+Как выглядит: pass/fail questions per phase and asset category.
+Роль: makes testing concrete.
+Когда появляется: always.
+Причина: Phase 26.
+Материализация: report.
+Не делает: no automated visual AI review.
+
+PHASE26_ASSET_006 — THREE_SEED_COMPARISON_REPORT
+Тип: VALIDATION_REPORT / DEBUG_PANEL
+Где используется: final test.
+Что это: comparison of three generated worlds.
+Как выглядит: columns seedA/seedB/seedC across geography/pressure/history/islands/assets.
+Роль: validates that different seeds produce visibly different worlds.
+Когда появляется: during three-seed test.
+Причина: Phase 26 + Phase 0–25 outputs.
+Материализация: report.
+Не делает: no benchmark score by itself.
+
+============================================================
+FINAL ACCEPTANCE RULE
+============================================================
+
+V1 visual asset catalog is valid only if:
+- every phase 0–26 has concrete asset records;
+- Phase 0–2 assets are physical/debug/terrain prerequisites, not human infrastructure;
+- Phase 18–26 close the materialization gap;
+- every important downstream object has an upstream cause;
+- every missing asset is reported, not hidden;
+- no unscoped UI feature is introduced.
+
+This document is intentionally asset-level, not phase-summary-level.
