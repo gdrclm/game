@@ -41,6 +41,7 @@ Forbidden V1 reduction:
 - placing disease evidence without upstream cause
 - making island roles handcrafted themes
 - losing links from geography -> pressure -> society -> history -> collapse -> archipelago -> islands -> NPCs
+- treating Phase 0-2 as invisible data-only packages without visual/debug proof
 ```
 
 The V1 skeleton must be expandable into the full intended simulation. It must not become a dead-end prototype.
@@ -175,9 +176,168 @@ propEvidenceThreads: []
 
 These can be empty or low-density in V1, but their presence prevents V2 from requiring a schema rewrite.
 
+## 5. Phase 0-2 visual proof requirement
+V1 must treat Phase 0-2 as visually verifiable world foundations, not only hidden JSON outputs.
+
+Phase 0-2 must be testable through debug/export visuals that make the causal chain readable:
+
+```text
+Phase 0 seed/profile
+-> tectonic and macro-geographic tendencies
+-> continents / seas / archipelago macro-region
+-> mountain systems / relief / volcanic zones
+-> river basins / hydrology
+-> maritime corridors / chokepoints / isolated zones
+-> pressure and rhythm overlays
+```
+
+V1 must prove that different seeds create visibly different but coherent systems of islands, mountains, rivers, seas, corridors, chokepoints, pressure fields, and rhythm fields.
+
+Required visual/debug artifacts:
+
+```text
+world profile summary panel
+macro geography overview map
+tectonic / plate / relief map
+mountain system overlay
+river basin and hydrology overlay
+sea region and maritime corridor overlay
+archipelago region overlay
+chokepoint and route network overlay
+pressure heatmap overlays
+rhythm / seasonality / storm / navigation overlays
+seed comparison snapshots
+```
+
+Required acceptance:
+
+```text
+[ ] A viewer can trace how Phase 0 profile values influenced Phase 1 geography.
+[ ] A viewer can see that mountain systems, river basins, seas, archipelago regions, corridors, and chokepoints belong to one coherent macro system.
+[ ] A viewer can see how Phase 2 pressure/rhythm derives from Phase 1 geography rather than appearing as random noise.
+[ ] At least three different seeds produce visibly distinct world structures.
+[ ] The archipelago region is visually identifiable as part of the larger macro geography, not as a detached island cluster.
+[ ] Pressure/rhythm overlays can be compared against geography overlays.
+```
+
+This requirement is mandatory before treating V1 worldgen as playable-core ready.
+
 ---
 
 # V1 Must Include By Phase
+
+## Phase 0 — Master Seed V1 Visual Requirement
+
+Must include:
+
+```text
+WorldSeedProfile
+DerivedWorldTendencies
+WorldSubSeedMap
+human-readable profile summary
+visual-debug metadata explaining major world tendencies
+```
+
+V1 must visually expose:
+
+```text
+maritimeDependence
+routeFragilityBias
+environmentalVolatility
+collapseIntensity
+conflictPressure
+culturalPermeability
+```
+
+These values must be visible as the root of later geography/pressure outcomes.
+
+---
+
+## Phase 1 — Macro Geography V1 Visual Requirement
+
+Must include real, visually traceable macro geography:
+
+```text
+plates
+continents
+seaRegions
+mountainSystems
+volcanicZones
+riverBasins
+climateBands
+reliefRegions
+archipelagoRegions
+chokepoints
+macroRoutes
+isolatedZones
+strategicRegions
+```
+
+V1 must visually prove:
+
+```text
+mountains follow tectonic/relief logic
+river basins respond to relief and hydrology
+seas and corridors form navigable structure
+archipelago belongs to a larger maritime/geographic system
+chokepoints and macro routes are readable from geography
+strategic regions are derived from routes, chokepoints, coastality, relief, and isolation
+```
+
+V1 does not need final game tiles here. It needs macro debug maps and readable causal overlays.
+
+V2 extension slots:
+
+```text
+detailedPlateMotion: []
+localMicroClimateCells: []
+riverTributaryExpansion: []
+coastalMicroErosion: []
+subRegionalGeology: []
+```
+
+---
+
+## Phase 2 — Pressure and Rhythm V1 Visual Requirement
+
+Must include visually traceable environmental pressure/rhythm derived from Phase 1.
+
+Required overlays:
+
+```text
+climate hostility
+resource stress
+route exposure
+chokepoint tension
+ecological stability / instability
+isolation pressure
+catastrophe frequency
+seasonal predictability
+navigation windows
+recovery / relief rhythm
+```
+
+V1 must visually prove:
+
+```text
+pressure follows geography
+route exposure follows macro routes, chokepoints, terrain, and seas
+hydrology pressure follows river basins and climate/relief
+isolation pressure follows macro connectivity
+catastrophe pressure follows volatile physical zones
+rhythm overlays are separated from pressure overlays but readable together
+```
+
+V2 extension slots:
+
+```text
+fineLocalWeatherCells: []
+seasonalMicroCalendar: []
+disasterEventSeries: []
+regionalRecoveryHistories: []
+```
+
+---
 
 ## Phase 3 — Proto-Cosmology V1
 
@@ -323,917 +483,6 @@ localCustomVariants: []
 
 ---
 
-## Phase 7 — Civilization Emergence V1
-
-Must include:
-
-```text
-civilizationId
-populationClusterRefs
-culturalRegionRefs
-polityType
-settlementViabilityRefs
-maritimeDependence
-expansionBias
-survivalBias
-```
-
-V1 does not include:
-
-```text
-full demographic simulation
-all towns and villages
-all language families
-```
-
-V2 extension slots:
-
-```text
-demographicCurves: []
-languageFamilies: []
-regionalSubcultures: []
-protoStateTransitions: []
-colonizationRoutes: []
-```
-
----
-
-## Phase 8 — Power Structures V1
-
-Must include:
-
-```text
-powerNodeId
-civilizationId
-nodeType
-controlDomain
-legitimacySource
-autonomyLevel
-conflictWithNodeIds
-supportsNodeIds
-collapseSensitivity
-```
-
-V1 does not include:
-
-```text
-full bureaucracy
-complete power graph for every minor actor
-all offices and ranks
-```
-
-V2 extension slots:
-
-```text
-officeHierarchy: []
-bureaucraticDepartments: []
-localPowerSubnodes: []
-rankTitles: []
-covertInfluenceEdges: []
-```
-
----
-
-## Phase 9 — Dynasties and Elites V1
-
-Must include:
-
-```text
-dynastyId
-eliteId
-civilizationId
-powerNodeRefs
-legitimacyBasis
-inheritanceVulnerability
-marriageStrategy
-successionRisk
-eliteConflictPressure
-lineageId
-```
-
-V1 does not include:
-
-```text
-all marriages
-all births/deaths
-full genealogical tree
-all secondary elite branches
-full biographies for every ruler
-```
-
-V2 extension slots:
-
-```text
-marriageLinks: []
-birthDeathRecords: []
-cadetBranches: []
-fullGenealogy: []
-rulerBiographies: []
-eliteBiographies: []
-secondaryEliteFamilies: []
-```
-
----
-
-## Phase 10 — Strategic Decisions V1
-
-Must include:
-
-```text
-decisionId
-actorRef
-decisionType
-inputPressures
-expectedGain
-expectedRisk
-chosenAction
-rejectedActions
-consequenceSeedRefs
-```
-
-Supported V1 decision types:
-
-```text
-trade_control
-route_fortification
-religious_suppression
-medical_suppression
-marriage_alliance_summary
-colonization_or_abandonment
-war_or_raid_summary
-reform_attempt
-monopoly_preservation
-```
-
-V1 does not include:
-
-```text
-full minimax for every war
-full expectimax for every catastrophe
-complete diplomatic negotiation graph
-complete marriage alliance simulation
-```
-
-V2 extension slots:
-
-```text
-minimaxTrace: []
-expectimaxTrace: []
-negotiationRounds: []
-marriageAllianceDetails: []
-warCampaignPlans: []
-coalitionFormationTrace: []
-```
-
----
-
-## Phase 11 — Era Simulation V1
-
-Must include:
-
-```text
-epochId
-timeRange
-dominantConflict
-majorEventIds
-tradeShiftIds
-warSummaryIds
-migrationWaveIds
-successionCrisisIds
-routeShiftIds
-religiousShiftIds
-```
-
-V1 target density:
-
-```text
-3 to 5 epochs
-8 to 20 major events total
-```
-
-V1 does not include:
-
-```text
-full 300-400 year granular simulation
-hundreds of minor incidents
-all marriages across every generation
-complete war-by-war campaign map
-```
-
-V2 extension slots:
-
-```text
-minorEvents: []
-fullYearlyTimeline: []
-warCampaigns: []
-diplomaticTreaties: []
-marriageEvents: []
-tradeContracts: []
-reformDebates: []
-```
-
----
-
-## Phase 12 — Memory, Trauma, Drift V1
-
-Must include:
-
-```text
-memoryId
-sourceEventId
-memoryType
-affectedGroupRefs
-traumaIntensity
-grievanceStructure
-identityHardening
-culturalDriftDirection
-tabooInfluenceRefs
-```
-
-V1 does not include:
-
-```text
-full oral tradition corpus
-full myth rewriting over generations
-complete memory variants by family line
-```
-
-V2 extension slots:
-
-```text
-oralTraditions: []
-mythRewrites: []
-familyMemoryVariants: []
-regionalMemoryVersions: []
-forgottenContradictions: []
-```
-
----
-
-## Phase 13 — Global Tragedy V1
-
-Must include:
-
-```text
-tragedyId
-tragedyType
-triggerChainIds
-rootEventRefs
-powerDriverRefs
-religiousDriverRefs
-memoryDriverRefs
-geographicDriverRefs
-principalStructuralBreak
-archipelagoConsequenceSeeds
-```
-
-V1 does not include:
-
-```text
-all tragedy sub-events
-full local version of tragedy for every region
-```
-
-V2 extension slots:
-
-```text
-regionalTragedyVariants: []
-subEvents: []
-failedPreventionAttempts: []
-propagandaVersions: []
-```
-
----
-
-## Phase 14 — Collapse Cascade V1
-
-Must include:
-
-```text
-collapseEventId
-routeCollapseRefs
-specialistLossRefs
-portAbandonmentRefs
-settlementFragmentationRefs
-institutionalHollowingRefs
-lateWorldPressureRefs
-```
-
-V1 does not include:
-
-```text
-complete collapse timeline for every settlement
-all local violence incidents
-full population attrition model
-```
-
-V2 extension slots:
-
-```text
-localCollapseEvents: []
-violenceIncidents: []
-populationAttritionCurves: []
-specialistDeathRecords: []
-failedReliefAttempts: []
-```
-
----
-
-## Phase 15 — Archipelago Role V1
-
-Must include:
-
-```text
-archipelagoRoleId
-oldSystemRole
-strategicSignificance
-dependenceNetworkRefs
-formerEmpireRefs
-routeCentrality
-collapseScarType
-pressureGradientToFinalIsland
-```
-
-V1 does not include:
-
-```text
-full trade ledger of every island
-complete imperial administration tree
-```
-
-V2 extension slots:
-
-```text
-tradeLedgers: []
-imperialAdministrationTree: []
-routeTreaties: []
-oldCustomsRecords: []
-```
-
----
-
-## Phase 16 — Island Roles V1
-
-Must include:
-
-```text
-islandRoleId
-islandIndex
-functionalRole
-oldSystemFunction
-routePosition
-resourceFunction
-socialFunction
-collapseFunction
-neighborDependencyRefs
-```
-
-V1 target density:
-
-```text
-30 island role records
-1 dominant function per island
-1 secondary function optional
-```
-
-V1 does not include:
-
-```text
-many micro-roles per island
-full internal administrative history
-```
-
-V2 extension slots:
-
-```text
-microRoles: []
-administrativeSubfunctions: []
-seasonalRoleVariants: []
-minorDependencyEdges: []
-```
-
----
-
-## Phase 17 — Island Histories V1
-
-Must include:
-
-```text
-islandHistoryId
-islandIndex
-foundingCause
-ownershipLayers
-migrationSummary
-faithShiftSummary
-mentalShiftSummary
-growthPeriodSummary
-localCrisisRefs
-declineReason
-presentContradiction
-```
-
-V1 target density:
-
-```text
-30 island history records
-3 to 6 history beats per island
-```
-
-V1 does not include:
-
-```text
-deep full timeline for every island
-all families and minor local incidents
-complete biographies of all historical residents
-```
-
-V2 extension slots:
-
-```text
-fullTimeline: []
-familyHistories: []
-minorIncidents: []
-historicalResidentBiographies: []
-localLegends: []
-```
-
----
-
-## Phase 17.5 — Gameplay Projection Bridge V1
-
-Must include:
-
-```text
-IslandGameplayProjectionRecord[]
-progressionBand
-travelPressure
-survivalPressure
-settlementPresence
-merchantLikelihood
-refugeLikelihood
-hazardBias
-scenarioBiases
-layoutHints
-mapNarrativeSummary
-```
-
-Must also include disease diagnosis projection:
-
-```text
-DiseaseTruthProfile
-IslandDiagnosisProjectionRecord[]
-FriendLetterProjection[]
-EvidenceSlot[]
-FalseCausalityProfile
-DiagnosisEndingConditionMatrix
-```
-
-V1 does not include:
-
-```text
-fully authored island quest scripts
-manual detective cases for all islands
-all optional narrative branches
-```
-
-V2 extension slots:
-
-```text
-optionalCaseBranches: []
-secondaryEvidenceChains: []
-alternateFriendLetterVersions: []
-expandedFalseCausalityBranches: []
-lateGameVariantEndings: []
-```
-
----
-
-## Phase 18 — Natural Evolution V1
-
-Must include:
-
-```text
-naturalEvolutionId
-islandIndex
-exploitationTraceRefs
-rewildingState
-loggingScarRefs
-fieldRemnantRefs
-marshExpansionRefs
-coastalCollapseRefs
-reclaimedRuinRefs
-```
-
-V1 does not include:
-
-```text
-full ecological simulation
-individual species succession
-complete plant community timelines
-```
-
-V2 extension slots:
-
-```text
-speciesSuccession: []
-plantCommunityTimeline: []
-faunaMigrationRecords: []
-detailedEcologicalRecovery: []
-```
-
----
-
-## Phase 19 — Terrain Transformation V1
-
-Must include:
-
-```text
-terrainTransformationId
-islandIndex
-rockOutcropHints
-collapseFieldHints
-shrubMassHints
-fieldRemnantHints
-oldRoadHints
-drownedPathHints
-terrainAnchorZones
-```
-
-V1 does not include:
-
-```text
-final tile placement
-high-density terrain microfeatures
-```
-
-V2 extension slots:
-
-```text
-microTerrainFeatures: []
-seasonalTerrainVariants: []
-routeErosionHistory: []
-```
-
----
-
-## Phase 20 — Settlements V1
-
-Must include:
-
-```text
-settlementId
-islandIndex
-settlementState
-survivingOrCollapsed
-currentCenterRefs
-deadCenterRefs
-authorityLayoutRefs
-socialGroupRefs
-districtRoleRefs
-```
-
-V1 target density:
-
-```text
-0 to 3 settlement records per island
-```
-
-V1 does not include:
-
-```text
-full population list
-all households
-complete local economy simulation
-```
-
-V2 extension slots:
-
-```text
-households: []
-populationRoster: []
-localEconomyGraph: []
-craftGuilds: []
-minorSocialGroups: []
-```
-
----
-
-## Phase 21 — Social AI V1
-
-Must include:
-
-```text
-localSocialAIStateId
-islandIndex
-factionGoalRefs
-resourcePriorities
-beliefMotivationRefs
-pressureDrivenTensions
-conflictTendencies
-allianceTendencies
-```
-
-V1 does not include:
-
-```text
-full autonomous NPC simulation
-hour-by-hour schedules for all residents
-complex multi-agent planning
-```
-
-V2 extension slots:
-
-```text
-agentPlans: []
-hourlySchedules: []
-negotiationState: []
-longTermFactionStrategies: []
-```
-
----
-
-## Phase 22 — Spatial Consequences V1
-
-Must include:
-
-```text
-spatialConsequenceId
-islandIndex
-aliveZones
-deadZones
-contestedZones
-sacredZones
-routeZones
-workZones
-abandonedDistricts
-socialGeographySummary
-```
-
-V1 does not include:
-
-```text
-exact final geometry
-all micro-zones
-```
-
-V2 extension slots:
-
-```text
-microZones: []
-exactGeometryHints: []
-seasonalZoneShifts: []
-forbiddenAccessSubzones: []
-```
-
----
-
-## Phase 23 — Building and Prop Narrative V1
-
-Must include:
-
-For buildings:
-
-```text
-buildingNarrativeId
-islandIndex
-originalFunction
-currentFunction
-factionLink
-historyDamageState
-repairHistoryState
-symbolicValue
-evidenceCarrierRole optional
-```
-
-For props:
-
-```text
-propNarrativeId
-islandIndex
-economicMeaning
-religiousMeaning
-laborTrace
-collapseTrace
-householdTrace
-environmentalStorytellingAnchor
-evidenceCarrierRole optional
-```
-
-V1 target density:
-
-```text
-key buildings only
-key props only
-only evidence-facing props when needed
-```
-
-V1 does not include:
-
-```text
-all props in all houses
-full object history for every item
-```
-
-V2 extension slots:
-
-```text
-allPropHistories: []
-householdObjectSets: []
-craftMarks: []
-ownershipMarks: []
-secondaryEvidenceThreads: []
-```
-
----
-
-## Phase 24 — Local NPC V1
-
-Must include:
-
-```text
-npcId
-islandIndex
-npcRole
-lineageRef optional
-powerRef optional
-memoryRef optional
-tabooRef optional
-buildingRef optional
-factionRef optional
-diseaseRole optional
-trustGate optional
-moralCostRole optional
-biographySkeleton
-```
-
-V1 target density:
-
-```text
-1 to 5 key NPCs per important island
-0 to 2 key NPCs per minor island
-```
-
-V1 biography skeleton must include:
-
-```text
-origin
-socialFunction
-woundOrNeed
-secretOrBlindspot
-relationshipToDisease
-relationshipToIslandHistory
-playerFacingFunction
-```
-
-V1 does not include:
-
-```text
-full biography of every NPC
-all secondary NPCs
-complete family trees
-all schedules and daily routines
-full dialogue trees
-```
-
-V2 extension slots:
-
-```text
-fullBiography: []
-familyTreeRefs: []
-marriageLinks: []
-dailySchedule: []
-secondaryNpcRelations: []
-dialogueMemory: []
-lifeEvents: []
-```
-
----
-
-## Phase 25 — Final Realization V1
-
-Must include:
-
-```text
-PlayableWorldPackage
-chunkDataRefs
-tileGenerationHints
-routeRefs
-structurePlacementHints
-propPlacementHints
-interactionPointRefs
-npcPlacementRefs
-mapMarkerRefs
-worldStatePackageRefs
-```
-
-V1 does not include:
-
-```text
-final polished art placement for every prop
-complete authored level design per island
-```
-
-V2 extension slots:
-
-```text
-artDirectedPropOverrides: []
-manualLevelDesignPatches: []
-cinematicCompositionAnchors: []
-```
-
----
-
-## Phase 26 — Validation and Rebalance V1
-
-Must include checks for:
-
-```text
-causal continuity
-phase output presence
-stable references
-island role diversity
-pressure gradient
-archipelago convergence
-tragedy clarity
-settlement variety
-social tension existence
-NPC grounding
-building/prop evidence grounding
-disease diagnosis readability
-friend objective vs survival conflict
-anti-repetition between islands
-ending condition reachability
-```
-
-V1 does not include:
-
-```text
-full playtest telemetry optimization
-large-scale automatic content rewriting
-```
-
-V2 extension slots:
-
-```text
-telemetryDrivenRebalance: []
-automaticNarrativePatchSuggestions: []
-largeScalePartialRerollPolicies: []
-```
-
----
-
-# V1 Disease-Diagnosis Minimum
-
-V1 must support the survival-diagnosis experience.
-
-Required:
-
-```text
-DiagnosisCompleteness
-MedicalReadiness
-SocialTrust
-SystemicRepair
-DiseaseTruthProfile
-FalseCausalityProfile
-FriendLetterProjection
-IslandDiagnosisProjectionRecord
-EvidenceSlot
-EndingConditionMatrix
-```
-
-V1 must guarantee:
-
-```text
-1. Every important island has a friend objective.
-2. Every friend objective conflicts with survival, trust, route, inventory, time, morality, or access.
-3. Each important island reveals one disease fragment.
-4. No two neighboring important islands repeat the same dominant pattern.
-5. Evidence supports triangulation through independent source groups.
-6. False causality is possible but not arbitrary.
-7. Endings depend on diagnosis, medicine, trust, and repair.
-```
-
-V1 does not include:
-
-```text
-fully authored detective cases per island
-manual branching dialogue for every witness
-all optional evidence chains
-complete contradiction web for every NPC
-```
-
-V2 extension slots:
-
-```text
-secondaryEvidenceChains: []
-optionalWitnessContradictions: []
-expandedInterrogationBranches: []
-advancedHypothesisGraph: []
-lateMutationVariants: []
-```
-
----
-
 # V1 / V2 Boundary Summary
 
 ## V1 includes
@@ -1254,6 +503,7 @@ key buildings/props
 key NPCs with biography skeletons
 playable package hints
 validation report
+Phase 0-2 visual/debug proof artifacts
 ```
 
 ## V1 excludes
@@ -1272,6 +522,8 @@ all household histories
 full daily schedules
 fully authored detective branches
 complete narrative environment density
+Phase 1 micro-geology beyond macro readability
+Phase 2 fine local weather simulation
 ```
 
 ## V2 adds
@@ -1289,6 +541,7 @@ local schedules and social routines
 expanded detective contradiction graph
 larger optional evidence web
 richer environmental storytelling
+deeper geology / hydrology / weather details on top of the Phase 0-2 visual foundation
 ```
 
 ---
@@ -1323,6 +576,7 @@ Before Codex implementation begins, the following must be true:
 [ ] V1 validation checks include missing-extension-slot warnings.
 [ ] Disease diagnosis projection is treated as part of gameplay projection, not a late quest layer.
 [ ] Phase 24 NPC generation is required to consume upstream lineage, memory, power, taboo, building, and disease roles.
+[ ] Phase 0-2 visual/debug proof artifacts are treated as mandatory V1 readiness criteria.
 ```
 
 ---
@@ -1336,7 +590,8 @@ It is the first structurally complete version of the full world-generation machi
 ```text
 less density now,
 full causal chain now,
-full expansion path later.
+full expansion path later,
+visually provable world foundations now.
 ```
 
 V1 must be playable and debuggable.
