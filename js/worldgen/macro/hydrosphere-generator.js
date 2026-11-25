@@ -2119,7 +2119,8 @@
                 const reliefRefs = summarizeReliefRegionRefs(group.cellIndices, reliefRegionMembership);
                 const headwaterPoint = pointFromIndex(drainageSignals.headwaterCellIndex, worldBounds.width);
                 const basinType = classifyWatershedBasinType(terminalWaterHint, drainageSignals);
-                const namespace = buildNamespace(PIPELINE_STEP_ID, 'riverBasins', watershedId);
+                // Record IDs remain snake_case; RNG namespace segments use lowerCamelCase.
+                const namespace = buildNamespace(PIPELINE_STEP_ID, 'riverBasins', `watershed${String(watershedSequence).padStart(3, '0')}`);
                 const terminalSeaRegionIds = terminalWaterHint.terminalSeaRegionIds.slice();
                 const pendingRecordFields = [
                     'sourceMountainSystemIds',

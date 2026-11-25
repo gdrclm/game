@@ -26,4 +26,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: worldgen-foundation-report
-          path: worldgen-foundation-report.json
+          path: |
+            worldgen-foundation-report.json
+            worldgen-observatory-data/

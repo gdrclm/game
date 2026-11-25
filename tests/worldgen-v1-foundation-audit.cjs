@@ -25,6 +25,7 @@ check('Phase 0 official entry',()=>{const p=a.createPhase0World(42);a.assertPhas
 check('Phase 0 export validator',()=>{const p=a.createPhase0World(42);const v=a.validatePhase0Export(p);assert(v.isValid===true,'Valid Phase 0 rejected');assert(hash(v)===hash(p.validationReport),'Validation drift');const bad=realm(p);bad.worldSubSeedMap.pressureSeed=(bad.worldSubSeedMap.pressureSeed+1)>>>0;assert(a.validatePhase0Export(bad).isValid===false,'Tampered seed accepted');return v;});
 check('Phase 0 orchestration adapter',()=>{const v=a.createPhase0OrchestrationAdapter().run(42);assert(v.immutable===true&&v.outputs.phase0Bundle.validationReport.isValid,'Invalid freeze wrapper');return Object.keys(v);});
 check('Phase 1 constraints intake',()=>{const p=a.createPhase0World(42);const v=b.intakeMasterConstraints(a.buildPhase1SafeSummaryBundle(p));assert(v.macroSeed===p.worldSubSeedMap.macroGeographySeed,'Macro seed drift');assert(v.coastJaggedness===0.5,'Unexpected default coast constraint');assert(b.ingestMacroSeedProfile(realm({...v,coastJaggedness:0.8})).coastJaggedness===0.8,'Coast constraint lost on intake');return v;});
+check('Hydrosphere namespace contract',()=>{const n=b.buildMacroSubSeedNamespace('hydrosphere','riverBasins','watershed001');assert(n==='macro.hydrosphere.riverBasins.watershed001','Unexpected namespace');assert(b.deriveMacroSubSeed(42,n)===b.deriveMacroSubSeed(42,n),'Non deterministic namespace');return n;});
 check('Phase 2 built-in harness',()=>{const h=c.runPhase2TestHarness();const result={smoke:h.smokeSuite.summary,regression:h.regressionSuite.summary};assert(h.overallStatus==='pass',JSON.stringify(result));return result;});
 function run(seed){
  let stage='phase0';const row={seed,officialPhase0:false};
@@ -35,6 +36,7 @@ function run(seed){
   const profile=b.intakeMasterConstraints(a.buildPhase1SafeSummaryBundle(p));
   const m=b.generateMacroGeographyEndToEnd(realm({macroSeed:p.worldSubSeedMap.macroGeographySeed,macroSeedProfile:profile,phase1Constraints:b.normalizePhase1SeedConstraints(profile),includeDebugArtifacts:true}));
   const g=m.macroGeographyPackage;
+  if(m.endToEndDebugExport){fs.mkdirSync('worldgen-observatory-data',{recursive:true});const f='worldgen-observatory-data/seed-'+seed+'.json';if(!fs.existsSync(f))fs.writeFileSync(f,JSON.stringify({schema:'worldgen-observatory-v1',seed,phase0:p,phase1:{macroSeed:m.macroSeed,validationReport:g.validationReport,debug:m.endToEndDebugExport}}));}
   row.phase1={hash:hash(g),validation:g.validationReport,counts:Object.fromEntries(['continents','seaRegions','mountainSystems','riverBasins','archipelagoRegions','macroRoutes','chokepoints'].map(k=>[k,g[k]?.length??null]))};
   stage='phase2';
   const r=c.createPhase2Engine().run(realm({macroGeographyPackage:g,macroGeographyHandoffPackage:m.macroGeographyHandoffPackage,pressureSeed:p.worldSubSeedMap.pressureSeed,rhythmSeed:p.worldSubSeedMap.rhythmSeed}));
