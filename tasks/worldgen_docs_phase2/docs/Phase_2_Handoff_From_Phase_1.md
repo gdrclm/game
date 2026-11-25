@@ -60,6 +60,9 @@ Phase 2 must not:
 - `version`
 - `worldBounds`
 - `validationReport`
+- `environmentalCoverage` when present
+
+`environmentalCoverage` provides exact land cell counts and intersections of relief regions, climate bands and watershed footprints at the macro grid resolution. Pressure and rhythm use those intersections to carry water stress into food stress and to bind environmental conditions to the local relief. Environmental pressure and recovery summaries can then weight local values by their measured land area. Travel, chokepoint and isolation pressure keep their structural carriers. Phase 2 intake accepts earlier roots without the optional coverage block and uses the record links they provide.
 
 ## 3.4 Debug artifacts
 Phase 2 may read `debugArtifacts.physicalWorldDebugBundle` only:

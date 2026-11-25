@@ -141,6 +141,8 @@ Required fields:
 Recovery domain is mandatory.  
 It must never be optional.
 
+Recovery uses local water, relief, weather and verified transport links. Runoff support for the recovery tempo and repeated stress accounts for the limiting seasonal water condition. Continuing support for a local refuge uses longer-term water reliability. Ruggedness slows access, and a transport bonus requires a linked macro route. An explicit empty list of relief IDs on an isolation record gives no specific relief association.
+
 ---
 
 # 6. Required synthesized layer
@@ -157,6 +159,8 @@ It must never be optional.
 
 ## Rule
 This layer may compact rhythm meaning, but must not flatten timing structure into one volatility scalar.
+
+With measured land coverage, `recoveryProfile.summary.mean` averages local readiness over the mapped relief area. Each region's `stabilizationInterval` lengthens its own recovery cycle before aggregation. `regionMean` gives equal weight to relief records for inspection, and `landCellCount` reports the measured denominator. The recovery-domain field summaries use the same land footprint for their primary means. The per-relief scores retain the conditions of smaller islands and isolated regions.
 
 ---
 

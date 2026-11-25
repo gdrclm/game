@@ -50,6 +50,7 @@
 - `climateBands`
 - `coastalOpportunityMap`
 - `isolatedZones`
+- `environmentalCoverage`
 - `debugArtifacts`
 
 ## Physical outputs
@@ -100,6 +101,8 @@ The root package now carries both physical outputs and strategic outputs in the 
 `climateBands[]` is a physical summary layer. `ClimateBandRecord` should link into upstream `reliefRegions` and optional `seaRegions` while exposing only normalized thermal/moisture/seasonality descriptors, without encoding climate simulation or gameplay weather rules inside the root contract.
 
 `reliefRegions[]` is a physical summary layer. `ReliefRegionRecord` should classify large landform families such as `mountain`, `plateau`, `plain`, `basin`, or `coast` and link into upstream `plates`, optional `continents`, and optional `seaRegions`, without encoding extracted terrain cells or local biome props inside the root contract.
+
+`environmentalCoverage` version `1` records intersections of the final land mask with the exported relief, climate and watershed footprints. Each of `reliefRegions`, `climateBands` and `riverBasins` maps the corresponding exported IDs to a nonnegative integer `landCellCount`. Climate bands may have zero land coverage. A relief entry can carry `climateBandCells` and `riverBasinCells`. A climate entry can carry `riverBasinCells`. The maps count only positive intersections. Their counts fit within the source and target land areas, and an absent intersection map describes an empty measured intersection. Earlier roots may omit the whole block. Generation uses the same physical sources in normal and diagnostic runs.
 
 `archipelagoRegions[]` may blend physical morphology summary with strategic-significance references. They may point to shaping `seaRegions[]` / `climateBands[]` and to already-derived route/chokepoint/strategic-region context, but they must not encode downstream island histories directly inside the root package.
 

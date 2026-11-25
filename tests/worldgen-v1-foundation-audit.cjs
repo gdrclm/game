@@ -194,8 +194,11 @@ function testHandoffs(result) {
     const args = { macroGeographyHandoffPackage: handoff, pressureSeed, rhythmSeed };
     const engine = phase2.createPhase2Engine();
     const coverage = structuredClone(geography.environmentalCoverage);
-    const [climate] = Object.values(coverage.climateBands);
-    climate.landCellCount = -1;
+    const [climateId] = Object.keys(coverage.climateBands);
+    coverage.climateBands[climateId].landCellCount = -1;
+    assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, environmentalCoverage: coverage } }),
+        /invalid_environmental_coverage/);
+    delete coverage.climateBands[climateId];
     assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, environmentalCoverage: coverage } }),
         /invalid_environmental_coverage/);
     assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, continents: [] } }), /insufficient_required_root_records/);

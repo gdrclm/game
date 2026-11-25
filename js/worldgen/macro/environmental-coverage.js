@@ -60,6 +60,11 @@
         for (const [collection, idField] of Object.entries(collections)) {
             const records = Array.isArray(geography[collection]) ? geography[collection] : [];
             const ids = new Set(records.map(record => record?.[idField]));
+            for (const id of ids) {
+                if (!Object.hasOwn(coverage[collection], id)) {
+                    errors.push(`Missing land coverage at environmentalCoverage.${collection}.${id}.`);
+                }
+            }
             let total = 0;
             for (const [id, row] of Object.entries(coverage[collection])) {
                 const path = `environmentalCoverage.${collection}.${id}`;
