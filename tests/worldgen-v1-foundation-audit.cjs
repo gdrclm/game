@@ -19,8 +19,10 @@ const f8q = [40681987, 359393571, 801384629, 1431655765, 2018958301, 2764796977,
 const f8qFormerBlind = [64847321, 958614127, 2345998979, 3900041903];
 const all = canonical.concat(holdout, expanded);
 const regression = all.concat(f8q, f8qFormerBlind);
+const recoveryRegression = regression.concat(3508323923);
 assert.equal(new Set(regression).size, 31, 'Regression cohort must preserve all reviewed seeds');
-const cohorts = { canonical, holdout, expanded, all, f8q, regression };
+assert.equal(new Set(recoveryRegression).size, 32, 'Recovery regression must include the F8-R area case');
+const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression };
 const args = process.argv.slice(2);
 const seeds = [];
 let cohort = 'canonical';

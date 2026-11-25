@@ -1967,6 +1967,10 @@
             return 0;
         }
 
+        if (domainId === 'recovery') {
+            const measured = phase2.meanScoreByLand(firstCollection, row => row.supportContextSnapshot?.landCellCount);
+            if (measured) return clamp01(measured.value);
+        }
         return clamp01(mean(firstCollection.map((entry) => entry && entry.value)));
     }
 
@@ -1985,7 +1989,7 @@
         });
         const spatial = phase2.meanScoreByLand(rates, row => row.landCellCount);
         if (!spatial) return null;
-        return { mean: mean(rates.map(row => row.value).filter(Number.isFinite)), spatial };
+        return { regionMean: mean(rates.map(row => row.value).filter(Number.isFinite)), spatial };
     }
 
     function buildEnvironmentalRhythmSynthesisAxis(fieldId, domainLayers, componentWeights, description, deterministicSeed) {
@@ -2014,7 +2018,7 @@
             ? getRhythmFieldMean(domainLayers, 'recovery', 'stabilizationInterval') : 0;
         const measuredRecovery = fieldId === 'recoveryProfile'
             ? measureRegionalRecovery(domainLayers.recovery, components) : null;
-        const synthesizedValue = measuredRecovery?.mean ?? weightedSupport / (1 + stabilizationDelay);
+        const synthesizedValue = measuredRecovery?.spatial.value ?? weightedSupport / (1 + stabilizationDelay);
         const componentValues = components.map(component => component.inverse ? 1 - component.value : component.value);
         const componentSpread = componentValues.length
             ? Math.max(...componentValues) - Math.min(...componentValues)
@@ -2049,7 +2053,7 @@
                 mean: roundValue(synthesizedValue),
                 ...(fieldId === 'recoveryProfile' && { stabilizationDelay: roundValue(stabilizationDelay) }),
                 ...(measuredRecovery && {
-                    landMean: roundValue(measuredRecovery.spatial.value),
+                    regionMean: roundValue(measuredRecovery.regionMean),
                     landCellCount: measuredRecovery.spatial.landCells
                 }),
                 componentCount: components.length,
@@ -2441,9 +2445,13 @@
         const runoffSupport = phase2.meanCarrierScore(
             context.runoffAvailability, basinCells, riverBasinIds, spatial?.landCellCount
         ) ?? 0;
+        const reliableRunoffSupport = phase2.meanCarrierScore(
+            context.reliableRunoff, basinCells, riverBasinIds, spatial?.landCellCount
+        ) ?? 0;
         const accessibleTerrain = 1 - clamp01(reliefRegion.ruggednessBias);
         // Shelter in a benign weather window and freshwater support are separate contributions.
         const localSupport = 0.25 * supportWindow + 0.75 * runoffSupport;
+        const persistentSupport = 0.25 * supportWindow + 0.75 * reliableRunoffSupport;
         const recoveryCapacity = accessibleTerrain * localSupport;
         const reliefPocket = applyThresholdContrast(
             clamp01(
@@ -2455,7 +2463,7 @@
             RECOVERY_RELIEF_TIMING_POLICY.reliefPocketThreshold,
             RECOVERY_RELIEF_TIMING_POLICY.reliefPocketExponent
         );
-        const mobilityRelief = applyThresholdContrast(
+        const mobilityRelief = routeIds.length ? applyThresholdContrast(
             clamp01(
                 (mobilityReentrySupport * 0.48)
                 + ((1 - chokepointPressure) * 0.16)
@@ -2464,7 +2472,7 @@
             ),
             RECOVERY_RELIEF_TIMING_POLICY.mobilityReliefThreshold,
             RECOVERY_RELIEF_TIMING_POLICY.mobilityReliefExponent
-        );
+        ) : 0;
         const persistentReliefAnchor = applyThresholdContrast(
             clamp01(
                 (supportWindow * 0.36)
@@ -2539,6 +2547,7 @@
             isolatedZoneIds,
             landCellCount: spatial?.landCellCount ?? null,
             runoffSupport: roundValue(runoffSupport),
+            reliableRunoffSupport: roundValue(reliableRunoffSupport),
             accessibleTerrain: roundValue(accessibleTerrain),
             supportWindow: roundValue(supportWindow),
             recoveryCapacity: roundValue(recoveryCapacity),
@@ -2558,7 +2567,7 @@
             recoveryTempo: roundValue(recoveryTempo * recoveryCapacity),
             stabilizationInterval: roundValue(stabilizationInterval),
             // Habitat can retain a refuge while delivery over the surrounding terrain remains slow.
-            reliefPersistence: roundValue(reliefPersistence * localSupport),
+            reliefPersistence: roundValue(reliefPersistence * persistentSupport),
             environmentalForgiveness: roundValue(environmentalForgiveness * localSupport)
         };
     }
@@ -2585,6 +2594,7 @@
                 isolatedZoneIds: signals.isolatedZoneIds || [],
                 landCellCount: signals.landCellCount ?? null,
                 runoffSupport: signals.runoffSupport || 0,
+                reliableRunoffSupport: signals.reliableRunoffSupport || 0,
                 accessibleTerrain: signals.accessibleTerrain || 0,
                 supportWindow: signals.supportWindow || 0,
                 recoveryCapacity: signals.recoveryCapacity || 0,
@@ -2637,8 +2647,8 @@
             perReliefScores,
             summary: Object.freeze({
                 recordCount: perReliefScores.length,
-                mean: roundValue(mean(values)),
-                ...(measured && { landCellCount: measured.landCells, landMean: roundValue(measured.value) }),
+                mean: roundValue(measured?.value ?? mean(values)),
+                ...(measured && { landCellCount: measured.landCells, regionMean: roundValue(mean(values)) }),
                 min: roundValue(values.length ? Math.min(...values) : 0),
                 max: roundValue(values.length ? Math.max(...values) : 0)
             })
@@ -2859,14 +2869,24 @@
                     ? pressureSynthesis.domainLayers
                     : {};
 
+                const reliabilityInverse = createScoreMap(domainLayers.hydrology?.waterReliabilityInverse?.perBasinScores);
+                const droughtPressure = createScoreMap(domainLayers.hydrology?.droughtPressure?.perBasinScores);
+                const reliableRunoff = {};
+                const runoffAvailability = {};
+                for (const basin of riverBasins) {
+                    const id = basin.riverBasinId;
+                    const potential = clamp01(basin.basinContinuity) * phase2.catchmentWaterSupport(clamp01(basin.catchmentScale));
+                    const unreliable = reliabilityInverse[id] ?? 0;
+                    reliableRunoff[id] = potential * (1 - unreliable);
+                    // Drought already includes supply reliability. Apply the limiting condition once.
+                    runoffAvailability[id] = potential * (1 - Math.max(unreliable, droughtPressure[id] ?? 0));
+                }
                 const context = {
                     coverage: phase2.getEnvironmentalCoverage(input),
                     climateBandIdsByReliefRegion: buildClimateBandIdsByReliefRegion(climateBands),
                     riverBasinIdsByReliefRegion: buildRiverBasinIdsByReliefRegion(riverBasins),
-                    runoffAvailability: Object.fromEntries(riverBasins.map(basin => {
-                        // A compact catchment may be continuous and still hold little water.
-                        return [basin.riverBasinId, clamp01(basin.basinContinuity) * phase2.catchmentWaterSupport(clamp01(basin.catchmentScale))];
-                    })),
+                    reliableRunoff,
+                    runoffAvailability,
                     routeIdsByReliefRegion: buildRouteIdsByReliefRegion(macroRoutes),
                     chokepointIdsByRoute: Object.fromEntries(macroRoutes.map(route => [route.routeId, route.chokepointIds])),
                     chokepointIdsByReliefRegion: buildChokepointIdsByReliefRegion(chokepoints),
@@ -2879,7 +2899,7 @@
                     },
                     hydrologyScores: {
                         waterStress: createScoreMap((((domainLayers.hydrology || {}).waterStress || {}).perBasinScores)),
-                        droughtPressure: createScoreMap((((domainLayers.hydrology || {}).droughtPressure || {}).perBasinScores)),
+                        droughtPressure,
                         floodInstability: createScoreMap((((domainLayers.hydrology || {}).floodInstability || {}).perBasinScores))
                     },
                     foodScores: {

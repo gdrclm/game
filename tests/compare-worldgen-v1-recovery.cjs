@@ -63,6 +63,7 @@ function unpack(snapshot) {
 
 function physicalSignature(snapshot) {
     const debug = snapshot.diagnostics.physicalWorldDebugBundle;
+    if (!debug) return null;
     return digest([
         debug.fieldSnapshots.map(row => [row.artifactId, row.payload]),
         debug.intermediateOutputs.filter(row => row.artifactId.startsWith('foundation_geometry_')),
@@ -86,6 +87,11 @@ function metrics(snapshot, phase1, phase2) {
     const persistence = valueById(domains.reliefPersistence, 'perReliefScores');
     const forgiveness = valueById(domains.environmentalForgiveness, 'perReliefScores');
     const ecology = valueById(pressure.domains.ecology.ecologicalFragility, 'perReliefScores');
+    const hydrology = pressure.domains.hydrology;
+    const basinScores = new Map(hydrology.waterStress.perBasinScores.map(row => [row.recordId, { waterStress: row.value }]));
+    for (const field of ['waterReliabilityInverse', 'droughtPressure', 'floodInstability']) {
+        for (const row of hydrology[field].perBasinScores) basinScores.get(row.recordId)[field] = row.value;
+    }
 
     return {
         exported: Boolean(snapshot.phase2),
@@ -95,10 +101,15 @@ function metrics(snapshot, phase1, phase2) {
         rebalanceAttempts: (phase2.rebalanceAttempts || []).map(attempt => attempt.rebalanceMetadata),
         recovery,
         balance: balance.meta,
+        recoveryDomain: Object.fromEntries(Object.entries(domains).map(([id, field]) => [id, field.summary])),
         pressure: Object.fromEntries(Object.entries(pressure.synthesized).map(([key, field]) => [key, field.value])),
         foodStressMean: pressure.domains.food.foodStress.summary.mean,
         foodBandsWithWaterStress: pressure.domains.food.foodStress.perBandScores
             .filter(row => row.upstreamBurdenSnapshot.waterStress > 0).length,
+        basins: phase1.macroGeographyPackage.riverBasins.map(row => ({
+            id: row.riverBasinId, basinType: row.basinType, scale: row.catchmentScale, continuity: row.basinContinuity,
+            ...basinScores.get(row.riverBasinId)
+        })),
         relief: phase1.macroGeographyPackage.reliefRegions.map(region => {
             const id = region.reliefRegionId;
             const tempo = recoveryTempo.get(id);
@@ -119,16 +130,17 @@ for (const file of readdirSync(afterDir).filter(name => /^seed-\d+\.json$/.test(
     assert.equal(before.seed, after.seed);
     const old = unpack(before);
     const next = unpack(after);
+    const beforeGeometry = physicalSignature(before);
+    const physicalGeometryUnchanged = Boolean(beforeGeometry && beforeGeometry === physicalSignature(after));
     if (!old.first || !next.first || !old.second || !next.second) {
         rows.push({ seed: after.seed, beforeRevision: before.revision, afterRevision: after.revision,
-            beforeFailure: before.error, afterFailure: after.error });
+            beforeFailure: before.error, afterFailure: after.error, physicalGeometryUnchanged });
         continue;
     }
     const { environmentalCoverage, ...sameRoot } = next.first.macroGeographyPackage;
     const phase0Unchanged = same(old.phase0, next.phase0);
     const phase1RecordsUnchanged = same(old.first.macroGeographyPackage, sameRoot);
     const handoffUnchanged = same(old.first.macroGeographyHandoffPackage, next.first.macroGeographyHandoffPackage);
-    const physicalGeometryUnchanged = physicalSignature(before) === physicalSignature(after);
     assert(phase0Unchanged && phase1RecordsUnchanged && handoffUnchanged && physicalGeometryUnchanged,
         'Geometry or original records changed at seed ' + after.seed);
     const coveredLandCells = validateMeasuredCoverage(after, next.first.macroGeographyPackage);

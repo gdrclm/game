@@ -125,8 +125,12 @@ function runCausalChecks(systems, canonical, saveStormPair) {
     const scarce = interpretCatchment(0.032);
     const supported = interpretCatchment(0.42);
     const water = output => byRecord(output.pressureFieldPackage.domains.hydrology.waterReliabilityInverse.perBasinScores, basin.riverBasinId);
-    const recovery = output => byRecord(output.environmentalRhythmPackage.domains.recovery.recoveryTempo.perReliefScores, localRelief);
+    const reliefTempo = output => output.environmentalRhythmPackage.domains.recovery.recoveryTempo.perReliefScores
+        .find(row => row.recordId === localRelief);
+    const recovery = output => reliefTempo(output).value;
+    const runoff = output => reliefTempo(output).supportContextSnapshot.runoffSupport;
     assert(water(scarce) > water(supported), 'Smaller catchment did not impair water reliability');
+    assert(runoff(scarce) < runoff(supported), 'More reliable water did not improve locally available runoff');
     assert(recovery(scarce) < recovery(supported), 'Reliable catchment did not support recovery');
     assert.deepEqual(scarce.pressureFieldPackage.domains.climate, supported.pressureFieldPackage.domains.climate);
     const bandFootprints = original.environmentalCoverage.climateBands;
@@ -167,6 +171,7 @@ function runCausalChecks(systems, canonical, saveStormPair) {
             riverBasinId: basin.riverBasinId,
             reliefRegionId: localRelief,
             waterReliabilityInverse: [water(scarce), water(supported)],
+            runoffSupport: [runoff(scarce), runoff(supported)],
             recoveryTempo: [recovery(scarce), recovery(supported)],
             foodClimateBandId: changedBand,
             foodStress: [food(scarce, changedBand), food(supported, changedBand)],

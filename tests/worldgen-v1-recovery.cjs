@@ -30,12 +30,26 @@ function verifySpatialAggregation(phase2) {
     } } }).synthesized.recoveryProfile.summary;
     const delayedLarge = recoveryAt(1, 0);
     const delayedSmall = recoveryAt(0, 1);
-    assert.equal(delayedLarge.stabilizationDelay, delayedSmall.stabilizationDelay);
-    assert.equal(delayedLarge.mean, 0.3);
-    assert.equal(delayedSmall.mean, 0.45);
-    assert.equal(delayedLarge.landMean, 0.35);
-    assert.equal(delayedSmall.landMean, 0.625);
-    return { splitPreservesAreaMean: baseline.value, localRecovery: [delayedLarge.mean, delayedSmall.mean] };
+    assert.equal(delayedLarge.stabilizationDelay, 0.75);
+    assert.equal(delayedSmall.stabilizationDelay, 0.25);
+    assert.equal(delayedLarge.mean, 0.35);
+    assert.equal(delayedSmall.mean, 0.625);
+    assert.equal(delayedLarge.regionMean, 0.3);
+    assert.equal(delayedSmall.regionMean, 0.45);
+
+    const splitField = ({ perReliefScores: [first, second] }) => ({ perReliefScores: [
+        ...['a1', 'a2'].map(recordId => ({ ...first, recordId, supportContextSnapshot: { landCellCount: 12 } })),
+        second
+    ] });
+    const splitHabitat = splitField(habitat);
+    const splitRecovery = synthesis.run({ rhythmDomainLayers: { recovery: {
+        recoveryTempo: splitHabitat, reliefPersistence: splitHabitat, environmentalForgiveness: splitHabitat,
+        stabilizationInterval: splitField(field(1, 0))
+    } } }).synthesized.recoveryProfile.summary;
+    assert.equal(splitRecovery.mean, delayedLarge.mean);
+    assert.notEqual(splitRecovery.regionMean, delayedLarge.regionMean);
+    return { splitPreservesPressure: baseline.value, splitPreservesRecovery: splitRecovery.mean,
+        recoveryByDelayLocation: [delayedLarge.mean, delayedSmall.mean] };
 }
 
 function verifyLocalRecovery(phase2, canonical) {
@@ -82,9 +96,16 @@ function verifyLocalRecovery(phase2, canonical) {
     assert(score(passable, routeRelief).value > score(rugged, routeRelief).value);
     assert.deepEqual(passable.pressureFieldPackage.domains.hydrology, rugged.pressureFieldPackage.domains.hydrology);
 
+    const localOnly = output => output.environmentalRhythmPackage.domains.recovery.recoveryTempo.perReliefScores
+        .filter(row => !row.supportContextSnapshot.routeIds.length);
+    const undriven = localOnly(canonical.phase2);
+    assert(undriven.length, 'Expected recovery regions without a sampled macro route');
+    assert(undriven.every(row => row.supportContextSnapshot.mobilityRelief === 0));
+
     return {
         isolation: { zoneId: zone.zoneId, localId, unchangedPeer: sameContinent.reliefRegionId, stabilizationDrag: [drag(connected), drag(delayed)] },
-        transport: { routeId: route.recordId, reliefId: routeRelief, mobilitySupport: [mobility(fragile), mobility(alternate)] },
+        transport: { routeId: route.recordId, reliefId: routeRelief, mobilitySupport: [mobility(fragile), mobility(alternate)],
+            regionsWithoutRouteBonus: undriven.map(row => row.recordId) },
         terrain: { reliefId: routeRelief, recoveryTempo: [score(passable, routeRelief).value, score(rugged, routeRelief).value] }
     };
 }
