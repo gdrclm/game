@@ -1745,6 +1745,8 @@
                     ? cloneValue(normalizedOverrides.summaries)
                     : {})
             },
+            ...(isPlainObject(normalizedOverrides.summaryMetadata)
+                && { summaryMetadata: cloneValue(normalizedOverrides.summaryMetadata) }),
             validationMeta: {
                 ...createKeyedObject(PRESSURE_VALIDATION_META_KEYS, ''),
                 ...(isPlainObject(normalizedOverrides.validationMeta)
@@ -1827,6 +1829,8 @@
                     ? cloneValue(normalizedOverrides.summaries)
                     : {})
             },
+            ...(isPlainObject(normalizedOverrides.summaryMetadata)
+                && { summaryMetadata: cloneValue(normalizedOverrides.summaryMetadata) }),
             validationMeta: {
                 ...createKeyedObject(RHYTHM_VALIDATION_META_KEYS, ''),
                 ...(isPlainObject(normalizedOverrides.validationMeta)

@@ -204,3 +204,14 @@ Codex must:
 - update this contract whenever downstream semantics change;
 - keep the handoff package explicit and minimal;
 - keep separation between world description and downstream handoff.
+
+
+## Foundation Closure addition
+
+`collapsePressureSeeds.routeCascadeProfiles` contains one potential per canonical
+`macroRoutes[].routeId`. Each row carries `physicalFragility`, `redundancy` and
+`susceptibility` in [0, 1]. At neutral `routeFragilityBias`, susceptibility equals
+physical fragility. Either direction is bounded by 0.15 of the physically fragile,
+unredundant share. Callers that omit the Phase 0 bias use the neutral value.
+The Phase 2 physical intake allowlist excludes this historical potential. It is
+available for interpretation when the appropriate later phase is implemented.

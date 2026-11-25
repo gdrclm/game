@@ -444,7 +444,8 @@
             }
 
             scoreEntries.forEach((scoreEntry) => {
-                const recordId = normalizeString(scoreEntry && scoreEntry[config.recordIdKey], '');
+                const recordId = normalizeString(scoreEntry?.recordType && scoreEntry.recordType !== config.sourceRecordType
+                    ? null : (scoreEntry?.recordId ?? scoreEntry?.[config.recordIdKey]), '');
                 if (!recordId) {
                     return;
                 }
@@ -475,7 +476,8 @@
             }
 
             scoreEntries.forEach((scoreEntry) => {
-                const recordId = normalizeString(scoreEntry && scoreEntry[config.recordIdKey], '');
+                const recordId = normalizeString(scoreEntry?.recordType && scoreEntry.recordType !== config.sourceRecordType
+                    ? null : (scoreEntry?.recordId ?? scoreEntry?.[config.recordIdKey]), '');
                 if (!recordId) {
                     return;
                 }
@@ -542,7 +544,7 @@
         }
 
         Object.entries(refMap).forEach(([recordType, recordIds]) => {
-            uniqueStrings(recordIds).forEach((recordId) => {
+            uniqueStrings(Array.isArray(recordIds) ? recordIds : [recordIds]).forEach((recordId) => {
                 pushRef(recordType, recordId);
             });
         });
@@ -697,11 +699,17 @@
         });
     }
 
-    function buildRecordBoundPressureProfile(recordType, recordId, sourcePackageId, pressureRecordScoreIndex, bindingLayer) {
-        const pressureEntries = rankEntriesByValue(
-            buildRecordPressureEntries(recordType, recordId, pressureRecordScoreIndex, bindingLayer),
-            4
-        );
+    function buildRecordBoundPressureProfile(recordType, recordId, sourcePackageId, pressureRecordScoreIndex, bindingLayer, synthesized) {
+        const recordEntries = buildRecordPressureEntries(recordType, recordId, pressureRecordScoreIndex, bindingLayer);
+        const pressureEntries = rankEntriesByValue(recordEntries, 4);
+        const byFieldId = new Map(recordEntries.map(entry => [entry.fieldId, entry.value]));
+        const synthesizedSnapshot = {};
+        for (const [axisId, axis] of Object.entries(synthesized)) {
+            const supported = (axis?.components || []).filter(component => byFieldId.has(component.fieldId));
+            const weight = supported.reduce((sum, component) => sum + component.weight, 0);
+            if (weight) synthesizedSnapshot[axisId] = roundValue(supported.reduce((sum, component) =>
+                sum + byFieldId.get(component.fieldId) * component.weight, 0) / weight);
+        }
         const pressureSignals = pressureEntries.reduce((signals, entry) => {
             signals[entry.fieldId] = entry.value;
             return signals;
@@ -713,7 +721,7 @@
             ? `Pressure profile is led by ${summarizeRankedFields(pressureEntries)}.`
             : 'Pressure profile has no direct burden evidence yet.';
 
-        return createRecordBoundSummaryScaffold({
+        const profile = createRecordBoundSummaryScaffold({
             profileId: `${recordType}:${recordId}`,
             recordType,
             recordId,
@@ -723,9 +731,10 @@
             dominantEnvironmentalTraits,
             summary
         }).profile;
+        return { ...profile, dominantBurdens: pressureEntries.slice(0, 3).map(entry => entry.fieldId), synthesizedSnapshot };
     }
 
-    function buildPressureRecordBoundProfiles(bindingLayer, sourcePackageId, pressureRecordScoreIndex = {}) {
+    function buildPressureRecordBoundProfiles(bindingLayer, sourcePackageId, pressureRecordScoreIndex, synthesized) {
         if (!isPlainObject(bindingLayer) || !isPlainObject(bindingLayer.summarySurfaceTables)) {
             return [];
         }
@@ -750,16 +759,17 @@
                 recordId,
                 sourcePackageId,
                 pressureRecordScoreIndex,
-                bindingLayer
+                bindingLayer,
+                synthesized
             ))
         ));
     }
 
     function buildRecordBoundRhythmProfile(recordType, recordId, sourcePackageId, rhythmRecordScoreIndex, bindingLayer) {
-        const rhythmEntries = rankEntriesByValue(
-            buildRecordRhythmEntries(recordType, recordId, rhythmRecordScoreIndex, bindingLayer),
-            4
-        );
+        const recordEntries = buildRecordRhythmEntries(recordType, recordId, rhythmRecordScoreIndex, bindingLayer);
+        const rhythmEntries = rankEntriesByValue(recordEntries, 4);
+        const recoverySnapshot = Object.fromEntries(recordEntries.filter(entry => entry.domainId === 'recovery')
+            .map(entry => [entry.fieldId, entry.value]));
         const rhythmSignals = rhythmEntries.reduce((signals, entry) => {
             signals[entry.fieldId] = entry.value;
             return signals;
@@ -771,7 +781,7 @@
             ? `Rhythm profile is shaped by ${summarizeRankedFields(rhythmEntries)}.`
             : 'Rhythm profile has no direct timing evidence yet.';
 
-        return createRecordBoundSummaryScaffold({
+        const profile = createRecordBoundSummaryScaffold({
             profileId: `${recordType}:${recordId}`,
             recordType,
             recordId,
@@ -781,6 +791,7 @@
             dominantEnvironmentalTraits,
             summary
         }).profile;
+        return { ...profile, dominantRhythms: rhythmEntries.slice(0, 3).map(entry => entry.fieldId), recoverySnapshot };
     }
 
     function buildRhythmRecordBoundProfiles(bindingLayer, sourcePackageId, rhythmRecordScoreIndex = {}) {
@@ -861,7 +872,8 @@
                 const recordBoundProfiles = buildPressureRecordBoundProfiles(
                     bindingLayer,
                     sourcePackageId,
-                    pressureRecordScoreIndex
+                    pressureRecordScoreIndex,
+                    synthesized
                 );
 
                 return createPressureSummaryGeneratorOutputSkeleton({

@@ -191,6 +191,10 @@
         };
     }
 
+    function packageId(kind, bundle) {
+        return `${kind}:${normalizeString(bundle && bundle.sourceMacroGeographyPackageId, 'unknown')}`;
+    }
+
     function assemblePressureFieldPackage(workingState, validationMeta) {
         const factory = getPressurePackageContractFactory();
         if (!factory) {
@@ -203,7 +207,7 @@
         const summaryOutput = workingState.pressureSummaryOutput;
 
         return factory({
-            packageId: `pressureFieldPackage:${normalizeString(bundle && bundle.sourceMacroGeographyPackageId, 'unknown')}`,
+            packageId: packageId('pressureFieldPackage', bundle),
             sourceMacroGeographyPackageId: normalizeString(bundle && bundle.sourceMacroGeographyPackageId),
             sourceMacroGeographyVersion: normalizeString(bundle && bundle.sourceMacroGeographyVersion),
             sourceHandoffPackageId: normalizeString(
@@ -215,7 +219,8 @@
             domains: cloneValue(synthesisOutput && synthesisOutput.domainLayers),
             synthesized: cloneValue(synthesisOutput && synthesisOutput.synthesized),
             regionalProfiles: cloneValue(summaryOutput && summaryOutput.recordBoundProfiles),
-            summaries: cloneValue(summaryOutput && summaryOutput.pressure && summaryOutput.pressure.summaries),
+            summaries: summaryOutput?.pressure.summaries,
+            summaryMetadata: { pressure: summaryOutput?.pressure.metadata },
             validationMeta: cloneValue(validationMeta)
         });
     }
@@ -232,7 +237,7 @@
         const summaryOutput = workingState.rhythmSummaryOutput;
 
         return factory({
-            packageId: `environmentalRhythmPackage:${normalizeString(bundle && bundle.sourceMacroGeographyPackageId, 'unknown')}`,
+            packageId: packageId('environmentalRhythmPackage', bundle),
             sourceMacroGeographyPackageId: normalizeString(bundle && bundle.sourceMacroGeographyPackageId),
             sourceMacroGeographyVersion: normalizeString(bundle && bundle.sourceMacroGeographyVersion),
             sourceHandoffPackageId: normalizeString(
@@ -244,7 +249,8 @@
             domains: cloneValue(synthesisOutput && synthesisOutput.domainLayers),
             synthesized: cloneValue(synthesisOutput && synthesisOutput.synthesized),
             regionalProfiles: cloneValue(summaryOutput && summaryOutput.recordBoundProfiles),
-            summaries: cloneValue(summaryOutput && summaryOutput.rhythm && summaryOutput.rhythm.summaries),
+            summaries: summaryOutput?.rhythm.summaries,
+            summaryMetadata: { rhythm: summaryOutput?.rhythm.metadata },
             validationMeta: cloneValue(validationMeta)
         });
     }
@@ -270,21 +276,23 @@
             canonicalPath: 'js/worldgen/phase2/orchestration/index.js',
             officialExecutionOrder: OFFICIAL_EXECUTION_ORDER.slice(),
             run(input = {}) {
-                const workingState = cloneValue(input);
                 const stageResults = [];
-
-                workingState.phase2InputBundle = phase2.createPhase2InputBundle(input, normalizedOptions.intakeOptions);
+                const inputBundle = phase2.createPhase2InputBundle(input, normalizedOptions.intakeOptions);
+                const workingState = { phase2InputBundle: inputBundle, inputBundle };
                 stageResults.push(createStageResult('intake', 'pass', {
                     bundleId: workingState.phase2InputBundle.bundleId
                 }));
 
-                workingState.phase2RecordBindingLayer = phase2.createPhase2RecordBindingLayer(workingState.phase2InputBundle);
+                const recordBinding = phase2.createPhase2RecordBindingLayer(inputBundle);
+                workingState.phase2RecordBindingLayer = recordBinding;
+                workingState.recordBinding = recordBinding;
                 stageResults.push(createStageResult('binding', 'pass', {
                     recordBindingContextId: workingState.phase2RecordBindingLayer.recordBindingContextId
                 }));
 
                 const pressureSeed = getPressureSeed(input, workingState.phase2InputBundle);
                 const rhythmSeed = getRhythmSeed(input, workingState.phase2InputBundle);
+                Object.assign(workingState, { pressureSeed, rhythmSeed });
 
                 workingState.pressureSynthesisOutput = phase2.createPressureSynthesis({
                     deterministicSeed: pressureSeed
@@ -304,10 +312,7 @@
 
                 workingState.environmentalRhythmSynthesisOutput = phase2.createEnvironmentalRhythmSynthesis({
                     deterministicSeed: rhythmSeed
-                }).run({
-                    ...workingState,
-                    recoveryReliefSynthesisOutput: workingState.recoveryReliefOutput
-                });
+                }).run(workingState);
                 stageResults.push(createStageResult('rhythm', 'pass', {
                     synthesizedFieldCount: Object.keys(
                         workingState.environmentalRhythmSynthesisOutput.synthesized || {}
@@ -316,10 +321,10 @@
 
                 workingState.pressureSummaryOutput = phase2.createPressureSummaryGenerator({
                     deterministicSeed: pressureSeed
-                }).run(workingState);
+                }).run({ ...workingState, sourcePressureFieldPackageId: packageId('pressureFieldPackage', inputBundle) });
                 workingState.rhythmSummaryOutput = phase2.createRhythmSummaryGenerator({
                     deterministicSeed: rhythmSeed
-                }).run(workingState);
+                }).run({ ...workingState, sourceEnvironmentalRhythmPackageId: packageId('environmentalRhythmPackage', inputBundle) });
                 stageResults.push(createStageResult('summaries', 'pass', {
                     pressureProfileCount: Array.isArray(workingState.pressureSummaryOutput.recordBoundProfiles)
                         ? workingState.pressureSummaryOutput.recordBoundProfiles.length

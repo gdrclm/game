@@ -276,11 +276,13 @@
         const continentalCohesionSummaries = findInputIntermediateOutput(input, 'continentalCohesionSummaries') || {};
         const bodyRows = getArrayAtPaths(continentBodies, ['continentBodies', 'bodies']);
         const summaryRows = getArrayAtPaths(continentalCohesionSummaries, ['continentSummaries']);
+        const climateSummaries = findInputIntermediateOutput(input, 'regionalClimateSummaries') || {};
         const fallbackRows = bodyRows.length ? bodyRows : summaryRows;
 
         return fallbackRows.map((row, index) => {
+            const draft = row.recordDraft || row;
             const continentId = normalizeString(
-                row.continentId || row.continentBodyId,
+                draft.continentId || row.continentBodyId,
                 `continent_${String(index + 1).padStart(3, '0')}`
             );
             const reliefRegionIds = uniqueStrings(
@@ -292,11 +294,15 @@
                             .map((reliefRegion) => reliefRegion.reliefRegionId)
                     )
             );
-            const climateBandIds = uniqueStrings(row.climateBandIds);
+            const climateBandIds = uniqueStrings((draft.climateBandIds || []).concat(
+                getArrayAtPaths(climateSummaries, ['continentSummaries'])
+                    .filter(summary => summary.continentId === continentId)
+                    .flatMap(summary => summary.climateBandIds || [])
+            ));
 
             return createRecord('createContinentRecordSkeleton', {
                 continentId,
-                nameSeed: normalizeString(row.nameSeed, continentId),
+                nameSeed: normalizeString(draft.nameSeed, continentId),
                 macroShape: normalizeString(row.macroShape || row.shapeClass || row.cohesionClass, 'continental_block'),
                 plateIds: uniqueStrings(row.plateIds),
                 reliefRegionIds,
@@ -307,128 +313,159 @@
         });
     }
 
-    function buildSeaRegionRecords(input = {}, climateBands = [], archipelagoRegions = []) {
+    function buildReliefRegionRecords(input, worldBounds) {
+        const { width, height } = worldBounds;
+        const seaByCell = [];
+        const seaClusters = findInputIntermediateOutput(input, 'seaRegionClusters')?.seaRegionClusters || [];
+        for (const region of seaClusters) {
+            for (const cell of region.cellIndices) seaByCell[cell] = region.recordDraft.seaRegionId;
+        }
+        const bodies = findInputIntermediateOutput(input, 'reliefRegionExtraction')?.reliefRegionBodies || [];
+        const topology = findInputIntermediateOutput(input, 'coastalAccessTopology');
+        const portsByRelief = new Map();
+        for (const port of topology?.ports || []) {
+            if (port.reliefRegionId) portsByRelief.set(port.reliefRegionId, port.seaRegionId);
+        }
+        const cellsById = new Map(bodies.map(body => [body.reliefRegionId, body.cellIndices]));
+        return findInputRecordArray(input, 'reliefRegions').map(record => {
+            const adjacentSeaRegionIds = new Set(record.adjacentSeaRegionIds || []);
+            for (const cell of cellsById.get(record.reliefRegionId) || []) {
+                macro.forEachCardinalNeighbor(cell, width, width * height, neighbor => {
+                    if (seaByCell[neighbor]) adjacentSeaRegionIds.add(seaByCell[neighbor]);
+                });
+            }
+            if (portsByRelief.has(record.reliefRegionId)) adjacentSeaRegionIds.add(portsByRelief.get(record.reliefRegionId));
+            return createRecord('createReliefRegionRecordSkeleton', { ...record, adjacentSeaRegionIds: [...adjacentSeaRegionIds] });
+        });
+    }
+
+    function buildSeaRegionRecords(input = {}) {
         const existingRecords = findInputRecordArray(input, 'seaRegions');
         if (existingRecords.length) {
             return existingRecords.map((record) => createRecord('createSeaRegionRecordSkeleton', record));
         }
 
         const seaRegionClusters = findInputIntermediateOutput(input, 'seaRegionClusters') || {};
+        const seaNavigability = findInputIntermediateOutput(input, 'seaNavigabilityTagging') || {};
         const climateSummaries = findInputIntermediateOutput(input, 'regionalClimateSummaries') || {};
-        const clusterRows = getArrayAtPaths(seaRegionClusters, ['seaRegionClusters', 'clusters', 'regionClusters']);
-        const fallbackSeaIds = uniqueStrings(archipelagoRegions.flatMap((record) => record.seaRegionIds));
-
-        if (!clusterRows.length && fallbackSeaIds.length) {
-            return fallbackSeaIds.map((seaRegionId, index) => createRecord('createSeaRegionRecordSkeleton', {
-                seaRegionId,
-                basinType: index === 0 ? 'open_ocean' : 'semi_enclosed_sea',
-                stormPressure: 0.5,
-                navigability: 0.5,
-                climateBandIds: uniqueStrings(climateBands.map((band) => band.climateBandId)).slice(0, 2),
-                primaryClimateBandId: normalizeString((climateBands[0] || {}).climateBandId, '')
-            }));
-        }
-
+        const stormValues = getNestedValue(input, 'climateEnvelope.outputs.fields.stormCorridorField.values');
+        const tagged = getArrayAtPaths(seaNavigability, ['taggedSeaRegionClusters']);
+        const clusterRows = tagged.length ? tagged : getArrayAtPaths(seaRegionClusters, ['seaRegionClusters', 'clusters', 'regionClusters']);
         return clusterRows.map((row, index) => {
-            const seaRegionId = normalizeString(
-                row.seaRegionId || row.clusterId || row.id,
-                `sea_region_${String(index + 1).padStart(3, '0')}`
-            );
-            const climateBandIds = uniqueStrings(
-                []
-                    .concat(row.climateBandIds)
-                    .concat(
-                        getArrayAtPaths(climateSummaries, ['seaSummaries'])
-                            .filter((summary) => normalizeString(summary.seaRegionClusterId || summary.seaRegionId, '') === seaRegionId)
-                            .flatMap((summary) => uniqueStrings(summary.climateBandIds))
-                    )
-            );
-
+            const draft = row.recordDraft || row;
+            const seaRegionId = normalizeString(draft.seaRegionId || row.clusterId || row.id,
+                `sea_region_${String(index + 1).padStart(3, '0')}`);
+            const climateBandIds = uniqueStrings((draft.climateBandIds || []).concat(
+                getArrayAtPaths(climateSummaries, ['seaSummaries'])
+                    .filter(summary => summary.seaRegionId === seaRegionId)
+                    .flatMap(summary => summary.climateBandIds || [])
+            ));
+            const inheritedHazard = clampUnitInterval(draft.stormPressure ?? row.exposureScore ?? row.hazardScore, 0.5);
+            const stormPressure = stormValues?.length && row.cellIndices?.length
+                ? 0.7 * computeMean(row.cellIndices.map(cellIndex => stormValues[cellIndex])) + 0.3 * inheritedHazard
+                : inheritedHazard;
             return createRecord('createSeaRegionRecordSkeleton', {
                 seaRegionId,
-                basinType: normalizeString(row.basinType || row.regionType || row.clusterType || row.kind, 'open_ocean'),
-                stormPressure: clampUnitInterval(row.stormPressure || row.exposureScore || row.hazardScore, 0.5),
-                navigability: clampUnitInterval(row.navigability || row.navigabilityScore || row.openWaterReach, 0.5),
+                basinType: normalizeString(draft.basinType || row.regionType || row.clusterType || row.kind, 'open_ocean'),
+                stormPressure,
+                navigability: clampUnitInterval(draft.navigability ?? row.navigabilityScore ?? row.openWaterReach, 0.5),
                 climateBandIds,
-                primaryClimateBandId: normalizeString(row.primaryClimateBandId, climateBandIds[0] || '')
+                primaryClimateBandId: normalizeString(draft.primaryClimateBandId || climateBandIds[0], '')
             });
         });
     }
 
-    function buildMountainSystemRecords(input = {}, reliefRegions = []) {
-        const existingRecords = findInputRecordArray(input, 'mountainSystems');
-        if (existingRecords.length) {
-            return existingRecords.map((record) => createRecord('createMountainSystemRecordSkeleton', record));
+    function buildFeatureReliefLookup(input) {
+        const extraction = findInputIntermediateOutput(input, 'reliefRegionExtraction');
+        const { width, height } = extraction?.worldBounds || {};
+        const reliefByCell = [];
+        for (const region of extraction?.reliefRegionBodies || []) {
+            for (const cell of region.cellIndices) reliefByCell[cell] = region.reliefRegionId;
         }
-
-        const mountainBeltCandidates = findInputIntermediateOutput(input, 'mountainBeltCandidates') || {};
-        const candidateRows = getArrayAtPaths(mountainBeltCandidates, ['mountainBeltCandidates', 'candidates']);
-
-        if (!candidateRows.length) {
-            return reliefRegions
-                .filter((record) => normalizeString(record.reliefType, '') === 'mountain')
-                .slice(0, 2)
-                .map((record, index) => createRecord('createMountainSystemRecordSkeleton', {
-                    mountainSystemId: `mountain_system_${String(index + 1).padStart(3, '0')}`,
-                    systemType: 'mountain_belt',
-                    plateIds: uniqueStrings(record.plateIds),
-                    reliefRegionIds: [normalizeString(record.reliefRegionId, '')],
-                    primaryReliefRegionId: normalizeString(record.reliefRegionId, ''),
-                    spineOrientation: 'mixed',
-                    upliftBias: clampUnitInterval(record.elevationBias, 0.6),
-                    ridgeContinuity: clampUnitInterval(record.ruggednessBias, 0.6)
-                }));
-        }
-
-        return candidateRows.map((row, index) => createRecord('createMountainSystemRecordSkeleton', {
-            mountainSystemId: normalizeString(
-                row.mountainSystemId || row.candidateId || row.id,
-                `mountain_system_${String(index + 1).padStart(3, '0')}`
-            ),
-            systemType: normalizeString(row.systemType || row.type, 'mountain_belt'),
-            plateIds: uniqueStrings(row.plateIds),
-            reliefRegionIds: uniqueStrings(row.reliefRegionIds),
-            primaryReliefRegionId: normalizeString(row.primaryReliefRegionId, uniqueStrings(row.reliefRegionIds)[0] || ''),
-            spineOrientation: normalizeString(row.spineOrientation || row.orientation, 'mixed'),
-            upliftBias: clampUnitInterval(row.upliftBias || row.pressureScore, 0.6),
-            ridgeContinuity: clampUnitInterval(row.ridgeContinuity || row.continuity, 0.6)
-        }));
+        return function findIntersectedRelief(points, radius) {
+            const counts = new Map();
+            const visited = new Set();
+            for (const { x, y } of points.filter(Boolean)) {
+                for (let row = Math.max(0, Math.ceil(y - radius)); row <= Math.min(height - 1, y + radius); row += 1) {
+                    for (let column = Math.max(0, Math.ceil(x - radius)); column <= Math.min(width - 1, x + radius); column += 1) {
+                        if (Math.hypot(column - x, row - y) > radius) continue;
+                        const key = row * width + column;
+                        const id = reliefByCell[key];
+                        if (!id || visited.has(key)) continue;
+                        visited.add(key);
+                        counts.set(id, (counts.get(id) || 0) + 1);
+                    }
+                }
+            }
+            return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([id]) => id);
+        };
     }
 
-    function buildVolcanicZoneRecords(input = {}, reliefRegions = [], mountainSystems = []) {
-        const existingRecords = findInputRecordArray(input, 'volcanicZones');
-        if (existingRecords.length) {
-            return existingRecords.map((record) => createRecord('createVolcanicZoneRecordSkeleton', record));
+    function buildMountainSystemRecords(input = {}, reliefRegions = []) {
+        const existing = findInputRecordArray(input, 'mountainSystems');
+        if (existing.length) return existing.map(record => createRecord('createMountainSystemRecordSkeleton', record));
+        const candidates = getArrayAtPaths(findInputIntermediateOutput(input, 'mountainBeltCandidates') || {}, ['mountainBeltCandidates', 'candidates']);
+        const findRelief = buildFeatureReliefLookup(input);
+        if (!candidates.length) {
+            return reliefRegions.filter(record => record.reliefType === 'mountain').slice(0, 2).map((record, index) =>
+                createRecord('createMountainSystemRecordSkeleton', {
+                    mountainSystemId: `mountain_system_${String(index + 1).padStart(3, '0')}`,
+                    systemType: 'mountain_belt',
+                    plateIds: record.plateIds,
+                    reliefRegionIds: [record.reliefRegionId],
+                    primaryReliefRegionId: record.reliefRegionId,
+                    spineOrientation: 'mixed',
+                    upliftBias: record.elevationBias,
+                    ridgeContinuity: record.ruggednessBias
+                }));
         }
+        return candidates.flatMap(row => {
+            const draft = row.recordDraft;
+            if (!draft || !row.spineStartPoint || !row.spineEndPoint) return [];
+            const start = row.spineStartPoint;
+            const end = row.spineEndPoint;
+            const steps = Math.max(1, Math.ceil(row.spineLength / 3));
+            const points = Array.from({ length: steps + 1 }, (_, step) => ({
+                x: start.x + (end.x - start.x) * step / steps,
+                y: start.y + (end.y - start.y) * step / steps
+            }));
+            const reliefRegionIds = findRelief(points, Math.max(3, Math.min(row.candidateArea.radiusX, row.candidateArea.radiusY)));
+            return reliefRegionIds.length ? [createRecord('createMountainSystemRecordSkeleton', {
+                ...draft, reliefRegionIds, primaryReliefRegionId: reliefRegionIds[0]
+            })] : [];
+        });
+    }
 
-        const arcFormationHelper = findInputIntermediateOutput(input, 'arcFormationHelper') || {};
-        const hotspotVolcanicSeedHelper = findInputIntermediateOutput(input, 'hotspotVolcanicSeedHelper') || {};
-        const arcRows = getArrayAtPaths(arcFormationHelper, ['arcGuides', 'guides']);
-        const hotspotRows = getArrayAtPaths(hotspotVolcanicSeedHelper, ['hotspotSeedRows', 'hotspotSeeds', 'seedRows']);
-        const primaryReliefRegionId = normalizeString((reliefRegions[0] || {}).reliefRegionId, '');
-        const mountainSystemId = normalizeString((mountainSystems[0] || {}).mountainSystemId, '');
-
-        return []
-            .concat(arcRows.map((row, index) => createRecord('createVolcanicZoneRecordSkeleton', {
-                volcanicZoneId: normalizeString(row.volcanicZoneId || row.arcId || row.id, `volcanic_zone_arc_${String(index + 1).padStart(3, '0')}`),
-                sourceType: 'arc',
-                plateIds: uniqueStrings(row.plateIds),
-                reliefRegionIds: uniqueStrings(row.reliefRegionIds),
-                mountainSystemIds: mountainSystemId ? [mountainSystemId] : [],
-                primaryReliefRegionId: normalizeString(row.primaryReliefRegionId, primaryReliefRegionId),
-                activityBias: clampUnitInterval(row.activityBias || row.volcanicBias, 0.5),
-                zoneContinuity: clampUnitInterval(row.zoneContinuity || row.arcContinuity, 0.5)
-            })))
-            .concat(hotspotRows.map((row, index) => createRecord('createVolcanicZoneRecordSkeleton', {
-                volcanicZoneId: normalizeString(row.volcanicZoneId || row.hotspotId || row.id, `volcanic_zone_hotspot_${String(index + 1).padStart(3, '0')}`),
-                sourceType: 'hotspot',
-                plateIds: uniqueStrings(row.plateIds),
-                reliefRegionIds: uniqueStrings(row.reliefRegionIds),
-                mountainSystemIds: [],
-                primaryReliefRegionId: normalizeString(row.primaryReliefRegionId, primaryReliefRegionId),
-                activityBias: clampUnitInterval(row.activityBias || row.intensity, 0.5),
-                zoneContinuity: clampUnitInterval(row.zoneContinuity || row.trailContinuity, 0.5)
-            })));
+    function buildVolcanicZoneRecords(input = {}, mountainSystems = []) {
+        const existing = findInputRecordArray(input, 'volcanicZones');
+        if (existing.length) return existing.map(record => createRecord('createVolcanicZoneRecordSkeleton', record));
+        const arcs = getArrayAtPaths(findInputIntermediateOutput(input, 'arcFormationHelper') || {}, ['arcGuides']);
+        const hotspots = getArrayAtPaths(findInputIntermediateOutput(input, 'hotspotVolcanicSeedHelper') || {}, ['hotspotSeeds']);
+        const emerged = getNestedValue(input, 'reliefElevation.outputs.fields.seaLevelAppliedElevationField.seaLevelModel.hotspotChain');
+        const findRelief = buildFeatureReliefLookup(input);
+        return arcs.concat(hotspots).flatMap(source => {
+            const hotspot = Boolean(source.hotspotSeedId);
+            const points = hotspot ? [source.seedPoint, ...source.trailSamples] : source.curveSamples;
+            if (hotspot && source.hotspotSeedId === emerged?.hotspotSeedId) points.push(...emerged.peaks);
+            const reliefRegionIds = findRelief(points, hotspot ? source.seedArea.influenceRadius : source.guideArea.influenceRadius / 2);
+            if (!reliefRegionIds.length) return [];
+            const sourceType = hotspot ? 'hotspot' : 'arc';
+            const plateIds = hotspot ? [source.sourcePlateId] : source.sourcePlateIds;
+            const mountainSystemIds = hotspot ? [] : mountainSystems.filter(mountain =>
+                mountain.plateIds.some(id => plateIds.includes(id))
+                && mountain.reliefRegionIds.some(id => reliefRegionIds.includes(id))
+            ).map(mountain => mountain.mountainSystemId);
+            return [createRecord('createVolcanicZoneRecordSkeleton', {
+                volcanicZoneId: `volc_${source.arcGuideId || source.hotspotSeedId}`,
+                sourceType,
+                plateIds,
+                reliefRegionIds,
+                mountainSystemIds,
+                primaryReliefRegionId: reliefRegionIds[0],
+                activityBias: hotspot ? source.volcanicZoneBias : source.volcanicArcBias,
+                zoneContinuity: hotspot ? source.persistenceBias : source.arcStrength
+            })];
+        });
     }
 
     function buildArchipelagoRegionRecords(input = {}) {
@@ -440,16 +477,26 @@
         const archipelagoMacroZones = findInputIntermediateOutput(input, 'archipelagoMacroZones') || {};
         const macroZones = getArrayAtPaths(archipelagoMacroZones, ['macroZones']);
 
+        const extraction = findInputIntermediateOutput(input, 'reliefRegionExtraction');
+        const bands = findInputRecordArray(input, 'climateBands');
+        const reliefByCell = [];
+        for (const region of extraction?.reliefRegionBodies || []) {
+            for (const cell of region.cellIndices) reliefByCell[cell] = region.reliefRegionId;
+        }
+
         return macroZones.map((zone, index) => {
             const recordDraftHints = isPlainObject(zone.recordDraftHints) ? zone.recordDraftHints : {};
+            const islandRelief = new Set((zone.cellIndices || []).map(cell => reliefByCell[cell]).filter(Boolean));
+            const climateBandIds = uniqueStrings([...(recordDraftHints.climateBandIds || []),
+                ...bands.filter(band => band.reliefRegionIds.some(id => islandRelief.has(id))).map(band => band.climateBandId)]);
             return createRecord('createArchipelagoRegionRecordSkeleton', {
                 archipelagoId: normalizeString(recordDraftHints.archipelagoId || zone.archipelagoId, `archipelago_${String(index + 1).padStart(3, '0')}`),
                 morphologyType: normalizeString(recordDraftHints.morphologyType || zone.morphologyType, 'broken_chain'),
                 roleProfile: normalizeString(recordDraftHints.roleProfile || getNestedValue(zone, 'roleSeedHints.primaryRoleSeed', ''), ''),
                 seaRegionIds: uniqueStrings(recordDraftHints.seaRegionIds || zone.seaRegionIds),
-                climateBandIds: uniqueStrings(recordDraftHints.climateBandIds),
+                climateBandIds,
                 primarySeaRegionId: normalizeString(recordDraftHints.primarySeaRegionId, uniqueStrings(zone.seaRegionIds)[0] || ''),
-                primaryClimateBandId: normalizeString(recordDraftHints.primaryClimateBandId, ''),
+                primaryClimateBandId: normalizeString(recordDraftHints.primaryClimateBandId || climateBandIds[0], ''),
                 macroRouteIds: uniqueStrings(recordDraftHints.macroRouteIds || zone.macroRouteIds),
                 chokepointIds: uniqueStrings(recordDraftHints.chokepointIds || zone.linkedChokepointIds),
                 strategicRegionIds: uniqueStrings(recordDraftHints.strategicRegionIds),
@@ -483,19 +530,28 @@
             });
         });
 
+        const zones = findInputIntermediateOutput(input, 'archipelagoMacroZones')?.macroZones || [];
+        const archipelagoByIslandGroup = new Map(zones.flatMap(zone =>
+            (zone.sourceIslandGroupIds || []).map(groupId => [groupId, zone.archipelagoId])
+        ));
         return routeRows.map((row, index) => {
             const routeId = normalizeString(row.routeId, `macro_route_${String(index + 1).padStart(3, '0')}`);
             const linkedCorridors = corridorRowsByRouteId.get(routeId) || [];
+            const sameContinent = row.fromContinentId && row.fromContinentId === row.toContinentId;
+            const fromArea = sameContinent ? row.fromReliefRegionId : (row.fromContinentId || row.fromReliefRegionId);
+            const toArea = sameContinent ? row.toReliefRegionId : (row.toContinentId || row.toReliefRegionId);
             return createRecord('createMacroRouteRecordSkeleton', {
                 routeId,
                 type: normalizeString(row.type || row.routeMode, 'hybrid_route'),
-                fromRegion: normalizeString(row.fromRegion || row.fromRegionalSegmentId || row.fromContinentId || row.fromNodeId, ''),
-                toRegion: normalizeString(row.toRegion || row.toRegionalSegmentId || row.toContinentId || row.toNodeId, ''),
-                through: uniqueStrings(row.through || row.nodePathIds || row.edgePathIds),
-                baseCost: clampUnitInterval(row.baseCost || row.meanEdgeRouteCost || row.totalRouteCost, 0.5),
+                fromRegion: normalizeString(row.fromRegion || fromArea || archipelagoByIslandGroup.get(row.fromIslandGroupId)
+                    || row.fromSeaRegionId || row.fromRegionalSegmentId || row.fromNodeId, ''),
+                toRegion: normalizeString(row.toRegion || toArea || archipelagoByIslandGroup.get(row.toIslandGroupId)
+                    || row.toSeaRegionId || row.toRegionalSegmentId || row.toNodeId, ''),
+                through: uniqueStrings(row.through || row.regionPathIds || row.nodePathIds || row.edgePathIds),
+                baseCost: clampUnitInterval(row.baseCost ?? row.meanEdgeRouteCost ?? row.totalRouteCost, 0.5),
                 fragility: clampUnitInterval(
                     row.fragility
-                    || averageUnit(linkedCorridors.map((corridor) => corridor.routeDependenceScore || corridor.structureFragilityScore), 0.5),
+                    ?? averageUnit(linkedCorridors.map(corridor => Math.max(corridor.routeDependenceScore, corridor.structureFragilityScore)), 0.5),
                     0.5
                 ),
                 redundancy: clampUnitInterval(
@@ -615,6 +671,8 @@
             return providedLayer.map(cloneValue);
         }
 
+        const topology = findInputIntermediateOutput(input, 'coastalAccessTopology');
+        if (topology) return topology.ports.map(cloneValue);
         const exceptionalCoastalNodes = findInputIntermediateOutput(input, 'exceptionalCoastalNodes') || {};
         return getArrayAtPaths(exceptionalCoastalNodes, ['exceptionalCoastalNodes']).map(cloneValue);
     }
@@ -626,7 +684,13 @@
         }
 
         const isolatedZones = findInputIntermediateOutput(input, 'isolatedZones') || {};
-        return getArrayAtPaths(isolatedZones, ['zones']).map(cloneValue);
+        const nodes = findInputIntermediateOutput(input, 'hybridConnectivityGraph')?.nodes || [];
+        const nodesById = new Map(nodes.map(node => [node.nodeId, node]));
+        const zones = getArrayAtPaths(isolatedZones, ['zones']);
+        return zones.map(zone => ({
+            ...cloneValue(zone),
+            seaRegionIds: uniqueStrings((zone.nodeIds || []).map(id => nodesById.get(id)?.seaRegionId))
+        }));
     }
 
     function buildMacroGeographyPackage(input = {}) {
@@ -644,15 +708,15 @@
             worldBounds
         });
         const plates = findInputRecordArray(input, 'plates').map((record) => createRecord('createPlateRecordSkeleton', record));
-        const reliefRegions = findInputRecordArray(input, 'reliefRegions').map((record) => createRecord('createReliefRegionRecordSkeleton', record));
+        const reliefRegions = buildReliefRegionRecords(input, worldBounds);
         const climateBands = findInputRecordArray(input, 'climateBands').map((record) => createRecord('createClimateBandRecordSkeleton', record));
         const riverBasins = findInputRecordArray(input, 'riverBasins').map((record) => createRecord('createRiverBasinRecordSkeleton', record));
         const chokepoints = findInputRecordArray(input, 'chokepoints').map((record) => createRecord('createChokepointRecordSkeleton', record));
         const continents = buildContinentRecords(input, reliefRegions, climateBands);
         const archipelagoRegions = buildArchipelagoRegionRecords(input);
-        const seaRegions = buildSeaRegionRecords(input, climateBands, archipelagoRegions);
+        const seaRegions = buildSeaRegionRecords(input);
         const mountainSystems = buildMountainSystemRecords(input, reliefRegions);
-        const volcanicZones = buildVolcanicZoneRecords(input, reliefRegions, mountainSystems);
+        const volcanicZones = buildVolcanicZoneRecords(input, mountainSystems);
         const macroRoutes = buildMacroRouteRecords(input);
         const strategicRegions = buildStrategicRegionRecords(input);
         const coastalOpportunityMap = buildCoastalOpportunityPackageLayer(input);

@@ -1649,6 +1649,9 @@
         const size = width * height;
         const stormNamespace = buildNamespace('stormDecaySeasonality');
         const stormSeed = deriveSubSeed(normalizedInput.macroSeed, stormNamespace);
+        const environmentalVolatility = clampUnitInterval(
+            input.phase1Constraints?.environmentalVolatility ?? input.macroSeedProfile?.environmentalVolatility, 0.5
+        );
         const latitudeBandBaselineField = baseFields.latitudeBandBaselineField
             || materializeLatitudeBandBaselineField(input);
         const prevailingWindField = baseFields.prevailingWindField
@@ -1807,7 +1810,7 @@
                 const seedNudge = maritimeContextAvailable
                     ? (deterministicUnitNoise(stormSeed, x, y, 'corridor') - 0.5) * 0.018
                     : 0;
-                const corridor = roundFieldValue(clampUnitInterval(
+                const stormBaseline = clampUnitInterval(
                     (
                         (basePotentialValues[index] * 0.56)
                         + (continuity * 0.32)
@@ -1816,7 +1819,11 @@
                     * (0.45 + (wind.magnitude * 0.55))
                     + seedNudge,
                     0
-                ));
+                );
+                // World-level volatility modulates existing storms in proportion
+                // to maritime exposure. Neutral volatility preserves the baseline.
+                const modulation = (2 * environmentalVolatility - 1) * 0.12 * maritimeExposureValues[index];
+                const corridor = roundFieldValue(clampUnitInterval(stormBaseline * (1 + modulation), 0));
 
                 continuityValues[index] = continuity;
                 values[index] = corridor;
@@ -1856,6 +1863,7 @@
             summary: {
                 corridorModel: 'wind_humidity_wetness_maritime_storm_corridor_baseline',
                 maritimeContextAvailable,
+                environmentalVolatility,
                 sourceFieldIds,
                 sampleStepCount,
                 activeCorridorCellCount,
@@ -4507,6 +4515,7 @@
                 bandType: component.bandType,
                 cellCount: component.cellCount,
                 anchorCellIndex: component.anchorCellIndex,
+                ...(input.includeDebugArtifacts === true && { cellIndices: component.cellIndices }),
                 recordCompatible: component.recordCompatible,
                 reliefRegionIds: component.reliefRegionIds.slice(),
                 seaRegionIds: component.seaRegionIds.slice(),

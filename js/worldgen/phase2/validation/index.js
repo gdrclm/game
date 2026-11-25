@@ -2668,7 +2668,7 @@
             ) || 'phase2-unresolved-macro-geography-package',
             sourceMacroGeographyHandoffPackageId: normalizeString(
                 input.sourceMacroGeographyHandoffPackageId
-                || (input.phase2InputBundle && input.phase2InputBundle.sourceHandoffPackageId)
+                || input.phase2InputBundle?.filteredHandoff?.sourceHandoffPackageId
             ) || null
         });
     }
@@ -2686,7 +2686,8 @@
             run(input = {}) {
                 const context = createPhase2ValidationOrchestrationContext(input);
                 let report = createPhase2ValidationReport({
-                    validationId: normalizeString(input.validationId) || `${VALIDATION_ORCHESTRATOR_ID}:${Date.now()}`,
+                    validationId: normalizeString(input.validationId)
+                        || `${VALIDATION_ORCHESTRATOR_ID}:${context.sourceMacroGeographyPackageId}:${input.pressureSeed ?? ''}:${input.rhythmSeed ?? ''}`,
                     sourcePressureFieldPackageId: context.sourcePressureFieldPackageId,
                     sourceEnvironmentalRhythmPackageId: context.sourceEnvironmentalRhythmPackageId,
                     sourceMacroGeographyPackageId: context.sourceMacroGeographyPackageId,

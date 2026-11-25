@@ -31,5 +31,10 @@ Full baseline:
     node tests/worldgen-v1-foundation-audit.cjs 42 137 2026 > worldgen-foundation-report.json
 CI workflow .github/workflows/worldgen-v1-foundation.yml uploads report and worldgen-observatory-data/. Baseline may take minutes; start with one seed and focused stage-level tests. Keep raw debug snapshots outside source control unless explicitly curated.
 
+## F1 reproduced locally
+
+The [execution plan and baseline trace](FOUNDATION_EXECUTION_PLAN.md#исходная-трассировка-f1) record masks, segment counts and actual graph sizes. The coast selector rejected every candidate in seed 137; each world supplied just one inland route endpoint and no axis-aligned fragmentation run or strait. Empty roots matched empty sources.
+
 ## Next safe action
-Trace missing macro topology and record assembly; compare intermediate stage counts with package counts, verify reference integrity and root minima. Do not assume a single continent is itself the only root cause. Fix earliest causal failure, rerun, exercise actual maritime channel, then real Phase 2. See ACTIVE_CHECKLIST.md.
+
+Continue F2 with bounded physical shoreline selection, measured open-water landfalls and verified passages before re-running package validation and Phase 2.

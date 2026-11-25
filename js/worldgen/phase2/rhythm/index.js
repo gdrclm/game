@@ -1628,9 +1628,6 @@
                 seasonalityStrength: signals.seasonalityStrength || 0,
                 annualSwingStrength: signals.annualSwingStrength || 0,
                 environmentalCycleClarity: signals.environmentalCycleClarity || 0,
-                waterReliabilityInverse: signals.waterReliabilityInverse || 0,
-                waterStress: signals.waterStress || 0,
-                droughtPressure: signals.droughtPressure || 0,
                 reliefWindowPotential: signals.reliefWindowPotential || 0,
                 reliefWindowStrength: signals.reliefWindowStrength || 0,
                 alternationBase: signals.alternationBase || 0,
@@ -1938,7 +1935,7 @@
             navigation: createNavigationWindowGenerator({ deterministicSeed }).run(input).domain,
             scarcity: createScarcityCadenceGenerator({ deterministicSeed }).run(input).domain,
             predictability: createPredictabilityRuptureAnalyzer({ deterministicSeed }).run(input).domain,
-            recovery: createRecoveryReliefSynthesis({ deterministicSeed }).run(input).domain
+            recovery: resolveRecoveryOutput(input, deterministicSeed).domain
         });
     }
 
@@ -1982,9 +1979,14 @@
             });
         });
         const totalWeight = components.reduce((sum, component) => sum + component.weight, 0);
-        const synthesizedValue = totalWeight > 0
+        const weightedSupport = totalWeight > 0
             ? components.reduce((sum, component) => sum + component.weightedValue, 0) / totalWeight
             : 0;
+        // Stabilization lengthens the recovery cycle. The readiness index is
+        // recovering capacity per unit of that cycle.
+        const stabilizationDelay = fieldId === 'recoveryProfile'
+            ? getRhythmFieldMean(domainLayers, 'recovery', 'stabilizationInterval') : 0;
+        const synthesizedValue = weightedSupport / (1 + stabilizationDelay);
         const componentValues = components.map((component) => component.value);
         const componentSpread = componentValues.length
             ? Math.max(...componentValues) - Math.min(...componentValues)
@@ -2017,6 +2019,7 @@
             components,
             summary: Object.freeze({
                 mean: roundValue(synthesizedValue),
+                ...(fieldId === 'recoveryProfile' && { stabilizationDelay: roundValue(stabilizationDelay) }),
                 componentCount: components.length,
                 componentSpread: roundValue(componentSpread),
                 dominantContribution: roundValue(dominantContribution),
@@ -2057,7 +2060,7 @@
             );
             const calibratedMeanCandidate = clamp01(baseMean + readabilityDelta);
             const calibratedMean = fieldId === 'recoveryProfile'
-                ? Math.max(baseMean, calibratedMeanCandidate)
+                ? baseMean
                 : calibratedMeanCandidate;
 
             calibrated[fieldId] = Object.freeze({
@@ -2152,10 +2155,9 @@
                 'recoveryProfile',
                 domainLayers,
                 {
-                    recoveryTempo: { domainId: 'recovery', fieldId: 'recoveryTempo', weight: 0.3 },
-                    stabilizationInterval: { domainId: 'recovery', fieldId: 'stabilizationInterval', weight: 0.24 },
-                    reliefPersistence: { domainId: 'recovery', fieldId: 'reliefPersistence', weight: 0.24 },
-                    environmentalForgiveness: { domainId: 'recovery', fieldId: 'environmentalForgiveness', weight: 0.22 }
+                    recoveryTempo: { domainId: 'recovery', fieldId: 'recoveryTempo', weight: 0.4 },
+                    reliefPersistence: { domainId: 'recovery', fieldId: 'reliefPersistence', weight: 0.32 },
+                    environmentalForgiveness: { domainId: 'recovery', fieldId: 'environmentalForgiveness', weight: 0.28 }
                 },
                 'Synthesized recovery profile while keeping recovery explicit and domain-preserved.',
                 deterministicSeed
@@ -2255,6 +2257,7 @@
     }
 
     function resolvePressureSynthesisOutput(input = {}, deterministicSeed = null) {
+        if (isPlainObject(input.pressureSynthesisOutput)) return input.pressureSynthesisOutput;
         if (isPlainObject(input.pressureSynthesis)) {
             return input.pressureSynthesis;
         }
@@ -2341,6 +2344,7 @@
     }
 
     function resolveRecoveryOutput(input = {}, deterministicSeed = null) {
+        if (isPlainObject(input.recoveryReliefOutput)) return input.recoveryReliefOutput;
         if (isPlainObject(input.recoveryRhythmOutput)) {
             return input.recoveryRhythmOutput;
         }
@@ -2423,6 +2427,11 @@
             scarcityBaseline,
             failureImpactPressure
         ]));
+        const runoffContinuity = meanByRecordIds(context.runoffAvailability, riverBasinIds);
+        const accessibleTerrain = 1 - clamp01(reliefRegion.ruggednessBias);
+        // A calm window becomes effective relief only when recoverable habitat and
+        // freshwater coincide. Rain-fed terrain keeps a limited local contribution.
+        const recoveryCapacity = accessibleTerrain * (0.25 * supportWindow + 0.75 * runoffContinuity);
         const reliefPocket = applyThresholdContrast(
             clamp01(
                 (supportWindow * 0.42)
@@ -2511,6 +2520,7 @@
 
         return {
             supportWindow: roundValue(supportWindow),
+            recoveryCapacity: roundValue(recoveryCapacity),
             mobilityReentrySupport: roundValue(mobilityReentrySupport),
             stabilizationDrag: roundValue(stabilizationDrag),
             scarcityDrag: roundValue(scarcityDrag),
@@ -2524,10 +2534,10 @@
             supportDelayBurden: roundValue(supportDelayBurden),
             ecologicalFragility: roundValue(ecologicalFragility),
             catastrophePressure: roundValue(catastrophePressure),
-            recoveryTempo: roundValue(recoveryTempo),
+            recoveryTempo: roundValue(recoveryTempo * recoveryCapacity),
             stabilizationInterval: roundValue(stabilizationInterval),
-            reliefPersistence: roundValue(reliefPersistence),
-            environmentalForgiveness: roundValue(environmentalForgiveness)
+            reliefPersistence: roundValue(reliefPersistence * recoveryCapacity),
+            environmentalForgiveness: roundValue(environmentalForgiveness * recoveryCapacity)
         };
     }
 
@@ -2547,6 +2557,7 @@
             }),
             supportContextSnapshot: Object.freeze({
                 supportWindow: signals.supportWindow || 0,
+                recoveryCapacity: signals.recoveryCapacity || 0,
                 mobilityReentrySupport: signals.mobilityReentrySupport || 0,
                 stabilizationDrag: signals.stabilizationDrag || 0,
                 scarcityDrag: signals.scarcityDrag || 0,
@@ -2554,12 +2565,6 @@
                 mobilityRelief: signals.mobilityRelief || 0,
                 persistentReliefAnchor: signals.persistentReliefAnchor || 0,
                 justifiedReliefBonus: signals.justifiedReliefBonus || 0,
-                climateExposurePressure: signals.climateExposurePressure || 0,
-                waterStress: signals.waterStress || 0,
-                foodStress: signals.foodStress || 0,
-                supportDelayBurden: signals.supportDelayBurden || 0,
-                ecologicalFragility: signals.ecologicalFragility || 0,
-                catastrophePressure: signals.catastrophePressure || 0
             })
         });
     }
@@ -2825,6 +2830,11 @@
                 const context = {
                     climateBandIdsByReliefRegion: buildClimateBandIdsByReliefRegion(climateBands),
                     riverBasinIdsByReliefRegion: buildRiverBasinIdsByReliefRegion(riverBasins),
+                    runoffAvailability: Object.fromEntries(riverBasins.map(basin => {
+                        const area = clamp01(basin.catchmentScale);
+                        // A compact catchment may be continuous and still hold little water.
+                        return [basin.riverBasinId, clamp01(basin.basinContinuity) * area / (area + 0.04)];
+                    })),
                     routeIdsByReliefRegion: buildRouteIdsByReliefRegion(macroRoutes),
                     chokepointIdsByReliefRegion: buildChokepointIdsByReliefRegion(chokepoints),
                     isolatedZoneIdsByContinent: buildIsolatedZoneIdsByContinent(isolatedZones),

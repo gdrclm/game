@@ -1,4 +1,4 @@
-name: WorldGen V1 foundation baseline
+name: WorldGen V1 foundation
 on:
   push:
     branches:
@@ -6,7 +6,7 @@ on:
     paths:
       - 'js/worldgen/**'
       - 'index.html'
-      - 'tests/worldgen-v1-foundation-audit.cjs'
+      - 'tests/worldgen-v1-*.cjs'
       - '.github/workflows/worldgen-v1-foundation.yml'
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: '22'
       - name: Run foundation diagnostics
-        run: node tests/worldgen-v1-foundation-audit.cjs > worldgen-foundation-report.json
+        run: node tests/worldgen-v1-foundation-audit.cjs --cohort all --causal --snapshots worldgen-observatory-data > worldgen-foundation-report.json
       - name: Upload diagnostic report
         if: always()
         uses: actions/upload-artifact@v4

@@ -642,7 +642,7 @@
             routeRows.length > 0
                 ? routeRows.filter((routeRow) => {
                     const routeMode = normalizeString(routeRow.routeMode, '');
-                    return routeMode === 'marine_assisted' || routeMode === 'coastal_transfer';
+                    return ['marine_assisted', 'coastal_transfer', 'sea_only'].includes(routeMode);
                 }).length / routeRows.length
                 : 0
         );
@@ -987,12 +987,12 @@
             ? fragmentationSummary.fragmentationRuns
             : [];
 
-        return fragmentationRuns.map((fragmentationRun, runIndex) => {
-            const sourceFragmentationRunId = normalizeString(
+        return fragmentationRuns.filter(run => run.acceptedAsIslandGroup !== false).map((fragmentationRun, runIndex) => {
+            const sourceMorphologyId = normalizeString(
                 fragmentationRun.fragmentationRunId,
                 `archipelagoRun_${String(runIndex + 1).padStart(3, '0')}`
             );
-            const support = supportLookup.get(sourceFragmentationRunId) || {
+            const support = supportLookup.get(sourceMorphologyId) || {
                 sourceIslandChainCandidateIds: [],
                 seaRegionIds: [],
                 seaRegionClusterIds: [],
@@ -1009,18 +1009,18 @@
             );
             const geometry = computeCellGeometry(
                 uniqueStrings([])
-                    .concat(fragmentationRun.runCellIndices || [])
-                    .concat(fragmentationRun.carvedBreakCellIndices || [])
+                    .concat(fragmentationRun.physicalIslandCellIndices || fragmentationRun.runCellIndices || [])
                     .map((value) => String(value)),
                 worldBounds
             );
 
             return {
-                sourceFragmentationRunId,
+                sourceMorphologyId,
+                sourceFragmentationRunId: sourceMorphologyId,
                 sourceIslandChainCandidateIds: support.sourceIslandChainCandidateIds.slice(),
                 orientation: normalizeString(fragmentationRun.orientation, ''),
                 candidateCellCount: Math.max(0, normalizeInteger(fragmentationRun.candidateCellCount, 0)),
-                projectedIslandSegmentCount: Math.max(0, normalizeInteger(fragmentationRun.projectedIslandSegmentCount, 0)),
+                projectedIslandSegmentCount: Math.max(0, normalizeInteger(fragmentationRun.physicalIslandCount ?? fragmentationRun.projectedIslandSegmentCount, 0)),
                 averageScore: clampUnitInterval(fragmentationRun.averageScore, 0),
                 strongestScore: clampUnitInterval(fragmentationRun.strongestScore, 0),
                 basinSupport: clampUnitInterval(fragmentationRun.basinSupport, 0),
@@ -1051,25 +1051,24 @@
         const sharedSeaRegionClusterIds = uniqueStrings(leftRun.linkedSeaRegionClusterIds || []).some((clusterId) => uniqueStrings(rightRun.linkedSeaRegionClusterIds || []).includes(clusterId));
         const sharedRouteIds = uniqueStrings(leftRun.routeIds || []).some((routeId) => uniqueStrings(rightRun.routeIds || []).includes(routeId));
 
-        if (sharedBasinIds || sharedSeaRegionIds || sharedSeaRegionClusterIds || sharedRouteIds) {
-            return true;
-        }
-
         const distance = getRunDistance(leftRun, rightRun);
-        return distance <= 0.12 && normalizeString(leftRun.orientation, '') === normalizeString(rightRun.orientation, '');
+        return distance <= 0.12 && (
+            sharedBasinIds || sharedSeaRegionIds || sharedSeaRegionClusterIds || sharedRouteIds
+            || leftRun.orientation === rightRun.orientation
+        );
     }
 
     function collectRunComponents(runRows = []) {
         const rows = Array.isArray(runRows) ? runRows.slice() : [];
-        const rowById = buildLookupById(rows, 'sourceFragmentationRunId');
+        const rowById = buildLookupById(rows, 'sourceMorphologyId');
         const visitedRunIds = new Set();
         const components = [];
 
         rows
             .slice()
-            .sort((left, right) => left.sourceFragmentationRunId.localeCompare(right.sourceFragmentationRunId))
+            .sort((left, right) => left.sourceMorphologyId.localeCompare(right.sourceMorphologyId))
             .forEach((runRow) => {
-                const runId = normalizeString(runRow.sourceFragmentationRunId, '');
+                const runId = normalizeString(runRow.sourceMorphologyId, '');
                 if (!runId || visitedRunIds.has(runId)) {
                     return;
                 }
@@ -1088,7 +1087,7 @@
                     componentRunIds.push(currentRunId);
 
                     rows.forEach((otherRun) => {
-                        const otherRunId = normalizeString(otherRun.sourceFragmentationRunId, '');
+                        const otherRunId = normalizeString(otherRun.sourceMorphologyId, '');
                         if (!otherRunId || visitedRunIds.has(otherRunId)) {
                             return;
                         }
@@ -1153,6 +1152,42 @@
         return draftInput;
     }
 
+    function buildOffshoreDetectionRow(topology, candidates, routes, corridors, seaClusterLookups, worldBounds) {
+        const groupId = topology?.islandGroupId;
+        if (!groupId) return null;
+        const islands = topology.islands;
+        const linkedCandidates = (candidates.candidates || []).filter(candidate => candidate.sourceIslandGroupId === groupId);
+        const routesToIslands = (routes.candidateRoutes || []).filter(route =>
+            route.fromIslandGroupId === groupId || route.toIslandGroupId === groupId);
+        const routeIds = uniqueStrings(routesToIslands.map(route => route.routeId).concat(
+            linkedCandidates.flatMap(candidate => candidate.supportingMarineRouteIds)
+        ));
+        const selectedRoutes = new Set(routeIds);
+        const corridorIds = (corridors.macroCorridors || []).filter(corridor =>
+            corridor.supportingRouteIds.some(id => selectedRoutes.has(id))).map(corridor => corridor.corridorId);
+        const flankingBasinIds = uniqueStrings(islands.map(island => island.sourceBasinId));
+        const clusters = flankingBasinIds.flatMap(id => seaClusterLookups.clustersByBasinId.get(id) || []);
+        const cellIndices = islands.flatMap(island => island.cellIndices);
+        const confidence = clampUnitInterval(islands.length / 6, 0);
+        return {
+            sourceMorphologyId: groupId,
+            sourceIslandGroupId: groupId,
+            sourceIslandChainCandidateIds: linkedCandidates.map(candidate => candidate.candidateId),
+            orientation: 'hotspot_drift',
+            candidateCellCount: cellIndices.length,
+            projectedIslandSegmentCount: islands.length,
+            averageScore: confidence,
+            strongestScore: confidence,
+            flankingBasinIds,
+            flankingBasinKinds: uniqueStrings(clusters.map(cluster => cluster.basinType)),
+            linkedSeaRegionClusterIds: uniqueStrings(clusters.map(cluster => cluster.seaRegionClusterId)),
+            linkedSeaRegionIds: uniqueStrings(islands.map(island => island.seaRegionId)),
+            routeIds,
+            corridorIds,
+            geometry: computeCellGeometry(cellIndices, worldBounds)
+        };
+    }
+
     function buildArchipelagoMacroZones(input = {}, dependencyAvailability = {}) {
         const archipelagoFragmentationSummary = findInputIntermediateOutput(input, 'archipelagoFragmentationSummary') || {};
         const seaRegionClustersOutput = findInputIntermediateOutput(input, 'seaRegionClusters') || {};
@@ -1190,8 +1225,13 @@
             supportLookup,
             worldBounds
         );
-        const rowsById = buildLookupById(runRows, 'sourceFragmentationRunId');
+        const topology = findInputIntermediateOutput(input, 'coastalAccessTopology');
+        const offshore = buildOffshoreDetectionRow(
+            topology, islandChainChokepointCandidates, macroRoutes, macroCorridors, seaClusterLookups, worldBounds
+        );
+        const rowsById = buildLookupById(offshore ? runRows.concat(offshore) : runRows, 'sourceMorphologyId');
         const components = collectRunComponents(runRows);
+        if (offshore) components.unshift([offshore.sourceMorphologyId]);
         const macroZones = components.map((componentRunIds, componentIndex) => {
             const componentRuns = componentRunIds
                 .map((runId) => rowsById.get(runId))
@@ -1210,7 +1250,9 @@
             const strongestRunScore = roundValue(
                 componentRuns.reduce((maxValue, run) => Math.max(maxValue, clampUnitInterval(run.strongestScore, 0)), 0)
             );
-            const morphologyType = classifyMorphologyType({
+            const sourceFragmentationRunIds = uniqueStrings(componentRuns.map(run => run.sourceFragmentationRunId));
+            const sourceIslandGroupIds = uniqueStrings(componentRuns.map(run => run.sourceIslandGroupId));
+            const morphologyType = sourceIslandGroupIds.length && projectedIslandSegmentCount <= 3 ? 'chain' : classifyMorphologyType({
                 runCount: componentRuns.length,
                 projectedIslandSegmentCount,
                 uniqueSeaRegionCount: seaRegionIds.length,
@@ -1236,7 +1278,8 @@
             const baseMacroZone = {
                 archipelagoId,
                 morphologyType,
-                sourceFragmentationRunIds: componentRunIds.slice(),
+                sourceFragmentationRunIds,
+                sourceIslandGroupIds,
                 sourceIslandChainCandidateIds,
                 seaRegionClusterIds,
                 seaRegionIds,
@@ -1272,7 +1315,8 @@
             return {
                 archipelagoId,
                 morphologyType,
-                sourceFragmentationRunIds: componentRunIds.slice(),
+                sourceFragmentationRunIds,
+                sourceIslandGroupIds,
                 sourceIslandChainCandidateIds,
                 runCount: componentRuns.length,
                 candidateCellCount: componentRuns.reduce((sum, run) => sum + Math.max(0, normalizeInteger(run.candidateCellCount, 0)), 0),

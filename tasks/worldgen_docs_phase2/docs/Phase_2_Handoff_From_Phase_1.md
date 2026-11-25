@@ -205,3 +205,27 @@ If Phase 2 implementation needs some Phase 1 truth that is not available in the 
 4. resume only after explicit handoff exists.
 
 Missing upstream truth must never be invented locally inside Phase 2.
+
+
+## Foundation Closure record links
+
+`seaRegions[].stormPressure` combines the actual Phase 1 storm corridor field
+over the basin and its hydrosphere roughness. Coastal relief regions cite
+adjacent `seaRegionId` values from spatial contact and measured island landfalls.
+Storm break risk uses those linked sea records, and storm cadence uses the sea
+references on climate bands. Both domains preserve their distinct outputs.
+
+`isolatedZones[].seaRegionIds` can carry canonical sea references measured at
+the underlying coastal nodes. The references support environmental profiles
+for offshore isolation. Empty input remains valid for inland zones.
+
+Pressure and rhythm packages may carry `summaryMetadata.pressure` or
+`summaryMetadata.rhythm` respectively. The generator records the field IDs
+used by its summaries. Every exported regional summary retains the source
+package and canonical record ID.
+
+The capacity for recovery uses the accessible fraction of the relief and the
+freshwater support of its attached catchments. Catchment area limits the
+amount of water available even where runoff stays connected. The synthesized
+readiness field accounts for the interval before stabilization. Local timing
+fields remain directly visible.

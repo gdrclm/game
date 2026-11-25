@@ -4,6 +4,7 @@
     const CONTRACT_ID = 'macroSeedProfile';
     const PHASE_VERSION = macro.phaseVersion || 'phase1-v1';
     const PRESSURE_FIELDS = Object.freeze([
+        'routeFragilityBias',
         'conflictPressure',
         'maritimeDependence',
         'environmentalVolatility',
@@ -375,6 +376,7 @@
             maritimeDependence: normalizedConstraints.maritimeDependence,
             environmentalVolatility: normalizedConstraints.environmentalVolatility,
             coastJaggedness: normalizedConstraints.coastJaggedness,
+            routeFragilityBias: normalizedConstraints.routeFragilityBias,
             collapseIntensity: normalizedConstraints.collapseIntensity
         };
     }
@@ -419,6 +421,7 @@
             maritimeDependence: pickFirstDefined(profileSources, ['maritimeDependence']),
             environmentalVolatility: pickFirstDefined(profileSources, ['environmentalVolatility']),
             coastJaggedness: pickFirstDefined(profileSources, ['coastJaggedness']),
+            routeFragilityBias: pickFirstDefined(profileSources, ['routeFragilityBias']),
             collapseIntensity: pickFirstDefined(profileSources, ['collapseIntensity'])
         }));
     }
@@ -636,6 +639,7 @@
                 type: 'number',
                 range: [0, 1]
             },
+            routeFragilityBias: { type: 'number', range: [0, 1] },
             coastJaggedness: {
                 type: 'number',
                 range: [0, 1]
@@ -662,6 +666,7 @@
                 'maritimeDependence',
                 'environmentalVolatility',
                 'coastJaggedness',
+                'routeFragilityBias',
                 'collapseIntensity'
             ]
         }

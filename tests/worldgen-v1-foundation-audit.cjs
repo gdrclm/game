@@ -1,57 +1,240 @@
 #!/usr/bin/env node
 'use strict';
-// Read-only baseline: official entry points plus diagnostic fallback for unfinished Phase 0.
-const fs=require('node:fs'), vm=require('node:vm'), crypto=require('node:crypto');
-const html=fs.readFileSync('index.html','utf8');
-const p2=['index.js','contracts/index.js','deterministic-rng.js','normalization.js','intake/index.js','binding/index.js','pressure/index.js','recovery/index.js','rhythm/index.js','summaries/index.js','validation/index.js','rebalance/index.js','debug/index.js','export/index.js','orchestration/index.js','tests/index.js'].map(x=>'js/worldgen/phase2/'+x);
-const p01=[...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/g)].map(x=>x[1]).filter(x=>/^js\/worldgen\/(phase0|macro)\//.test(x));
-const ctx=vm.createContext({console,TextEncoder,TextDecoder});
-vm.runInContext('globalThis.window=globalThis; window.Game={systems:{}};',ctx);
-const report={diagnosticOnly:true,revision:process.env.GITHUB_SHA||null,bootErrors:[],checks:[],seeds:[]};
-for(const file of new Set([...p01,...p2]))try{vm.runInContext(fs.readFileSync(file,'utf8'),ctx,{filename:file});}catch(e){report.bootErrors.push({file,error:String(e)});}
-const {worldgenPhase0:a,worldgenMacro:b,worldgenPhase2:c}=ctx.Game.systems;
-const realm=x=>vm.runInContext('JSON.parse('+JSON.stringify(JSON.stringify(x))+')',ctx);
-const hash=x=>crypto.createHash('sha256').update(JSON.stringify(x)).digest('hex');
-const assert=(v,m)=>{if(!v)throw Error(m);};
-function check(name,fn){try{report.checks.push({name,pass:true,details:fn()});}catch(e){report.checks.push({name,pass:false,error:String(e)});}}
-function manual0(seed){
- const n=a.normalizePhase0Input(seed);
- const p=a.buildWorldSeedProfile(n.baseRandomSeed,realm({worldPresetMode:n.worldPresetMode,hardConstraintsProfile:n.hardConstraintsProfile}));
- const t=a.deriveWorldTendencies(p), s=a.deriveWorldSubSeedMap(n.baseRandomSeed,p);
- const v=a.buildPhase0ValidationReport(realm({worldSeedProfile:p,derivedWorldTendencies:t,worldSubSeedMap:s}));
- return a.assemblePhase0Bundle(realm({worldSeedProfile:p,derivedWorldTendencies:t,worldSubSeedMap:s,validationReport:v}));
+
+const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
+const { execFileSync } = require('node:child_process');
+const { mkdirSync, writeFileSync } = require('node:fs');
+const { join } = require('node:path');
+const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
+const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
+
+const canonical = [42, 137, 2026];
+const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
+const expanded = [73537, 16908799, 422095321, 894213317, 1536241709, 2269445513, 3071624507, 4011398309];
+const cohorts = { canonical, holdout, expanded, all: canonical.concat(holdout, expanded) };
+const args = process.argv.slice(2);
+const seeds = [];
+let cohort = 'canonical';
+let snapshots;
+let runCausal = false;
+for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+    if (token === '--cohort') cohort = args[++index];
+    else if (token === '--snapshots') snapshots = args[++index];
+    else if (token === '--causal') runCausal = true;
+    else {
+        assert(/^\d+$/.test(token) && Number(token) <= 0xffffffff, `Expected uint32 seed, got ${token}`);
+        seeds.push(Number(token));
+    }
 }
-check('Phase 0 official entry',()=>{const p=a.createPhase0World(42);a.assertPhase0BundleShape(p);return p.validationReport;});
-check('Phase 0 export validator',()=>{const p=a.createPhase0World(42);const v=a.validatePhase0Export(p);assert(v.isValid===true,'Valid Phase 0 rejected');assert(hash(v)===hash(p.validationReport),'Validation drift');const bad=realm(p);bad.worldSubSeedMap.pressureSeed=(bad.worldSubSeedMap.pressureSeed+1)>>>0;assert(a.validatePhase0Export(bad).isValid===false,'Tampered seed accepted');return v;});
-check('Phase 0 orchestration adapter',()=>{const v=a.createPhase0OrchestrationAdapter().run(42);assert(v.immutable===true&&v.outputs.phase0Bundle.validationReport.isValid,'Invalid freeze wrapper');return Object.keys(v);});
-check('Phase 1 constraints intake',()=>{const p=a.createPhase0World(42);const v=b.intakeMasterConstraints(a.buildPhase1SafeSummaryBundle(p));assert(v.macroSeed===p.worldSubSeedMap.macroGeographySeed,'Macro seed drift');assert(v.coastJaggedness===0.5,'Unexpected default coast constraint');assert(b.ingestMacroSeedProfile(realm({...v,coastJaggedness:0.8})).coastJaggedness===0.8,'Coast constraint lost on intake');return v;});
-check('Hydrosphere namespace contract',()=>{const n=b.buildMacroSubSeedNamespace('hydrosphere','riverBasins','watershed001');assert(n==='macro.hydrosphere.riverBasins.watershed001','Unexpected namespace');assert(b.deriveMacroSubSeed(42,n)===b.deriveMacroSubSeed(42,n),'Non deterministic namespace');return n;});
-check('Maritime demand causal unit',()=>{const z=realm({seaRegionIds:['sea1','sea2'],detectionConfidence:0.7});const supported=realm({routeRows:[{routeMode:'marine_assisted',meanEdgeRouteCost:0.25}],corridorRows:[]});const score=(support,v)=>b.computeArchipelagoSignificanceMetrics(z,support,realm({}),v);const lo=score(supported,0.1),mid=score(supported,0.5),hi=score(supported,0.9);assert(lo.connectiveValue<mid.connectiveValue&&mid.connectiveValue<hi.connectiveValue,'Expected bounded maritime demand effect');assert(lo.fragility===hi.fragility&&lo.contestScore===hi.contestScore,'Independent controls drifted');const empty=realm({routeRows:[]});assert(score(empty,0.1).connectiveValue===score(empty,0.9).connectiveValue,'Unsupported sea influence');return {low:lo.connectiveValue,neutral:mid.connectiveValue,high:hi.connectiveValue};});
-check('Phase 2 built-in harness',()=>{const h=c.runPhase2TestHarness();const result={smoke:h.smokeSuite.summary,regression:h.regressionSuite.summary};assert(h.overallStatus==='pass',JSON.stringify(result));return result;});
-function run(seed){
- let stage='phase0';const row={seed,officialPhase0:false};
- try{
-  let p;try{p=a.createPhase0World(seed);a.assertPhase0BundleShape(p);row.officialPhase0=true;}catch(e){row.officialPhase0Error=String(e);p=manual0(seed);}
-  row.phase0={hash:hash(p),validation:p.validationReport};
-  stage='phase1';
-  const profile=b.intakeMasterConstraints(a.buildPhase1SafeSummaryBundle(p));
-  const m=b.generateMacroGeographyEndToEnd(realm({macroSeed:p.worldSubSeedMap.macroGeographySeed,macroSeedProfile:profile,phase1Constraints:b.normalizePhase1SeedConstraints(profile),includeDebugArtifacts:true,includeCausalDiagnostics:true}));
-  const g=m.macroGeographyPackage;
-  if(m.endToEndDebugExport){fs.mkdirSync('worldgen-observatory-data',{recursive:true});const f='worldgen-observatory-data/seed-'+seed+'.json';if(!fs.existsSync(f))fs.writeFileSync(f,JSON.stringify({schema:'worldgen-observatory-v1',seed,phase0:p,phase1:{macroSeed:m.macroSeed,validationReport:g.validationReport,causalDiagnostics:m.causalDiagnostics,debug:m.endToEndDebugExport}}));}
-  row.phase1={hash:hash(g),validation:g.validationReport,causalDiagnostics:m.causalDiagnostics,counts:Object.fromEntries(['continents','seaRegions','mountainSystems','riverBasins','archipelagoRegions','macroRoutes','chokepoints'].map(k=>[k,g[k]?.length??null]))};
-  stage='phase2';
-  const r=c.createPhase2Engine().run(realm({macroGeographyPackage:g,macroGeographyHandoffPackage:m.macroGeographyHandoffPackage,pressureSeed:p.worldSubSeedMap.pressureSeed,rhythmSeed:p.worldSubSeedMap.rhythmSeed}));
-  const o=r.output;row.phase2={hash:hash([o.pressureFieldPackage,o.environmentalRhythmPackage]),validationStatus:o.validationReport.finalStatus,exported:o.exportResult.exported,validation:o.validationReport,stages:r.stageResults};
- }catch(e){row.error={stage,message:String(e),stack:e.stack?.split('\n').slice(0,5).join('\n')};}
- return row;
+assert(Object.hasOwn(cohorts, cohort), `Unknown cohort ${cohort}`);
+if (!seeds.length) seeds.push(...cohorts[cohort]);
+if (snapshots) mkdirSync(snapshots, { recursive: true });
+
+const systems = loadWorldGen({ includeFixtureHarness: true });
+const { worldgenFoundation, worldgenMacro: macro, worldgenPhase0: phase0, worldgenPhase2: phase2 } = systems;
+const revision = process.env.GITHUB_SHA || execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const report = { schema: 'worldgen-foundation-audit-v2', revision, node: process.version, checks: [], seeds: [] };
+const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const geometry = (debug, id) => debug.intermediateOutputs.find(entry => entry.artifactId === `foundation_geometry_${id}`)?.payload;
+const field = (debug, id) => debug.fieldSnapshots.find(entry => entry.payload.fieldId === id)?.payload;
+const failedChecks = data => Object.values(data || {}).flatMap(section => section?.checks || [])
+    .filter(row => row.status !== 'pass').map(({ checkId, status, details }) => ({ checkId, status, details: details.slice(0, 5) }));
+
+function check(name, run) {
+    try {
+        report.checks.push({ name, pass: true, details: run() });
+    } catch (error) {
+        report.checks.push({ name, pass: false, error: error.stack });
+        console.error(name, error.message);
+    }
 }
-const seeds=process.argv.length>2?process.argv.slice(2).map(Number):[42,137,2026];
-assert(seeds.every(s=>Number.isSafeInteger(s)&&s>=0&&s<=0xffffffff),'Expected uint32 seeds');
-for(const seed of seeds){
- console.error('Auditing seed',seed);
- const first=run(seed),repeat=run(seed);
- report.seeds.push({first,repeat:{error:repeat.error,officialPhase0:repeat.officialPhase0,phase2Exported:repeat.phase2?.exported},determinism:Object.fromEntries(['phase0','phase1','phase2'].map(k=>[k,first[k]&&repeat[k]?first[k].hash===repeat[k].hash:null]))});
+
+check('Phase 0 official intake and seed tamper rejection', () => {
+    const { outputs } = phase0.createPhase0OrchestrationAdapter().run(42);
+    const { phase0Bundle: bundle, phase1SafeSummaryBundle } = outputs;
+    assert(phase0.validatePhase0Export(bundle).isValid);
+    const invalid = structuredClone(bundle);
+    invalid.worldSubSeedMap.pressureSeed = (invalid.worldSubSeedMap.pressureSeed + 1) >>> 0;
+    assert(!phase0.validatePhase0Export(invalid).isValid);
+    const profile = macro.intakeMasterConstraints(phase1SafeSummaryBundle);
+    assert.equal(profile.macroSeed, bundle.worldSubSeedMap.macroGeographySeed);
+    assert.equal(profile.coastJaggedness, 0.5);
+    assert.equal(macro.ingestMacroSeedProfile({ ...profile, coastJaggedness: 0.8 }).coastJaggedness, 0.8);
+    const namespace = macro.buildMacroSubSeedNamespace('hydrosphere', 'riverBasins', 'watershed001');
+    assert.equal(namespace, 'macro.hydrosphere.riverBasins.watershed001');
+    return bundle.validationReport.isValid;
+});
+
+check('Maritime demand requires supported sea routes', () => {
+    const zone = { seaRegionIds: ['sea1', 'sea2'], detectionConfidence: 0.7 };
+    const support = { routeRows: [{ routeMode: 'marine_assisted', meanEdgeRouteCost: 0.25 }], corridorRows: [] };
+    const score = (context, value) => macro.computeArchipelagoSignificanceMetrics(zone, context, {}, value);
+    const low = score(support, 0.1), neutral = score(support, 0.5), high = score(support, 0.9);
+    assert(low.connectiveValue < neutral.connectiveValue && neutral.connectiveValue < high.connectiveValue);
+    assert.equal(low.fragility, high.fragility);
+    assert.equal(low.contestScore, high.contestScore);
+    assert.equal(score({ routeRows: [] }, 0.1).connectiveValue, score({ routeRows: [] }, 0.9).connectiveValue);
+    return [low.connectiveValue, neutral.connectiveValue, high.connectiveValue];
+});
+
+check('Phase 2 fixture harness', () => {
+    const result = phase2.runPhase2TestHarness();
+    assert.equal(result.overallStatus, 'pass');
+    return { smoke: result.smokeSuite.summary, regression: result.regressionSuite.summary };
+});
+
+function inspectGeometry(result) {
+    const debug = result.diagnostics.physicalWorldDebugBundle;
+    macro.assertPhysicalWorldDebugBundle(debug);
+    const mask = field(debug, 'coastJaggednessControlledLandWaterMaskField');
+    const { width, values, threshold } = mask;
+    const isLand = cell => values[cell] >= threshold;
+    const adjacent = (a, b) => Math.abs(a % width - b % width) + Math.abs(Math.floor(a / width) - Math.floor(b / width)) === 1;
+    const topology = geometry(debug, 'coastalAccessTopology');
+    const sea = debug.graphSnapshots.find(snapshot => snapshot.sourceLayerId === 'seaConnectivityGraph').payload;
+    for (const port of topology.ports) {
+        assert(isLand(port.landCellIndex) && !isLand(port.waterCellIndex) && adjacent(port.landCellIndex, port.waterCellIndex), port.coastalNodeId);
+    }
+    for (const edge of sea.edges) {
+        assert(edge.waterPathCellIndices.length > 1, edge.edgeId);
+        edge.waterPathCellIndices.forEach((cell, index, path) => {
+            assert(cell >= 0 && cell < values.length && !isLand(cell), edge.edgeId);
+            if (index > 0) assert(adjacent(cell, path[index - 1]), edge.edgeId);
+        });
+    }
+    const routeIds = new Set(result.phase1.macroGeographyPackage.macroRoutes.map(route => route.routeId));
+    const corridorSummary = geometry(debug, 'macroCorridors').summary;
+    const verifiedPassages = topology.islandPassages.filter(passage =>
+        passage.routeIds.every(id => routeIds.has(id)) && passage.shoreCellIndices.every(isLand)
+        && !isLand(passage.cellIndex) && (passage.bypassTravelCells === null || passage.bypassTravelCells > passage.travelCells)
+    );
+    assert(verifiedPassages.length >= 2, `Need two route-backed constrictions with measured detours, found ${verifiedPassages.length}`);
+    assert(corridorSummary.brittleCorridorCount >= 1 && corridorSummary.redundantCorridorCount >= 1, 'Need brittle and redundant corridors');
+    assert.equal(result.diagnostics.maritime.status, 'pass', 'Maritime diagnostics lack supported cases');
+
+    const watersheds = geometry(debug, 'watershedSegmentation').watersheds;
+    for (const watershed of watersheds) {
+        const remaining = new Set(watershed.cellIndices);
+        const queue = [watershed.cellIndices[0]];
+        remaining.delete(queue[0]);
+        for (let cursor = 0; cursor < queue.length; cursor += 1) {
+            macro.forEachCardinalNeighbor(queue[cursor], width, values.length, neighbor => {
+                if (remaining.delete(neighbor)) queue.push(neighbor);
+            });
+        }
+        assert.equal(remaining.size, 0, `Disconnected watershed ${watershed.watershedId}`);
+    }
+    const shoreline = geometry(debug, 'seaLevelModel');
+    return {
+        landRatio: values.filter(value => value >= threshold).length / values.length,
+        continentCells: geometry(debug, 'continentBodies').continentBodies.map(row => row.cellCount),
+        seaBasinTypes: geometry(debug, 'seaRegionClusters').seaRegionClusters.map(row => row.basinType),
+        islandAreas: topology.islands.map(island => island.cellIndices.length),
+        passageWidths: verifiedPassages.map(passage => passage.widthCells),
+        shorelinePercentile: shoreline.thresholdPercentile,
+        shorelineAttempts: shoreline.shorelineAttempts.length,
+        coastalPorts: topology.ports.length,
+        seaLanes: sea.edges.length,
+        brittleCorridors: corridorSummary.brittleCorridorCount,
+        redundantCorridors: corridorSummary.redundantCorridorCount
+    };
 }
-report.diagnosticPassed=report.bootErrors.length===0&&report.checks.every(x=>x.pass)&&report.seeds.every(x=>!x.first.error&&!x.repeat.error&&x.first.officialPhase0&&x.repeat.officialPhase0&&x.first.phase0.validation?.isValid===true&&x.first.phase1?.validation?.isValid===true&&x.first.phase1?.causalDiagnostics?.status!=='fail'&&x.first.phase2?.exported===true&&x.repeat.phase2Exported===true&&Object.values(x.determinism).every(v=>v===true));
-console.error('FOUNDATION SUMMARY',JSON.stringify({bootErrors:report.bootErrors,checks:report.checks.map(({name,pass,error})=>({name,pass,error})),seeds:report.seeds.map(x=>({seed:x.first.seed,officialPhase0:x.first.officialPhase0,phase0Error:x.first.officialPhase0Error,phase0Valid:x.first.phase0?.validation?.isValid,phase1Counts:x.first.phase1?.counts,phase1Valid:x.first.phase1?.validation?.isValid,causalDiagnostics:x.first.phase1?.causalDiagnostics,phase1Diagnostics:x.first.phase1?.validation?.diagnostics,phase2Status:x.first.phase2?.validationStatus,phase2Exported:x.first.phase2?.exported,phase2FailedChecks:x.first.phase2?.validation?Object.fromEntries(Object.entries(x.first.phase2.validation).filter(([k,v])=>v&&typeof v==='object'&&v.status&&v.status!=='pass').map(([k,v])=>[k,{status:v.status,checks:v.checks?.filter(c=>c.status!=='pass').map(c=>({checkId:c.checkId,status:c.status,message:c.message}))}])):null,error:x.first.error,repeatError:x.repeat.error,determinism:x.determinism})),diagnosticPassed:report.diagnosticPassed}));
-console.log(JSON.stringify(report,null,2));process.exitCode=report.diagnosticPassed?0:1;
+
+function testHandoffs(result) {
+    const { macroGeographyPackage: geography, macroGeographyHandoffPackage: handoff } = result.phase1;
+    const { phase0Bundle } = result.phase0.outputs;
+    assert(Object.isFrozen(phase0Bundle.worldSubSeedMap) && Object.isFrozen(geography.continents[0])
+        && Object.isFrozen(handoff.collapsePressureSeeds) && Object.isFrozen(result.phase2.pressureFieldPackage.domains));
+    assert(!geography.debugArtifacts?.physicalWorldDebugBundle, 'Diagnostics must stay separate from the canonical root package');
+    const { pressureSeed, rhythmSeed } = phase0Bundle.worldSubSeedMap;
+    const args = { macroGeographyHandoffPackage: handoff, pressureSeed, rhythmSeed };
+    const engine = phase2.createPhase2Engine();
+    assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, continents: [] } }), /insufficient_required_root_records/);
+    assert.throws(() => engine.run({
+        ...args, macroGeographyPackage: { ...geography, validationReport: { ...geography.validationReport, isValid: false } }
+    }), /Invalid MacroGeographyPackage intake/);
+    const route = { ...geography.macroRoutes[0], toRegion: 'absent_region' };
+    assert.throws(() => macro.assertFoundationRecordReferences({
+        ...geography, macroRoutes: [route, ...geography.macroRoutes.slice(1)]
+    }), /does not resolve/);
+    const noExport = phase2.createPhase2ExportEnvelopeShell().run({
+        ...result.phase2, validationReport: { ...result.phase2.validationReport, finalStatus: 'fail' }
+    });
+    assert(!noExport.exported && noExport.bundle === null);
+
+    const generate = macro.generateMacroGeographyEndToEnd;
+    const phase2Engine = phase2.createPhase2Engine;
+    let phase2Called = false;
+    try {
+        macro.generateMacroGeographyEndToEnd = () => ({
+            ...result.phase1, macroGeographyPackage: { ...geography, continents: [] }
+        });
+        phase2.createPhase2Engine = () => { phase2Called = true; throw new Error('must not reach Phase 2'); };
+        assert.throws(() => worldgenFoundation.runWorldGenFoundation(phase0Bundle.worldSeedProfile.worldSeed),
+            error => error.name === 'FoundationGenerationError' && error.phase === 'phase1');
+        assert(!phase2Called);
+    } finally {
+        macro.generateMacroGeographyEndToEnd = generate;
+        phase2.createPhase2Engine = phase2Engine;
+    }
+    return { invalidRootRejected: true, unresolvedReferenceRejected: true, invalidExportBlocked: true, noPhase2AfterFailedPhase1: true };
+}
+
+let controlsRun = false;
+for (const seed of seeds) {
+    console.error('Auditing seed', seed);
+    const start = performance.now();
+    let first;
+    try {
+        first = worldgenFoundation.runWorldGenFoundation(seed, { includeDebugArtifacts: true, includeCausalDiagnostics: true });
+        const firstMs = Math.round(performance.now() - start);
+        const rerunStart = performance.now();
+        const repeat = worldgenFoundation.runWorldGenFoundation(seed);
+        const repeatMs = Math.round(performance.now() - rerunStart);
+        const hashes = Object.fromEntries(['phase0', 'phase1', 'phase2'].map(id => [id, hash(first[id])]));
+        const determinism = Object.fromEntries(Object.entries(hashes).map(([id, digest]) => [id, digest === hash(repeat[id])]));
+        assert(Object.values(determinism).every(Boolean), `Determinism failure for seed ${seed}`);
+        const map = inspectGeometry(first);
+        const geography = first.phase1.macroGeographyPackage;
+        report.seeds.push({
+            seed, pass: true, macroSeed: geography.macroSeed, firstMs, repeatMs, hashes, determinism, map,
+            phase1Scores: geography.validationReport.scores, phase1Warnings: geography.validationReport.diagnostics.warnings,
+            counts: Object.fromEntries(Object.entries(geography).filter(([, value]) => Array.isArray(value)).map(([key, value]) => [key, value.length])),
+            phase2: {
+                status: first.phase2.validationReport.finalStatus,
+                bindingTargets: first.phase2.pressureFieldPackage.regionalProfiles.length,
+                recovery: first.phase2.environmentalRhythmPackage.synthesized.recoveryProfile.summary.mean
+            },
+            maritime: first.diagnostics.maritime
+        });
+        if (!controlsRun) {
+            check('Immutable handoffs and fail-closed Phase 2', () => testHandoffs(first));
+            if (runCausal) {
+                const saveStormPair = snapshots ? pair => writeFileSync(
+                    join(snapshots, `counterfactual-${seed}.json`), JSON.stringify({ ...pair, revision })
+                ) : null;
+                check('Fixed-seed upstream interventions', () => runCausalChecks(systems, first, saveStormPair));
+            }
+            controlsRun = true;
+        }
+    } catch (error) {
+        const evidence = error.evidence || first?.diagnostics;
+        report.seeds.push({
+            seed, pass: false, elapsedMs: Math.round(performance.now() - start),
+            phase: error.phase || 'audit', message: error.message, issues: error.cause?.issues,
+            phase1Report: evidence?.phase1Report, phase2Failures: failedChecks(evidence?.phase2Report),
+            maritime: evidence?.maritime
+        });
+        if (snapshots && evidence?.physicalWorldDebugBundle && !first) {
+            writeFileSync(join(snapshots, `seed-${seed}.json`), JSON.stringify({ seed, revision, error: error.message, diagnostics: evidence }));
+        }
+        console.error(seed, error.message);
+    }
+    if (snapshots && first) writeFileSync(join(snapshots, `seed-${seed}.json`), JSON.stringify({ seed, revision, ...first }));
+}
+
+report.diagnosticPassed = controlsRun && report.checks.every(row => row.pass) && report.seeds.every(row => row.pass);
+console.log(JSON.stringify(report, null, 2));
+process.exitCode = report.diagnosticPassed ? 0 : 1;

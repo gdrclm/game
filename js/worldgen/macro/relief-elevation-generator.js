@@ -711,6 +711,7 @@
             plainLowlandSmoothingField: resolveFieldFromInput(input, 'plainLowlandSmoothingField'),
             plateSeedDistribution: resolveIntermediateFromInput(input, 'plateSeedDistribution'),
             basinSeeds: resolveIntermediateFromInput(input, 'basinSeeds'),
+            hotspotVolcanicSeedHelper: resolveIntermediateFromInput(input, 'hotspotVolcanicSeedHelper'),
             mountainBeltCandidates: resolveIntermediateFromInput(input, 'mountainBeltCandidates')
         };
     }
@@ -1934,7 +1935,7 @@
             DEFAULT_LANDMASS_CLEANUP_MASK_THRESHOLD
         );
         const allLandmassComponents = sortLandmassComponents(collectMaskComponents(cleanupMaskValues, width, height, 1));
-        const minimumContinentCellCount = Math.max(12, Math.round(totalCells * 0.025));
+        const minimumContinentCellCount = macro.getContinentMinimumSize(totalCells);
         const selectedComponents = allLandmassComponents.filter((component) => component.cellCount >= minimumContinentCellCount);
         const continentComponents = selectedComponents.length
             ? selectedComponents
@@ -2186,7 +2187,7 @@
         return index >= 0 ? index : RELIEF_REGION_TYPES.length;
     }
 
-    function collectReliefRegionComponents(reliefTypeValues, width, height, minimumReliefRegionCellCount) {
+    function collectReliefRegionComponents(reliefTypeValues, width, height, minimumReliefRegionCellCount, hotspotPeaks) {
         const candidates = [];
 
         RELIEF_REGION_TYPES.forEach((reliefType) => {
@@ -2196,7 +2197,8 @@
                 ? Math.max(6, Math.round(minimumReliefRegionCellCount * 0.55))
                 : minimumReliefRegionCellCount;
             components
-                .filter((component) => component.cellCount >= typeMinimum)
+                .filter(component => component.cellCount >= typeMinimum
+                    || component.cellCount >= 7 && component.cells.some(cell => hotspotPeaks.has(cell)))
                 .forEach((component) => {
                     candidates.push({
                         reliefType,
@@ -2509,11 +2511,10 @@
         });
 
         const minimumReliefRegionCellCount = Math.max(8, Math.round(totalCells * 0.006));
+        const hotspotPeaks = new Set(sourceInputs.seaLevelAppliedElevationField.seaLevelModel?.hotspotChain?.peaks
+            .map(peak => peak.cellIndex) || []);
         const reliefRegionCandidates = collectReliefRegionComponents(
-            reliefTypeValues,
-            width,
-            height,
-            minimumReliefRegionCellCount
+            reliefTypeValues, width, height, minimumReliefRegionCellCount, hotspotPeaks
         );
         const continentMembership = buildContinentMembershipLookup(sourceInputs.continentBodies);
         const reliefRegionBodies = reliefRegionCandidates.map((candidate, regionIndex) => summarizeReliefRegionComponent(
@@ -2562,7 +2563,7 @@
                 reliefRegionCount: reliefRegions.length,
                 typeCellCounts: cloneValue(typeCellCounts),
                 typeCounts,
-                outputPolicy: 'large connected relief-region records only; no climate classification, local biome placement, or terrain-cell emission'
+                outputPolicy: 'connected relief regions with supported offshore peaks retained at island scale'
             },
             reliefRegions,
             reliefRegionBodies
@@ -3372,16 +3373,15 @@
             0
         ));
         const percentileBias = 0.5 + ((hashUnit(seed ^ 0x27d4eb2d, width, height) - 0.5) * 0.12);
-        const sortedValues = blendedValues.slice().sort((left, right) => left - right);
-        const thresholdIndex = Math.max(0, Math.min(
-            sortedValues.length - 1,
-            Math.floor((sortedValues.length - 1) * percentileBias)
-        ));
-        const seaLevelThreshold = clampUnitInterval(sortedValues[thresholdIndex], 0.5);
+        const shoreline = macro.selectContinentalShoreline(blendedValues, worldBounds, percentileBias, collectMaskComponents);
+        const seaLevelThreshold = shoreline.cutoff;
+        const { elevation, hotspotChain } = macro.raiseOffshoreHotspotChain(
+            blendedValues, shoreline, worldBounds, sourceInputs.hotspotVolcanicSeedHelper?.hotspotSeeds, collectMaskComponents
+        );
         let landCellCount = 0;
         let waterCellCount = 0;
 
-        blendedValues.forEach((value, index) => {
+        elevation.forEach((value, index) => {
             const postSeaLevelValue = value <= seaLevelThreshold
                 ? 0
                 : clampUnitInterval(
@@ -3405,7 +3405,9 @@
             componentWeights,
             preThresholdStats: buildFieldStats(blendedValues),
             seaLevelThreshold: roundFieldValue(seaLevelThreshold),
-            thresholdPercentile: roundFieldValue(percentileBias),
+            thresholdPercentile: roundFieldValue(shoreline.percentile),
+            shorelineAttempts: shoreline.attempts,
+            hotspotChain,
             landCellCount,
             waterCellCount,
             landRatio: roundFieldValue(landCellCount / Math.max(1, blendedValues.length)),
@@ -3472,9 +3474,12 @@
         let filledWaterCells = 0;
         let neighborFlips = 0;
 
+        const hotspotPeaks = new Set(sourceInputs.seaLevelAppliedElevationField.seaLevelModel?.hotspotChain?.peaks
+            .map(peak => peak.cellIndex) || []);
         const landComponents = collectMaskComponents(values, width, height, 1);
         landComponents.forEach((component) => {
-            if (component.touchesBorder || component.cellCount > minLandArtifactCells) {
+            const supportedIsland = component.cellCount >= 7 && component.cells.some(cell => hotspotPeaks.has(cell));
+            if (component.touchesBorder || component.cellCount > minLandArtifactCells || supportedIsland) {
                 return;
             }
 
@@ -6453,6 +6458,7 @@
         generateBasinDepressionField,
         generatePlateauCandidateField,
         generateSeaLevelAppliedElevationField,
+        collectLandWaterComponents: collectMaskComponents,
         generateLandWaterMaskField,
         generateLandmassCleanupMaskField,
         generateLandmassShapeInterestScores,

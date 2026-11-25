@@ -1869,33 +1869,26 @@
         return assignments;
     }
 
-    function buildWatershedGroups(assignments = []) {
-        const groups = new Map();
-
-        assignments.forEach((assignmentId, cellIndex) => {
-            if (!assignmentId) {
-                return;
-            }
-
-            if (!groups.has(assignmentId)) {
-                groups.set(assignmentId, []);
-            }
-
-            groups.get(assignmentId).push(cellIndex);
-        });
-
-        return Array.from(groups.entries())
-            .map(([assignmentId, cellIndices]) => ({
-                assignmentId,
-                cellIndices
-            }))
-            .sort((left, right) => {
-                if (right.cellIndices.length !== left.cellIndices.length) {
-                    return right.cellIndices.length - left.cellIndices.length;
+    function buildWatershedGroups(assignments, { width, height }) {
+        const groups = [];
+        const visited = new Uint8Array(assignments.length);
+        for (const [index, assignmentId] of assignments.entries()) {
+            if (!assignmentId || visited[index]) continue;
+            const cellIndices = [index];
+            visited[index] = 1;
+            for (let cursor = 0; cursor < cellIndices.length; cursor += 1) {
+                for (const neighbor of getNeighborIndices(cellIndices[cursor], width, height)) {
+                    if (assignments[neighbor] === assignmentId && !visited[neighbor]) {
+                        visited[neighbor] = 1;
+                        cellIndices.push(neighbor);
+                    }
                 }
-
-                return left.assignmentId.localeCompare(right.assignmentId);
-            });
+            }
+            groups.push({ assignmentId, cellIndices });
+        }
+        // Sharing an outlet sea does not make disconnected land a shared catchment.
+        return groups.sort((a, b) => b.cellIndices.length - a.cellIndices.length
+            || a.assignmentId.localeCompare(b.assignmentId) || a.cellIndices[0] - b.cellIndices[0]);
     }
 
     function summarizeWatershedCells(cellIndices = [], worldBounds = DEFAULT_WORLD_BOUNDS) {
@@ -2086,7 +2079,7 @@
         const stageNamespace = buildNamespace(PIPELINE_STEP_ID, 'riverBasins');
         const stageSeed = deriveSubSeed(normalizedInput.macroSeed, stageNamespace);
         const assignments = buildWatershedAssignments(landCells, waterBasinLookup, worldBounds);
-        const watershedGroups = buildWatershedGroups(assignments);
+        const watershedGroups = buildWatershedGroups(assignments, worldBounds);
         const fields = {
             seaLevelField,
             basinDepressionField,

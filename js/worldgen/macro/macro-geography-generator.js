@@ -461,6 +461,20 @@
                 || normalizeString(row.type, '').includes('disputed')
             )
         });
+        const routeFragilityBias = clampUnitInterval(
+            input.phase1Constraints?.routeFragilityBias ?? input.macroSeedProfile?.routeFragilityBias, 0.5
+        );
+        const routeCascadeProfiles = macroRoutes.map(route => {
+            const redundancy = clampUnitInterval(route.redundancy, 0);
+            const physicalFragility = clampUnitInterval(route.fragility, 0);
+            const exposure = physicalFragility * (1 - redundancy);
+            return {
+                routeId: route.routeId,
+                physicalFragility,
+                redundancy,
+                susceptibility: clampUnitInterval(physicalFragility + (2 * routeFragilityBias - 1) * 0.15 * exposure, 0)
+            };
+        });
         const routeCascadeCandidates = uniqueStrings(
             buildScopedIds(macroCorridors, {
                 scope: 'macroCorridor',
@@ -552,6 +566,7 @@
             },
             collapsePressureSeeds: {
                 routeCascadeCandidates,
+                routeCascadeProfiles,
                 specialistLossSensitiveRegions,
                 peripheryLossCandidates,
                 archipelagoCollapseSensitivity: clampUnitInterval(
@@ -745,7 +760,7 @@
                 macroGeographyHandoffPackage
             })
             : null;
-        const finalMacroGeographyPackage = endToEndDebugExport
+        const finalMacroGeographyPackage = endToEndDebugExport && input.attachDebugToPackage !== false
             ? macro.buildMacroGeographyPackage({
                 ...packageInput,
                 debugArtifacts: {

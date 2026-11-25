@@ -2596,6 +2596,7 @@
         const waterStress = meanByRecordIds(context.hydrologyScores.waterStress, riverBasinIds);
         const droughtPressureContext = meanByRecordIds(context.hydrologyScores.droughtPressure, riverBasinIds);
         const floodInstabilityContext = meanByRecordIds(context.hydrologyScores.floodInstability, riverBasinIds);
+        const seaStormPressure = meanByRecordIds(context.seaStormPressure, adjacentSeaRegionIds);
         const maritimeAdjacency = clamp01(adjacentSeaRegionIds.length ? Math.min(1, adjacentSeaRegionIds.length / 2) : 0);
 
         const activityBias = mean(linkedVolcanicZones.map((zone) => clamp01(zone.activityBias)));
@@ -2608,7 +2609,7 @@
         const stormBreakRiskBase = clamp01(
             (climateExposurePressure * 0.46)
             + (floodInstabilityContext * 0.18)
-            + (maritimeAdjacency * 0.18)
+            + (maritimeAdjacency * (0.06 + seaStormPressure * 0.24))
             + (waterStress * 0.06)
         );
         const volcanicInstabilityBase = clamp01(
@@ -2734,6 +2735,7 @@
             droughtPressureContext: roundValue(droughtPressureContext),
             floodInstabilityContext: roundValue(floodInstabilityContext),
             maritimeAdjacency: roundValue(maritimeAdjacency),
+            seaStormPressure: roundValue(seaStormPressure),
             volcanicActivityBias: roundValue(activityBias),
             volcanicZoneContinuity: roundValue(zoneContinuity),
             stormSpecificity: roundValue(stormSpecificity),
@@ -2768,6 +2770,7 @@
                 droughtPressureContext: signals.droughtPressureContext || 0,
                 floodInstabilityContext: signals.floodInstabilityContext || 0,
                 volcanicActivityBias: signals.volcanicActivityBias || 0,
+                seaStormPressure: signals.seaStormPressure || 0,
                 stormSpecificity: signals.stormSpecificity || 0,
                 volcanicSpecificity: signals.volcanicSpecificity || 0,
                 floodSpecificity: signals.floodSpecificity || 0,
@@ -4102,6 +4105,7 @@
                 const climateBands = resolveClimateBands(input);
                 const riverBasins = resolveRiverBasins(input);
                 const volcanicZones = resolveVolcanicZones(input);
+                const seaRegions = resolveSeaRegions(input);
                 const recordBindingContextId = resolveBindingContextId(input);
                 const climateOutput = createClimateBurdenInterpreter({
                     deterministicSeed: generatorSeed
@@ -4137,6 +4141,7 @@
                 const context = {
                     climateBandIdsByReliefRegion,
                     riverBasinIdsByReliefRegion,
+                    seaStormPressure: Object.fromEntries(seaRegions.map(sea => [sea.seaRegionId, sea.stormPressure])),
                     volcanicZonesByReliefRegion: buildVolcanicZoneIndexByReliefRegion(volcanicZones),
                     climateScores: {
                         climateExposurePressure: createScoreMap(climateOutput.domain.climateExposurePressure.perBandScores)

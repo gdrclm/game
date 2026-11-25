@@ -409,7 +409,7 @@
                 artifactKind: 'graphSnapshot',
                 stageId: 'connectivityGraph',
                 sourceLayerId: outputId,
-                payload: summarizeValue(graph)
+                payload: { ...summarizeValue(graph), nodes: graph.nodes, edges: graph.edges, summary: graph.summary }
             }, 'graphSnapshots'));
         });
 
@@ -772,6 +772,8 @@
             collectStageDebugArtifacts(stageId, stageBundle, categories);
             collectStageOutputSummaries(stageId, stageBundle, categories.intermediateOutputs);
         });
+
+        macro.buildFoundationSpatialDebug(normalizedInput, createArtifactEntry, categories);
 
         const debugBundle = createPhysicalWorldDebugBundleSkeleton({
             macroSeed: normalizeSeed(

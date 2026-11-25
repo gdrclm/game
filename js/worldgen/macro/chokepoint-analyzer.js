@@ -821,6 +821,39 @@
         };
     }
 
+    function buildMeasuredIslandPassageCandidates(topology, macroCorridors) {
+        const scale = Math.min(topology?.worldBounds?.width || 128, topology?.worldBounds?.height || 128);
+        const corridorById = buildLookupById(macroCorridors?.macroCorridors, 'corridorId');
+        return (topology?.islandPassages || []).map(passage => {
+            const narrowness = clampUnitInterval(1 - passage.widthCells / (scale * 0.13), 0);
+            const bypassDifficulty = passage.bypassTravelCells === null ? 1
+                : clampUnitInterval((passage.bypassTravelCells - passage.travelCells) / passage.travelCells, 0);
+            const linkedCorridors = passage.corridorIds.map(id => corridorById.get(id)).filter(Boolean);
+            const tradeDependency = roundValue(computeMean(linkedCorridors.map(corridor => corridor.routeDependenceScore)));
+            const controlValue = roundValue(narrowness * 0.55 + bypassDifficulty * 0.25 + tradeDependency * 0.2);
+            const collapseSensitivity = roundValue((bypassDifficulty + tradeDependency) / 2);
+            return {
+                candidateId: passage.passageId,
+                sourceIslandGroupId: passage.islandGroupId,
+                sourcePassageId: passage.passageId,
+                cellIndex: passage.cellIndex,
+                widthCells: passage.widthCells,
+                chokepointType: 'island_chain_lock',
+                lockClass: classifyIslandChainLockClass(controlValue, tradeDependency, bypassDifficulty, collapseSensitivity),
+                supportingMarineRouteIds: passage.routeIds,
+                supportingMarineCorridorIds: passage.corridorIds,
+                supportingSeaEdgeIds: [passage.seaEdgeId],
+                matchedSeaRegionIds: passage.seaRegionIds,
+                seaGraphMatchMode: 'measured_navigable_passage',
+                adjacentRegions: passage.seaRegionIds,
+                controlValue,
+                tradeDependency,
+                bypassDifficulty,
+                collapseSensitivity
+            };
+        });
+    }
+
     function buildIslandChainChokepointCandidates(input = {}, dependencyAvailability = {}) {
         const archipelagoFragmentationSummary = findInputIntermediateOutput(input, 'archipelagoFragmentationSummary');
         const seaConnectivityGraph = findInputIntermediateOutput(input, 'seaConnectivityGraph');
@@ -832,7 +865,8 @@
         const seaGraphContext = buildSeaGraphContext(seaConnectivityGraph);
         const routeSupportContext = buildIslandChainRouteSupport(macroRoutes, macroCorridors);
 
-        const candidates = fragmentationRuns.map((fragmentationRun, candidateIndex) => {
+        const topology = findInputIntermediateOutput(input, 'coastalAccessTopology');
+        const candidates = fragmentationRuns.filter(run => run.acceptedAsIslandGroup !== false).map((fragmentationRun, candidateIndex) => {
             const seaGraphMatch = resolveIslandChainSeaGraphMatches(fragmentationRun, seaGraphContext);
             const normalizedCandidateCellCount = Math.max(1, normalizeInteger(fragmentationRun.candidateCellCount, 1));
             const projectedIslandSegmentCount = Math.max(1, normalizeInteger(fragmentationRun.projectedIslandSegmentCount, 1));
@@ -972,6 +1006,7 @@
             };
         });
 
+        candidates.push(...buildMeasuredIslandPassageCandidates(topology, macroCorridors));
         return {
             outputId: ISLAND_CHAIN_CANDIDATES_OUTPUT_ID,
             stageId: ISLAND_CHAIN_DETECTION_STAGE_ID,
@@ -996,8 +1031,8 @@
             summary: {
                 fragmentationRunHintCount: fragmentationRuns.length,
                 islandChainLockCandidateCount: candidates.length,
-                linkedSeaGraphCandidateCount: candidates.filter((candidate) => candidate.matchedSeaNodeIds.length > 0).length,
-                routeBackedCandidateCount: candidates.filter((candidate) => candidate.marineCorridorSupportCount > 0 || candidate.marineRouteSupportCount > 0).length,
+                linkedSeaGraphCandidateCount: candidates.filter((candidate) => (candidate.matchedSeaNodeIds || candidate.matchedSeaRegionIds).length > 0).length,
+                routeBackedCandidateCount: candidates.filter((candidate) => candidate.supportingMarineCorridorIds.length > 0 || candidate.supportingMarineRouteIds.length > 0).length,
                 strongestControlValue: candidates.reduce((maxValue, candidate) => Math.max(maxValue, clampUnitInterval(candidate.controlValue, 0)), 0),
                 strongestTradeDependency: candidates.reduce((maxValue, candidate) => Math.max(maxValue, clampUnitInterval(candidate.tradeDependency, 0)), 0),
                 strongestBypassDifficulty: candidates.reduce((maxValue, candidate) => Math.max(maxValue, clampUnitInterval(candidate.bypassDifficulty, 0)), 0),
@@ -1427,7 +1462,7 @@
             familyId,
             sourceOutputId: normalizeString(sourceOutputId, ''),
             sourceReferenceId: normalizeString(
-                candidate.sourceStraitPassageId,
+                candidate.sourcePassageId || candidate.sourceStraitPassageId,
                 normalizeString(
                     candidate.sourceFragmentationRunId,
                     normalizeString(candidate.sourceLandEdgeId, '')

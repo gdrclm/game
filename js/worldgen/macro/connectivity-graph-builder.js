@@ -663,7 +663,7 @@
         ]));
         const connectivityFriction = roundValue(1 - clampUnitInterval(edge.coarseConnectivityStrength, 0));
         const edgeType = normalizeString(edge.edgeType, '');
-        const isMarineEdge = edgeType === 'interbasin_link' || edgeType === 'coastal_sea_attachment';
+        const isMarineEdge = edge.seaGraphEdge === true;
         const isTransitionEdge = edgeType === 'land_sea_transition';
         const isCoastalEdge = edgeType.indexOf('coastal') >= 0 || isTransitionEdge;
         const baseRouteCost = roundValue(
@@ -671,6 +671,7 @@
                 : edgeType === 'coastal_terminal_attachment' ? 0.32
                 : edgeType === 'interbasin_link' ? 0.38
                 : edgeType === 'coastal_sea_attachment' ? 0.34
+                : edgeType === 'navigable_sea_lane' ? 0.08 + edge.distanceRatio * 0.6
                 : isTransitionEdge ? 0.44
                 : 0.3
         );
@@ -858,6 +859,7 @@
             entry.node.nodeRole === 'major_inland_node' || entry.routeEndpointScore >= 0.62
         ));
         const endpointPool = majorPool.length >= 2 ? majorPool : inlandNodes;
+        const islandEndpoints = hybridNodes.filter(node => node.nodeRole === 'coastal_sea_terminal' && node.islandId);
         const selectedEntries = [];
         const selectedNodeIds = new Set();
         const coveredContinents = new Set();
@@ -881,6 +883,11 @@
             if (continentId) {
                 coveredContinents.add(continentId);
             }
+        });
+
+        islandEndpoints.slice(0, Math.max(0, endpointLimit - selectedEntries.length)).forEach(node => {
+            selectedEntries.push({ node, routeEndpointScore: node.coastalOpportunityScore, selectionReason: 'island_landfall' });
+            selectedNodeIds.add(node.nodeId);
         });
 
         endpointPool.forEach((entry) => {
@@ -913,6 +920,9 @@
             endpointId: `route_endpoint_${normalizeString(entry.node.sourceRegionalSegmentId, normalizeString(entry.node.nodeId, 'unknown'))}`,
             nodeId: normalizeString(entry.node.nodeId, ''),
             nodeRole: normalizeString(entry.node.nodeRole, ''),
+            seaRegionId: normalizeString(entry.node.seaRegionId, ''),
+            reliefRegionId: normalizeString(entry.node.reliefRegionId, ''),
+            islandGroupId: normalizeString(entry.node.islandGroupId, ''),
             continentId: normalizeString(entry.node.continentId, ''),
             sourceRegionalSegmentId: normalizeString(entry.node.sourceRegionalSegmentId, ''),
             routeEndpointScore: entry.routeEndpointScore,
@@ -1131,11 +1141,17 @@
         const edgeCostLookup = buildLookupById(routeCostSurface && routeCostSurface.edgeCosts, 'edgeId');
         const candidateRoutes = [];
         let unreachablePairCount = 0;
+        let sameRegionPairCount = 0;
 
         for (let leftIndex = 0; leftIndex < majorRouteEndpoints.length; leftIndex += 1) {
             for (let rightIndex = leftIndex + 1; rightIndex < majorRouteEndpoints.length; rightIndex += 1) {
                 const leftEndpoint = majorRouteEndpoints[leftIndex];
                 const rightEndpoint = majorRouteEndpoints[rightIndex];
+                if (leftEndpoint.continentId && leftEndpoint.continentId === rightEndpoint.continentId
+                    && (!leftEndpoint.reliefRegionId || !rightEndpoint.reliefRegionId || leftEndpoint.reliefRegionId === rightEndpoint.reliefRegionId)) {
+                    sameRegionPairCount += 1;
+                    continue;
+                }
                 const sampledRoute = sampleRouteBetweenEndpoints(leftEndpoint, rightEndpoint, adjacency);
 
                 if (!sampledRoute) {
@@ -1167,6 +1183,12 @@
                     toEndpointId: normalizeString(rightEndpoint.endpointId, ''),
                     fromNodeId: normalizeString(leftEndpoint.nodeId, ''),
                     toNodeId: normalizeString(rightEndpoint.nodeId, ''),
+                    fromReliefRegionId: leftEndpoint.reliefRegionId,
+                    toReliefRegionId: rightEndpoint.reliefRegionId,
+                    fromSeaRegionId: leftEndpoint.seaRegionId,
+                    toSeaRegionId: rightEndpoint.seaRegionId,
+                    fromIslandGroupId: leftEndpoint.islandGroupId,
+                    toIslandGroupId: rightEndpoint.islandGroupId,
                     fromContinentId: normalizeString(leftEndpoint.continentId, ''),
                     toContinentId: normalizeString(rightEndpoint.continentId, ''),
                     fromRegionalSegmentId: normalizeString(leftEndpoint.sourceRegionalSegmentId, ''),
@@ -1178,6 +1200,9 @@
                         .map((node) => normalizeString(node.sourceCoastalNodeId, ''))
                         .filter(Boolean)
                         .sort(),
+                    regionPathIds: [...new Set(nodePath.flatMap(node => [
+                        node.continentId, node.reliefRegionId, node.seaRegionId
+                    ]).filter(Boolean))],
                     hopCount: sampledRoute.hopCount,
                     totalRouteCost: sampledRoute.totalRouteCost,
                     meanEdgeRouteCost,
@@ -1221,6 +1246,7 @@
                 candidatePairCount: pairCount,
                 sampledRouteCount: candidateRoutes.length,
                 unreachablePairCount,
+                sameRegionPairCount,
                 meanSampledRouteCost: totalRouteCosts.length ? roundMetric(computeMean(totalRouteCosts)) : 0,
                 landOnlyRouteCount: candidateRoutes.filter((route) => route.routeMode === 'land_only').length,
                 marineAssistedRouteCount: candidateRoutes.filter((route) => route.routeMode === 'marine_assisted').length,
@@ -1310,7 +1336,7 @@
         ));
     }
 
-    function analyzeCorridorDependence(corridor = {}, macroRoutes = {}, hybridConnectivityGraph = {}, routeCostSurface = {}) {
+    function analyzeCorridorDependence(corridor = {}, macroRoutes = {}, hybridConnectivityGraph = {}, routeCostSurface = {}, passage) {
         const candidateRoutes = Array.isArray(macroRoutes && macroRoutes.candidateRoutes)
             ? macroRoutes.candidateRoutes
             : [];
@@ -1320,6 +1346,12 @@
                 .map((edgeId) => normalizeString(edgeId, ''))
                 .filter(Boolean)
         );
+        if (passage) {
+            const closedCells = new Set(passage.restrictedCellIndices);
+            for (const edge of hybridConnectivityGraph.edges) {
+                if (edge.waterPathCellIndices?.some(cell => closedCells.has(cell))) excludedEdgeIdSet.add(edge.edgeId);
+            }
+        }
         const affectedRoutes = candidateRoutes.filter((route) => (
             Array.isArray(route.edgePathIds)
                 ? route.edgePathIds.some((edgeId) => excludedEdgeIdSet.has(normalizeString(edgeId, '')))
@@ -1450,7 +1482,7 @@
         };
     }
 
-    function buildMacroCorridors(macroRoutes = {}, hybridConnectivityGraph = {}, routeCostSurface = {}) {
+    function buildMacroCorridors(macroRoutes = {}, hybridConnectivityGraph = {}, routeCostSurface = {}, islandPassages = []) {
         const candidateRoutes = Array.isArray(macroRoutes && macroRoutes.candidateRoutes)
             ? macroRoutes.candidateRoutes
             : [];
@@ -1484,6 +1516,7 @@
             });
         });
 
+        const passageByEdgeId = new Map(islandPassages.map(passage => [passage.hybridEdgeId, passage]));
         const maxRouteCount = Math.max(1, candidateRoutes.length);
         const qualifyingEdges = Array.from(edgeSupportByEdgeId.values())
             .map((edgeSupport) => {
@@ -1508,7 +1541,7 @@
                     edgeCost
                 };
             })
-            .filter((edgeSupport) => edgeSupport.usageCount >= 2 || edgeSupport.supportScore >= 0.42)
+            .filter(edgeSupport => passageByEdgeId.has(edgeSupport.edgeId) || edgeSupport.usageCount >= 2 || edgeSupport.supportScore >= 0.42)
             .sort((left, right) => (
                 right.supportScore - left.supportScore
                 || right.usageCount - left.usageCount
@@ -1561,9 +1594,10 @@
                 const toNodeId = normalizeString(getNestedValue(currentEdgeSupport.edge, 'toNodeId'), '');
                 [fromNodeId, toNodeId].filter(Boolean).forEach((nodeId) => {
                     corridorNodeIds.add(nodeId);
+                    if (passageByEdgeId.has(currentEdgeId)) return;
                     const connectedEdgeIds = nodeToEdgeIds.get(nodeId) || [];
                     connectedEdgeIds.forEach((connectedEdgeId) => {
-                        if (!visitedEdgeIds.has(connectedEdgeId)) {
+                        if (!passageByEdgeId.has(connectedEdgeId) && !visitedEdgeIds.has(connectedEdgeId)) {
                             edgeQueue.push(connectedEdgeId);
                         }
                     });
@@ -1625,7 +1659,8 @@
 
         const classifiedCorridors = corridors.map((corridor) => ({
             ...corridor,
-            ...analyzeCorridorDependence(corridor, macroRoutes, hybridConnectivityGraph, routeCostSurface)
+            ...analyzeCorridorDependence(corridor, macroRoutes, hybridConnectivityGraph, routeCostSurface,
+                passageByEdgeId.get(corridor.corridorEdgeIds[0]))
         }));
 
         classifiedCorridors.sort((left, right) => (
@@ -1738,12 +1773,14 @@
     }
 
     function selectBestCoastalAttachmentSegment(coastalNode = {}, inlandNodes = []) {
+        if (coastalNode.islandId) return null;
         const preferredCandidates = inlandNodes.filter((inlandNode) => (
             coastalNode.continentId
                 ? inlandNode.continentId === coastalNode.continentId
                 : true
         ));
-        const candidates = preferredCandidates.length ? preferredCandidates : inlandNodes.slice();
+        const candidates = coastalNode.landCellIndex === undefined && !preferredCandidates.length
+            ? inlandNodes : preferredCandidates;
         let bestMatch = null;
 
         candidates.forEach((candidate) => {
@@ -1773,6 +1810,8 @@
                 attachment ? normalizeString(attachment.node.continentId, '') : ''
             ),
             seaRegionClusterId: normalizeString(coastalNode.seaRegionClusterId, ''),
+            seaRegionId: coastalNode.seaRegionId || '',
+            landCellIndex: coastalNode.landCellIndex,
             basinType: normalizeString(coastalNode.basinType, ''),
             anchorCellIndex: normalizeInteger(coastalNode.anchorCellIndex, -1),
             anchorPoint: cloneValue(coastalNode.anchorPoint || {}),
@@ -2067,6 +2106,11 @@
             nodeId: `sea_terminal_${normalizeString(coastalNode.coastalNodeId, 'unknown')}`,
             nodeType: 'coastal_terminal',
             nodeRole: 'coastal_sea_terminal',
+            waterCellIndex: coastalNode.waterCellIndex,
+            islandId: coastalNode.islandId || '',
+            reliefRegionId: coastalNode.reliefRegionId || '',
+            islandGroupId: coastalNode.islandGroupId || '',
+            seaRegionId: seaRegionNode.seaRegionId,
             sourceCoastalNodeId: normalizeString(coastalNode.coastalNodeId, ''),
             seaRegionClusterId: normalizeString(coastalNode.seaRegionClusterId, normalizeString(seaRegionNode.seaRegionClusterId, '')),
             basinType: normalizeString(coastalNode.basinType, normalizeString(seaRegionNode.basinType, '')),
@@ -2271,7 +2315,7 @@
         };
     }
 
-    function buildLandConnectivityGraph(input = {}, dependencyAvailability = {}) {
+    function buildLandConnectivityGraph(input = {}, dependencyAvailability = {}, accessTopology = null) {
         const regionalSegmentationAnalysis = findInputIntermediateOutput(input, 'regionalSegmentationAnalysis');
         const continentalCohesionSummaries = findInputIntermediateOutput(input, 'continentalCohesionSummaries');
         const corePotentialAnalysis = findInputIntermediateOutput(input, 'corePotentialAnalysis');
@@ -2295,16 +2339,26 @@
             continentalCohesionSummaries && continentalCohesionSummaries.continentSummaries,
             'continentId'
         );
-        const inlandNodes = regionalSegments.map((segment) => createInlandLandNode(
+        const reliefByCell = [];
+        for (const region of findInputIntermediateOutput(input, 'reliefRegionExtraction')?.reliefRegionBodies || []) {
+            for (const cell of region.cellIndices) reliefByCell[cell] = region.reliefRegionId;
+        }
+        const inlandNodes = regionalSegments.map(segment => {
+            const regionCounts = new Map();
+            for (const cell of segment.cellIndices || []) {
+                const id = reliefByCell[cell];
+                if (id) regionCounts.set(id, (regionCounts.get(id) || 0) + 1);
+            }
+            const [primary] = [...regionCounts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+            return { ...createInlandLandNode(
             segment,
             segmentPotentialLookup.get(normalizeString(segment.regionalSegmentId, '')) || {},
             segmentPeripheryLookup.get(normalizeString(segment.regionalSegmentId, '')) || {},
-            continentSummaryLookup.get(normalizeString(segment.continentId, '')) || {}
-        ));
+                continentSummaryLookup.get(normalizeString(segment.continentId, '')) || {}
+            ), reliefRegionId: primary?.[0] || '' };
+        });
         const interRegionalEdges = buildInterRegionalLandEdges(inlandNodes);
-        const exceptionalCoastalNodes = Array.isArray(exceptionalCoastalNodesOutput && exceptionalCoastalNodesOutput.exceptionalCoastalNodes)
-            ? exceptionalCoastalNodesOutput.exceptionalCoastalNodes
-            : [];
+        const exceptionalCoastalNodes = accessTopology?.ports || exceptionalCoastalNodesOutput?.exceptionalCoastalNodes || [];
         const coastalTerminalNodes = exceptionalCoastalNodes.map((coastalNode) => {
             const attachment = selectBestCoastalAttachmentSegment(coastalNode, inlandNodes);
             return createCoastalTerminalNode(coastalNode, attachment);
@@ -2370,7 +2424,7 @@
         };
     }
 
-    function buildSeaConnectivityGraph(input = {}, dependencyAvailability = {}) {
+    function buildSeaConnectivityGraph(input = {}, dependencyAvailability = {}, accessTopology = null, mask = null) {
         const seaRegionClustersOutput = findInputIntermediateOutput(input, 'seaRegionClusters');
         const seaNavigabilityTagging = findInputIntermediateOutput(input, 'seaNavigabilityTagging');
         const exceptionalCoastalNodesOutput = findInputIntermediateOutput(input, 'exceptionalCoastalNodes');
@@ -2385,10 +2439,8 @@
             coastalProfileLookup.get(normalizeString(cluster.seaRegionClusterId, '')) || {}
         ));
         const seaRegionNodeLookup = buildLookupById(seaRegionNodes, 'seaRegionClusterId');
-        const interBasinEdges = buildInterBasinSeaEdges(seaRegionNodes);
-        const exceptionalCoastalNodes = Array.isArray(exceptionalCoastalNodesOutput && exceptionalCoastalNodesOutput.exceptionalCoastalNodes)
-            ? exceptionalCoastalNodesOutput.exceptionalCoastalNodes
-            : [];
+        const interBasinEdges = accessTopology ? [] : buildInterBasinSeaEdges(seaRegionNodes);
+        const exceptionalCoastalNodes = accessTopology?.ports || exceptionalCoastalNodesOutput?.exceptionalCoastalNodes || [];
         const matchedCoastalNodes = exceptionalCoastalNodes.filter((coastalNode) => (
             seaRegionNodeLookup.has(normalizeString(coastalNode.seaRegionClusterId, ''))
         ));
@@ -2396,10 +2448,12 @@
             coastalNode,
             seaRegionNodeLookup.get(normalizeString(coastalNode.seaRegionClusterId, '')) || {}
         ));
-        const coastalSeaAttachmentEdges = buildCoastalSeaAttachmentEdges(coastalSeaTerminalNodes);
+        const coastalSeaAttachmentEdges = accessTopology ? [] : buildCoastalSeaAttachmentEdges(coastalSeaTerminalNodes);
+        const navigableSeaLanes = accessTopology
+            ? macro.buildMarineAccessEdges(coastalSeaTerminalNodes, mask, classifyConnectionStrength) : [];
         const nodes = seaRegionNodes.concat(coastalSeaTerminalNodes)
             .sort((left, right) => left.nodeId.localeCompare(right.nodeId));
-        const edges = interBasinEdges.concat(coastalSeaAttachmentEdges)
+        const edges = interBasinEdges.concat(coastalSeaAttachmentEdges, navigableSeaLanes)
             .sort((left, right) => left.edgeId.localeCompare(right.edgeId));
         const adjacencyCountByNodeId = new Map(nodes.map((node) => [node.nodeId, 0]));
 
@@ -2433,6 +2487,7 @@
                 coastalTerminalNodeCount: coastalSeaTerminalNodes.length,
                 interBasinEdgeCount: interBasinEdges.length,
                 coastalAttachmentEdgeCount: coastalSeaAttachmentEdges.length,
+                navigableSeaLaneCount: navigableSeaLanes.length,
                 isolatedNodeCount: Array.from(adjacencyCountByNodeId.values()).filter((count) => count === 0).length,
                 unattachedCoastalNodeCount: exceptionalCoastalNodes.length - matchedCoastalNodes.length,
                 routeCostComputed: false,
@@ -2647,8 +2702,19 @@
     function buildConnectivityGraph(input = {}) {
         const dependencyAvailability = describeConnectivityGraphDependencyAvailability(input);
         const connectivityGraphBuildPlan = buildConnectivityGraphPlan(input, dependencyAvailability);
-        const landConnectivityGraph = buildLandConnectivityGraph(input, dependencyAvailability);
-        const seaConnectivityGraph = buildSeaConnectivityGraph(input, dependencyAvailability);
+        const mask = findInputField(input, 'coastJaggednessControlledLandWaterMaskField');
+        const accessTopology = macro.buildCoastalAccessTopology({
+            mask,
+            continentBodies: findInputIntermediateOutput(input, 'continentBodies')?.continentBodies,
+            seaClusters: getSeaClusterList(findInputIntermediateOutput(input, 'seaRegionClusters') || {},
+                findInputIntermediateOutput(input, 'seaNavigabilityTagging') || {}),
+            coastalOpportunity: findInputField(input, 'coastalOpportunityMap'),
+            clusterProfiles: findInputIntermediateOutput(input, 'coastalOpportunityProfile')?.clusterProfiles || [],
+            reliefRegionBodies: findInputIntermediateOutput(input, 'reliefRegionExtraction')?.reliefRegionBodies || [],
+            hotspotChain: findInputField(input, 'seaLevelAppliedElevationField')?.seaLevelModel?.hotspotChain
+        });
+        const landConnectivityGraph = buildLandConnectivityGraph(input, dependencyAvailability, accessTopology);
+        const seaConnectivityGraph = buildSeaConnectivityGraph(input, dependencyAvailability, accessTopology, mask);
         const hybridConnectivityGraphBase = buildHybridConnectivityGraph(
             input,
             dependencyAvailability,
@@ -2668,12 +2734,15 @@
             hybridConnectivityGraph,
             routeCostSurface
         );
-        const macroCorridors = buildMacroCorridors(
-            macroRoutes,
-            hybridConnectivityGraph,
-            routeCostSurface
+        const islandPassages = macro.findIslandPassages(
+            accessTopology, seaConnectivityGraph, hybridConnectivityGraph, macroRoutes, mask
         );
-
+        const macroCorridors = buildMacroCorridors(macroRoutes, hybridConnectivityGraph, routeCostSurface, islandPassages);
+        for (const passage of islandPassages) {
+            passage.corridorIds = macroCorridors.macroCorridors
+                .filter(corridor => corridor.corridorEdgeIds.includes(passage.hybridEdgeId))
+                .map(corridor => corridor.corridorId);
+        }
         return {
             status: STATUS,
             phaseVersion: PHASE_VERSION,
@@ -2685,6 +2754,7 @@
                 fields: {},
                 intermediateOutputs: {
                     connectivityGraphBuildPlan,
+                    ...(accessTopology && { coastalAccessTopology: { ...accessTopology, islandPassages } }),
                     landConnectivityGraph,
                     seaConnectivityGraph,
                     hybridConnectivityGraph,

@@ -466,8 +466,8 @@
                 ])
             }),
             primaryCarrierLeadRefs: Object.freeze({}),
-            primaryCarrierRefs: Object.freeze({}),
-            secondaryContextRefs: Object.freeze({}),
+            primaryCarrierRefs: Object.freeze({ seaRegions: 'seaRegionIds' }),
+            secondaryContextRefs: Object.freeze({ continents: 'continentIds' }),
             mixedLeadRefFields: Object.freeze([]),
             mixedArrayRefFields: Object.freeze([]),
             excludedSemanticFields: Object.freeze([

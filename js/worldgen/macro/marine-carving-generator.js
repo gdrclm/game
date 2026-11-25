@@ -2790,6 +2790,29 @@
         return materializeCoastJaggednessControl(input).coastJaggednessControlSummary;
     }
 
+    function verifyFragmentationIslands(summary, finalMask) {
+        if (!summary.fragmentationRuns.length) return summary;
+        const { width, height, threshold } = finalMask;
+        const land = finalMask.values.map(value => Number(value >= threshold));
+        const maxIslandSize = macro.getContinentMinimumSize(land.length);
+        const byCell = [];
+        for (const component of macro.collectLandWaterComponents(land, width, height, 1)) {
+            for (const cell of component.cells) byCell[cell] = component;
+        }
+        const fragmentationRuns = summary.fragmentationRuns.map(run => {
+            const parts = [...new Set(run.runCellIndices.map(cell => byCell[cell]).filter(Boolean))];
+            const islands = parts.filter(part => part.cellCount >= 7 && part.cellCount < maxIslandSize && !part.touchesBorder);
+            return {
+                ...run,
+                physicalIslandCount: islands.length,
+                physicalIslandCellIndices: islands.flatMap(island => island.cells),
+                acceptedAsIslandGroup: islands.length >= 2,
+                rejectionReason: islands.length >= 2 ? '' : 'fewer_than_two_distinct_offshore_components'
+            };
+        });
+        return { ...summary, fragmentationRuns };
+    }
+
     function createMarineCarvingPipeline(input = {}) {
         const normalizedInput = normalizeInput(input);
         const bayCarvingOutput = materializeBayCarving(input);
@@ -2841,7 +2864,10 @@
                 intermediateOutputs: {
                     bayCarvingSummary: bayCarvingOutput.bayCarvingSummary,
                     straitCarvingSummary: straitCarvingOutput.straitCarvingSummary,
-                    archipelagoFragmentationSummary: archipelagoFragmentationOutput.archipelagoFragmentationSummary,
+                    archipelagoFragmentationSummary: verifyFragmentationIslands(
+                        archipelagoFragmentationOutput.archipelagoFragmentationSummary,
+                        coastJaggednessControlOutput.coastJaggednessControlledLandWaterMaskField
+                    ),
                     coastJaggednessControlSummary: coastJaggednessControlOutput.coastJaggednessControlSummary
                 }
             },

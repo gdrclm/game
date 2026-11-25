@@ -8,14 +8,14 @@
             max: 1,
             defaultValue: DEFAULT_CONSTRAINT_MIDPOINT,
             normalization: 'clamp',
-            affectsLayers: Object.freeze(['physical', 'macro'])
+            affectsLayers: Object.freeze([])
         },
         maritimeDependence: {
             min: 0,
             max: 1,
             defaultValue: DEFAULT_CONSTRAINT_MIDPOINT,
             normalization: 'clamp',
-            affectsLayers: Object.freeze(['physical', 'macro'])
+            affectsLayers: Object.freeze(['macro'])
         },
         environmentalVolatility: {
             min: 0,
@@ -31,12 +31,19 @@
             normalization: 'clamp',
             affectsLayers: Object.freeze(['physical', 'macro'])
         },
+        routeFragilityBias: {
+            min: 0,
+            max: 1,
+            defaultValue: DEFAULT_CONSTRAINT_MIDPOINT,
+            normalization: 'clamp',
+            affectsLayers: Object.freeze(['macro'])
+        },
         collapseIntensity: {
             min: 0,
             max: 1,
             defaultValue: DEFAULT_CONSTRAINT_MIDPOINT,
             normalization: 'clamp',
-            affectsLayers: Object.freeze(['physical', 'macro'])
+            affectsLayers: Object.freeze([])
         }
     });
 
