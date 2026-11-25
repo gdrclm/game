@@ -1,0 +1,16 @@
+# Paths — repository agent instructions
+
+## Start here
+Read [context index](docs/context/CONTEXT_MAP.md), [authorial vision](docs/context/PATHS_AUTHORIAL_VISION.md), [design decisions](docs/context/DESIGN_DECISIONS.md), [current state](docs/context/PROJECT_STATE.md), [active checklist](docs/context/ACTIVE_CHECKLIST.md), and [PLANS.md](PLANS.md). Follow the source documents linked for your scope. These files complement rather than replace the phase contracts, GDD and architecture. Do not infer that a roadmap claim means a runtime feature has passed tests.
+
+## Working agreement
+- Current development target: worldgen/v1-foundation-closure. Verify HEAD and working tree. Never push/merge main, rewrite shared history, overwrite unrelated user work, or deploy without explicit approval.
+- Work autonomously between author review gates. Read, plan, implement, run, inspect, correct, repeat. Do not stop at a plan when execution is requested. Prefer actual outputs over speculative explanations.
+- Preserve causal order and stable contracts/IDs. V1 reduces simulation density, not causal links. Do not shortcut Phase 0–17 by generating prewritten island stories or connect the historical generator to gameplay before Phase 17.5.
+- Never make tests pass by dropping required records, fabricating geography/history/evidence, silencing validators, or changing expectations without a documented contract reconciliation. Treat an unexercised causal test as missing evidence.
+- Preserve non-combat, grid-based isometric survival/exploration and detective gameplay; no unsanctioned player-facing UI features. Debug tools are read-only and separate.
+- Follow ARCHITECTURE.md for runtime boundaries, registries, save migrations and stable IDs. Keep changes focused; split new functionality instead of adding unrelated code to oversized legacy modules.
+- Test determinism, invariants, negative cases, cross-phase references, meaningful controlled counterfactuals, and unseen seeds. Distinguish fixtures from real generated worlds.
+- Separate confirmed author constraints, existing repository contracts, provisional implementation choices and unresolved decisions. Do not silently promote a proposed coefficient, story example, or interpretation into author canon.
+- Report in Russian by default; code and existing contracts retain their established naming/language. At each meaningful iteration update PROJECT_STATE.md, ACTIVE_CHECKLIST.md and, if applicable, AUTHOR_REVIEW_QUEUE.md. Summarize commit/diff, exact tests, outputs, failures, decisions and next safe step. Don't claim tests not run.
+- Stop for author review at consequential design ambiguities, not routine engineering issues. Preserve actual seed exports and concise evidence for GPT-project review. Ask only questions that change meaningful outcomes.

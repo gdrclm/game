@@ -1,0 +1,24 @@
+# Design decisions and rejected shortcuts
+
+Labels: AUTHOR = explicit author direction in available discussion; CONTRACT = repository specification; WORKING = agent's provisional implementation or workflow; OPEN = needs further evidence/author decision. No claim that this captures all prior chat decisions.
+
+| Status | Keep | Reject |
+|---|---|---|
+| AUTHOR | Emergent contextual facts from probabilities and prior culture/environment/history | Selecting prewritten NPC grave stories as canonical facts |
+| AUTHOR | No combat; non-combat survival, crafting, exploration and investigation | Combat RPG or loot primarily for fighting |
+| AUTHOR | Independent detective pillar; separate early test slice | Reducing detective to survival modifiers or a collect-and-click quest |
+| CONTRACT | Full causal sequence 0–26 with bridge 17.5; reduce density in V1 | Skip religion, mentality, memory or history to get playable islands faster |
+| CONTRACT | Phase 17.5 translates established history into gameplay-facing biases | Late runtime invents why island/merchant/ruin exists |
+| CONTRACT | Social states via existing/scoped narrative channels, debug separately | Automatic liar/trust icons, hover overlays, new UX without approval |
+| AUTHOR | Ordinary/ironic dialogue, autonomy, cultural contradiction | All dialogue is functional exposition; all events tragic; effects-only humor |
+| AUTHOR | Offline instantaneous NPC text target | Online per-turn model dependency as default |
+| AUTHOR | Flat ornamental readable isometry, modularity, visual rhythm | Full-field small detail noise, generic dark fantasy or photorealism |
+| WORKING | Causal counterfactuals with fixed local randomness, negative controls | Different random seeds as sole proof of causality |
+| WORKING | Maritime demand modifies value of existing supported routes; provisional 0.20 coefficient | Arbitrarily changing physical coastline because maritime dependence increases |
+| WORKING | Preserve coastJaggedness default 0.5 from existing bounds | Inventing an undocumented global control or declaring it approved art/design |
+| WORKING | Separate author and technical gates | Declaring product ready from fixture tests |
+| OPEN | Actual strength/distribution of strategic influences, additional channels | Premature tuning before real seed evidence |
+| OPEN | Exact production blocks 3–5, NPC model and detailed visual refs | Filling gaps with invented decisions |
+
+## Feedback protocol
+Record new author decisions with date, source (chat excerpt or approved summary), scope, invariant, affected files/contracts, proposed regression and approval state. If rejected, record reason and what would justify reopening. Keep current decision rather than endless duplicate logs. Refer to detailed source docs in CONTEXT_MAP.md.
