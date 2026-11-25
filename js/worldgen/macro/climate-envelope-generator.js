@@ -4515,7 +4515,7 @@
                 bandType: component.bandType,
                 cellCount: component.cellCount,
                 anchorCellIndex: component.anchorCellIndex,
-                ...(input.includeDebugArtifacts === true && { cellIndices: component.cellIndices }),
+                cellIndices: component.cellIndices,
                 recordCompatible: component.recordCompatible,
                 reliefRegionIds: component.reliefRegionIds.slice(),
                 seaRegionIds: component.seaRegionIds.slice(),

@@ -1418,12 +1418,14 @@
 
         const mountainUplift = mean(linkedMountains.map((mountainSystem) => clamp01(mountainSystem.upliftBias)));
         const ridgeContinuity = mean(linkedMountains.map((mountainSystem) => clamp01(mountainSystem.ridgeContinuity)));
+        // An outlet helps drain the available catchment. It cannot supply water by itself.
+        const waterYield = phase2.catchmentWaterSupport(catchmentScale);
         const terminalDrainageSupport = terminalSeaRegionIds.length
-            ? clamp01(0.35 + (Math.min(terminalSeaRegionIds.length, 2) * 0.18))
+            ? waterYield * clamp01(0.35 + (Math.min(terminalSeaRegionIds.length, 2) * 0.18))
             : 0;
         const endorheicPenalty = basinType.includes('endorheic') ? 0.28 : 0;
         const deltaicFloodBonus = basinType.includes('deltaic') ? 0.18 : 0;
-        const exorheicReliabilityBonus = basinType.includes('exorheic') ? 0.12 : 0;
+        const exorheicReliabilityBonus = basinType.includes('exorheic') ? waterYield * 0.12 : 0;
         const inlandSeaModifier = basinType.includes('inland_sea') ? 0.08 : 0;
 
         const waterReliabilityBase = clamp01(
@@ -1572,7 +1574,9 @@
         const hydrologyScores = context.hydrologyScores || {};
         const climateBandId = normalizeString(climateBand.climateBandId, '');
         const reliefRegionIds = uniqueStrings(climateBand.reliefRegionIds);
-        const climateBandIds = climateBandId ? [climateBandId] : [];
+        const localCoverage = context.coverage?.climateBands[climateBandId];
+        const basinCells = localCoverage ? localCoverage.riverBasinCells || {} : undefined;
+        const basinIds = basinCells ? Object.keys(basinCells) : context.basinIdsByBand.get(climateBandId) || [];
 
         const coldPressure = clamp01(climateScores.coldPressure[climateBandId] || 0);
         const heatPressure = clamp01(climateScores.heatPressure[climateBandId] || 0);
@@ -1584,10 +1588,11 @@
         const fragmentationBurden = clamp01(meanByRecordIds(terrainScores.fragmentationBurden, reliefRegionIds));
         const mobilityTerrainPenalty = clamp01(meanByRecordIds(terrainScores.mobilityTerrainPenalty, reliefRegionIds));
 
-        const waterReliabilityInverse = clamp01(meanByRecordIds(hydrologyScores.waterReliabilityInverse, climateBandIds));
-        const waterStress = clamp01(meanByRecordIds(hydrologyScores.waterStress, climateBandIds));
-        const droughtPressure = clamp01(meanByRecordIds(hydrologyScores.droughtPressure, climateBandIds));
-        const floodInstability = clamp01(meanByRecordIds(hydrologyScores.floodInstability, climateBandIds));
+        const basinMean = scores => phase2.meanCarrierScore(scores, basinCells, basinIds) ?? 0;
+        const waterReliabilityInverse = basinMean(hydrologyScores.waterReliabilityInverse);
+        const waterStress = basinMean(hydrologyScores.waterStress);
+        const droughtPressure = basinMean(hydrologyScores.droughtPressure);
+        const floodInstability = basinMean(hydrologyScores.floodInstability);
 
         const climateBurdenBlend = clamp01(
             (coldPressure * 0.18)
@@ -1693,6 +1698,7 @@
 
         return {
             reliefRegionIds,
+            basinIds,
             coldPressure: roundValue(coldPressure),
             heatPressure: roundValue(heatPressure),
             humidityPressure: roundValue(humidityPressure),
@@ -1733,6 +1739,7 @@
                 terrainHarshness: signals.terrainHarshness || 0,
                 waterStress: signals.waterStress || 0,
                 droughtPressure: signals.droughtPressure || 0,
+                riverBasinIds: signals.basinIds || [],
                 supportRichness: signals.supportRichness || 0
             })
         });
@@ -2353,34 +2360,16 @@
         });
     }
 
-    function buildIsolationZoneIndexByContinent(isolatedZones = []) {
-        return isolatedZones.reduce((index, isolatedZone) => {
-            const continentIds = uniqueStrings(isolatedZone.continentIds);
-            continentIds.forEach((continentId) => {
-                if (!index[continentId]) {
-                    index[continentId] = [];
-                }
-                index[continentId].push(isolatedZone);
-            });
-            return index;
-        }, {});
-    }
-
     function inferEcologySignals(reliefRegion = {}, context = {}) {
         const reliefRegionId = normalizeString(reliefRegion.reliefRegionId, '');
-        const continentIds = uniqueStrings(reliefRegion.continentIds);
-        const climateBandIds = uniqueStrings((context.climateBandIdsByReliefRegion || {})[reliefRegionId]);
-        const riverBasinIds = uniqueStrings((context.riverBasinIdsByReliefRegion || {})[reliefRegionId]);
-        const isolatedZoneIds = uniqueStrings(continentIds.flatMap((continentId) => {
-            const zones = (context.isolationZonesByContinent || {})[continentId];
-            return Array.isArray(zones) ? zones.map((zone) => zone.zoneId) : [];
-        }));
+        const { climateBandIds, riverBasinIds, climateMean, basinMean } = phase2.getReliefCarriers(context, reliefRegionId);
+        const isolatedZoneIds = context.isolatedZoneIdsByReliefRegion[reliefRegionId] || [];
 
-        const climateExposurePressure = meanByRecordIds(context.climateScores.climateExposurePressure, climateBandIds);
-        const humidityPressure = meanByRecordIds(context.climateScores.humidityPressure, climateBandIds);
-        const waterStress = meanByRecordIds(context.hydrologyScores.waterStress, riverBasinIds);
-        const droughtPressure = meanByRecordIds(context.hydrologyScores.droughtPressure, riverBasinIds);
-        const floodInstability = meanByRecordIds(context.hydrologyScores.floodInstability, riverBasinIds);
+        const climateExposurePressure = climateMean(context.climateScores.climateExposurePressure);
+        const humidityPressure = climateMean(context.climateScores.humidityPressure);
+        const waterStress = basinMean(context.hydrologyScores.waterStress);
+        const droughtPressure = basinMean(context.hydrologyScores.droughtPressure);
+        const floodInstability = basinMean(context.hydrologyScores.floodInstability);
         const isolationPressure = meanByRecordIds(context.isolationScores.isolationPressure, isolatedZoneIds);
         const supportDelayBurden = meanByRecordIds(context.isolationScores.supportDelayBurden, isolatedZoneIds);
         const accessFragility = meanByRecordIds(context.isolationScores.accessFragility, isolatedZoneIds);
@@ -2585,17 +2574,16 @@
 
     function inferCatastropheSignals(reliefRegion = {}, context = {}) {
         const reliefRegionId = normalizeString(reliefRegion.reliefRegionId, '');
-        const climateBandIds = uniqueStrings((context.climateBandIdsByReliefRegion || {})[reliefRegionId]);
-        const riverBasinIds = uniqueStrings((context.riverBasinIdsByReliefRegion || {})[reliefRegionId]);
+        const { climateBandIds, riverBasinIds, climateMean, basinMean } = phase2.getReliefCarriers(context, reliefRegionId);
         const adjacentSeaRegionIds = uniqueStrings(reliefRegion.adjacentSeaRegionIds);
         const linkedVolcanicZones = Array.isArray((context.volcanicZonesByReliefRegion || {})[reliefRegionId])
             ? (context.volcanicZonesByReliefRegion || {})[reliefRegionId]
             : [];
 
-        const climateExposurePressure = meanByRecordIds(context.climateScores.climateExposurePressure, climateBandIds);
-        const waterStress = meanByRecordIds(context.hydrologyScores.waterStress, riverBasinIds);
-        const droughtPressureContext = meanByRecordIds(context.hydrologyScores.droughtPressure, riverBasinIds);
-        const floodInstabilityContext = meanByRecordIds(context.hydrologyScores.floodInstability, riverBasinIds);
+        const climateExposurePressure = climateMean(context.climateScores.climateExposurePressure);
+        const waterStress = basinMean(context.hydrologyScores.waterStress);
+        const droughtPressureContext = basinMean(context.hydrologyScores.droughtPressure);
+        const floodInstabilityContext = basinMean(context.hydrologyScores.floodInstability);
         const seaStormPressure = meanByRecordIds(context.seaStormPressure, adjacentSeaRegionIds);
         const maritimeAdjacency = clamp01(adjacentSeaRegionIds.length ? Math.min(1, adjacentSeaRegionIds.length / 2) : 0);
 
@@ -2857,15 +2845,17 @@
         });
     }
 
-    function buildPressureSynthesisAxis(fieldId, domainLayers, componentWeights, description, generatorSeed) {
+    function buildPressureSynthesisAxis(fieldId, domainLayers, componentWeights, description, generatorSeed, coverage) {
         const components = Object.entries(componentWeights).map(([componentId, component]) => {
-            const value = getDomainFieldMean(domainLayers, component.domainId, component.fieldId);
+            const measured = phase2.landWeightedPressure(domainLayers[component.domainId]?.[component.fieldId], coverage);
+            const value = measured?.value ?? getDomainFieldMean(domainLayers, component.domainId, component.fieldId);
             return Object.freeze({
                 componentId,
                 domainId: component.domainId,
                 fieldId: component.fieldId,
                 weight: roundValue(component.weight),
                 value: roundValue(value),
+                ...(measured && { landCellCount: measured.landCells }),
                 weightedValue: roundValue(value * component.weight)
             });
         });
@@ -2990,7 +2980,7 @@
         })));
     }
 
-    function buildPressureSynthesizedFields(domainLayers, generatorSeed) {
+    function buildPressureSynthesizedFields(domainLayers, generatorSeed, coverage) {
         const baseSynthesized = Object.freeze({
             survivabilityPressure: buildPressureSynthesisAxis(
                 'survivabilityPressure',
@@ -3004,7 +2994,8 @@
                     catastrophePressure: { domainId: 'catastrophe', fieldId: 'catastrophePressure', weight: 0.2 }
                 },
                 'Synthesized survivability pressure from burden domains only.',
-                generatorSeed
+                generatorSeed,
+                coverage
             ),
             mobilityPressure: buildPressureSynthesisAxis(
                 'mobilityPressure',
@@ -3018,7 +3009,8 @@
                     floodInstability: { domainId: 'hydrology', fieldId: 'floodInstability', weight: 0.08 }
                 },
                 'Synthesized mobility pressure from terrain, hydrology, and route burden only.',
-                generatorSeed
+                generatorSeed,
+                coverage
             ),
             supplyPressure: buildPressureSynthesisAxis(
                 'supplyPressure',
@@ -3032,7 +3024,8 @@
                     supportDelayBurden: { domainId: 'isolation', fieldId: 'supportDelayBurden', weight: 0.14 }
                 },
                 'Synthesized supply pressure from water, food, travel, and support-delay burden only.',
-                generatorSeed
+                generatorSeed,
+                coverage
             ),
             chokepointStress: buildPressureSynthesisAxis(
                 'chokepointStress',
@@ -3044,7 +3037,8 @@
                     detourBurden: { domainId: 'travel', fieldId: 'detourBurden', weight: 0.12 }
                 },
                 'Synthesized chokepoint stress while preserving chokepoint domain detail.',
-                generatorSeed
+                generatorSeed,
+                coverage
             ),
             remotenessBurden: buildPressureSynthesisAxis(
                 'remotenessBurden',
@@ -3057,7 +3051,8 @@
                     routeReliabilityInverse: { domainId: 'travel', fieldId: 'routeReliabilityInverse', weight: 0.12 }
                 },
                 'Synthesized remoteness burden from isolation and access fragility only.',
-                generatorSeed
+                generatorSeed,
+                coverage
             ),
             ecologicalBurden: buildPressureSynthesisAxis(
                 'ecologicalBurden',
@@ -3070,7 +3065,8 @@
                     droughtPressure: { domainId: 'hydrology', fieldId: 'droughtPressure', weight: 0.1 }
                 },
                 'Synthesized ecological burden from brittleness and regeneration weakness only.',
-                generatorSeed
+                generatorSeed,
+                coverage
             ),
             catastropheSusceptibility: buildPressureSynthesisAxis(
                 'catastropheSusceptibility',
@@ -3084,7 +3080,8 @@
                     climateExposurePressure: { domainId: 'climate', fieldId: 'climateExposurePressure', weight: 0.08 }
                 },
                 'Synthesized catastrophe susceptibility from cause-separated pressure channels only.',
-                generatorSeed
+                generatorSeed,
+                coverage
             )
         });
 
@@ -3591,6 +3588,13 @@
             output: FOOD_RELIABILITY_GENERATOR_OUTPUT_SPEC,
             run(input = {}) {
                 const climateBands = resolveClimateBands(input);
+                const basinIdsByBand = new Map();
+                for (const basin of resolveRiverBasins(input)) {
+                    for (const bandId of uniqueStrings(basin.climateBandIds)) {
+                        if (!basinIdsByBand.has(bandId)) basinIdsByBand.set(bandId, []);
+                        basinIdsByBand.get(bandId).push(basin.riverBasinId);
+                    }
+                }
                 const recordBindingContextId = resolveBindingContextId(input);
 
                 const climateOutput = createClimateBurdenInterpreter({
@@ -3604,6 +3608,8 @@
                 }).run(input);
 
                 const context = {
+                    basinIdsByBand,
+                    coverage: phase2.getEnvironmentalCoverage(input),
                     climateScores: {
                         coldPressure: createScoreMap(climateOutput.domain.coldPressure.perBandScores),
                         heatPressure: createScoreMap(climateOutput.domain.heatPressure.perBandScores),
@@ -3957,30 +3963,33 @@
                     return index;
                 }, {});
 
+                const context = {
+                    climateBandIdsByReliefRegion,
+                    riverBasinIdsByReliefRegion,
+                    isolatedZoneIdsByReliefRegion: phase2.indexIsolationByRelief(reliefRegions, isolatedZones),
+                    coverage: phase2.getEnvironmentalCoverage(input),
+                    climateScores: {
+                        climateExposurePressure: createScoreMap(climateOutput.domain.climateExposurePressure.perBandScores),
+                        humidityPressure: createScoreMap(climateOutput.domain.humidityPressure.perBandScores)
+                    },
+                    hydrologyScores: {
+                        waterStress: createScoreMap(hydrologyOutput.domain.waterStress.perBasinScores),
+                        droughtPressure: createScoreMap(hydrologyOutput.domain.droughtPressure.perBasinScores),
+                        floodInstability: createScoreMap(hydrologyOutput.domain.floodInstability.perBasinScores)
+                    },
+                    isolationScores: {
+                        isolationPressure: createScoreMap(isolationOutput.domain.isolationPressure.perZoneScores),
+                        supportDelayBurden: createScoreMap(isolationOutput.domain.supportDelayBurden.perZoneScores),
+                        accessFragility: createScoreMap(isolationOutput.domain.accessFragility.perZoneScores)
+                    }
+                };
+
                 return createEcologicalFragilityGeneratorOutputSkeleton({
                     domain: {
                         ecologicalFragility: buildEcologyPressureField(
                             'ecologicalFragility',
                             reliefRegions,
-                            {
-                                climateBandIdsByReliefRegion,
-                                riverBasinIdsByReliefRegion,
-                                isolationZonesByContinent: buildIsolationZoneIndexByContinent(isolatedZones),
-                                climateScores: {
-                                    climateExposurePressure: createScoreMap(climateOutput.domain.climateExposurePressure.perBandScores),
-                                    humidityPressure: createScoreMap(climateOutput.domain.humidityPressure.perBandScores)
-                                },
-                                hydrologyScores: {
-                                    waterStress: createScoreMap(hydrologyOutput.domain.waterStress.perBasinScores),
-                                    droughtPressure: createScoreMap(hydrologyOutput.domain.droughtPressure.perBasinScores),
-                                    floodInstability: createScoreMap(hydrologyOutput.domain.floodInstability.perBasinScores)
-                                },
-                                isolationScores: {
-                                    isolationPressure: createScoreMap(isolationOutput.domain.isolationPressure.perZoneScores),
-                                    supportDelayBurden: createScoreMap(isolationOutput.domain.supportDelayBurden.perZoneScores),
-                                    accessFragility: createScoreMap(isolationOutput.domain.accessFragility.perZoneScores)
-                                }
-                            },
+                            context,
                             'ecologicalFragility',
                             'Coarse ecological fragility from support logic and physical context only.',
                             generatorSeed
@@ -3988,25 +3997,7 @@
                         ecologicalStabilityInverse: buildEcologyPressureField(
                             'ecologicalStabilityInverse',
                             reliefRegions,
-                            {
-                                climateBandIdsByReliefRegion,
-                                riverBasinIdsByReliefRegion,
-                                isolationZonesByContinent: buildIsolationZoneIndexByContinent(isolatedZones),
-                                climateScores: {
-                                    climateExposurePressure: createScoreMap(climateOutput.domain.climateExposurePressure.perBandScores),
-                                    humidityPressure: createScoreMap(climateOutput.domain.humidityPressure.perBandScores)
-                                },
-                                hydrologyScores: {
-                                    waterStress: createScoreMap(hydrologyOutput.domain.waterStress.perBasinScores),
-                                    droughtPressure: createScoreMap(hydrologyOutput.domain.droughtPressure.perBasinScores),
-                                    floodInstability: createScoreMap(hydrologyOutput.domain.floodInstability.perBasinScores)
-                                },
-                                isolationScores: {
-                                    isolationPressure: createScoreMap(isolationOutput.domain.isolationPressure.perZoneScores),
-                                    supportDelayBurden: createScoreMap(isolationOutput.domain.supportDelayBurden.perZoneScores),
-                                    accessFragility: createScoreMap(isolationOutput.domain.accessFragility.perZoneScores)
-                                }
-                            },
+                            context,
                             'ecologicalStabilityInverse',
                             'Coarse inverse ecological stability from support logic and physical context only.',
                             generatorSeed
@@ -4014,25 +4005,7 @@
                         regenerationWeakness: buildEcologyPressureField(
                             'regenerationWeakness',
                             reliefRegions,
-                            {
-                                climateBandIdsByReliefRegion,
-                                riverBasinIdsByReliefRegion,
-                                isolationZonesByContinent: buildIsolationZoneIndexByContinent(isolatedZones),
-                                climateScores: {
-                                    climateExposurePressure: createScoreMap(climateOutput.domain.climateExposurePressure.perBandScores),
-                                    humidityPressure: createScoreMap(climateOutput.domain.humidityPressure.perBandScores)
-                                },
-                                hydrologyScores: {
-                                    waterStress: createScoreMap(hydrologyOutput.domain.waterStress.perBasinScores),
-                                    droughtPressure: createScoreMap(hydrologyOutput.domain.droughtPressure.perBasinScores),
-                                    floodInstability: createScoreMap(hydrologyOutput.domain.floodInstability.perBasinScores)
-                                },
-                                isolationScores: {
-                                    isolationPressure: createScoreMap(isolationOutput.domain.isolationPressure.perZoneScores),
-                                    supportDelayBurden: createScoreMap(isolationOutput.domain.supportDelayBurden.perZoneScores),
-                                    accessFragility: createScoreMap(isolationOutput.domain.accessFragility.perZoneScores)
-                                }
-                            },
+                            context,
                             'regenerationWeakness',
                             'Coarse regeneration weakness from support logic and physical context only.',
                             generatorSeed
@@ -4040,25 +4013,7 @@
                         carryingCapacityBrittleness: buildEcologyPressureField(
                             'carryingCapacityBrittleness',
                             reliefRegions,
-                            {
-                                climateBandIdsByReliefRegion,
-                                riverBasinIdsByReliefRegion,
-                                isolationZonesByContinent: buildIsolationZoneIndexByContinent(isolatedZones),
-                                climateScores: {
-                                    climateExposurePressure: createScoreMap(climateOutput.domain.climateExposurePressure.perBandScores),
-                                    humidityPressure: createScoreMap(climateOutput.domain.humidityPressure.perBandScores)
-                                },
-                                hydrologyScores: {
-                                    waterStress: createScoreMap(hydrologyOutput.domain.waterStress.perBasinScores),
-                                    droughtPressure: createScoreMap(hydrologyOutput.domain.droughtPressure.perBasinScores),
-                                    floodInstability: createScoreMap(hydrologyOutput.domain.floodInstability.perBasinScores)
-                                },
-                                isolationScores: {
-                                    isolationPressure: createScoreMap(isolationOutput.domain.isolationPressure.perZoneScores),
-                                    supportDelayBurden: createScoreMap(isolationOutput.domain.supportDelayBurden.perZoneScores),
-                                    accessFragility: createScoreMap(isolationOutput.domain.accessFragility.perZoneScores)
-                                }
-                            },
+                            context,
                             'carryingCapacityBrittleness',
                             'Coarse carrying-capacity brittleness from support logic and physical context only.',
                             generatorSeed
@@ -4139,6 +4094,7 @@
                     return index;
                 }, {});
                 const context = {
+                    coverage: phase2.getEnvironmentalCoverage(input),
                     climateBandIdsByReliefRegion,
                     riverBasinIdsByReliefRegion,
                     seaStormPressure: Object.fromEntries(seaRegions.map(sea => [sea.seaRegionId, sea.stormPressure])),
@@ -4235,7 +4191,7 @@
             run(input = {}) {
                 const recordBindingContextId = resolveBindingContextId(input);
                 const domainLayers = buildPressureDomainLayers(input, generatorSeed);
-                const synthesized = buildPressureSynthesizedFields(domainLayers, generatorSeed);
+                const synthesized = buildPressureSynthesizedFields(domainLayers, generatorSeed, phase2.getEnvironmentalCoverage(input));
 
                 return createPressureSynthesisOutputSkeleton({
                     synthesized,

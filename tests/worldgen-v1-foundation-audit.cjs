@@ -9,6 +9,7 @@ const { join } = require('node:path');
 const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
 const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture } = require('./worldgen-v1-quality.cjs');
+const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -93,6 +94,7 @@ check('Phase 2 fixture harness', () => {
 });
 check('Physical passage closure and terminal negative controls', () => verifyPassageFixture(macro));
 check('Hotspot curvature follows shallow crust at fixed plate drift', () => verifyHotspotFixture(macro));
+check('Land-weighted pressure and local recovery timing', () => verifySpatialAggregation(phase2));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;
@@ -189,6 +191,11 @@ function testHandoffs(result) {
     const { pressureSeed, rhythmSeed } = phase0Bundle.worldSubSeedMap;
     const args = { macroGeographyHandoffPackage: handoff, pressureSeed, rhythmSeed };
     const engine = phase2.createPhase2Engine();
+    const coverage = structuredClone(geography.environmentalCoverage);
+    const [climate] = Object.values(coverage.climateBands);
+    climate.landCellCount = -1;
+    assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, environmentalCoverage: coverage } }),
+        /invalid_environmental_coverage/);
     assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, continents: [] } }), /insufficient_required_root_records/);
     assert.throws(() => engine.run({
         ...args, macroGeographyPackage: { ...geography, validationReport: { ...geography.validationReport, isValid: false } }
@@ -239,7 +246,7 @@ function testHandoffs(result) {
     } finally {
         phase2.createPhase2Engine = phase2Engine;
     }
-    return { invalidRootRejected: true, unresolvedReferenceRejected: true, invalidExportBlocked: true, noPhase2AfterFailedPhase1: true, rejectedCandidateDiagnosticOnly: true };
+    return { invalidRootRejected: true, invalidCoverageRejected: true, unresolvedReferenceRejected: true, invalidExportBlocked: true, noPhase2AfterFailedPhase1: true, rejectedCandidateDiagnosticOnly: true };
 }
 
 let controlsRun = false;
@@ -278,6 +285,9 @@ for (const seed of seeds) {
                 check('Fixed-seed upstream interventions', () => runCausalChecks(systems, first, saveStormPair));
             }
             controlsRun = true;
+        }
+        if (runCausal && seed === 16908799) {
+            check('Recovery locality on seed 16908799', () => verifyLocalRecovery(phase2, first));
         }
     } catch (error) {
         const evidence = error.evidence || first?.diagnostics;

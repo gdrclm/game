@@ -129,6 +129,14 @@ function runCausalChecks(systems, canonical, saveStormPair) {
     assert(water(scarce) > water(supported), 'Smaller catchment did not impair water reliability');
     assert(recovery(scarce) < recovery(supported), 'Reliable catchment did not support recovery');
     assert.deepEqual(scarce.pressureFieldPackage.domains.climate, supported.pressureFieldPackage.domains.climate);
+    const bandFootprints = original.environmentalCoverage.climateBands;
+    const food = (output, bandId) => byRecord(output.pressureFieldPackage.domains.food.foodStress.perBandScores, bandId);
+    const linkedBands = Object.keys(bandFootprints).filter(id => bandFootprints[id].riverBasinCells?.[basin.riverBasinId]);
+    const changedBand = linkedBands.find(id => food(scarce, id) > food(supported, id));
+    assert(changedBand, 'Food pressure did not respond in any band supplied by the intervened basin');
+    const independentBands = Object.keys(bandFootprints).filter(id => !linkedBands.includes(id));
+    assert(independentBands.length);
+    assert(independentBands.every(id => food(scarce, id) === food(supported, id)), 'Water pressure leaked into an independent band');
     const result = {
         seed: phase0Bundle.worldSeedProfile.worldSeed,
         fixedSubseeds: { macroGeographySeed, pressureSeed, rhythmSeed },
@@ -160,6 +168,9 @@ function runCausalChecks(systems, canonical, saveStormPair) {
             reliefRegionId: localRelief,
             waterReliabilityInverse: [water(scarce), water(supported)],
             recoveryTempo: [recovery(scarce), recovery(supported)],
+            foodClimateBandId: changedBand,
+            foodStress: [food(scarce, changedBand), food(supported, changedBand)],
+            unchangedIndependentBands: independentBands.length,
             climateControlsStable: true
         }
     };

@@ -753,6 +753,15 @@
         const reliefRegions = buildReliefRegionRecords(input, worldBounds);
         const climateBands = findInputRecordArray(input, 'climateBands').map((record) => createRecord('createClimateBandRecordSkeleton', record));
         const riverBasins = findInputRecordArray(input, 'riverBasins').map((record) => createRecord('createRiverBasinRecordSkeleton', record));
+        const environmentalCoverage = macro.buildEnvironmentalCoverage({
+            mask: getNestedValue(input, 'marineCarving.outputs.fields.coastJaggednessControlledLandWaterMaskField'),
+            reliefRegions,
+            reliefBodies: findInputIntermediateOutput(input, 'reliefRegionExtraction')?.reliefRegionBodies,
+            riverBasins,
+            watersheds: findInputIntermediateOutput(input, 'watershedSegmentation')?.watersheds,
+            climateBands,
+            climateZones: findInputIntermediateOutput(input, 'climateZoneClassification')?.zoneSummaries
+        });
         const chokepoints = findInputRecordArray(input, 'chokepoints').map((record) => createRecord('createChokepointRecordSkeleton', record));
         const continents = buildContinentRecords(input, reliefRegions, climateBands);
         const archipelagoRegions = buildArchipelagoRegionRecords(input);
@@ -785,6 +794,7 @@
             macroRoutes,
             isolatedZones,
             strategicRegions,
+            environmentalCoverage,
             debugArtifacts,
             validationReport: validationArtifacts.validationReport
         });

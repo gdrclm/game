@@ -1500,7 +1500,9 @@
     function inferScarcityCadenceSignals(climateBand = {}, context = {}) {
         const climateBandId = normalizeString(climateBand.climateBandId, '');
         const reliefRegionIds = uniqueStrings(climateBand.reliefRegionIds);
-        const riverBasinIds = uniqueStrings(reliefRegionIds.flatMap((reliefRegionId) => {
+        const coverage = context.coverage?.climateBands[climateBandId];
+        const basinCells = coverage ? coverage.riverBasinCells || {} : undefined;
+        const riverBasinIds = basinCells ? Object.keys(basinCells) : uniqueStrings(reliefRegionIds.flatMap((reliefRegionId) => {
             const basinIds = (context.riverBasinIdsByReliefRegion || {})[reliefRegionId];
             return Array.isArray(basinIds) ? basinIds : [];
         }));
@@ -1508,9 +1510,10 @@
         const seasonalityStrength = clamp01((context.seasonalityScores.seasonalityStrength || {})[climateBandId] || 0);
         const annualSwingStrength = clamp01((context.seasonalityScores.annualSwingStrength || {})[climateBandId] || 0);
         const environmentalCycleClarity = clamp01((context.seasonalityScores.environmentalCycleClarity || {})[climateBandId] || 0);
-        const waterReliabilityInverse = meanByRecordIds(context.hydrologyScores.waterReliabilityInverse, riverBasinIds);
-        const waterStress = meanByRecordIds(context.hydrologyScores.waterStress, riverBasinIds);
-        const droughtPressure = meanByRecordIds(context.hydrologyScores.droughtPressure, riverBasinIds);
+        const basinMean = scores => phase2.meanCarrierScore(scores, basinCells, riverBasinIds) ?? 0;
+        const waterReliabilityInverse = basinMean(context.hydrologyScores.waterReliabilityInverse);
+        const waterStress = basinMean(context.hydrologyScores.waterStress);
+        const droughtPressure = basinMean(context.hydrologyScores.droughtPressure);
 
         const supportBurdenBase = clamp01(
             (waterReliabilityInverse * 0.34)
@@ -1967,6 +1970,24 @@
         return clamp01(mean(firstCollection.map((entry) => entry && entry.value)));
     }
 
+    function measureRegionalRecovery(domain, components) {
+        const intervals = domain?.stabilizationInterval?.perReliefScores;
+        if (!intervals?.length) return null;
+        const componentScores = components.map(row => ({
+            weight: row.weight,
+            scores: createScoreMap(domain[row.fieldId]?.perReliefScores)
+        }));
+        const totalWeight = componentScores.reduce((sum, row) => sum + row.weight, 0);
+        const rates = intervals.map(interval => {
+            const values = componentScores.map(({ weight, scores }) => weight * scores[interval.recordId]);
+            const amount = values.reduce((sum, value) => sum + value, 0) / totalWeight;
+            return { landCellCount: interval.supportContextSnapshot?.landCellCount, value: amount / (1 + interval.value) };
+        });
+        const spatial = phase2.meanScoreByLand(rates, row => row.landCellCount);
+        if (!spatial) return null;
+        return { mean: mean(rates.map(row => row.value).filter(Number.isFinite)), spatial };
+    }
+
     function buildEnvironmentalRhythmSynthesisAxis(fieldId, domainLayers, componentWeights, description, deterministicSeed) {
         const components = Object.entries(componentWeights).map(([componentId, component]) => {
             const value = getRhythmFieldMean(domainLayers, component.domainId, component.fieldId);
@@ -1991,7 +2012,9 @@
         // recovering capacity per unit of that cycle.
         const stabilizationDelay = fieldId === 'recoveryProfile'
             ? getRhythmFieldMean(domainLayers, 'recovery', 'stabilizationInterval') : 0;
-        const synthesizedValue = weightedSupport / (1 + stabilizationDelay);
+        const measuredRecovery = fieldId === 'recoveryProfile'
+            ? measureRegionalRecovery(domainLayers.recovery, components) : null;
+        const synthesizedValue = measuredRecovery?.mean ?? weightedSupport / (1 + stabilizationDelay);
         const componentValues = components.map(component => component.inverse ? 1 - component.value : component.value);
         const componentSpread = componentValues.length
             ? Math.max(...componentValues) - Math.min(...componentValues)
@@ -2025,6 +2048,10 @@
             summary: Object.freeze({
                 mean: roundValue(synthesizedValue),
                 ...(fieldId === 'recoveryProfile' && { stabilizationDelay: roundValue(stabilizationDelay) }),
+                ...(measuredRecovery && {
+                    landMean: roundValue(measuredRecovery.spatial.value),
+                    landCellCount: measuredRecovery.spatial.landCells
+                }),
                 componentCount: components.length,
                 componentSpread: roundValue(componentSpread),
                 dominantContribution: roundValue(dominantContribution),
@@ -2246,21 +2273,6 @@
         }, {});
     }
 
-    function buildIsolatedZoneIdsByContinent(isolatedZones = []) {
-        return isolatedZones.reduce((index, isolatedZone) => {
-            const zoneId = normalizeString(isolatedZone.zoneId, '');
-            uniqueStrings(isolatedZone.continentIds).forEach((continentId) => {
-                if (!index[continentId]) {
-                    index[continentId] = [];
-                }
-                if (zoneId) {
-                    index[continentId].push(zoneId);
-                }
-            });
-            return index;
-        }, {});
-    }
-
     function resolvePressureSynthesisOutput(input = {}, deterministicSeed = null) {
         if (isPlainObject(input.pressureSynthesisOutput)) return input.pressureSynthesisOutput;
         if (isPlainObject(input.pressureSynthesis)) {
@@ -2369,22 +2381,20 @@
 
     function inferRecoverySignals(reliefRegion = {}, context = {}) {
         const reliefRegionId = normalizeString(reliefRegion.reliefRegionId, '');
-        const continentIds = uniqueStrings(reliefRegion.continentIds);
-        const climateBandIds = uniqueStrings((context.climateBandIdsByReliefRegion || {})[reliefRegionId]);
-        const riverBasinIds = uniqueStrings((context.riverBasinIdsByReliefRegion || {})[reliefRegionId]);
+        const { spatial, basinCells, climateBandIds, riverBasinIds, climateMean, basinMean } = phase2.getReliefCarriers(context, reliefRegionId);
         const routeIds = uniqueStrings((context.routeIdsByReliefRegion || {})[reliefRegionId]);
-        const chokepointIds = uniqueStrings((context.chokepointIdsByReliefRegion || {})[reliefRegionId]);
-        const isolatedZoneIds = uniqueStrings(continentIds.flatMap((continentId) => {
-            const zoneIds = (context.isolatedZoneIdsByContinent || {})[continentId];
-            return Array.isArray(zoneIds) ? zoneIds : [];
-        }).concat(context.isolatedZoneIdsByReliefRegion[reliefRegionId] || []));
+        const chokepointIds = uniqueStrings([
+            ...(context.chokepointIdsByReliefRegion[reliefRegionId] || []),
+            ...routeIds.flatMap(id => context.chokepointIdsByRoute[id] || [])
+        ]);
+        const isolatedZoneIds = context.isolatedZoneIdsByReliefRegion[reliefRegionId] || [];
 
-        const climateExposurePressure = meanByRecordIds(context.climateScores.climateExposurePressure, climateBandIds);
-        const waterStress = meanByRecordIds(context.hydrologyScores.waterStress, riverBasinIds);
-        const droughtPressure = meanByRecordIds(context.hydrologyScores.droughtPressure, riverBasinIds);
-        const floodInstability = meanByRecordIds(context.hydrologyScores.floodInstability, riverBasinIds);
-        const foodStress = meanByRecordIds(context.foodScores.foodStress, climateBandIds);
-        const scarcityBaseline = meanByRecordIds(context.foodScores.scarcityBaseline, climateBandIds);
+        const climateExposurePressure = climateMean(context.climateScores.climateExposurePressure);
+        const waterStress = basinMean(context.hydrologyScores.waterStress);
+        const droughtPressure = basinMean(context.hydrologyScores.droughtPressure);
+        const floodInstability = basinMean(context.hydrologyScores.floodInstability);
+        const foodStress = climateMean(context.foodScores.foodStress);
+        const scarcityBaseline = climateMean(context.foodScores.scarcityBaseline);
         const routeReliabilityInverse = meanByRecordIds(context.travelScores.routeReliabilityInverse, routeIds);
         const movementUncertaintyPressure = meanByRecordIds(context.travelScores.movementUncertaintyPressure, routeIds);
         const detourBurden = meanByRecordIds(context.travelScores.detourBurden, routeIds);
@@ -2408,15 +2418,11 @@
                 catastrophePressure
             ])
         );
-        const mobilityReentrySupport = clamp01(
-            1 - mean([
-                routeReliabilityInverse,
-                movementUncertaintyPressure,
-                detourBurden,
-                chokepointPressure,
-                accessFragility
-            ])
-        );
+        const mobilityBurden = routeIds.length ? [routeReliabilityInverse, movementUncertaintyPressure, detourBurden]
+            : [context.localMobilityPenalty[reliefRegionId] ?? clamp01(reliefRegion.ruggednessBias)];
+        if (chokepointIds.length) mobilityBurden.push(chokepointPressure);
+        if (isolatedZoneIds.length) mobilityBurden.push(accessFragility);
+        const mobilityReentrySupport = clamp01(1 - mean(mobilityBurden));
         const stabilizationDrag = clamp01(mean([
             catastrophePressure,
             floodInstability,
@@ -2432,11 +2438,13 @@
             scarcityBaseline,
             failureImpactPressure
         ]));
-        const runoffContinuity = meanByRecordIds(context.runoffAvailability, riverBasinIds);
+        const runoffSupport = phase2.meanCarrierScore(
+            context.runoffAvailability, basinCells, riverBasinIds, spatial?.landCellCount
+        ) ?? 0;
         const accessibleTerrain = 1 - clamp01(reliefRegion.ruggednessBias);
-        // A calm window becomes effective relief only when recoverable habitat and
-        // freshwater coincide. Rain-fed terrain keeps a limited local contribution.
-        const recoveryCapacity = accessibleTerrain * (0.25 * supportWindow + 0.75 * runoffContinuity);
+        // Shelter in a benign weather window and freshwater support are separate contributions.
+        const localSupport = 0.25 * supportWindow + 0.75 * runoffSupport;
+        const recoveryCapacity = accessibleTerrain * localSupport;
         const reliefPocket = applyThresholdContrast(
             clamp01(
                 (supportWindow * 0.42)
@@ -2524,6 +2532,14 @@
         );
 
         return {
+            climateBandIds,
+            riverBasinIds,
+            routeIds,
+            chokepointIds,
+            isolatedZoneIds,
+            landCellCount: spatial?.landCellCount ?? null,
+            runoffSupport: roundValue(runoffSupport),
+            accessibleTerrain: roundValue(accessibleTerrain),
             supportWindow: roundValue(supportWindow),
             recoveryCapacity: roundValue(recoveryCapacity),
             mobilityReentrySupport: roundValue(mobilityReentrySupport),
@@ -2541,8 +2557,9 @@
             catastrophePressure: roundValue(catastrophePressure),
             recoveryTempo: roundValue(recoveryTempo * recoveryCapacity),
             stabilizationInterval: roundValue(stabilizationInterval),
-            reliefPersistence: roundValue(reliefPersistence * recoveryCapacity),
-            environmentalForgiveness: roundValue(environmentalForgiveness * recoveryCapacity)
+            // Habitat can retain a refuge while delivery over the surrounding terrain remains slow.
+            reliefPersistence: roundValue(reliefPersistence * localSupport),
+            environmentalForgiveness: roundValue(environmentalForgiveness * localSupport)
         };
     }
 
@@ -2561,6 +2578,14 @@
                 coastalInfluence: roundValue(clamp01(reliefRegion.coastalInfluence))
             }),
             supportContextSnapshot: Object.freeze({
+                climateBandIds: signals.climateBandIds || [],
+                riverBasinIds: signals.riverBasinIds || [],
+                routeIds: signals.routeIds || [],
+                chokepointIds: signals.chokepointIds || [],
+                isolatedZoneIds: signals.isolatedZoneIds || [],
+                landCellCount: signals.landCellCount ?? null,
+                runoffSupport: signals.runoffSupport || 0,
+                accessibleTerrain: signals.accessibleTerrain || 0,
                 supportWindow: signals.supportWindow || 0,
                 recoveryCapacity: signals.recoveryCapacity || 0,
                 mobilityReentrySupport: signals.mobilityReentrySupport || 0,
@@ -2580,6 +2605,7 @@
             return buildRecoveryScoreEntry(reliefRegion, signalKey, signals[signalKey], signals);
         });
         const values = perReliefScores.map((entry) => entry.value);
+        const measured = phase2.meanScoreByLand(perReliefScores, row => row.supportContextSnapshot.landCellCount);
 
         return Object.freeze({
             type: 'phase2ScalarField',
@@ -2612,6 +2638,7 @@
             summary: Object.freeze({
                 recordCount: perReliefScores.length,
                 mean: roundValue(mean(values)),
+                ...(measured && { landCellCount: measured.landCells, landMean: roundValue(measured.value) }),
                 min: roundValue(values.length ? Math.min(...values) : 0),
                 max: roundValue(values.length ? Math.max(...values) : 0)
             })
@@ -2833,20 +2860,18 @@
                     : {};
 
                 const context = {
+                    coverage: phase2.getEnvironmentalCoverage(input),
                     climateBandIdsByReliefRegion: buildClimateBandIdsByReliefRegion(climateBands),
                     riverBasinIdsByReliefRegion: buildRiverBasinIdsByReliefRegion(riverBasins),
                     runoffAvailability: Object.fromEntries(riverBasins.map(basin => {
-                        const area = clamp01(basin.catchmentScale);
                         // A compact catchment may be continuous and still hold little water.
-                        return [basin.riverBasinId, clamp01(basin.basinContinuity) * area / (area + 0.04)];
+                        return [basin.riverBasinId, clamp01(basin.basinContinuity) * phase2.catchmentWaterSupport(clamp01(basin.catchmentScale))];
                     })),
                     routeIdsByReliefRegion: buildRouteIdsByReliefRegion(macroRoutes),
+                    chokepointIdsByRoute: Object.fromEntries(macroRoutes.map(route => [route.routeId, route.chokepointIds])),
                     chokepointIdsByReliefRegion: buildChokepointIdsByReliefRegion(chokepoints),
-                    isolatedZoneIdsByContinent: buildIsolatedZoneIdsByContinent(isolatedZones),
-                    isolatedZoneIdsByReliefRegion: isolatedZones.reduce((index, zone) => {
-                        for (const id of uniqueStrings(zone.reliefRegionIds)) (index[id] ||= []).push(zone.zoneId);
-                        return index;
-                    }, Object.create(null)),
+                    isolatedZoneIdsByReliefRegion: phase2.indexIsolationByRelief(reliefRegions, isolatedZones),
+                    localMobilityPenalty: createScoreMap(domainLayers.terrain?.mobilityTerrainPenalty?.perReliefScores),
                     climateScores: {
                         climateExposurePressure: createScoreMap(
                             (((domainLayers.climate || {}).climateExposurePressure || {}).perBandScores)
@@ -3178,6 +3203,7 @@
                     : {};
 
                 const context = {
+                    coverage: phase2.getEnvironmentalCoverage(input),
                     riverBasinIdsByReliefRegion: buildRiverBasinIdsByReliefRegion(riverBasins),
                     seasonalityScores: {
                         seasonalityStrength: createScoreMap((((seasonalityOutput.domain || {}).seasonalityStrength || {}).perBandScores)),

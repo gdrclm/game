@@ -799,6 +799,10 @@
             });
         });
 
+        for (const error of window.Game.systems.worldgenMacro?.validateEnvironmentalCoverage?.(macroGeographyPackage) || []) {
+            addIssue(issues, 'error', 'invalid_environmental_coverage', 'macroGeographyPackage.environmentalCoverage', error);
+        }
+
         if (hasOwn(macroGeographyPackage, 'debugArtifacts') && !isPlainObject(macroGeographyPackage.debugArtifacts)) {
             addIssue(
                 issues,
@@ -852,6 +856,9 @@
             macroSeed: normalizeSeed(macroGeographyPackage.macroSeed),
             version: normalizeString(macroGeographyPackage.version),
             worldBounds: cloneValue(macroGeographyPackage.worldBounds),
+            ...(macroGeographyPackage.environmentalCoverage && {
+                environmentalCoverage: cloneValue(macroGeographyPackage.environmentalCoverage)
+            }),
             validationReport: cloneValue(macroGeographyPackage.validationReport)
         };
         const recordCollections = buildRecordCollections(macroGeographyPackage);

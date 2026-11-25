@@ -7,7 +7,7 @@ const { compileFunction } = require('node:vm');
 const repo = resolve(__dirname, '../../..');
 const phase2Scripts = [
     'index.js', 'contracts/index.js', 'deterministic-rng.js', 'normalization.js',
-    'intake/index.js', 'binding/index.js', 'pressure/index.js', 'recovery/index.js',
+    'intake/index.js', 'binding/index.js', 'environmental-context.js', 'pressure/index.js', 'recovery/index.js',
     'rhythm/index.js', 'summaries/index.js', 'validation/index.js', 'rebalance/index.js',
     'debug/index.js', 'export/index.js', 'orchestration/index.js'
 ].map(file => `js/worldgen/phase2/${file}`);

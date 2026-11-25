@@ -1,0 +1,98 @@
+(() => {
+    const macro = window.Game.systems.worldgenMacro;
+
+    function indexLandCoverage(records, idField, bodies, mask, bodyId) {
+        const ids = new Set(records.map(record => record[idField]));
+        const byCell = new Array(mask.values.length);
+        const byId = new Map();
+        for (const body of bodies) {
+            const id = bodyId(body);
+            if (!ids.has(id)) continue;
+            const row = { landCellCount: 0 };
+            for (const cell of body.cellIndices) {
+                if (mask.values[cell] < mask.threshold) continue;
+                byCell[cell] = id;
+                row.landCellCount += 1;
+            }
+            byId.set(id, row);
+        }
+        return { byCell, byId };
+    }
+
+    function countIntersections(size, sources, targets, field) {
+        for (let cell = 0; cell < size; cell += 1) {
+            const source = sources.byCell[cell];
+            const target = targets.byCell[cell];
+            if (!source || !target) continue;
+            const row = sources.byId.get(source);
+            const counts = row[field] ||= {};
+            counts[target] = (counts[target] || 0) + 1;
+        }
+    }
+
+    function buildEnvironmentalCoverage({ mask, reliefRegions, reliefBodies, riverBasins, watersheds, climateBands, climateZones }) {
+        if (!mask?.values?.length || !reliefBodies?.length || !watersheds?.length || !climateZones?.length) return undefined;
+        const relief = indexLandCoverage(reliefRegions, 'reliefRegionId', reliefBodies, mask, body => body.reliefRegionId);
+        const climate = indexLandCoverage(climateBands, 'climateBandId', climateZones, mask, zone => zone.climateBandId);
+        const basins = indexLandCoverage(riverBasins, 'riverBasinId', watersheds, mask, basin => basin.recordDraft.riverBasinId);
+        const size = mask.values.length;
+        countIntersections(size, relief, climate, 'climateBandCells');
+        countIntersections(size, relief, basins, 'riverBasinCells');
+        countIntersections(size, climate, basins, 'riverBasinCells');
+        return {
+            version: 1,
+            reliefRegions: Object.fromEntries(relief.byId),
+            climateBands: Object.fromEntries(climate.byId),
+            riverBasins: Object.fromEntries(basins.byId)
+        };
+    }
+
+    function validateEnvironmentalCoverage(geography) {
+        const coverage = geography.environmentalCoverage;
+        if (coverage === undefined) return [];
+        const isRecord = value => value && typeof value === 'object' && !Array.isArray(value);
+        const collections = { reliefRegions: 'reliefRegionId', climateBands: 'climateBandId', riverBasins: 'riverBasinId' };
+        if (coverage?.version !== 1 || Object.keys(collections).some(key => !isRecord(coverage[key]))) {
+            return ['Invalid environmentalCoverage version or collections.'];
+        }
+        const worldSize = geography.worldBounds?.width * geography.worldBounds?.height;
+        const errors = [];
+        for (const [collection, idField] of Object.entries(collections)) {
+            const records = Array.isArray(geography[collection]) ? geography[collection] : [];
+            const ids = new Set(records.map(record => record?.[idField]));
+            let total = 0;
+            for (const [id, row] of Object.entries(coverage[collection])) {
+                const path = `environmentalCoverage.${collection}.${id}`;
+                if (!ids.has(id) || !Number.isSafeInteger(row?.landCellCount) || row.landCellCount < 0) {
+                    errors.push(`Invalid land coverage at ${path}.`);
+                    continue;
+                }
+                total += row.landCellCount;
+                const relations = collection === 'reliefRegions'
+                    ? { climateBandCells: 'climateBands', riverBasinCells: 'riverBasins' }
+                    : collection === 'climateBands' ? { riverBasinCells: 'riverBasins' } : {};
+                for (const [field, targetCollection] of Object.entries(relations)) {
+                    if (row[field] === undefined) continue;
+                    if (!isRecord(row[field])) {
+                        errors.push(`Invalid intersection counts at ${path}.${field}.`);
+                        continue;
+                    }
+                    let overlap = 0;
+                    for (const [target, count] of Object.entries(row[field])) {
+                        const targetSize = coverage[targetCollection][target]?.landCellCount;
+                        if (!Number.isSafeInteger(count) || count <= 0 || !Number.isSafeInteger(targetSize) || count > targetSize) {
+                            errors.push(`Invalid intersection with ${target} at ${path}.${field}.`);
+                            continue;
+                        }
+                        overlap += count;
+                    }
+                    if (overlap > row.landCellCount) errors.push(`Intersection counts exceed land coverage at ${path}.${field}.`);
+                }
+            }
+            if (total > worldSize) errors.push(`Land coverage exceeds world area in ${collection}.`);
+        }
+        return errors;
+    }
+
+    Object.assign(macro, { buildEnvironmentalCoverage, validateEnvironmentalCoverage });
+})();
