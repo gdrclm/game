@@ -16,3 +16,6 @@ Purpose: shared context between ChatGPT Project and Codex; navigation rather tha
 
 ## Conflict resolution
 Latest explicit author decision takes precedence for design, subject to documenting contract consequences; official contracts for interface semantics; executable tests and observed outputs for actual state. The older runtime roadmap has a separate phase numbering from WorldGen. Do not conflate them. Old prompt packs and completed checklists are not proof of runtime readiness. If a contradiction changes game design or historical causality, flag it instead of silently choosing. Existing GDD/craft docs may predate the diagnosis and worldgen expansion; keep relevant mechanics, don't assume all old final-goal language is current.
+
+## Current autonomous goal
+[WORLDGEN_PHASE0_2_GLOBAL_GOAL.md](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) — active Phase 0–2 engineering objective, including F8-R and terrain/bathymetry/causality/diversity/scale/visual review. Use it with AGENTS.md and the current state; it does not supersede author approval gates or phase contracts.

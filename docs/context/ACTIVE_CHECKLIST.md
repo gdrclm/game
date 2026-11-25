@@ -16,8 +16,15 @@ Only current work and acceptance. Historical implementation details belong in gi
 - [x] F7: Five read-only atlases and the fixed-seed storm comparison checked against actual PhysicalWorldDebugBundle and Phase 2 exports. See [author review packet](review/README.md).
 - [x] F8-Q: Investigate and refine physical passage closures, transport independence, morphology and center/periphery contrast. Compare the baseline and candidate on the same 27 seeds and four untouched seeds. Publish [maps, causes, and evidence](review/f8q/README.md).
 - [ ] F8-R: Resolve the two technical Phase 2 blockers found by F8-Q. Seed `16908799` falls below relief checks; `2764796977` fails tension versus relief. Keep existing gates. [Recovery diagnosis and acceptance](FOUNDATION_RECOVERY_CLOSURE.md). The mandatory regression cohort now includes all 31 reviewed seeds; retain new predeclared holdouts separately.
+- [ ] F8-T: Terrain and bathymetry capability audit, causal implementation of missing V1 coverage and actual maps.
+- [ ] F8-C: Phase 0–2 causal channel and handoff audit.
+- [ ] F8-D: Real-world physical and environmental diversity evidence.
+- [ ] F8-S: Full regression and predeclared fresh holdout stress tests; profile performance.
+- [ ] F8-V: Real visual evidence, coverage matrix and author review packet.
 - [ ] F8: Author review of physical coherence, causal meaning, variation and downstream narrative potential. Record decision or requested rule changes and retest unseen seeds. Do not claim author acceptance.
 - [ ] F9: Final reconciliation of docs/code/tests/phase readiness; explicit approval before Phase 3 expansion or merge.
 
 ## Milestone boundary
 F1–F7 passed on `04f5b5c`. The F8-Q repeat on `808ac3a` passed 25/27 in the main comparison, with all canonical seeds, and 4/4 on the untouched cohort. See [project state](PROJECT_STATE.md) and the [F8-Q review packet](review/f8q/README.md). F8 and F9 require the author's decision before Phase 3 or merge.
+
+Active global objective: [WORLDGEN_PHASE0_2_GLOBAL_GOAL.md](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). Engineering steps may be interleaved, but resolve known F8-R failures first and preserve F8-Q. These review tasks are not additional WorldGen phases.
