@@ -1,10 +1,11 @@
 # Author review queue
 
-No immediate author input is required to diagnose missing Phase 1 records. Continue technical work. Do not ask author to debug GitHub, write code or supply an archive if repository access is available.
+F8 is pending author feedback. The Phase 0–2 technical checks passed on generator revision `04f5b5c`. The packet includes the final 19-world audit, five atlas sheets, and a paired storm comparison. [Author review packet](review/README.md)
 
 ## Pending evidence-based gates
-- Physical-world review (after F7): actual maps from diverse seeds with land/water, relief, climate, routes, archipelagos, environmental pressure and recovery; show failures and controlled effects. Ask about meaningful differences, not technical numbers in isolation.
-- Causal strength: maritime coefficient 0.20 provisional; show real paired results before discussing tuning. Additional factor semantics need evidence and may require author confirmation.
+
+- Physical-world review: compare low-land seed 137, six-island seed 1908874353, three-continent seed 2576980379 and basin-rich seed 4286578687. Judge coastline shape, route geography, bottlenecks and the range of environment patterns.
+- Causal strength: the measured maritime and storm response, catchment recovery and fragility handoff are in the packet. The existing maritime coefficient and the new storm/cascade coefficients are provisional. Center/periphery contrast fell below its target in the checked worlds. Seed 16908799 sits at the low end of usable recovery.
 - Later narrative review: culture/individual differences, everyday life, humor, contradictions, rare histories, material traces and investigation potential. Before 17.5 label gameplay projections as hypotheses.
 - Later production: clarify exact block 3–5 boundaries and NPC architecture when relevant. Reconcile old GDD final-goal language with disease narrative before implementation.
 - Art: access original chat reference packs and approved visual assets before art production. Do not ask for them during foundation debugging unless visual test truly needs them.

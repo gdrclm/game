@@ -1,40 +1,25 @@
-# Project state — Codex handoff, 2026-11-25
+# Project state · WorldGen V1 Foundation Closure
 
-Scope: WorldGen V1 Foundation Closure on worldgen/v1-foundation-closure. Prior code HEAD afc59830bb4e40ea953572e80f6dbf625faddcab; handoff commit adds documentation only. Main not merged. Verify actual HEAD before working.
+Дата проверки — 25 ноября 2026. Генератор `04f5b5c4980c9835b039e356713f2b0b138df30c`, рабочая ветка `worldgen/v1-foundation-closure`. Технические задачи F1–F7 выполнены. Авторская приёмка F8 открыта. [Чеклист](ACTIVE_CHECKLIST.md) · [Пакет для приёмки](review/README.md)
 
-## What exists
-- Browser runtime uses window.Game; expedition generation currently separate from causal worldgen (js/expedition/progression.js, island-layout.js). No Phase 17.5 integration yet.
-- Phase 0 actual canonical entry, export validator, freeze adapter, Phase 1 intake implemented. Two 256-seed cohorts passed deterministic Phase 0 generation/validation; boundary and tampered sub-seed tests passed. Sequential seed sample had narrow conflictPressure, spread sample did not. Broader statistical quality not proved.
-- Phase 1 coastJaggedness missing constructor field fixed; watershed record ID kept intact while RNG namespace converted to lowerCamelCase. Phase 1 now reaches package assembly.
-- Phase 2 orchestration status aggregation fixed. Built-in fixture harness passes. Full real Phase 1→2 intake is BLOCKED.
-- First maritime demand channel implemented in archipelago-significance-generator.js, controlled unit test passed. Real world counterfactuals NOT EXERCISED because no supported archipelago zones.
-- Read-only standalone Observatory HTML prototype exists as a chat attachment, not confirmed in repo. CI now exports real debug JSON; no author visual acceptance yet.
-- Phase 3+ not verified as implemented. Do not start them before the current gate.
+## Проверено
 
-## Latest verified CI evidence
-Run 45653210495 (afc5983): https://github.com/gdrclm/game/actions/runs/45653210495
-Artifact 15040214691 (~4.5 MB): https://github.com/gdrclm/game/actions/runs/45653210495/artifacts/15040214691
-All 7 targeted checks passed; whole workflow FAILED. Three real seeds repeated with matching Phase 0 and Phase 1 hashes.
+- Phase 0 выдаёт замороженный официальный handoff. Phase 1 сохраняет исходный master seed и строит материки, связные водосборы, морские выходы, проливы и маршруты. На входе Phase 2 проверены полнота и ссылки корневого пакета.
+- Phase 2 интерпретирует фактические записи географии и раздельно экспортирует давление, ритм и восстановление. При испорченном входе сборка блокируется. Подмена seed, разрыв ссылки и получение невалидного экспорта покрыты отрицательными проверками.
+- Все 19 миров прошли Phase 0–2 дважды с совпавшими хешами. В числе проверенных 3 канонических и 16 новых seed, заранее записанных в плане. Суша занимает 21.5–54.9% карты. В мирах 2–3 материка, 2–11 водных бассейнов, 3–6 островов цепи, 7–28 маршрутов и 2–5 проливов с измеренной зависимостью.
+- Морской контрфактуал выполнен на всех 19 мирах. На 42 отделили влияние морского спроса, изменчивости среды и хрупкости маршрутов. География сохраняет самостоятельную роль. Пара площади водосбора проверяет переход от связанной записи Phase 1 к физическому давлению и восстановлению Phase 2.
+- Встроенный Phase 2 harness прошёл 4 smoke и 6 regression проверок. В Chromium прошли 5 проверок Phase 0, и основной браузерный вход загрузил WorldGen-код без ошибок страницы.
+- Из фактических экспортов собраны пять диагностических карт и парная карта штормов. Сырые данные, в том числе геометрия, графы, поля и результаты валидации, сохранены в CI. [Успешный GitHub Actions](https://github.com/gdrclm/game/actions/runs/45668576173) · [Сырые экспорты](https://github.com/gdrclm/game/actions/runs/45668576173/artifacts/15047299604)
 
-| Master seed | Macro seed | continents | sea regions | mountains | river basins | archipelago regions | routes | chokepoints |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 42 | 363947094 | 1 | 5 | 5 | 5 | 0 | 0 | 0 |
-| 137 | 3879670900 | 1 | 5 | 4 | 5 | 0 | 0 | 0 |
-| 2026 | 2713179311 | 1 | 8 | 4 | 8 | 0 | 0 | 0 |
+## Следующий этап
 
-Phase 1 validation false; blocked exportPackage and MacroGeographyPackageAssembly. Warnings: macro diversity 0.41, center/periphery contrast 0.32–0.34, no official chokepoints. Phase 2 rejects invalid validationReport and insufficient required root records (continents, archipelagoRegions, chokepoints, macroRoutes; seed 137 also coastalOpportunityMap). These are observed symptoms, not yet diagnosed root cause. Causal diagnostics status not_exercised for all three. Phase 2 determinism on real worlds unknown.
+F8 — авторская оценка разнообразия и физической причинности на картах. Текущий контраст центра и периферии остаётся ниже целевого ориентира в 19 мирах. У 16908799 сводное восстановление 0.180434 при минимуме 0.18. Геометрические оси материков и прямолинейность отдельных островных цепей видны в атласе. Коэффициенты штормового и каскадного откликов предварительные. Переход к Phase 3 требует авторского решения F8/F9. Игровая интеграция следует после Phase 17.5. [Вопросы и карты](review/README.md#вопросы-для-f8)
 
-## Reproduction
-From repo root, Node 22:
-    node tests/worldgen-v1-foundation-audit.cjs 42
-Full baseline:
-    node tests/worldgen-v1-foundation-audit.cjs 42 137 2026 > worldgen-foundation-report.json
-CI workflow .github/workflows/worldgen-v1-foundation.yml uploads report and worldgen-observatory-data/. Baseline may take minutes; start with one seed and focused stage-level tests. Keep raw debug snapshots outside source control unless explicitly curated.
+## Воспроизведение
 
-## F1 reproduced locally
+```sh
+node tests/worldgen-v1-foundation-audit.cjs --cohort all --causal --snapshots ../observatory-data > ../foundation-report.json
+python3 tests/render-worldgen-foundation-atlas.py ../atlas ../observatory-data/seed-42.json ../observatory-data/counterfactual-42.json
+```
 
-The [execution plan and baseline trace](FOUNDATION_EXECUTION_PLAN.md#исходная-трассировка-f1) record masks, segment counts and actual graph sizes. The coast selector rejected every candidate in seed 137; each world supplied just one inland route endpoint and no axis-aligned fragmentation run or strait. Empty roots matched empty sources.
-
-## Next safe action
-
-Continue F2 with bounded physical shoreline selection, measured open-water landfalls and verified passages before re-running package validation and Phase 2.
+Успешный прогон выполнен на Node 22.23.5. Полный отчёт сохраняет отдельные хеши Phase 0, Phase 1 и Phase 2, время, состав мира и контрольные пары. Исходный сбой CI 45653210495 и отказы на промежуточных итерациях описаны в плане. [Полный отчёт](review/foundation-report.json) · [Рабочий план](FOUNDATION_EXECUTION_PLAN.md)

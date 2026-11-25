@@ -1,5 +1,7 @@
 # Codex entry prompt
 
+For the current checkpoint read [project state](PROJECT_STATE.md) and the [F8 review packet](review/README.md). The entry prompt below records the original Foundation Closure task.
+
 Open repository gdrclm/game on branch worldgen/v1-foundation-closure. Read AGENTS.md, PLANS.md and docs/context/CONTEXT_MAP.md and follow its mandatory reading order. Read PROJECT_STATE.md and ACTIVE_CHECKLIST.md first for the latest execution evidence.
 
 In Plan Mode, develop an executable plan for F1–F7 of V1 Foundation Closure, starting from the actual Phase 1 record/validation failure in CI run 45653210495. Do not redesign the project or restart Phase 0. Locate the earliest loss of valid records, distinguish generation from assembly, use actual runtime and contracts. Specify commands, unit/integration tests, causal counterfactuals, holdout seeds, expected evidence and safe review gates. Keep Phase 17.5 as the boundary for gameplay integration.
