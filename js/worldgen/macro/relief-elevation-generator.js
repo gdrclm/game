@@ -3373,11 +3373,16 @@
             0
         ));
         const percentileBias = 0.5 + ((hashUnit(seed ^ 0x27d4eb2d, width, height) - 0.5) * 0.12);
-        const shoreline = macro.selectContinentalShoreline(blendedValues, worldBounds, percentileBias, collectMaskComponents);
-        const seaLevelThreshold = shoreline.cutoff;
-        const { elevation, hotspotChain } = macro.raiseOffshoreHotspotChain(
-            blendedValues, shoreline, worldBounds, sourceInputs.hotspotVolcanicSeedHelper?.hotspotSeeds, collectMaskComponents
+        const hotspotSeeds = sourceInputs.hotspotVolcanicSeedHelper?.hotspotSeeds;
+        const raiseChain = slice => macro.raiseOffshoreHotspotChain(
+            blendedValues, slice, worldBounds, hotspotSeeds, collectMaskComponents
         );
+        const shoreline = macro.selectContinentalShoreline(
+            blendedValues, worldBounds, percentileBias, collectMaskComponents,
+            hotspotSeeds?.length && Math.min(width, height) >= 32 ? raiseChain : null
+        );
+        const seaLevelThreshold = shoreline.cutoff;
+        const { elevation, hotspotChain } = shoreline.offshore || raiseChain(shoreline);
         let landCellCount = 0;
         let waterCellCount = 0;
 
@@ -3408,6 +3413,10 @@
             thresholdPercentile: roundFieldValue(shoreline.percentile),
             shorelineAttempts: shoreline.attempts,
             hotspotChain,
+            relativeElevationValues: elevation.map(value => roundFieldValue(value - seaLevelThreshold)),
+            hotspotUpliftValues: hotspotChain
+                ? elevation.map((value, cell) => roundFieldValue(value - blendedValues[cell]))
+                : null,
             landCellCount,
             waterCellCount,
             landRatio: roundFieldValue(landCellCount / Math.max(1, blendedValues.length)),
@@ -5126,7 +5135,9 @@
         const field = createScalarFieldStorage('seaLevelAppliedElevationField', worldBounds, {
             range: DEFAULT_SEA_LEVEL_APPLIED_ELEVATION_FIELD_RANGE
         });
-        const seaLevelModel = materializeSeaLevelAppliedElevationField(field, worldBounds, resolvedSourceInputs, seed);
+        const { relativeElevationValues, hotspotUpliftValues, ...seaLevelModel } = materializeSeaLevelAppliedElevationField(
+            field, worldBounds, resolvedSourceInputs, seed
+        );
 
         return serializeScalarField(field, {
             stageId: SEA_LEVEL_APPLIED_ELEVATION_STAGE_ID,
@@ -5145,6 +5156,8 @@
             sourceFieldIds: buildSeaLevelAppliedElevationSourceFieldIds(resolvedSourceInputs),
             worldBounds,
             seaLevelModel,
+            relativeElevationValues,
+            hotspotUpliftValues,
             compatibility: buildSeaLevelAppliedElevationCompatibility(resolvedSourceInputs, worldBounds),
             intentionallyAbsent: [
                 'finalElevation',

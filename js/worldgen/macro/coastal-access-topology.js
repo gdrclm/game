@@ -18,7 +18,8 @@
     }
 
     function selectPorts(component, context, limit, favoredCell = -1) {
-        const { width, height, values, seaByCell, opportunity, landContinentByCell, reliefByCell, profileByCluster } = context;
+        const { width, height, values, seaByCell, opportunity, landContinentByCell, reliefByCell, profileByCluster,
+            selectedWaterCells } = context;
         const scale = Math.min(width, height);
         const candidatesByWaterCell = new Map();
         for (const landCellIndex of component.cells) {
@@ -40,8 +41,14 @@
             const { sea, score, landCellIndex, waterCellIndex } = candidate;
             const profile = profileByCluster.get(sea.seaRegionClusterId) || {};
             const anchorPoint = cellPoint(landCellIndex, width);
+            // A one-cell channel can carry landfalls on both banks. Their land
+            // anchors remain distinct even if they start at the same water cell.
+            const coastalNodeId = selectedWaterCells.has(waterCellIndex)
+                ? `coastal_access_${waterCellIndex}_${landCellIndex}`
+                : `coastal_access_${waterCellIndex}`;
+            selectedWaterCells.add(waterCellIndex);
             ports.push({
-                coastalNodeId: `coastal_access_${waterCellIndex}`,
+                coastalNodeId,
                 selectionMode: 'local_open_water_access',
                 continentId: landContinentByCell[landCellIndex] || component.continentId || '',
                 seaRegionClusterId: sea.seaRegionClusterId,
@@ -122,6 +129,7 @@
         const context = {
             width, height, values, seaByCell, landContinentByCell, reliefByCell,
             opportunity: coastalOpportunity?.values,
+            selectedWaterCells: new Set(),
             profileByCluster: new Map(clusterProfiles.map(profile => [profile.seaRegionClusterId, profile]))
         };
 

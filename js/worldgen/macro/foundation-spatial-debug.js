@@ -3,14 +3,29 @@
 
     const fields = [
         ['tectonicSkeleton', 'platePressureField'],
+        ['tectonicSkeleton', 'upliftField'],
+        ['tectonicSkeleton', 'subsidenceField'],
+        ['tectonicSkeleton', 'fractureMaskField'],
+        ['tectonicSkeleton', 'ridgeDirectionField'],
+        ['hydrosphere', 'coastalShelfDepthField'],
         ['marineCarving', 'marineInvasionField'],
         ['marineCarving', 'coastJaggednessControlledLandWaterMaskField'],
+        ['marineCarving', 'preMarineRelativeElevationField'],
+        ['marineCarving', 'offshoreHotspotUpliftField'],
+        ['marineCarving', 'finalRelativeElevationField'],
+        ['marineCarving', 'finalSurfaceOriginField'],
+        ['marineCarving', 'finalSurfaceSlopeField'],
+        ['marineCarving', 'finalLocalReliefField'],
+        ['marineCarving', 'macroLandformField'],
+        ['marineCarving', 'macroSeafloorFormField'],
         ['continentalCohesion', 'continentalCohesionField'],
         ['coastalOpportunity', 'coastalOpportunityMap']
     ];
     const intermediate = [
         ['tectonicSkeleton', 'plateSeedDistribution'],
         ['tectonicSkeleton', 'plateBoundaryClassification'],
+        ['tectonicSkeleton', 'arcFormationHelper'],
+        ['tectonicSkeleton', 'hotspotVolcanicSeedHelper'],
         ['reliefElevation', 'continentBodies'],
         ['reliefElevation', 'reliefRegionExtraction'],
         ['hydrosphere', 'seaRegionClusters'],
@@ -37,14 +52,16 @@
     function buildFoundationSpatialDebug(input, makeEntry, categories) {
         for (const [stageId, fieldId] of fields) {
             const field = input[stageId]?.outputs?.fields?.[fieldId];
-            if (!field?.values?.length) continue;
-            const { width, height, values, range, threshold } = field;
+            if (!field?.values?.length && !field?.xValues?.length) continue;
+            const { width, height, values, range, threshold, valueEncoding, sourceFieldIds,
+                xValues, yValues, vectorEncoding } = field;
             categories.fieldSnapshots.push(makeEntry({
                 artifactId: `foundation_field_${fieldId}`,
                 artifactKind: 'fieldSnapshot',
                 stageId,
                 sourceLayerId: fieldId,
-                payload: { fieldId, width, height, values, range, threshold }
+                payload: { fieldId, width, height, values, range, threshold, valueEncoding, sourceFieldIds,
+                    xValues, yValues, vectorEncoding }
             }, 'fieldSnapshots'));
         }
         for (const [stageId, outputId] of intermediate) {
@@ -56,6 +73,20 @@
                 stageId,
                 sourceLayerId: outputId,
                 payload
+            }, 'intermediateOutputs'));
+        }
+        const finalFields = input.marineCarving?.outputs?.fields;
+        if (finalFields?.finalRelativeElevationField) {
+            categories.intermediateOutputs.push(makeEntry({
+                artifactId: 'foundation_geometry_finalDrainage',
+                artifactKind: 'intermediateOutput',
+                stageId: 'marineCarving',
+                sourceLayerId: 'finalDrainage',
+                payload: macro.buildFinalDrainage(
+                    finalFields.finalRelativeElevationField,
+                    finalFields.macroSeafloorFormField,
+                    input.climateEnvelope?.outputs?.fields?.wetnessField?.values
+                )
             }, 'intermediateOutputs'));
         }
         const payload = input.reliefElevation?.outputs?.fields?.seaLevelAppliedElevationField?.seaLevelModel;

@@ -2835,6 +2835,7 @@
             archipelagoFragmentationOutput,
             coastJaggednessControlOutput
         );
+        const finalTerrain = macro.buildFinalTerrain(input, coastJaggednessControlOutput.coastJaggednessControlledLandWaterMaskField);
 
         return {
             generatorId: MODULE_ID,
@@ -2859,7 +2860,8 @@
                     bayCarvedLandWaterMaskField: bayCarvingOutput.bayCarvedLandWaterMaskField,
                     straitCarvedLandWaterMaskField: straitCarvingOutput.straitCarvedLandWaterMaskField,
                     islandChainFragmentedLandWaterMaskField: archipelagoFragmentationOutput.islandChainFragmentedLandWaterMaskField,
-                    coastJaggednessControlledLandWaterMaskField: coastJaggednessControlOutput.coastJaggednessControlledLandWaterMaskField
+                    coastJaggednessControlledLandWaterMaskField: coastJaggednessControlOutput.coastJaggednessControlledLandWaterMaskField,
+                    ...finalTerrain
                 },
                 intermediateOutputs: {
                     bayCarvingSummary: bayCarvingOutput.bayCarvingSummary,
