@@ -11,3 +11,7 @@ F8 is pending author feedback. The Phase 0–2 technical checks passed on genera
 - Art: access original chat reference packs and approved visual assets before art production. Do not ask for them during foundation debugging unless visual test truly needs them.
 
 Each review packet: revision, seed(s), phase, actual outputs, why they arose (linked records/algorithm), observed issue, two or more meaningful alternatives when necessary, proposed correction/invariant, acceptance test. Mark pending/accepted/rejected with date and record decision in DESIGN_DECISIONS.md. Author approves creative decisions; agent handles implementation.
+
+## F8-Q before creative assessment
+
+Run [quality review](FOUNDATION_QUALITY_REVIEW.md) first: separate true route constraints from endpoint-confounded closure, compare regional distributions and independent routes, measure physical morphology. Ask author about range of worlds and possible multi-archipelago scope only after evidence. No approval inferred from technical success.

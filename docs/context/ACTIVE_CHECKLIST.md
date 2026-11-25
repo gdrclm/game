@@ -14,6 +14,7 @@ Only current work and acceptance. Historical implementation details belong in gi
 - [x] F5: One narrow Phase 0→1→2 orchestrator, fail closed; canonical outputs and immutable handoffs; opt-in debug exports. Not player runtime. No integration with expedition progression before Phase 17.5.
 - [x] F6: Run predeclared holdout cohort (suggest 8 distributed seed values distinct from canonical and document before running); report success/failure per seed, determinism, diversity, causal effect coverage, generation time. Scale cohort after performance check. Do not hide failed seeds.
 - [x] F7: Five read-only atlases and the fixed-seed storm comparison checked against actual PhysicalWorldDebugBundle and Phase 2 exports. See [author review packet](review/README.md).
+- [ ] F8-Q: Quality refinement and independent review before author acceptance; see [FOUNDATION_QUALITY_REVIEW.md](FOUNDATION_QUALITY_REVIEW.md). Verify passage closure endpoints, actual topology/shape diversity and center-periphery contrast without weakening validators.
 - [ ] F8: Author review of physical coherence, causal meaning, variation and downstream narrative potential. Record decision or requested rule changes and retest unseen seeds. Do not claim author acceptance.
 - [ ] F9: Final reconciliation of docs/code/tests/phase readiness; explicit approval before Phase 3 expansion or merge.
 
