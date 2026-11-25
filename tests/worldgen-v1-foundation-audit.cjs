@@ -13,7 +13,13 @@ const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture } = 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
 const expanded = [73537, 16908799, 422095321, 894213317, 1536241709, 2269445513, 3071624507, 4011398309];
-const cohorts = { canonical, holdout, expanded, all: canonical.concat(holdout, expanded) };
+// Preserve the historical 19-seed cohort; regression includes every F8-Q case.
+const f8q = [40681987, 359393571, 801384629, 1431655765, 2018958301, 2764796977, 3669891307, 4264079171];
+const f8qFormerBlind = [64847321, 958614127, 2345998979, 3900041903];
+const all = canonical.concat(holdout, expanded);
+const regression = all.concat(f8q, f8qFormerBlind);
+assert.equal(new Set(regression).size, 31, 'Regression cohort must preserve all reviewed seeds');
+const cohorts = { canonical, holdout, expanded, all, f8q, regression };
 const args = process.argv.slice(2);
 const seeds = [];
 let cohort = 'canonical';
@@ -211,7 +217,29 @@ function testHandoffs(result) {
         macro.generateMacroGeographyEndToEnd = generate;
         phase2.createPhase2Engine = phase2Engine;
     }
-    return { invalidRootRejected: true, unresolvedReferenceRejected: true, invalidExportBlocked: true, noPhase2AfterFailedPhase1: true };
+    // A rejected candidate is inspectable only in explicit diagnostics. It is not exported.
+    try {
+        phase2.createPhase2Engine = () => ({
+            run: () => ({ stageResults: [], output: {
+                validationReport: { finalStatus: 'fail' },
+                exportResult: { exported: false, bundle: null },
+                pressureFieldPackage: { marker: 'rejected-pressure' },
+                environmentalRhythmPackage: { marker: 'rejected-rhythm' },
+                rebalancePlan: { triggerResponses: [] }
+            } })
+        });
+        const seed = phase0Bundle.worldSeedProfile.worldSeed;
+        assert.throws(() => worldgenFoundation.runWorldGenFoundation(seed, { includeDebugArtifacts: true }),
+            error => error.phase === 'phase2'
+                && error.evidence.rejectedPhase2Candidate.diagnosticOnly === true
+                && error.evidence.rejectedPhase2Candidate.exported === false
+                && error.evidence.rejectedPhase2Candidate.environmentalRhythmPackage.marker === 'rejected-rhythm');
+        assert.throws(() => worldgenFoundation.runWorldGenFoundation(seed),
+            error => error.phase === 'phase2' && !error.evidence.rejectedPhase2Candidate);
+    } finally {
+        phase2.createPhase2Engine = phase2Engine;
+    }
+    return { invalidRootRejected: true, unresolvedReferenceRejected: true, invalidExportBlocked: true, noPhase2AfterFailedPhase1: true, rejectedCandidateDiagnosticOnly: true };
 }
 
 let controlsRun = false;

@@ -15,3 +15,7 @@ F8 ждёт авторской оценки. Сравнение начально
 - Оригинальные художественные референсы и утверждённые материалы нужны к художественному этапу.
 
 Авторские решения фиксируются в [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md). F9 и Phase 3 ждут явной авторской приёмки.
+
+## F8-R before final acceptance
+
+Recovery and tension/relief blockers must be traced and corrected before asking the author to tune global thresholds. See [F8-R](FOUNDATION_RECOVERY_CLOSURE.md). Preserve meaningful harsh and forgiving environments; do not infer approval of an extra archipelago or a new design target from a request to continue engineering.

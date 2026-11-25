@@ -52,7 +52,33 @@
                 rhythmSeed
             });
             if (!result.output.exportResult.exported || result.output.validationReport.finalStatus !== 'pass') {
-                evidence = Object.freeze({ ...evidence, phase2Report: result.output.validationReport, stageResults: result.stageResults });
+                // Failed candidates are diagnostic evidence only; never a downstream export.
+                const output = result.output;
+                evidence = Object.freeze({
+                    ...evidence,
+                    phase2Report: output.validationReport,
+                    stageResults: result.stageResults,
+                    ...(includeDebugArtifacts ? {
+                        rejectedPhase2Candidate: Object.freeze({
+                            diagnosticOnly: true,
+                            exported: false,
+                            sourcePhase0: phase0Bundle,
+                            sourcePhase1: Object.freeze({ macroGeographyPackage, macroGeographyHandoffPackage }),
+                            phase2InputBundle: output.phase2InputBundle,
+                            recordBinding: output.phase2RecordBindingLayer,
+                            pressureFieldPackage: output.pressureFieldPackage,
+                            environmentalRhythmPackage: output.environmentalRhythmPackage,
+                            pressureSummaryOutput: output.pressureSummaryOutput,
+                            rhythmSummaryOutput: output.rhythmSummaryOutput,
+                            rebalanceAttempts: Object.freeze((output.rebalancePlan?.triggerResponses || []).map(response => Object.freeze({
+                                triggerId: response.triggerId,
+                                rerunLog: response.rerunLog,
+                                rebalanceMetadata: response.rebalanceMetadata,
+                                revalidatedReport: response.revalidatedReport
+                            })))
+                        })
+                    } : {})
+                });
                 throw new Error('Phase 2 export blocked by validation.');
             }
 
