@@ -374,6 +374,7 @@
             conflictPressure: normalizedConstraints.conflictPressure,
             maritimeDependence: normalizedConstraints.maritimeDependence,
             environmentalVolatility: normalizedConstraints.environmentalVolatility,
+            coastJaggedness: normalizedConstraints.coastJaggedness,
             collapseIntensity: normalizedConstraints.collapseIntensity
         };
     }
@@ -417,6 +418,7 @@
             conflictPressure: pickFirstDefined(profileSources, ['conflictPressure']),
             maritimeDependence: pickFirstDefined(profileSources, ['maritimeDependence']),
             environmentalVolatility: pickFirstDefined(profileSources, ['environmentalVolatility']),
+            coastJaggedness: pickFirstDefined(profileSources, ['coastJaggedness']),
             collapseIntensity: pickFirstDefined(profileSources, ['collapseIntensity'])
         }));
     }
