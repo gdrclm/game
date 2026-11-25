@@ -52,6 +52,29 @@ function runCausalChecks(systems, canonical, saveStormPair) {
     for (const id of physicalControls) {
         assert.deepEqual(field(weatherLow.endToEndDebugExport, id).values, field(weatherHigh.endToEndDebugExport, id).values, id);
     }
+    const debug = canonical.diagnostics.physicalWorldDebugBundle;
+    const elevation = field(debug, 'seaLevelAppliedElevationField');
+    const mountain = field(debug, 'mountainAmplificationField');
+    const rainShadowFields = {
+        seaLevelAppliedElevationField: elevation,
+        mountainAmplificationField: mountain,
+        landmassCleanupMaskField: field(debug, 'landmassCleanupMaskField'),
+        oceanConnectivityMaskField: field(debug, 'oceanConnectivityMaskField'),
+        coastalShelfDepthField: field(debug, 'coastalShelfDepthField')
+    };
+    const rainShadowAt = fields => macro.generateRainShadowEffect({
+        macroSeed: macroGeographySeed, worldBounds: { width: elevation.width, height: elevation.height }, fields
+    });
+    const orographic = rainShadowAt(rainShadowFields);
+    const flatControl = rainShadowAt({
+        ...rainShadowFields,
+        seaLevelAppliedElevationField: { ...elevation, values: elevation.values.map(() => 0) },
+        mountainAmplificationField: { ...mountain, values: mountain.values.map(() => 0) }
+    });
+    assert.equal(orographic.seed, flatControl.seed);
+    assert(orographic.summary.shadowedCellCount > 0);
+    assert(flatControl.values.every(value => value === 0), 'Flat relief cannot cast a rain shadow');
+    assert(flatControl.orographicBoostValues.every(value => value === 0));
     const lowSea = weatherLow.macroGeographyPackage.seaRegions.find(sea => sea.basinType === 'open_ocean');
     const highSea = weatherHigh.macroGeographyPackage.seaRegions.find(sea => sea.seaRegionId === lowSea.seaRegionId);
     assert(highSea.stormPressure > lowSea.stormPressure);
@@ -166,6 +189,12 @@ function runCausalChecks(systems, canonical, saveStormPair) {
             phase2ControlsStable: true
         },
         socialControls,
+        rainShadow: {
+            namespace: orographic.seedNamespace,
+            fixedSeed: orographic.seed,
+            shadowedCells: [flatControl.summary.shadowedCellCount, orographic.summary.shadowedCellCount],
+            mean: [flatControl.stats.mean, orographic.stats.mean]
+        },
         catchmentScale: {
             range: [0.032, 0.42],
             riverBasinId: basin.riverBasinId,

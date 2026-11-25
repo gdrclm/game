@@ -8,6 +8,7 @@
         ['tectonicSkeleton', 'fractureMaskField'],
         ['tectonicSkeleton', 'ridgeDirectionField'],
         ['hydrosphere', 'coastalShelfDepthField'],
+        ['hydrosphere', 'oceanConnectivityMaskField'],
         ['marineCarving', 'marineInvasionField'],
         ['marineCarving', 'coastJaggednessControlledLandWaterMaskField'],
         ['marineCarving', 'preMarineRelativeElevationField'],

@@ -37,8 +37,8 @@
             firstContinentalSlice ??= slice;
             if (!findSupportedChain) return { ...slice, attempts };
             const offshore = findSupportedChain(slice);
-            attempt.supportedHotspotPeaks = offshore.hotspotChain?.peaks.length || 0;
-            if (offshore.hotspotChain) return { ...slice, attempts, offshore };
+            attempt.supportedHotspotPeaks = offshore.hotspotChain?.distinctEmergenceCount || 0;
+            if (attempt.supportedHotspotPeaks >= 3) return { ...slice, attempts, offshore };
         }
         return { ...(firstContinentalSlice || firstSlice), attempts };
     }

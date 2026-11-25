@@ -72,20 +72,9 @@
         return tracks.sort((a, b) => b.support - a.support);
     }
 
-    function raiseOffshoreHotspotChain(elevation, shoreline, bounds, hotspotSeeds, collectComponents) {
-        if (!hotspotSeeds?.length || Math.min(bounds.width, bounds.height) < 32) {
-            return { elevation, hotspotChain: null };
-        }
-        const { land, cutoff } = shoreline;
-        const { width, height } = bounds;
-        const distance = distanceFromLand(land, width);
-        const openWater = new Uint8Array(land.length);
-        collectComponents(land, width, height, 0).filter(body => body.touchesBorder)
-            .forEach(body => body.cells.forEach(cell => { openWater[cell] = 1; }));
-        const track = locateHotspotPeaks(hotspotSeeds, bounds, openWater, distance, elevation, cutoff)[0];
-        if (!track) return { elevation, hotspotChain: null };
+    function raiseTrack(track, elevation, bounds, openWater, distance, cutoff) {
+        const { width } = bounds;
         const selected = { ...track, peaks: macro.bendHotspotTrack(track, bounds, openWater, distance, elevation, cutoff) };
-
         const raised = elevation.slice();
         for (const peak of selected.peaks) {
             const { x, y, radius } = peak;
@@ -112,6 +101,35 @@
                 peaks: selected.peaks
             }
         };
+    }
+
+    function raiseOffshoreHotspotChain(elevation, shoreline, bounds, hotspotSeeds, collectComponents) {
+        if (!hotspotSeeds?.length || Math.min(bounds.width, bounds.height) < 32) {
+            return { elevation, hotspotChain: null };
+        }
+        const { land, cutoff } = shoreline;
+        const { width, height } = bounds;
+        const distance = distanceFromLand(land, width);
+        const openWater = new Uint8Array(land.length);
+        collectComponents(land, width, height, 0).filter(body => body.touchesBorder)
+            .forEach(body => body.cells.forEach(cell => { openWater[cell] = 1; }));
+        const tracks = locateHotspotPeaks(hotspotSeeds, bounds, openWater, distance, elevation, cutoff);
+        const attempts = [];
+        let first;
+        for (const track of tracks.slice(0, 12)) {
+            const outcome = raiseTrack(track, elevation, bounds, openWater, distance, cutoff);
+            const peakIndices = new Set(outcome.hotspotChain.peaks.map(peak => peak.cellIndex));
+            const emerged = outcome.elevation.map(value => Number(value > cutoff));
+            const distinctEmergenceCount = collectComponents(emerged, width, height, 1).filter(body =>
+                body.cellCount >= 7 && body.cells.some(cell => peakIndices.has(cell)) && body.cells.every(cell => !land[cell])
+            ).length;
+            outcome.hotspotChain.distinctEmergenceCount = distinctEmergenceCount;
+            attempts.push({ hotspotSeedId: track.hotspot.hotspotSeedId, lateralOffset: track.offset, distinctEmergenceCount });
+            outcome.hotspotChain.trackAttempts = attempts;
+            first ??= outcome;
+            if (distinctEmergenceCount >= 3) return outcome;
+        }
+        return first || { elevation, hotspotChain: null };
     }
 
     macro.raiseOffshoreHotspotChain = raiseOffshoreHotspotChain;

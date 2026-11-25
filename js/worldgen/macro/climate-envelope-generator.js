@@ -1347,7 +1347,7 @@
                 }
 
                 const upwindBarrier = totalWeight > 0 ? weightedBarrier / totalWeight : 0;
-                const seedNudge = hasOrographicSpatialSource
+                const seedNudge = upwindBarrier > 0
                     ? (deterministicUnitNoise(rainShadowSeed, x, y, 'shadow') - 0.5) * 0.015
                     : 0;
                 const shadow = roundFieldValue(clampUnitInterval(

@@ -10,7 +10,7 @@ const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
 const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
-const { inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture } = require('./worldgen-v1-terrain.cjs');
+const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture } = require('./worldgen-v1-terrain.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -285,6 +285,7 @@ for (const seed of seeds) {
         report.seeds.push({
             seed, pass: true, macroSeed: geography.macroSeed, firstMs, repeatMs, hashes, determinism, map,
             terrain: inspectFinalTerrain(first),
+            environment: inspectClimateAndPressure(first),
             phase1Scores: geography.validationReport.scores, phase1Warnings: geography.validationReport.diagnostics.warnings,
             counts: Object.fromEntries(Object.entries(geography).filter(([, value]) => Array.isArray(value)).map(([key, value]) => [key, value.length])),
             phase2: {

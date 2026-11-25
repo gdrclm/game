@@ -493,9 +493,26 @@
 
     function getSourceInputs(input = {}) {
         const containers = buildDependencyContainers(input);
+        const marineFields = input.marineCarving?.outputs?.fields;
+        const finalSurface = marineFields?.finalRelativeElevationField;
+        const finalMask = marineFields?.coastJaggednessControlledLandWaterMaskField;
+        const upstreamElevation = findDependencyValue(containers.fields, 'seaLevelAppliedElevationField');
+        const upstreamMask = findDependencyValue(containers.fields, 'landmassCleanupMaskField');
+        // Legacy hydrology scores use land elevation normalized above sea level.
+        // Keep that scale while evaluating the final shoreline and routing surface.
+        const landElevation = finalSurface && upstreamElevation && finalMask ? {
+            ...upstreamElevation,
+            fieldId: finalSurface.fieldId,
+            values: finalSurface.values.map((value, cell) => {
+                if (value < 0) return 0;
+                const original = upstreamElevation.values[cell];
+                const waterline = upstreamElevation.seaLevelModel?.seaLevelThreshold ?? 0;
+                return original > 0 ? original : value / Math.max(0.000001, 1 - waterline);
+            })
+        } : upstreamElevation;
         return {
-            seaLevelAppliedElevationField: findDependencyValue(containers.fields, 'seaLevelAppliedElevationField'),
-            landmassCleanupMaskField: findDependencyValue(containers.fields, 'landmassCleanupMaskField'),
+            seaLevelAppliedElevationField: landElevation,
+            landmassCleanupMaskField: finalSurface && finalMask ? finalMask : upstreamMask,
             basinDepressionField: findDependencyValue(containers.fields, 'basinDepressionField'),
             mountainAmplificationField: findDependencyValue(containers.fields, 'mountainAmplificationField'),
             plateauCandidateField: findDependencyValue(containers.fields, 'plateauCandidateField'),

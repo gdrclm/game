@@ -2,9 +2,11 @@
     const macro = window.Game.systems.worldgenMacro;
     const QUANTUM = 0.000001;
     const SCALE = 'normalized_macro_elevation_offset_from_sea_level';
-    const LAND_FORMS = ['water', 'coastal_lowland', 'lowland', 'plain', 'hill', 'plateau', 'mountain', 'basin', 'incised_valley', 'slope'];
+    const LAND_FORMS = ['water', 'coastal_lowland', 'lowland', 'plain', 'hill', 'plateau', 'mountain',
+        'basin', 'incised_valley', 'slope', 'saddle'];
     const SEA_FORMS = ['land', 'inland_water', 'shelf', 'continental_slope', 'open_basin', 'deep_basin', 'submarine_ridge', 'volcanic_flank'];
     const SURFACE_ORIGINS = ['original', 'cleanup_submergence', 'cleanup_fill', 'marine_carving', 'marine_accretion'];
+    const DISTANT_RIM_OFFSETS = [[-7, 0], [7, 0], [0, -7], [0, 7]];
     const round = value => Math.round(value * 1e6) / 1e6;
 
     function distances(width, land, seedCell, allowEdge) {
@@ -73,15 +75,33 @@
                 if (Math.abs(dx) + Math.abs(dy) === 1) slope = Math.max(slope, Math.abs(center - value));
             }
         }
-        return { slope, relief: max - min, position: count ? center - mean / count : 0 };
+        let saddle = false;
+        let prominence = 0;
+        if (land[cell] && x >= 2 && x + 2 < width && y >= 2 && y + 2 < height) {
+            const cross = [cell - 2, cell + 2, cell - 2 * width, cell + 2 * width];
+            if (cross.every(index => land[index])) {
+                const [left, right, top, bottom] = cross.map(index => signed[index] - center);
+                const alongX = Math.max(left, right) <= -0.007 && Math.min(top, bottom) >= 0.007;
+                const alongY = Math.max(top, bottom) <= -0.007 && Math.min(left, right) >= 0.007;
+                saddle = alongX || alongY;
+            }
+            for (const [dx, dy] of DISTANT_RIM_OFFSETS) {
+                if (x + dx < 0 || x + dx >= width || y + dy < 0 || y + dy >= height) continue;
+                const rim = cell + dx + dy * width;
+                if (land[rim]) prominence = Math.max(prominence, center - signed[rim]);
+            }
+        }
+        return { slope, relief: max - min, position: count ? center - mean / count : 0, saddle, prominence };
     }
 
     function landForm(elevation, distance, shape, mountain, plateau, depression) {
-        const { slope, relief, position } = shape;
+        const { slope, relief, position, saddle, prominence } = shape;
+        if (saddle && relief >= 0.029 && elevation >= 0.03) return 10;
+        if (elevation >= 0.035 && distance > 3 && relief < 0.024 && slope < 0.01
+            && prominence >= 0.022 && plateau >= 0.18) return 5;
         if (elevation >= 0.05 && relief >= 0.027 && (mountain >= 0.52 || elevation >= 0.22)) return 6;
-        if (elevation >= 0.065 && relief < 0.037 && plateau >= 0.39) return 5;
         if (position <= -0.009 && relief >= 0.033 && depression >= 0.27) return 8;
-        if (position < -0.003 && depression >= 0.38 && slope < 0.02) return 7;
+        if (position < -0.004 && depression >= 0.25 && slope < 0.015) return 7;
         if (distance <= 3 && elevation <= 0.028 && relief < 0.038) return 1;
         if (slope >= 0.021) return 9;
         if (relief >= 0.024 && position >= 0.001) return 4;
@@ -95,7 +115,7 @@
         if (volcanic && relief >= 0.013) return 7;
         if (distance >= 4 && position >= 0.005 && relief >= 0.018 && (ridge >= 0.25 || uplift >= 0.25)) return 6;
         if (distance <= 9 && depth <= 0.042 && slope <= 0.018) return 2;
-        if (distance <= 17 && depth <= 0.15) return 3;
+        if (distance <= 17 && depth <= 0.15 && slope > 0.006) return 3;
         return depth >= 0.13 ? 5 : 4;
     }
 

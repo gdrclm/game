@@ -104,4 +104,34 @@ function inspectFinalTerrain(result) {
         drainage: inspectDrainage(bundle, final, mask.width) };
 }
 
-module.exports = { inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture };
+function inspectClimateAndPressure(result) {
+    const bundle = result.diagnostics.physicalWorldDebugBundle;
+    const mask = bundle.fieldSnapshots.find(row => row.artifactId === 'foundation_field_coastJaggednessControlledLandWaterMaskField').payload;
+    const climate = bundle.intermediateOutputs.find(row => row.artifactId === 'foundation_geometry_climateZoneClassification').payload;
+    const tags = ['temperatureColdLoadField', 'wetnessField', 'stormCorridorField', 'seasonalityField'];
+    const range = values => {
+        const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+        if (!sorted.length) return null;
+        return [0.05, 0.5, 0.95].map(p => sorted[Math.floor((sorted.length - 1) * p)]);
+    };
+    const landClimate = Object.fromEntries(tags.map(id => {
+        const values = bundle.fieldSnapshots.find(row => row.payload.fieldId === id).payload.values;
+        return [id, range(values.filter((_, cell) => mask.values[cell] >= mask.threshold))];
+    }));
+    const climateCellsByType = {};
+    for (const zone of climate.zoneSummaries) {
+        const cells = zone.cellIndices.filter(cell => mask.values[cell] >= mask.threshold).length;
+        climateCellsByType[zone.bandType] = (climateCellsByType[zone.bandType] || 0) + cells;
+    }
+    const tempo = result.phase2.environmentalRhythmPackage.domains.recovery.recoveryTempo.perReliefScores;
+    const pressure = result.phase2.pressureFieldPackage.regionalProfiles.filter(row => row.recordType === 'reliefRegions');
+    return {
+        quantiles: [0.05, 0.5, 0.95],
+        landClimate,
+        climateCellsByType,
+        localRecoveryTempo: range(tempo.map(row => row.value)),
+        localSurvivabilityPressure: range(pressure.map(row => row.synthesizedSnapshot.survivabilityPressure))
+    };
+}
+
+module.exports = { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture };
