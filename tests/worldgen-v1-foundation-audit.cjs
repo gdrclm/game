@@ -22,9 +22,9 @@ function manual0(seed){
  return a.assemblePhase0Bundle(realm({worldSeedProfile:p,derivedWorldTendencies:t,worldSubSeedMap:s,validationReport:v}));
 }
 check('Phase 0 official entry',()=>{const p=a.createPhase0World(42);a.assertPhase0BundleShape(p);return p.validationReport;});
-check('Phase 0 export validator',()=>{const v=a.validatePhase0Export(manual0(42));assert(v,'Empty validator result');return v;});
-check('Phase 0 orchestration adapter',()=>{const v=a.createPhase0OrchestrationAdapter();assert(v,'Empty adapter');return Object.keys(v);});
-check('Phase 1 constraints intake',()=>{const v=b.intakeMasterConstraints(a.buildPhase1SafeSummaryBundle(manual0(42)));assert(v,'Empty intake');return Object.keys(v);});
+check('Phase 0 export validator',()=>{const p=a.createPhase0World(42);const v=a.validatePhase0Export(p);assert(v.isValid===true,'Valid Phase 0 rejected');assert(hash(v)===hash(p.validationReport),'Validation drift');const bad=realm(p);bad.worldSubSeedMap.pressureSeed=(bad.worldSubSeedMap.pressureSeed+1)>>>0;assert(a.validatePhase0Export(bad).isValid===false,'Tampered seed accepted');return v;});
+check('Phase 0 orchestration adapter',()=>{const v=a.createPhase0OrchestrationAdapter().run(42);assert(v.immutable===true&&v.outputs.phase0Bundle.validationReport.isValid,'Invalid freeze wrapper');return Object.keys(v);});
+check('Phase 1 constraints intake',()=>{const p=a.createPhase0World(42);const v=b.intakeMasterConstraints(a.buildPhase1SafeSummaryBundle(p));assert(v.macroSeed===p.worldSubSeedMap.macroGeographySeed,'Macro seed drift');return v;});
 check('Phase 2 built-in harness',()=>{const h=c.runPhase2TestHarness();const result={smoke:h.smokeSuite.summary,regression:h.regressionSuite.summary};assert(h.overallStatus==='pass',JSON.stringify(result));return result;});
 function run(seed){
  let stage='phase0';const row={seed,officialPhase0:false};
@@ -32,7 +32,7 @@ function run(seed){
   let p;try{p=a.createPhase0World(seed);a.assertPhase0BundleShape(p);row.officialPhase0=true;}catch(e){row.officialPhase0Error=String(e);p=manual0(seed);}
   row.phase0={hash:hash(p),validation:p.validationReport};
   stage='phase1';
-  const profile=b.ingestMacroSeedProfile(a.buildPhase1SafeSummaryBundle(p));
+  const profile=b.intakeMasterConstraints(a.buildPhase1SafeSummaryBundle(p));
   const m=b.generateMacroGeographyEndToEnd(realm({macroSeed:p.worldSubSeedMap.macroGeographySeed,macroSeedProfile:profile,includeDebugArtifacts:true}));
   const g=m.macroGeographyPackage;
   row.phase1={hash:hash(g),validation:g.validationReport,counts:Object.fromEntries(['continents','seaRegions','mountainSystems','riverBasins','archipelagoRegions','macroRoutes','chokepoints'].map(k=>[k,g[k]?.length??null]))};
@@ -50,4 +50,5 @@ for(const seed of seeds){
  report.seeds.push({first,repeat:{error:repeat.error,officialPhase0:repeat.officialPhase0,phase2Exported:repeat.phase2?.exported},determinism:Object.fromEntries(['phase0','phase1','phase2'].map(k=>[k,first[k]&&repeat[k]?first[k].hash===repeat[k].hash:null]))});
 }
 report.diagnosticPassed=report.bootErrors.length===0&&report.checks.every(x=>x.pass)&&report.seeds.every(x=>!x.first.error&&!x.repeat.error&&x.first.officialPhase0&&x.repeat.officialPhase0&&x.first.phase0.validation?.isValid===true&&x.first.phase2?.exported===true&&x.repeat.phase2Exported===true&&Object.values(x.determinism).every(v=>v===true));
+console.error('FOUNDATION SUMMARY',JSON.stringify({bootErrors:report.bootErrors,checks:report.checks.map(({name,pass,error})=>({name,pass,error})),seeds:report.seeds.map(x=>({seed:x.first.seed,officialPhase0:x.first.officialPhase0,phase0Error:x.first.officialPhase0Error,phase0Valid:x.first.phase0?.validation?.isValid,phase1Counts:x.first.phase1?.counts,phase2Status:x.first.phase2?.validationStatus,phase2Exported:x.first.phase2?.exported,error:x.first.error,repeatError:x.repeat.error,determinism:x.determinism})),diagnosticPassed:report.diagnosticPassed}));
 console.log(JSON.stringify(report,null,2));process.exitCode=report.diagnosticPassed?0:1;

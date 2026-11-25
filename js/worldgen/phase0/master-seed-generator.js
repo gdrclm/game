@@ -298,14 +298,22 @@
     }
 
     function createPhase0World(baseSeed, options = {}) {
-        const normalizedSeed = typeof phase0.normalizeSeed === 'function'
-            ? phase0.normalizeSeed(baseSeed)
-            : 0;
-        void options;
-
-        throw typeof phase0.createTodoContractedError === 'function'
-            ? phase0.createTodoContractedError(`masterSeedGenerator.createPhase0World(seed=${normalizedSeed})`)
-            : new Error('[worldgen/phase0] TODO CONTRACTED stub.');
+        const input = normalizePhase0Input(baseSeed, options);
+        const worldSeedProfile = phase0.buildWorldSeedProfile(input.baseRandomSeed, {
+            worldPresetMode: input.worldPresetMode,
+            hardConstraintsProfile: input.hardConstraintsProfile
+        });
+        const derivedWorldTendencies = phase0.deriveWorldTendencies(worldSeedProfile);
+        const worldSubSeedMap = phase0.deriveWorldSubSeedMap(input.baseRandomSeed, worldSeedProfile);
+        const components = { worldSeedProfile, derivedWorldTendencies, worldSubSeedMap };
+        const provisional = assemblePhase0Bundle({
+            ...components,
+            validationReport: phase0.buildPhase0ValidationReport(components)
+        });
+        return assemblePhase0Bundle({
+            ...components,
+            validationReport: phase0.validatePhase0Export(provisional)
+        });
     }
 
     function getPhase0GenerationScaffoldStatus() {
@@ -322,7 +330,7 @@
         return {
             phaseId: phase0.phaseId || 'phase0',
             phaseVersion: phase0.phaseVersion || 'phase0-v1',
-            stub: true,
+            stub: false,
             registeredModuleCount: registeredModules.length,
             registeredModules,
             expectedPipeline,
@@ -334,7 +342,7 @@
         phase0.registerModule('masterSeedGenerator', {
             entry: 'createPhase0World',
             file: 'js/worldgen/phase0/master-seed-generator.js',
-            description: 'Top-level Phase 0 orchestration scaffold with root export bundle assembly and no synthesis logic.'
+            description: 'Deterministic Phase 0 orchestration with canonical synthesis, export validation and frozen assembly.'
         });
         phase0.registerPipelineStep('inputIntake', {
             entry: 'normalizePhase0Input',

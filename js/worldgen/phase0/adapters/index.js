@@ -203,9 +203,15 @@
     }
 
     function createPhase0OrchestrationAdapter() {
-        throw typeof phase0.createTodoContractedError === 'function'
-            ? phase0.createTodoContractedError('adapters.createPhase0OrchestrationAdapter')
-            : new Error('[worldgen/phase0] TODO CONTRACTED stub.');
+        return Object.freeze({
+            run(baseSeed, options = {}) {
+                const bundle = phase0.createPhase0World(baseSeed, options);
+                if (!bundle.validationReport.isValid) {
+                    throw new Error('[worldgen/phase0] Invalid world cannot cross freeze point A.');
+                }
+                return buildFrozenPhase0OutputWrappers(bundle);
+            }
+        });
     }
 
     if (typeof phase0.registerModule === 'function') {

@@ -991,11 +991,33 @@
     }
 
     function validatePhase0Export(phase0Bundle) {
-        void phase0Bundle;
-
-        throw typeof phase0.createTodoContractedError === 'function'
-            ? phase0.createTodoContractedError('validation.validatePhase0Export')
-            : new Error('[worldgen/phase0] TODO CONTRACTED stub.');
+        phase0.assertPhase0BundleShape(phase0Bundle);
+        const { worldSeedProfile, derivedWorldTendencies, worldSubSeedMap } = phase0Bundle;
+        const input = { worldSeedProfile, derivedWorldTendencies, worldSubSeedMap };
+        const diagnostics = buildPhase0DownstreamUsabilityDiagnostics(input);
+        const expectedTendencies = phase0.deriveWorldTendencies(worldSeedProfile);
+        const expectedSeeds = phase0.deriveWorldSubSeedMap(worldSeedProfile.worldSeed, worldSeedProfile);
+        const equalFields = (actual, expected) => Object.keys(expected)
+            .every(key => actual[key] === expected[key]);
+        const warnings = [];
+        if (phase0.synthesizeWorldTone(worldSeedProfile) !== worldSeedProfile.worldTone) {
+            warnings.push('World tone differs from canonical synthesis.');
+        }
+        if (!equalFields(derivedWorldTendencies, expectedTendencies)) {
+            warnings.push('Derived tendencies differ from canonical synthesis.');
+        }
+        if (!equalFields(worldSubSeedMap, expectedSeeds)) {
+            warnings.push('Sub-seeds differ from canonical namespace derivation.');
+        }
+        const blocked = warnings.length
+            ? getDownstreamPhaseNamespaceEntries().map(entry => entry.namespaceId)
+            : diagnostics.blockedDownstreamPhases;
+        return buildPhase0ValidationReport({
+            ...input,
+            isValid: warnings.length === 0 && diagnostics.blockedDownstreamPhases.length === 0,
+            warnings,
+            blockedDownstreamPhases: blocked
+        });
     }
 
     if (typeof phase0.registerModule === 'function') {

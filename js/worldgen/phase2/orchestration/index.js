@@ -154,10 +154,14 @@
             rebalance_required: 3,
             fail: 4
         };
-        return (Array.isArray(statuses) ? statuses : []).reduce((dominant, status) => {
-            const normalized = normalizeString(status, fallback);
-            return (priority[normalized] || 0) > (priority[dominant] || 0) ? normalized : dominant;
-        }, fallback);
+        const values = Array.isArray(statuses) ? statuses : [];
+        if (!values.length) return fallback;
+        return values.reduce((dominant, status) => {
+            const candidate = normalizeString(status, fallback);
+            const normalized = Object.prototype.hasOwnProperty.call(priority, candidate)
+                ? candidate : fallback;
+            return priority[normalized] > priority[dominant] ? normalized : dominant;
+        }, 'not_run');
     }
 
     function buildPressureValidationMetaFromReport(report) {
