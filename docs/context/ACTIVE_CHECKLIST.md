@@ -15,7 +15,7 @@ Only current work and acceptance. Historical implementation details belong in gi
 - [x] F6: Run predeclared holdout cohort (suggest 8 distributed seed values distinct from canonical and document before running); report success/failure per seed, determinism, diversity, causal effect coverage, generation time. Scale cohort after performance check. Do not hide failed seeds.
 - [x] F7: Five read-only atlases and the fixed-seed storm comparison checked against actual PhysicalWorldDebugBundle and Phase 2 exports. See [author review packet](review/README.md).
 - [x] F8-Q: Investigate and refine physical passage closures, transport independence, morphology and center/periphery contrast. Compare the baseline and candidate on the same 27 seeds and four untouched seeds. Publish [maps, causes, and evidence](review/f8q/README.md).
-- [ ] F8-R: Resolve the two technical Phase 2 blockers found by F8-Q. Seed `16908799` falls below relief checks; `2764796977` fails tension versus relief. Keep existing gates. [Recovery diagnosis and acceptance](FOUNDATION_RECOVERY_CLOSURE.md). The mandatory regression cohort now includes all 31 reviewed seeds; retain new predeclared holdouts separately.
+- [x] F8-R: Fix both original Phase 2 failures and the area-weighting regression `3508323923`. Verify all 31 known worlds plus two predeclared cohorts. CI passed 32/32. The holdouts passed 13/16 with three reproducible Phase 1 failures present on the baseline. [Recovery evidence and maps](review/f8r/README.md)
 - [ ] F8-T: Terrain and bathymetry capability audit, causal implementation of missing V1 coverage and actual maps.
 - [ ] F8-C: Phase 0–2 causal channel and handoff audit.
 - [ ] F8-D: Real-world physical and environmental diversity evidence.
@@ -25,6 +25,6 @@ Only current work and acceptance. Historical implementation details belong in gi
 - [ ] F9: Final reconciliation of docs/code/tests/phase readiness; explicit approval before Phase 3 expansion or merge.
 
 ## Milestone boundary
-F1–F7 passed on `04f5b5c`. The F8-Q repeat on `808ac3a` passed 25/27 in the main comparison, with all canonical seeds, and 4/4 on the untouched cohort. See [project state](PROJECT_STATE.md) and the [F8-Q review packet](review/f8q/README.md). F8 and F9 require the author's decision before Phase 3 or merge.
+F1–F7 passed on `04f5b5c`. F8-Q established physical passage, route and center/periphery evidence. F8-R closed the scoped Phase 2 regressions on `9f5da47`. F8 and F9 require the author's decision before Phase 3 or merge. [Project state](PROJECT_STATE.md) · [F8-Q review packet](review/f8q/README.md) · [F8-R review packet](review/f8r/README.md)
 
 Active global objective: [WORLDGEN_PHASE0_2_GLOBAL_GOAL.md](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). Engineering steps may be interleaved, but resolve known F8-R failures first and preserve F8-Q. These review tasks are not additional WorldGen phases.

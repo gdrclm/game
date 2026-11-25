@@ -123,7 +123,7 @@ function metrics(snapshot, phase1, phase2) {
 }
 
 const rows = [];
-for (const file of readdirSync(afterDir).filter(name => /^seed-\d+\.json$/.test(name))
+for (const file of readdirSync(beforeDir).filter(name => /^seed-\d+\.json$/.test(name))
     .sort((a, b) => Number(a.slice(5, -5)) - Number(b.slice(5, -5)))) {
     const before = JSON.parse(readFileSync(join(beforeDir, file)));
     const after = JSON.parse(readFileSync(join(afterDir, file)));

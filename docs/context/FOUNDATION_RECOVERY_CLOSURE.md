@@ -23,3 +23,7 @@ Failure snapshots include rejectedPhase2Candidate under diagnostics only, with u
 
 ## Evidence boundary
 No generator coefficient or validation threshold changed by this instrumentation commit. Current repository connector cannot independently decode binary atlas images. Technical diagnosis is not visual approval or proof of gameplay. 
+
+## Verified F8-R outcome
+
+`16908799` and `2764796977` pass the original Phase 2 validation on the first attempt. The final regression includes all 31 previously reviewed worlds and `3508323923`, the land-area case exposed by the first predeclared holdout. GitHub Actions passed all 32. Two new cohorts passed 5/8 and 8/8. All three failures are baseline Phase 1 semantic blocks with matching physical diagnostics. The [review packet](review/f8r/README.md) contains the evidence, remaining scope limits and author questions. F8 and F9 remain pending.

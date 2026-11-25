@@ -1,0 +1,3401 @@
+{
+  "schema": "worldgen-foundation-audit-v2",
+  "revision": "f5085ad554c46cecb967ccb9791637970fbb0055",
+  "node": "v22.23.5",
+  "checks": [
+    {
+      "name": "Phase 0 official intake and seed tamper rejection",
+      "pass": true,
+      "details": true
+    },
+    {
+      "name": "Maritime demand requires supported sea routes",
+      "pass": true,
+      "details": [
+        0.3585,
+        0.3717,
+        0.394
+      ]
+    },
+    {
+      "name": "Phase 2 fixture harness",
+      "pass": true,
+      "details": {
+        "smoke": {
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "status": "pass"
+        },
+        "regression": {
+          "total": 6,
+          "passed": 6,
+          "failed": 0,
+          "status": "pass"
+        }
+      }
+    },
+    {
+      "name": "Physical passage closure and terminal negative controls",
+      "pass": true,
+      "details": [
+        "terminal cell rejected",
+        "terminal access rejected",
+        "disconnection",
+        "no effect",
+        "alternate water path"
+      ]
+    },
+    {
+      "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+      "pass": true,
+      "details": {
+        "flatPreservesDrift": true,
+        "tiltedShelfShiftsPeaks": [
+          0,
+          1,
+          2,
+          1,
+          0
+        ]
+      }
+    },
+    {
+      "name": "Land-weighted pressure and local recovery timing",
+      "pass": true,
+      "details": {
+        "splitPreservesAreaMean": 0.625,
+        "localRecovery": [
+          0.3,
+          0.45
+        ]
+      }
+    },
+    {
+      "name": "Immutable handoffs and fail-closed Phase 2",
+      "pass": true,
+      "details": {
+        "invalidRootRejected": true,
+        "invalidCoverageRejected": true,
+        "unresolvedReferenceRejected": true,
+        "invalidExportBlocked": true,
+        "noPhase2AfterFailedPhase1": true,
+        "rejectedCandidateDiagnosticOnly": true
+      }
+    },
+    {
+      "name": "Fixed-seed upstream interventions",
+      "pass": true,
+      "details": {
+        "seed": 42,
+        "fixedSubseeds": {
+          "macroGeographySeed": 363947094,
+          "pressureSeed": 4107865506,
+          "rhythmSeed": 306034812
+        },
+        "routeCarriers": {
+          "routeId": "macro_route_001",
+          "seaRegionIds": [
+            "sea_01"
+          ],
+          "reliefRegionIds": [
+            "relief_001",
+            "relief_002"
+          ],
+          "navigationWindows": [
+            0.729327,
+            0.464409
+          ]
+        },
+        "environmentalVolatility": {
+          "values": [
+            0.1,
+            0.9
+          ],
+          "changedStormCells": 21973,
+          "physicalControls": [
+            "platePressureField",
+            "coastJaggednessControlledLandWaterMaskField",
+            "seaLevelAppliedElevationField",
+            "temperatureColdLoadField",
+            "wetnessField"
+          ],
+          "seaRegionId": "sea_01",
+          "seaStormPressure": [
+            0.4412081085188049,
+            0.4854460889347877
+          ],
+          "stormBreakRisk": [
+            0.126823,
+            0.130367
+          ],
+          "stormCadence": [
+            0.17107,
+            0.171489
+          ]
+        },
+        "routeFragilityBias": {
+          "values": [
+            0.1,
+            0.9
+          ],
+          "supportedRoutes": 10,
+          "susceptibility": [
+            [
+              "macro_route_001",
+              0.47,
+              0.53
+            ],
+            [
+              "macro_route_002",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_003",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_004",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_005",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_006",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_007",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_008",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_009",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_010",
+              0.88,
+              1
+            ]
+          ],
+          "phase2ControlsStable": true
+        },
+        "socialControls": [
+          {
+            "channel": "conflictPressure",
+            "phase1ControlsStable": true,
+            "phase2ReceivesSameInput": true
+          },
+          {
+            "channel": "collapseIntensity",
+            "phase1ControlsStable": true,
+            "phase2ReceivesSameInput": true
+          }
+        ],
+        "catchmentScale": {
+          "range": [
+            0.032,
+            0.42
+          ],
+          "riverBasinId": "basin_001",
+          "reliefRegionId": "relief_002",
+          "waterReliabilityInverse": [
+            0.517878,
+            0.04837
+          ],
+          "recoveryTempo": [
+            0.10542,
+            0.14776
+          ],
+          "foodClimateBandId": "climate_006",
+          "foodStress": [
+            0.185306,
+            0.066949
+          ],
+          "unchangedIndependentBands": 117,
+          "climateControlsStable": true
+        }
+      }
+    },
+    {
+      "name": "Recovery locality on seed 16908799",
+      "pass": true,
+      "details": {
+        "isolation": {
+          "zoneId": "iso_002",
+          "localId": "relief_004",
+          "unchangedPeer": "relief_002",
+          "stabilizationDrag": [
+            0.121201,
+            0.262833
+          ]
+        },
+        "transport": {
+          "routeId": "macro_route_001",
+          "reliefId": "relief_001",
+          "mobilitySupport": [
+            0.50901,
+            0.551269
+          ]
+        },
+        "terrain": {
+          "reliefId": "relief_001",
+          "recoveryTempo": [
+            0.234201,
+            0.039761
+          ]
+        }
+      }
+    }
+  ],
+  "seeds": [
+    {
+      "seed": 42,
+      "pass": true,
+      "macroSeed": 363947094,
+      "firstMs": 9462,
+      "repeatMs": 6608,
+      "hashes": {
+        "phase0": "ece13b235e7d0540d40a2214192e4fc6fd083feff5658c4809fbff98d13cdbdd",
+        "phase1": "057b71288bf4bda593869770dafd1390b56ee6d3130b74c59158953512e552b1",
+        "phase2": "698d6e55b1cccb0418be150e193dcf84cbe0bcc80764b3eee6920695e80d510c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.329437255859375,
+        "continentCells": [
+          6732,
+          3921
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea",
+          "inland_sea",
+          "inland_sea",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          48,
+          48,
+          63
+        ],
+        "passageWidths": [
+          6.0710678118654755,
+          7.602325267042627,
+          7.944271909999159,
+          7.246211251235321
+        ],
+        "shorelinePercentile": 0.674898,
+        "shorelineAttempts": 6,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7122,
+        "routeRichness": 0.812,
+        "chokeValue": 0.4961,
+        "archipelagoSignificance": 0.6966,
+        "centerPeripheryContrast": 0.5578,
+        "historyPotential": 0.6179
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.50 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 5,
+        "mountainSystems": 5,
+        "volcanicZones": 12,
+        "riverBasins": 9,
+        "climateBands": 189,
+        "reliefRegions": 6,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 9,
+        "chokepoints": 4,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 6
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 242,
+        "recovery": 0.194026
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 363947094,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.626,
+            "high": 0.706,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 137,
+      "pass": true,
+      "macroSeed": 3879670900,
+      "firstMs": 5000,
+      "repeatMs": 4296,
+      "hashes": {
+        "phase0": "211c569e874d4b39ab53165234297ce8ba2ebd99e9a08b0b3487266146a11bb4",
+        "phase1": "5898956db210ccd4bc326e740d0dd798f08e7b23eb50a10f1ece806e74a33985",
+        "phase2": "bca1b67274a141c9fa15be5477e7f190514b906481553e207d106953b704819e"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.21502685546875,
+        "continentCells": [
+          5628,
+          1300
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          51,
+          43,
+          36
+        ],
+        "passageWidths": [
+          3.1231056256176606,
+          4,
+          9
+        ],
+        "shorelinePercentile": 0.788579,
+        "shorelineAttempts": 11,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7106,
+        "routeRichness": 0.8094,
+        "chokeValue": 0.6276,
+        "archipelagoSignificance": 0.7069,
+        "centerPeripheryContrast": 0.5761,
+        "historyPotential": 0.6598
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 3,
+        "mountainSystems": 4,
+        "volcanicZones": 11,
+        "riverBasins": 7,
+        "climateBands": 113,
+        "reliefRegions": 6,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 9,
+        "chokepoints": 3,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 7
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 159,
+        "recovery": 0.22929
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 3879670900,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6282,
+            "high": 0.7082,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 2026,
+      "pass": true,
+      "macroSeed": 2713179311,
+      "firstMs": 6872,
+      "repeatMs": 5883,
+      "hashes": {
+        "phase0": "bb16b6000e71ea627ceb5da92e6fb29d0b5662fedd0b96062b2065f771dd002d",
+        "phase1": "4547dec36b9ec0cc9b9dcbcc948f5ce9cbe09897313e74a8e8cff713996ee56d",
+        "phase2": "1f1317240f8a70bb44e2cc2775c5f78e7cbd2b8b41c747e10a9d9101f1e39eb1"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.475677490234375,
+        "continentCells": [
+          8003,
+          7203
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water",
+          "enclosed_water",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          97,
+          89,
+          69
+        ],
+        "passageWidths": [
+          1.2360679774997898,
+          1.8284271247461903,
+          8.433981132056603,
+          8.219544457292887
+        ],
+        "shorelinePercentile": 0.531295,
+        "shorelineAttempts": 3,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 4,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7188,
+        "routeRichness": 0.8042,
+        "chokeValue": 0.6584,
+        "archipelagoSignificance": 0.6981,
+        "centerPeripheryContrast": 0.5696,
+        "historyPotential": 0.6721
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 4,
+        "mountainSystems": 4,
+        "volcanicZones": 11,
+        "riverBasins": 8,
+        "climateBands": 219,
+        "reliefRegions": 7,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 9,
+        "chokepoints": 4,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 8
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 269,
+        "recovery": 0.215089
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 2713179311,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6287,
+            "high": 0.7087,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 4194307,
+      "pass": true,
+      "macroSeed": 929657046,
+      "firstMs": 6161,
+      "repeatMs": 5115,
+      "hashes": {
+        "phase0": "e7bf9472e53490692f9044146d7333e8334ea186be4210600fa89d5ef440ea61",
+        "phase1": "cdc29f8c28578dfd29a0dbd209360c6a53cd3a9575f10a1508deecad0a6dbba4",
+        "phase2": "3ec13e4711c266bf3cf09174cf3e69d4fb86115789f3e1d30b6175120994dc34"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.47979736328125,
+        "continentCells": [
+          9630,
+          4981
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "enclosed_water",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          84,
+          185,
+          67,
+          54,
+          42
+        ],
+        "passageWidths": [
+          1,
+          1,
+          1.2360679774997898,
+          3.1231056256176606,
+          11.08304597359457,
+          3.1231056256176606,
+          8.848857801796104,
+          10.6619037896906
+        ],
+        "shorelinePercentile": 0.530443,
+        "shorelineAttempts": 1,
+        "coastalPorts": 11,
+        "seaLanes": 55,
+        "brittleCorridors": 5,
+        "redundantCorridors": 10
+      },
+      "phase1Scores": {
+        "diversity": 0.7115,
+        "routeRichness": 0.8045,
+        "chokeValue": 0.4975,
+        "archipelagoSignificance": 0.7001,
+        "centerPeripheryContrast": 0.5654,
+        "historyPotential": 0.6197
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.50 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 5,
+        "mountainSystems": 2,
+        "volcanicZones": 12,
+        "riverBasins": 11,
+        "climateBands": 178,
+        "reliefRegions": 7,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 11,
+        "chokepoints": 8,
+        "macroRoutes": 21,
+        "isolatedZones": 1,
+        "strategicRegions": 7
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 246,
+        "recovery": 0.18065
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 929657046,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6131,
+            "high": 0.6931,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 271828183,
+      "pass": true,
+      "macroSeed": 2979727212,
+      "firstMs": 5370,
+      "repeatMs": 3270,
+      "hashes": {
+        "phase0": "ca49a93a7f5b80b958109b3115af4023d7ff697986de71e2454816687e0416b8",
+        "phase1": "8a8e3f248930ff88c338eb497afe7a8495d81c478dd8c67a8880c38536b0faf7",
+        "phase2": "c8aab610cb7f05f7f12728313117e8de8067a684f9c0a43274fb2dd9aa2f0b9f"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.4678955078125,
+        "continentCells": [
+          10990,
+          2576
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "semi_enclosed_sea",
+          "enclosed_water",
+          "open_ocean",
+          "open_ocean",
+          "enclosed_water",
+          "semi_enclosed_sea"
+        ],
+        "islandAreas": [
+          70,
+          70,
+          56,
+          50
+        ],
+        "passageWidths": [
+          4,
+          4.656854249492381,
+          6.0710678118654755,
+          11.041594578792294
+        ],
+        "shorelinePercentile": 0.537029,
+        "shorelineAttempts": 1,
+        "coastalPorts": 10,
+        "seaLanes": 24,
+        "brittleCorridors": 4,
+        "redundantCorridors": 4
+      },
+      "phase1Scores": {
+        "diversity": 0.7115,
+        "routeRichness": 0.8077,
+        "chokeValue": 0.4216,
+        "archipelagoSignificance": 0.6999,
+        "centerPeripheryContrast": 0.5683,
+        "historyPotential": 0.6213
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.42 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 7,
+        "mountainSystems": 1,
+        "volcanicZones": 7,
+        "riverBasins": 15,
+        "climateBands": 239,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 4,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 7
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 294,
+        "recovery": 0.211377
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 2979727212,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6276,
+            "high": 0.7076,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 698377633,
+      "pass": true,
+      "macroSeed": 414757626,
+      "firstMs": 3587,
+      "repeatMs": 3284,
+      "hashes": {
+        "phase0": "0b4e76d37d4c2b27a67098da9aa601f98ea29a48c94ba757a081c36230879262",
+        "phase1": "13cc36ba567085f6b86c585e3b9b79c19ff8d11beec58c0c43c33e128b4b597f",
+        "phase2": "d1ffd64f404d93eea6f121ca611950ce5ddb1a26a7eb4c04ffa73e8da2d7b43b"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.53997802734375,
+        "continentCells": [
+          9545,
+          7861
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "open_ocean",
+          "semi_enclosed_sea"
+        ],
+        "islandAreas": [
+          74,
+          64,
+          54,
+          41
+        ],
+        "passageWidths": [
+          5.708203932499369,
+          7.062257748298549,
+          5.4031242374328485,
+          2,
+          14.556349186104047
+        ],
+        "shorelinePercentile": 0.465741,
+        "shorelineAttempts": 1,
+        "coastalPorts": 10,
+        "seaLanes": 36,
+        "brittleCorridors": 4,
+        "redundantCorridors": 7
+      },
+      "phase1Scores": {
+        "diversity": 0.6615,
+        "routeRichness": 0.8091,
+        "chokeValue": 0.6183,
+        "archipelagoSignificance": 0.7005,
+        "centerPeripheryContrast": 0.4347,
+        "historyPotential": 0.5835
+      },
+      "phase1Warnings": [
+        "center-periphery contrast score 0.43 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 5,
+        "mountainSystems": 7,
+        "volcanicZones": 13,
+        "riverBasins": 10,
+        "climateBands": 205,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 5,
+        "macroRoutes": 15,
+        "isolatedZones": 2,
+        "strategicRegions": 5
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 272,
+        "recovery": 0.218598
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 414757626,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6227,
+            "high": 0.7027,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 1258291229,
+      "pass": true,
+      "macroSeed": 1931562428,
+      "firstMs": 2961,
+      "repeatMs": 2885,
+      "hashes": {
+        "phase0": "94ae1cdf940781e971b2e8fc83fadd192b82a756277fe058e85bd84b99eb3eae",
+        "phase1": "a2f2a23c2d1cdf8bd17e5b96e18f25e4162613d6e625c09454a8e291582904c4",
+        "phase2": "12ad976d3eeb0ac28741726669c20682c9dec9fd9f7e588d2a9cfabde99f9ad5"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.48828125,
+        "continentCells": [
+          12987,
+          1904
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          88,
+          79,
+          69
+        ],
+        "passageWidths": [
+          4.385164807134505,
+          2.6055512754639896
+        ],
+        "shorelinePercentile": 0.518227,
+        "shorelineAttempts": 1,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 4
+      },
+      "phase1Scores": {
+        "diversity": 0.6379,
+        "routeRichness": 0.7961,
+        "chokeValue": 0.3375,
+        "archipelagoSignificance": 0.6971,
+        "centerPeripheryContrast": 0.5685,
+        "historyPotential": 0.5836
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.34 is weak and may produce a shallow macro world."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 4,
+        "mountainSystems": 6,
+        "volcanicZones": 12,
+        "riverBasins": 9,
+        "climateBands": 179,
+        "reliefRegions": 8,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 9,
+        "chokepoints": 2,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 5
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 232,
+        "recovery": 0.26199
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 1931562428,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6262,
+            "high": 0.7062,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 1908874353,
+      "pass": true,
+      "macroSeed": 407735371,
+      "firstMs": 4140,
+      "repeatMs": 3928,
+      "hashes": {
+        "phase0": "fae71b638c7a9f1e92c6ad75c604a0df6da1f84ba616ffe24a4d9800321e6cc3",
+        "phase1": "dda3d8a4a48782f0462a661ccd34398d13a87b76f4f779eabce1645186711bbf",
+        "phase2": "c9ccde35f62b8377525e9aab29265332babfd0a0389ddec5d1920d4cbef74793"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.323822021484375,
+        "continentCells": [
+          9287,
+          1011
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          67,
+          69,
+          61,
+          50,
+          45,
+          41
+        ],
+        "passageWidths": [
+          3.2426406871192857,
+          4.8309518948453,
+          5.4031242374328485,
+          7.062257748298549,
+          4.8309518948453,
+          15.278820596099706,
+          13.142135623730951
+        ],
+        "shorelinePercentile": 0.685724,
+        "shorelineAttempts": 10,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 6,
+        "redundantCorridors": 8
+      },
+      "phase1Scores": {
+        "diversity": 0.6695,
+        "routeRichness": 0.8065,
+        "chokeValue": 0.4679,
+        "archipelagoSignificance": 0.6896,
+        "centerPeripheryContrast": 0.5545,
+        "historyPotential": 0.6087
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.47 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 2,
+        "mountainSystems": 5,
+        "volcanicZones": 11,
+        "riverBasins": 9,
+        "climateBands": 190,
+        "reliefRegions": 10,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 12,
+        "chokepoints": 7,
+        "macroRoutes": 28,
+        "isolatedZones": 1,
+        "strategicRegions": 7
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 264,
+        "recovery": 0.202482
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 407735371,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6107,
+            "high": 0.6907,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 2576980379,
+      "pass": true,
+      "macroSeed": 1004403349,
+      "firstMs": 3089,
+      "repeatMs": 2834,
+      "hashes": {
+        "phase0": "f173e902ef4a23cf637dc825a7c7dc74630df4ab14d49df846a8db884c7df76c",
+        "phase1": "167d50730f8185bf9279189cf9aebb606fd3ff091658557162b8c713cd2d6037",
+        "phase2": "08fe2e80ee55c54ff0889912d77abd8845cdac2af9796406a7ef29bc70fde680"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.492523193359375,
+        "continentCells": [
+          8547,
+          4080,
+          2692
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          69,
+          71,
+          73
+        ],
+        "passageWidths": [
+          4,
+          4.8309518948453
+        ],
+        "shorelinePercentile": 0.513136,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7654,
+        "routeRichness": 0.8034,
+        "chokeValue": 0.6128,
+        "archipelagoSignificance": 0.7112,
+        "centerPeripheryContrast": 0.5857,
+        "historyPotential": 0.6736
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 3,
+        "seaRegions": 7,
+        "mountainSystems": 1,
+        "volcanicZones": 8,
+        "riverBasins": 13,
+        "climateBands": 187,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 12,
+        "chokepoints": 2,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 9
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 244,
+        "recovery": 0.2335
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 1004403349,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6206,
+            "high": 0.7006,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 3405691582,
+      "pass": true,
+      "macroSeed": 2228205911,
+      "firstMs": 3072,
+      "repeatMs": 2875,
+      "hashes": {
+        "phase0": "eb90145c4b23d42423656d7d51a90d585cefd414f78a503e1dde20acac1e1ba8",
+        "phase1": "54afb7a51403b888898983a2aeb7cdf8c9205e9039fafd214c7d46deb7ae46c9",
+        "phase2": "d35b57291e451d8366437004864497b3c6133e1b376d38b276324e6c50ecdbe6"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.472320556640625,
+        "continentCells": [
+          11870,
+          3276
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          45,
+          57,
+          69
+        ],
+        "passageWidths": [
+          7.944271909999159,
+          4
+        ],
+        "shorelinePercentile": 0.530428,
+        "shorelineAttempts": 2,
+        "coastalPorts": 9,
+        "seaLanes": 28,
+        "brittleCorridors": 3,
+        "redundantCorridors": 4
+      },
+      "phase1Scores": {
+        "diversity": 0.6871,
+        "routeRichness": 0.8019,
+        "chokeValue": 0.5054,
+        "archipelagoSignificance": 0.6914,
+        "centerPeripheryContrast": 0.5681,
+        "historyPotential": 0.628
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.51 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 5,
+        "mountainSystems": 4,
+        "volcanicZones": 12,
+        "riverBasins": 9,
+        "climateBands": 206,
+        "reliefRegions": 6,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 9,
+        "chokepoints": 2,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 6
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 256,
+        "recovery": 0.200012
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 2228205911,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6297,
+            "high": 0.7097,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 4286578687,
+      "pass": true,
+      "macroSeed": 2640768313,
+      "firstMs": 2838,
+      "repeatMs": 3564,
+      "hashes": {
+        "phase0": "e589477ab0fedc8af772198cc59c18742c9ff87cb127448e2cc15bc7499e0013",
+        "phase1": "e3f8a55bdc337388021934a015a18538a7b421f7a8d0c951bff8778b30e23761",
+        "phase2": "5c7f16171b58cf000f7f350112cf24ef4a0662d28d0e54716ce91d63e2e7552e"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.52923583984375,
+        "continentCells": [
+          13629,
+          3272
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "inland_sea",
+          "open_ocean",
+          "enclosed_water",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          68,
+          66,
+          68
+        ],
+        "passageWidths": [
+          5.324555320336759,
+          4.8309518948453
+        ],
+        "shorelinePercentile": 0.466709,
+        "shorelineAttempts": 1,
+        "coastalPorts": 9,
+        "seaLanes": 22,
+        "brittleCorridors": 4,
+        "redundantCorridors": 3
+      },
+      "phase1Scores": {
+        "diversity": 0.7068,
+        "routeRichness": 0.7973,
+        "chokeValue": 0.328,
+        "archipelagoSignificance": 0.7065,
+        "centerPeripheryContrast": 0.5421,
+        "historyPotential": 0.615
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.33 is weak and may produce a shallow macro world.",
+        "center-periphery contrast score 0.54 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 11,
+        "mountainSystems": 3,
+        "volcanicZones": 9,
+        "riverBasins": 15,
+        "climateBands": 171,
+        "reliefRegions": 7,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 9,
+        "chokepoints": 2,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 6
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 230,
+        "recovery": 0.218086
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 2640768313,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.628,
+            "high": 0.708,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 73537,
+      "pass": true,
+      "macroSeed": 1029053146,
+      "firstMs": 5175,
+      "repeatMs": 3275,
+      "hashes": {
+        "phase0": "d2694cc7c46d2cd5482963feaee116003625a05b3f6178f3035b1a4a3ba6987a",
+        "phase1": "f06c3ecb176d8860f95d592cfc5f421978f1281bbe32967507c4ca8186bf4ddc",
+        "phase2": "fd067ba77aff25f133f979a65c435db7838c182d1f1b8f94745da31840cbd2cf"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.511688232421875,
+        "continentCells": [
+          9380,
+          6846
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "enclosed_water",
+          "enclosed_water",
+          "enclosed_water",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          69,
+          89,
+          102,
+          87,
+          69,
+          54
+        ],
+        "passageWidths": [
+          4,
+          2,
+          2.1622776601683795,
+          3.1231056256176606,
+          5.324555320336759,
+          12.416407864998739,
+          7,
+          8.219544457292887,
+          13.317821063276352,
+          4.656854249492381
+        ],
+        "shorelinePercentile": 0.501058,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 6,
+        "redundantCorridors": 11
+      },
+      "phase1Scores": {
+        "diversity": 0.7153,
+        "routeRichness": 0.8145,
+        "chokeValue": 0.5761,
+        "archipelagoSignificance": 0.6997,
+        "centerPeripheryContrast": 0.5667,
+        "historyPotential": 0.6461
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 6,
+        "mountainSystems": 7,
+        "volcanicZones": 14,
+        "riverBasins": 13,
+        "climateBands": 175,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 12,
+        "chokepoints": 10,
+        "macroRoutes": 28,
+        "isolatedZones": 1,
+        "strategicRegions": 10
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 264,
+        "recovery": 0.184571
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 1029053146,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.614,
+            "high": 0.694,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 16908799,
+      "pass": true,
+      "macroSeed": 2266972990,
+      "firstMs": 3342,
+      "repeatMs": 3482,
+      "hashes": {
+        "phase0": "8ac5eeb372c766880c6f48fb3408436c4141ffad064f31b3d9ac085e170bb341",
+        "phase1": "19d33c8344e3bf9322babe5bccec88a113ccb247ee6473c5260700be6e5fcfb8",
+        "phase2": "a114afa35170b965a06ecf6003958abb6e1ed2a532e7544ed74719306e5393a4"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.265106201171875,
+        "continentCells": [
+          7574,
+          897
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea",
+          "inland_sea",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          43,
+          54,
+          85,
+          49
+        ],
+        "passageWidths": [
+          7,
+          5,
+          7,
+          7.246211251235321
+        ],
+        "shorelinePercentile": 0.741486,
+        "shorelineAttempts": 11,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 6
+      },
+      "phase1Scores": {
+        "diversity": 0.7118,
+        "routeRichness": 0.8062,
+        "chokeValue": 0.495,
+        "archipelagoSignificance": 0.6949,
+        "centerPeripheryContrast": 0.5279,
+        "historyPotential": 0.5971
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.49 is thinner than target and may benefit from selective rerolling.",
+        "center-periphery contrast score 0.53 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 4,
+        "mountainSystems": 10,
+        "volcanicZones": 14,
+        "riverBasins": 9,
+        "climateBands": 223,
+        "reliefRegions": 10,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 4,
+        "macroRoutes": 15,
+        "isolatedZones": 2,
+        "strategicRegions": 5
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 292,
+        "recovery": 0.211644
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 2266972990,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6204,
+            "high": 0.7004,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 422095321,
+      "pass": true,
+      "macroSeed": 63993969,
+      "firstMs": 2762,
+      "repeatMs": 2561,
+      "hashes": {
+        "phase0": "2de7c1b91c28a446acc653e1c871f1407e3f576b2ab56b70423185c8e7ab4005",
+        "phase1": "539e2088782318b0be5b5691f577985d0daa82e72bee8595b103118dda631c2b",
+        "phase2": "42eeb6d7307a74301b701b102b71529e64aaa739f621b3137415ff215b022638"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.2149658203125,
+        "continentCells": [
+          3901,
+          2979
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          48,
+          49,
+          40,
+          40
+        ],
+        "passageWidths": [
+          8.486832980505138,
+          6.810249675906656,
+          8.219544457292887
+        ],
+        "shorelinePercentile": 0.790044,
+        "shorelineAttempts": 11,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7092,
+        "routeRichness": 0.8012,
+        "chokeValue": 0.3866,
+        "archipelagoSignificance": 0.7027,
+        "centerPeripheryContrast": 0.5603,
+        "historyPotential": 0.6144
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.39 is weak and may produce a shallow macro world."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 3,
+        "mountainSystems": 6,
+        "volcanicZones": 11,
+        "riverBasins": 8,
+        "climateBands": 132,
+        "reliefRegions": 6,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 3,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 7
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 186,
+        "recovery": 0.209751
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 63993969,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6211,
+            "high": 0.7011,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 894213317,
+      "pass": true,
+      "macroSeed": 3873298626,
+      "firstMs": 2414,
+      "repeatMs": 2509,
+      "hashes": {
+        "phase0": "04c462d30eb0065fa4a56795e73182a2ddb324264f9afd4d2427bd2ee29214fc",
+        "phase1": "2a3f402c6d952bb9655a9b743b19224bcfd00a140ed7f2f3f8ab728be9a12ba0",
+        "phase2": "9b532d2360a4b39a85e0a07eff524bd92043c7b476dfb86131496acd62107817"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.252960205078125,
+        "continentCells": [
+          5777,
+          2291
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          82,
+          52,
+          51,
+          49
+        ],
+        "passageWidths": [
+          6,
+          7,
+          6
+        ],
+        "shorelinePercentile": 0.753753,
+        "shorelineAttempts": 10,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.672,
+        "routeRichness": 0.8062,
+        "chokeValue": 0.5001,
+        "archipelagoSignificance": 0.694,
+        "centerPeripheryContrast": 0.5486,
+        "historyPotential": 0.6194
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.50 is thinner than target and may benefit from selective rerolling.",
+        "center-periphery contrast score 0.55 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 2,
+        "mountainSystems": 4,
+        "volcanicZones": 12,
+        "riverBasins": 7,
+        "climateBands": 112,
+        "reliefRegions": 8,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 3,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 7
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 165,
+        "recovery": 0.243521
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 3873298626,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6214,
+            "high": 0.7014,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 1536241709,
+      "pass": true,
+      "macroSeed": 1728815457,
+      "firstMs": 3025,
+      "repeatMs": 3011,
+      "hashes": {
+        "phase0": "d071e90448870b2167bba62890f133e904addc670b344cc344309bf83ed0014e",
+        "phase1": "711e513f90c74d8a3dbc1df2ca8370a24284a3d3197d64584359ee8d720fa7e6",
+        "phase2": "7e165acb5f9671bee79f24e7e6568913b46d71db918dd344e85b35929611ef31"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.5008544921875,
+        "continentCells": [
+          13561,
+          1495
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "inland_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          69,
+          279,
+          76,
+          73,
+          50,
+          46
+        ],
+        "passageWidths": [
+          1.2360679774997898,
+          3,
+          1,
+          1.2360679774997898,
+          4.099019513592785
+        ],
+        "shorelinePercentile": 0.51646,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 6,
+        "redundantCorridors": 7
+      },
+      "phase1Scores": {
+        "diversity": 0.7071,
+        "routeRichness": 0.8007,
+        "chokeValue": 0.5096,
+        "archipelagoSignificance": 0.7053,
+        "centerPeripheryContrast": 0.5608,
+        "historyPotential": 0.6317
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.51 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 6,
+        "mountainSystems": 5,
+        "volcanicZones": 10,
+        "riverBasins": 14,
+        "climateBands": 199,
+        "reliefRegions": 11,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 12,
+        "chokepoints": 5,
+        "macroRoutes": 28,
+        "isolatedZones": 1,
+        "strategicRegions": 8
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 280,
+        "recovery": 0.209837
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 1728815457,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6167,
+            "high": 0.6967,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 2269445513,
+      "pass": true,
+      "macroSeed": 3284206890,
+      "firstMs": 3151,
+      "repeatMs": 3777,
+      "hashes": {
+        "phase0": "4c8d415ef7247f28f81338ce281715d3da8e40b3b1e535ec4b7ecd909cc51ad1",
+        "phase1": "99ad341c358aec63935ea0b7df422b0f1166746a54c8f727f90c00ebbc4d3c1d",
+        "phase2": "6a020f070789aaaa2c08dce2313378355b40b81fdd2b64b10e7fa5d615dfcc55"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.536529541015625,
+        "continentCells": [
+          13892,
+          1360,
+          1025
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean",
+          "enclosed_water",
+          "enclosed_water",
+          "open_ocean",
+          "enclosed_water",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          110,
+          75,
+          73
+        ],
+        "passageWidths": [
+          4,
+          5.4031242374328485,
+          9.816653826391969
+        ],
+        "shorelinePercentile": 0.470125,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 25,
+        "brittleCorridors": 3,
+        "redundantCorridors": 4
+      },
+      "phase1Scores": {
+        "diversity": 0.7875,
+        "routeRichness": 0.8102,
+        "chokeValue": 0.674,
+        "archipelagoSignificance": 0.6971,
+        "centerPeripheryContrast": 0.5871,
+        "historyPotential": 0.6814
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 3,
+        "seaRegions": 12,
+        "mountainSystems": 2,
+        "volcanicZones": 9,
+        "riverBasins": 17,
+        "climateBands": 189,
+        "reliefRegions": 8,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 12,
+        "chokepoints": 3,
+        "macroRoutes": 7,
+        "isolatedZones": 1,
+        "strategicRegions": 10
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 249,
+        "recovery": 0.212049
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 3284206890,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6307,
+            "high": 0.7107,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 3071624507,
+      "pass": true,
+      "macroSeed": 3267866357,
+      "firstMs": 3486,
+      "repeatMs": 3374,
+      "hashes": {
+        "phase0": "6c9d09d0fe76c05da3c75a6edcd48369afe9dca60ca2892d204aa15737af06d3",
+        "phase1": "064b92a02dbf7b43f69d7ea4e1575c684b92597eb2ce71f61334a7cc8e4e7654",
+        "phase2": "0e564c842040a3a50c88fd49e7db136ba8ef7f44f55ddd8146fceed7714a8d77"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.548736572265625,
+        "continentCells": [
+          7547,
+          6267,
+          2569
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "enclosed_water",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          52,
+          67,
+          86
+        ],
+        "passageWidths": [
+          4.8309518948453,
+          3.2426406871192857,
+          8.899494936611665
+        ],
+        "shorelinePercentile": 0.454307,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 3,
+        "redundantCorridors": 6
+      },
+      "phase1Scores": {
+        "diversity": 0.7882,
+        "routeRichness": 0.8091,
+        "chokeValue": 0.505,
+        "archipelagoSignificance": 0.694,
+        "centerPeripheryContrast": 0.5646,
+        "historyPotential": 0.6336
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.51 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 3,
+        "seaRegions": 5,
+        "mountainSystems": 2,
+        "volcanicZones": 8,
+        "riverBasins": 12,
+        "climateBands": 243,
+        "reliefRegions": 8,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 12,
+        "chokepoints": 3,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 6
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 298,
+        "recovery": 0.246253
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 3267866357,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6239,
+            "high": 0.7039,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 4011398309,
+      "pass": true,
+      "macroSeed": 1498660786,
+      "firstMs": 2855,
+      "repeatMs": 2438,
+      "hashes": {
+        "phase0": "9d9d0d25b0c274cd9e11e1a308661e5ccc10b367e819ea412349f5c0c1ef861f",
+        "phase1": "b634f7098d632930ce196b34fdf57bf1e1af7e62884191c25eafcda0c2c056ae",
+        "phase2": "2e3946aef04eb6e3b147be8c9a818d7c32efe4561839f936a05d88ecfaeaf215"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.4407958984375,
+        "continentCells": [
+          9307,
+          2577
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          110,
+          79,
+          66,
+          47
+        ],
+        "passageWidths": [
+          2,
+          6,
+          4,
+          14.811388300841896
+        ],
+        "shorelinePercentile": 0.558457,
+        "shorelineAttempts": 1,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 6
+      },
+      "phase1Scores": {
+        "diversity": 0.7548,
+        "routeRichness": 0.8058,
+        "chokeValue": 0.5308,
+        "archipelagoSignificance": 0.7075,
+        "centerPeripheryContrast": 0.5695,
+        "historyPotential": 0.6757
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.53 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 6,
+        "mountainSystems": 2,
+        "volcanicZones": 7,
+        "riverBasins": 14,
+        "climateBands": 141,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 4,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 9
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 200,
+        "recovery": 0.238609
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 1498660786,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6258,
+            "high": 0.7058,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 40681987,
+      "pass": true,
+      "macroSeed": 2355681109,
+      "firstMs": 2795,
+      "repeatMs": 2956,
+      "hashes": {
+        "phase0": "7162d87bb518205f71e38b2c360afee992b69e3076a67bc250ede71acd94b702",
+        "phase1": "fab8f61c6181cfc8d425e7ace21ed12cb0ce0437a7edce0197d0401a2ab2b326",
+        "phase2": "e48b10f07b3cfdc6d727fb82414de66e618427022b30036d185f561d2d67d3f2"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.45391845703125,
+        "continentCells": [
+          7855,
+          6489
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea",
+          "semi_enclosed_sea",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          68,
+          57,
+          45
+        ],
+        "passageWidths": [
+          4.385164807134505,
+          3.4721359549995796,
+          7.062257748298549
+        ],
+        "shorelinePercentile": 0.548482,
+        "shorelineAttempts": 1,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7568,
+        "routeRichness": 0.8103,
+        "chokeValue": 0.652,
+        "archipelagoSignificance": 0.7127,
+        "centerPeripheryContrast": 0.5782,
+        "historyPotential": 0.691
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 4,
+        "mountainSystems": 6,
+        "volcanicZones": 13,
+        "riverBasins": 8,
+        "climateBands": 167,
+        "reliefRegions": 7,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 9,
+        "chokepoints": 3,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 9
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 220,
+        "recovery": 0.23627
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 2355681109,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6312,
+            "high": 0.7112,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 359393571,
+      "pass": true,
+      "macroSeed": 4178614197,
+      "firstMs": 3284,
+      "repeatMs": 2852,
+      "hashes": {
+        "phase0": "aa20cf8172bc23b8e8469cbb2aed034542dbbe4e1c1af0f66f39bd94d5d3f0f4",
+        "phase1": "8a195faaf6418dfcf4dbd105cba9fa2e01489e6bc5746bf4ffd62a4427eba704",
+        "phase2": "4aacbe97e3469d9c30528b0ec90901b999b14da27fa770406bc17fe8efc5713a"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.2520751953125,
+        "continentCells": [
+          6499,
+          1530
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          45,
+          56,
+          69,
+          81
+        ],
+        "passageWidths": [
+          5,
+          7.062257748298549,
+          4,
+          15.278820596099706,
+          11.727922061357857
+        ],
+        "shorelinePercentile": 0.754995,
+        "shorelineAttempts": 11,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 7
+      },
+      "phase1Scores": {
+        "diversity": 0.6752,
+        "routeRichness": 0.8037,
+        "chokeValue": 0.36,
+        "archipelagoSignificance": 0.7004,
+        "centerPeripheryContrast": 0.5722,
+        "historyPotential": 0.6019
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.36 is weak and may produce a shallow macro world."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 2,
+        "mountainSystems": 4,
+        "volcanicZones": 11,
+        "riverBasins": 7,
+        "climateBands": 212,
+        "reliefRegions": 6,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 5,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 7
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 264,
+        "recovery": 0.199771
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 4178614197,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6159,
+            "high": 0.6959,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 801384629,
+      "pass": true,
+      "macroSeed": 572771161,
+      "firstMs": 3215,
+      "repeatMs": 2914,
+      "hashes": {
+        "phase0": "e6b323dd63844e07df48cae09bcdd1e246059f82c448f4f3bd67a2be835908e2",
+        "phase1": "b6f5d7229c432eb5b7122dc66fcc35f48634990f24e697438560f8f2475cc83a",
+        "phase2": "4e301c57e8978d7be707a298154c1b07df411708e7a03fb6a060247528eaac2f"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.492950439453125,
+        "continentCells": [
+          13140,
+          2609
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          86,
+          86,
+          73,
+          69,
+          64
+        ],
+        "passageWidths": [
+          2.6055512754639896,
+          3.2426406871192857,
+          1.8284271247461903,
+          3.2426406871192857
+        ],
+        "shorelinePercentile": 0.517605,
+        "shorelineAttempts": 2,
+        "coastalPorts": 11,
+        "seaLanes": 29,
+        "brittleCorridors": 5,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7557,
+        "routeRichness": 0.8003,
+        "chokeValue": 0.5191,
+        "archipelagoSignificance": 0.7112,
+        "centerPeripheryContrast": 0.5571,
+        "historyPotential": 0.6617
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.52 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 8,
+        "mountainSystems": 5,
+        "volcanicZones": 12,
+        "riverBasins": 14,
+        "climateBands": 198,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 11,
+        "chokepoints": 4,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 9
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 267,
+        "recovery": 0.209626
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 572771161,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6213,
+            "high": 0.7013,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 1431655765,
+      "pass": true,
+      "macroSeed": 3264412288,
+      "firstMs": 3319,
+      "repeatMs": 3579,
+      "hashes": {
+        "phase0": "fccfd20c965b4308839a7fcc0736711be317799a404febdaab1404d01c84ffc7",
+        "phase1": "ffccf545621fe5362b19dc4179568bceda208b4f1128e32c2c94b9245311cdcc",
+        "phase2": "f95971dba9c4763d154f5479be0fdfae3586e4ba68b6200e043ce7115c34e0e7"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.538482666015625,
+        "continentCells": [
+          11699,
+          4549
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "inland_sea",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          74,
+          78,
+          63
+        ],
+        "passageWidths": [
+          4.099019513592785,
+          2.6055512754639896,
+          14.556349186104047
+        ],
+        "shorelinePercentile": 0.465698,
+        "shorelineAttempts": 1,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7111,
+        "routeRichness": 0.8097,
+        "chokeValue": 0.5515,
+        "archipelagoSignificance": 0.6965,
+        "centerPeripheryContrast": 0.5762,
+        "historyPotential": 0.632
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 9,
+        "mountainSystems": 1,
+        "volcanicZones": 7,
+        "riverBasins": 15,
+        "climateBands": 264,
+        "reliefRegions": 8,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 9,
+        "chokepoints": 3,
+        "macroRoutes": 10,
+        "isolatedZones": 1,
+        "strategicRegions": 6
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 319,
+        "recovery": 0.229606
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 3264412288,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6303,
+            "high": 0.7103,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 2018958301,
+      "pass": true,
+      "macroSeed": 1250244416,
+      "firstMs": 3294,
+      "repeatMs": 3540,
+      "hashes": {
+        "phase0": "9df925de5d1b4b17ece306b5a4c4aa759d39191f7e764af6045dbcf37ecd4c37",
+        "phase1": "534ad19a91b7034f5bd1a8ebb20f3ef6e6aa186a7474cd972a3d89553326326f",
+        "phase2": "ce2e3feca731b2faa2dc1c0393b722f855db61e035ed996076eff8221712ef1e"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.508087158203125,
+        "continentCells": [
+          12720,
+          2892
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          65,
+          59,
+          59,
+          51
+        ],
+        "passageWidths": [
+          7.54400374531753,
+          5.324555320336759,
+          5.708203932499369,
+          15.278820596099706,
+          10
+        ],
+        "shorelinePercentile": 0.496215,
+        "shorelineAttempts": 1,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 7
+      },
+      "phase1Scores": {
+        "diversity": 0.7077,
+        "routeRichness": 0.8085,
+        "chokeValue": 0.5936,
+        "archipelagoSignificance": 0.6877,
+        "centerPeripheryContrast": 0.5725,
+        "historyPotential": 0.6477
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 9,
+        "mountainSystems": 4,
+        "volcanicZones": 11,
+        "riverBasins": 15,
+        "climateBands": 231,
+        "reliefRegions": 7,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 5,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 8
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 299,
+        "recovery": 0.195173
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 1250244416,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6224,
+            "high": 0.7024,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 2764796977,
+      "pass": true,
+      "macroSeed": 1289035813,
+      "firstMs": 4064,
+      "repeatMs": 3722,
+      "hashes": {
+        "phase0": "6f27bed576a42dcc167f10d6b8167c76932d87318be984ee9be5b353b269ac1c",
+        "phase1": "9f68699fa84a99566b04ff4eacc732c74aacac3613d169580f5bc0be76f1394e",
+        "phase2": "01903fba4ffea14ea0ed9d1596920ad6ed1022a261f8778a0e720d2a8d24f5df"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.5162353515625,
+        "continentCells": [
+          9891,
+          5520
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          70,
+          68,
+          56,
+          54
+        ],
+        "passageWidths": [
+          4.8309518948453,
+          10.704699910719626,
+          5
+        ],
+        "shorelinePercentile": 0.487233,
+        "shorelineAttempts": 2,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.6615,
+        "routeRichness": 0.8002,
+        "chokeValue": 0.3961,
+        "archipelagoSignificance": 0.6939,
+        "centerPeripheryContrast": 0.5661,
+        "historyPotential": 0.59
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.40 is weak and may produce a shallow macro world."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 6,
+        "mountainSystems": 1,
+        "volcanicZones": 7,
+        "riverBasins": 13,
+        "climateBands": 220,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 3,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 6
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 276,
+        "recovery": 0.231515
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 1289035813,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6214,
+            "high": 0.7014,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 3669891307,
+      "pass": true,
+      "macroSeed": 204572182,
+      "firstMs": 3327,
+      "repeatMs": 3593,
+      "hashes": {
+        "phase0": "14f43b5adeb81bbc9a2fac5f9738c227b68298f72e7a3ee46ff47316039a41b0",
+        "phase1": "237605bb9c44b0ed6aeaf4e6737f6205aa41c93712859c0363df2c82d5ee030d",
+        "phase2": "78c8d4b588f3102b9b9c892e42984b40ea16b4b1c9f7e1ba74812e876b96382f"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.286224365234375,
+        "continentCells": [
+          5987,
+          3182
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          44,
+          57,
+          63,
+          69
+        ],
+        "passageWidths": [
+          6.0710678118654755,
+          3.2426406871192857,
+          4.656854249492381,
+          10.180339887498947
+        ],
+        "shorelinePercentile": 0.720103,
+        "shorelineAttempts": 11,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 6
+      },
+      "phase1Scores": {
+        "diversity": 0.6701,
+        "routeRichness": 0.8135,
+        "chokeValue": 0.6296,
+        "archipelagoSignificance": 0.7016,
+        "centerPeripheryContrast": 0.5572,
+        "historyPotential": 0.6511
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 2,
+        "mountainSystems": 3,
+        "volcanicZones": 11,
+        "riverBasins": 7,
+        "climateBands": 157,
+        "reliefRegions": 7,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 4,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 8
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 208,
+        "recovery": 0.18888
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 204572182,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6267,
+            "high": 0.7067,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 4264079171,
+      "pass": true,
+      "macroSeed": 4159693028,
+      "firstMs": 4187,
+      "repeatMs": 4619,
+      "hashes": {
+        "phase0": "fd609d98ec2eef9b15e8fde52cb3c4a15148f3bcbe9e72aafe1795d9224fd526",
+        "phase1": "993994f0ca11192c77a80712cf8cccc5cd4a55a6c5985550a490a3c42815ef5e",
+        "phase2": "86b8a48a3198103c558873651eaff777146574036bbf8aaf6ace488972b41130"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.460418701171875,
+        "continentCells": [
+          8429,
+          5534
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          69,
+          174,
+          69,
+          63,
+          53,
+          45
+        ],
+        "passageWidths": [
+          1.2360679774997898,
+          1,
+          2,
+          1.8284271247461903,
+          3.4721359549995796,
+          13.560219778561038,
+          4,
+          6.810249675906656,
+          13.212670403551897,
+          12.892443989449806
+        ],
+        "shorelinePercentile": 0.551244,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 6,
+        "redundantCorridors": 12
+      },
+      "phase1Scores": {
+        "diversity": 0.6631,
+        "routeRichness": 0.7988,
+        "chokeValue": 0.3767,
+        "archipelagoSignificance": 0.6928,
+        "centerPeripheryContrast": 0.5591,
+        "historyPotential": 0.5781
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.38 is weak and may produce a shallow macro world."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 3,
+        "mountainSystems": 5,
+        "volcanicZones": 13,
+        "riverBasins": 10,
+        "climateBands": 206,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 12,
+        "chokepoints": 10,
+        "macroRoutes": 28,
+        "isolatedZones": 1,
+        "strategicRegions": 8
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 286,
+        "recovery": 0.214601
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 4159693028,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6096,
+            "high": 0.6896,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 64847321,
+      "pass": true,
+      "macroSeed": 463592119,
+      "firstMs": 4585,
+      "repeatMs": 4257,
+      "hashes": {
+        "phase0": "27600c05107853fe169b9356b03544eec89412f9b0132f28a2d5d915f1aed127",
+        "phase1": "a1e9465409aa306f2e8bb4e1635450e7046094c57ddbd379b19bf377f412ae5b",
+        "phase2": "695d386d0a50c064750a4ded24caa211620532a7504e1d254c2bb21e0a50012b"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.4443359375,
+        "continentCells": [
+          8051,
+          4036
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "enclosed_water",
+          "semi_enclosed_sea",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          90,
+          75,
+          71,
+          87
+        ],
+        "passageWidths": [
+          4.8309518948453,
+          3.1231056256176606,
+          3,
+          6,
+          9,
+          1.2360679774997898
+        ],
+        "shorelinePercentile": 0.562814,
+        "shorelineAttempts": 2,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 8
+      },
+      "phase1Scores": {
+        "diversity": 0.7603,
+        "routeRichness": 0.8146,
+        "chokeValue": 0.5144,
+        "archipelagoSignificance": 0.7131,
+        "centerPeripheryContrast": 0.5728,
+        "historyPotential": 0.6521
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.51 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 6,
+        "mountainSystems": 1,
+        "volcanicZones": 7,
+        "riverBasins": 15,
+        "climateBands": 247,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 10,
+        "chokepoints": 6,
+        "macroRoutes": 15,
+        "isolatedZones": 1,
+        "strategicRegions": 8
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 308,
+        "recovery": 0.244725
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 463592119,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.623,
+            "high": 0.703,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 958614127,
+      "pass": true,
+      "macroSeed": 1466406157,
+      "firstMs": 3282,
+      "repeatMs": 3331,
+      "hashes": {
+        "phase0": "8e2a563acc7986d52acefff2906c46503889ffd31b83b19675831fe1a38526a0",
+        "phase1": "6361ed44019381aa7f3890730d6e9b7f9a69b6f12c4785e6ea7fa577fb79646f",
+        "phase2": "6560b97930076172eba51d57ab14ad6669f9c5fa9a5d89df48d268d49b9e9584"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.248779296875,
+        "continentCells": [
+          4275,
+          3271
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          78,
+          60,
+          41,
+          40,
+          36
+        ],
+        "passageWidths": [
+          1.2360679774997898,
+          4.8309518948453,
+          5,
+          6
+        ],
+        "shorelinePercentile": 0.758428,
+        "shorelineAttempts": 13,
+        "coastalPorts": 11,
+        "seaLanes": 55,
+        "brittleCorridors": 5,
+        "redundantCorridors": 6
+      },
+      "phase1Scores": {
+        "diversity": 0.6198,
+        "routeRichness": 0.798,
+        "chokeValue": 0.3698,
+        "archipelagoSignificance": 0.6998,
+        "centerPeripheryContrast": 0.5419,
+        "historyPotential": 0.5788
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.37 is weak and may produce a shallow macro world.",
+        "center-periphery contrast score 0.54 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 2,
+        "mountainSystems": 2,
+        "volcanicZones": 12,
+        "riverBasins": 9,
+        "climateBands": 162,
+        "reliefRegions": 9,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 11,
+        "chokepoints": 4,
+        "macroRoutes": 21,
+        "isolatedZones": 1,
+        "strategicRegions": 7
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 223,
+        "recovery": 0.236105
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 1466406157,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6163,
+            "high": 0.6963,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 2345998979,
+      "pass": true,
+      "macroSeed": 2075053107,
+      "firstMs": 3370,
+      "repeatMs": 3393,
+      "hashes": {
+        "phase0": "325c4f62459d473dc43722c060b501eea2dbec1008467d5cbefd914ec740a9c3",
+        "phase1": "cedece6dce047f6842db064378f2e42dc0f2dbbfdfb5b955f87e0806ce37f397",
+        "phase2": "e02ab25c5685e579bb772c5b320630a9193c4bf13047799c2bea065c5d6d4c0b"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.36993408203125,
+        "continentCells": [
+          9380,
+          2062
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          69,
+          168,
+          59,
+          58,
+          48
+        ],
+        "passageWidths": [
+          1,
+          2,
+          2.1622776601683795
+        ],
+        "shorelinePercentile": 0.641741,
+        "shorelineAttempts": 7,
+        "coastalPorts": 11,
+        "seaLanes": 55,
+        "brittleCorridors": 5,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.6724,
+        "routeRichness": 0.8079,
+        "chokeValue": 0.532,
+        "archipelagoSignificance": 0.7148,
+        "centerPeripheryContrast": 0.5592,
+        "historyPotential": 0.6342
+      },
+      "phase1Warnings": [
+        "choke usefulness score 0.53 is thinner than target and may benefit from selective rerolling."
+      ],
+      "counts": {
+        "plates": 8,
+        "continents": 2,
+        "seaRegions": 2,
+        "mountainSystems": 5,
+        "volcanicZones": 12,
+        "riverBasins": 9,
+        "climateBands": 170,
+        "reliefRegions": 10,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 11,
+        "chokepoints": 3,
+        "macroRoutes": 21,
+        "isolatedZones": 1,
+        "strategicRegions": 8
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 234,
+        "recovery": 0.219904
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 2075053107,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.6212,
+            "high": 0.7012,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    },
+    {
+      "seed": 3900041903,
+      "pass": true,
+      "macroSeed": 2890176720,
+      "firstMs": 3260,
+      "repeatMs": 3140,
+      "hashes": {
+        "phase0": "6c48ff5380c9354551a27a60b2506fb58b74ab895021c61f7e6ef5be6b84016a",
+        "phase1": "bb93e018f5a71e0b420340cfca0e2ca1ecc10ef56f0eb6abb0081c1e3758be65",
+        "phase2": "8137331ef37be5df5975f85962e3fcc7aca2b354288460d306a801028ba6ef86"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "map": {
+        "landRatio": 0.509033203125,
+        "continentCells": [
+          11826,
+          2253,
+          1016
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          76,
+          50,
+          47
+        ],
+        "passageWidths": [
+          4.656854249492381,
+          5.4031242374328485,
+          7.062257748298549,
+          6.810249675906656
+        ],
+        "shorelinePercentile": 0.492697,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 30,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "phase1Scores": {
+        "diversity": 0.7867,
+        "routeRichness": 0.8154,
+        "chokeValue": 0.647,
+        "archipelagoSignificance": 0.6994,
+        "centerPeripheryContrast": 0.573,
+        "historyPotential": 0.6712
+      },
+      "phase1Warnings": [],
+      "counts": {
+        "plates": 8,
+        "continents": 3,
+        "seaRegions": 6,
+        "mountainSystems": 1,
+        "volcanicZones": 7,
+        "riverBasins": 13,
+        "climateBands": 226,
+        "reliefRegions": 10,
+        "archipelagoRegions": 1,
+        "coastalOpportunityMap": 12,
+        "chokepoints": 4,
+        "macroRoutes": 7,
+        "isolatedZones": 1,
+        "strategicRegions": 9
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 276,
+        "recovery": 0.255143
+      },
+      "maritime": {
+        "intervention": "maritimeDependence",
+        "lowValue": 0.1,
+        "highValue": 0.9,
+        "fixedMacroSeed": 2890176720,
+        "supportedCount": 1,
+        "stable": true,
+        "directional": true,
+        "noFalseInfluence": true,
+        "status": "pass",
+        "rows": [
+          {
+            "archipelagoId": "arch_001",
+            "opportunity": 0.5,
+            "low": 0.633,
+            "high": 0.713,
+            "geometryAndControlsStable": true
+          }
+        ]
+      }
+    }
+  ],
+  "diagnosticPassed": true
+}
