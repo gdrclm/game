@@ -14,9 +14,10 @@ Only current work and acceptance. Historical implementation details belong in gi
 - [x] F5: One narrow Phase 0→1→2 orchestrator, fail closed; canonical outputs and immutable handoffs; opt-in debug exports. Not player runtime. No integration with expedition progression before Phase 17.5.
 - [x] F6: Run predeclared holdout cohort (suggest 8 distributed seed values distinct from canonical and document before running); report success/failure per seed, determinism, diversity, causal effect coverage, generation time. Scale cohort after performance check. Do not hide failed seeds.
 - [x] F7: Five read-only atlases and the fixed-seed storm comparison checked against actual PhysicalWorldDebugBundle and Phase 2 exports. See [author review packet](review/README.md).
-- [ ] F8-Q: Quality refinement and independent review before author acceptance; see [FOUNDATION_QUALITY_REVIEW.md](FOUNDATION_QUALITY_REVIEW.md). Verify passage closure endpoints, actual topology/shape diversity and center-periphery contrast without weakening validators.
+- [x] F8-Q: Investigate and refine physical passage closures, transport independence, morphology and center/periphery contrast. Compare the baseline and candidate on the same 27 seeds and four untouched seeds. Publish [maps, causes, and evidence](review/f8q/README.md).
+- [ ] Resolve the two technical Phase 2 blockers found by F8-Q. Seed `16908799` falls below the relief checks. Seed `2764796977` fails tension versus relief. Both failures reproduced. Keep the current gates. [Audit](review/f8q/audit.json)
 - [ ] F8: Author review of physical coherence, causal meaning, variation and downstream narrative potential. Record decision or requested rule changes and retest unseen seeds. Do not claim author acceptance.
 - [ ] F9: Final reconciliation of docs/code/tests/phase readiness; explicit approval before Phase 3 expansion or merge.
 
 ## Milestone boundary
-F1–F7 passed on generator revision `04f5b5c`. The 19 worlds include three canonical seeds and 16 previously declared holdout seeds. Start with [the atlas and F8 questions](review/README.md). The latest observations and reproduction commands are in [project state](PROJECT_STATE.md). F8 and F9 require the author's decision before Phase 3 or merge.
+F1–F7 passed on `04f5b5c`. The F8-Q repeat on `808ac3a` passed 25/27 in the main comparison, with all canonical seeds, and 4/4 on the untouched cohort. See [project state](PROJECT_STATE.md) and the [F8-Q review packet](review/f8q/README.md). F8 and F9 require the author's decision before Phase 3 or merge.

@@ -1,17 +1,17 @@
 # Author review queue
 
-F8 is pending author feedback. The Phase 0–2 technical checks passed on generator revision `04f5b5c`. The packet includes the final 19-world audit, five atlas sheets, and a paired storm comparison. [Author review packet](review/README.md)
+F8 ждёт авторской оценки. Сравнение начальной ревизии `90125cf` и реализации `808ac3a` включает географию, водные обходы, пересчёт доступности и восемь карт. Два технических отказа Phase 2 зарегистрированы отдельно. [Пакет F8-Q](review/f8q/README.md) · [Технический статус](ACTIVE_CHECKLIST.md)
 
-## Pending evidence-based gates
+## F8
 
-- Physical-world review: compare low-land seed 137, six-island seed 1908874353, three-continent seed 2576980379 and basin-rich seed 4286578687. Judge coastline shape, route geography, bottlenecks and the range of environment patterns.
-- Causal strength: the measured maritime and storm response, catchment recovery and fragility handoff are in the packet. The existing maritime coefficient and the new storm/cascade coefficients are provisional. Center/periphery contrast fell below its target in the checked worlds. Seed 16908799 sits at the low end of usable recovery.
-- Later narrative review: culture/individual differences, everyday life, humor, contradictions, rare histories, material traces and investigation potential. Before 17.5 label gameplay projections as hypotheses.
-- Later production: clarify exact block 3–5 boundaries and NPC architecture when relevant. Reconcile old GDD final-goal language with disease narrative before implementation.
-- Art: access original chat reference packs and approved visual assets before art production. Do not ask for them during foundation debugging unless visual test truly needs them.
+- Сравнить `137` и `2026`, где одинаковое число пар рейсов приводит к разной концентрации движения. Оценить различия между распределёнными линиями, локальными узкими местами и зависимостью от конкретной пристани. [Карты и измерения](review/f8q/README.md#карты-и-контекст-для-будущей-истории)
+- Сравнить цепь из шести островов `1908874353`, три материка `2576980379` и новую географию `64847321`. Оценить, достаточно ли отличий, которые даёт модель с одной цепью и ограниченными отклонениями по высоте дна. Дополнительные архипелаги потребуют отдельного авторского решения. [Результаты по форме](review/f8q/README.md#форма)
+- Рассмотреть разные условия для снабжения и восстановления. Карты `16908799` и `2764796977` показывают направления двух отклонений. Phase 2 блокирует их экспорт. [Диагностика Phase 2](review/f8q/README.md#повторяемость-и-открытые-проверки)
 
-Each review packet: revision, seed(s), phase, actual outputs, why they arose (linked records/algorithm), observed issue, two or more meaningful alternatives when necessary, proposed correction/invariant, acceptance test. Mark pending/accepted/rejected with date and record decision in DESIGN_DECISIONS.md. Author approves creative decisions; agent handles implementation.
+## Более поздняя оценка
 
-## F8-Q before creative assessment
+- Культура, индивидуальные различия, повседневность, юмор, противоречия, редкие истории и их материальные следы. До Phase 17.5 возможные последствия остаются гипотезами.
+- Точные границы производственных блоков 3–5, архитектура NPC и согласование формулировки финальной цели с историей болезни.
+- Оригинальные художественные референсы и утверждённые материалы нужны к художественному этапу.
 
-Run [quality review](FOUNDATION_QUALITY_REVIEW.md) first: separate true route constraints from endpoint-confounded closure, compare regional distributions and independent routes, measure physical morphology. Ask author about range of worlds and possible multi-archipelago scope only after evidence. No approval inferred from technical success.
+Авторские решения фиксируются в [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md). F9 и Phase 3 ждут явной авторской приёмки.

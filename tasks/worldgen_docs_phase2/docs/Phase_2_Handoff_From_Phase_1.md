@@ -219,6 +219,14 @@ references on climate bands. Both domains preserve their distinct outputs.
 the underlying coastal nodes. The references support environmental profiles
 for offshore isolation. Empty input remains valid for inland zones.
 
+`isolatedZones[].reliefRegionIds` optionally links those nodes to their
+physical relief. Recovery reads those local links alongside existing
+continent references. Routes use the canonical waypoint sequence in
+`macroRoutes[].through`. Record binding resolves relief, sea, and measured
+chokepoint references for travel exposure, navigation windows, and recovery.
+A measured chokepoint enters the sequence when the sampled route crosses its
+aperture and closing it increases the cost or breaks that route.
+
 Pressure and rhythm packages may carry `summaryMetadata.pressure` or
 `summaryMetadata.rhythm` respectively. The generator records the field IDs
 used by its summaries. Every exported regional summary retains the source

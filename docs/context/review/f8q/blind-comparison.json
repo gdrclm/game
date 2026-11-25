@@ -1,0 +1,3252 @@
+{
+  "schema": "worldgen-v1-f8q-comparison-v1",
+  "worlds": [
+    {
+      "seed": 64847321,
+      "baseline": {
+        "seed": 64847321,
+        "exportedPhase2": true,
+        "passages": [
+          {
+            "id": "island_passage_14974_11641",
+            "status": "endpoint_confounded",
+            "width": 4,
+            "closedCells": 42,
+            "routesUsingFootprint": 1,
+            "beforeCells": 24,
+            "afterCells": null
+          },
+          {
+            "id": "island_passage_11641_8309",
+            "status": "endpoint_confounded",
+            "width": 3.123,
+            "closedCells": 36,
+            "routesUsingFootprint": 1,
+            "beforeCells": 18,
+            "afterCells": null
+          },
+          {
+            "id": "island_passage_8309_4977",
+            "status": "endpoint_confounded",
+            "width": 3,
+            "closedCells": 31,
+            "routesUsingFootprint": 1,
+            "beforeCells": 5,
+            "afterCells": null
+          }
+        ],
+        "morphology": {
+          "landFraction": 0.4444,
+          "landComponentAreas": [
+            8036,
+            4030,
+            611,
+            569,
+            535,
+            186,
+            169,
+            100,
+            90,
+            87,
+            77,
+            72
+          ],
+          "shorelineAttempts": 2,
+          "continents": [
+            {
+              "id": "cont_01",
+              "areaCells": 8036,
+              "coastEdges": 818,
+              "coastComplexity": 2.281,
+              "centroid": [
+                198.73,
+                66.45
+              ],
+              "axisDegrees": 70.3,
+              "axisRatio": 1.458,
+              "profile": "broken_mass",
+              "reliefContrast": 0.294871
+            },
+            {
+              "id": "cont_02",
+              "areaCells": 4030,
+              "coastEdges": 567,
+              "coastComplexity": 2.233,
+              "centroid": [
+                85.05,
+                76.4
+              ],
+              "axisDegrees": 99.3,
+              "axisRatio": 1.948,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.295293
+            }
+          ],
+          "chainShore": [
+            {
+              "areaCells": 90,
+              "coastEdges": 44,
+              "mainlandDistance": 18
+            },
+            {
+              "areaCells": 77,
+              "coastEdges": 40,
+              "mainlandDistance": 8
+            },
+            {
+              "areaCells": 72,
+              "coastEdges": 38,
+              "mainlandDistance": 11
+            },
+            {
+              "areaCells": 87,
+              "coastEdges": 44,
+              "mainlandDistance": 3
+            }
+          ],
+          "chainOfPeaks": [
+            [
+              126,
+              58
+            ],
+            [
+              121,
+              45
+            ],
+            [
+              117,
+              32
+            ],
+            [
+              113,
+              19
+            ]
+          ],
+          "chainTurnsDegrees": [
+            3.935,
+            0.0
+          ],
+          "crossTrackShifts": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "crustSupportGain": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "network": {
+          "routes": 15,
+          "sailings": 15,
+          "uniqueWaterFootprints": 15,
+          "waterSteps": 229,
+          "sharedWaterStepFraction": 0.45415,
+          "maximumRoutesOnWaterStep": 5,
+          "pairsWithDifferentTerminals": 45,
+          "pairJaccard": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.03543,
+            "max": 0.35556
+          },
+          "disjointPairCount": 37,
+          "graphNodeCount": 22,
+          "contextualBasinCount": 6,
+          "componentSizes": [
+            22
+          ],
+          "reachablePairFraction": 1.0,
+          "travelCost": {
+            "min": 0.187,
+            "p10": 0.421,
+            "median": 1.109,
+            "p90": 1.897,
+            "max": 2.575
+          },
+          "sampledTransit": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.26667,
+            "max": 0.26667
+          },
+          "harmonicCentrality": {
+            "min": 0.75604,
+            "p10": 0.76502,
+            "median": 0.91867,
+            "p90": 1.9589,
+            "max": 1.99362
+          },
+          "corridorClasses": {
+            "redundant": 2,
+            "mandatory": 3
+          },
+          "closurePairs": 29,
+          "blockedPairs": 19,
+          "altCosts": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "altPenalty": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          }
+        },
+        "contrast": {
+          "score": 0.493,
+          "scoreComponents": {
+            "center_strength": 0.7494,
+            "periphery_pressure": 0.3293,
+            "dual_presence": 0.4281,
+            "contrast_gap": 0.5393
+          },
+          "coreAnchorCount": 2,
+          "groups": {
+            "core": {
+              "nodes": 2,
+              "coreTravelCost": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "resupplyCost": {
+                "min": 0.2255,
+                "p10": 0.22555,
+                "median": 0.22575,
+                "p90": 0.22595,
+                "max": 0.226
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2491,
+                "p10": 0.2492,
+                "median": 0.2496,
+                "p90": 0.25,
+                "max": 0.2501
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.8118,
+                "p10": 0.81206,
+                "median": 0.8131,
+                "p90": 0.81414,
+                "max": 0.8144
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1898,
+                "p10": 0.18992,
+                "median": 0.1904,
+                "p90": 0.19088,
+                "max": 0.191
+              },
+              "peripheryScore": {
+                "min": 0.3128,
+                "p10": 0.31284,
+                "median": 0.313,
+                "p90": 0.31316,
+                "max": 0.3132
+              }
+            },
+            "island": {
+              "nodes": 4,
+              "coreTravelCost": {
+                "min": 2.45104,
+                "p10": 2.46107,
+                "median": 2.48844,
+                "p90": 2.49548,
+                "max": 2.4968
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.7009,
+                "p10": 0.70378,
+                "median": 0.71165,
+                "p90": 0.71364,
+                "max": 0.714
+              },
+              "resupplyCost": {
+                "min": 0.6115,
+                "p10": 0.61372,
+                "median": 0.6209,
+                "p90": 0.6264,
+                "max": 0.6279
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.4444,
+                "p10": 0.44779,
+                "median": 0.46475,
+                "p90": 0.4808,
+                "max": 0.4838
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.5168,
+                "p10": 0.51758,
+                "median": 0.52325,
+                "p90": 0.52969,
+                "max": 0.5308
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1287,
+                "p10": 0.12966,
+                "median": 0.13635,
+                "p90": 0.14395,
+                "max": 0.1453
+              },
+              "peripheryScore": {
+                "min": 0.4594,
+                "p10": 0.46135,
+                "median": 0.4696,
+                "p90": 0.4768,
+                "max": 0.4783
+              }
+            },
+            "mainlandCoast": {
+              "nodes": 6,
+              "coreTravelCost": {
+                "min": 0.53712,
+                "p10": 0.53976,
+                "median": 0.54856,
+                "p90": 0.55164,
+                "max": 0.55208
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.1536,
+                "p10": 0.15435,
+                "median": 0.1569,
+                "p90": 0.15775,
+                "max": 0.1579
+              },
+              "resupplyCost": {
+                "min": 0.3016,
+                "p10": 0.3041,
+                "median": 0.31,
+                "p90": 0.3124,
+                "max": 0.3129
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.3037,
+                "p10": 0.31085,
+                "median": 0.32935,
+                "p90": 0.3343,
+                "max": 0.3357
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.5116,
+                "p10": 0.51245,
+                "median": 0.5141,
+                "p90": 0.5206,
+                "max": 0.5237
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1185,
+                "p10": 0.12005,
+                "median": 0.125,
+                "p90": 0.21765,
+                "max": 0.224
+              },
+              "peripheryScore": {
+                "min": 0.3162,
+                "p10": 0.3183,
+                "median": 0.3232,
+                "p90": 0.3402,
+                "max": 0.3467
+              }
+            }
+          },
+          "regionalSegments": 2,
+          "peripheryClusterCount": 4,
+          "phase2Recovery": 0.30831
+        }
+      },
+      "candidate": {
+        "seed": 64847321,
+        "exportedPhase2": true,
+        "passages": [
+          {
+            "id": "island_passage_14974_11640",
+            "status": "measured_detour",
+            "width": 4.831,
+            "closedCells": 4,
+            "routesUsingFootprint": 4,
+            "beforeCells": 51,
+            "afterCells": 69
+          },
+          {
+            "id": "island_passage_11640_8308",
+            "status": "measured_detour",
+            "width": 3.123,
+            "closedCells": 3,
+            "routesUsingFootprint": 4,
+            "beforeCells": 21,
+            "afterCells": 27
+          },
+          {
+            "id": "island_passage_8308_4976",
+            "status": "measured_detour",
+            "width": 3,
+            "closedCells": 3,
+            "routesUsingFootprint": 2,
+            "beforeCells": 29,
+            "afterCells": 39
+          },
+          {
+            "id": "island_passage_11640_cont_02",
+            "status": "measured_detour",
+            "width": 6,
+            "closedCells": 6,
+            "routesUsingFootprint": 1,
+            "beforeCells": 37,
+            "afterCells": 41
+          },
+          {
+            "id": "island_passage_8308_cont_02",
+            "status": "measured_detour",
+            "width": 9,
+            "closedCells": 9,
+            "routesUsingFootprint": 2,
+            "beforeCells": 29,
+            "afterCells": 39
+          },
+          {
+            "id": "island_passage_4976_cont_02",
+            "status": "disconnected_after_closure",
+            "width": 1.236,
+            "closedCells": 1,
+            "routesUsingFootprint": 1,
+            "beforeCells": 38,
+            "afterCells": null
+          }
+        ],
+        "morphology": {
+          "landFraction": 0.44434,
+          "landComponentAreas": [
+            8037,
+            4030,
+            611,
+            569,
+            535,
+            186,
+            169,
+            100,
+            90,
+            87,
+            75,
+            71
+          ],
+          "shorelineAttempts": 2,
+          "continents": [
+            {
+              "id": "cont_01",
+              "areaCells": 8037,
+              "coastEdges": 818,
+              "coastComplexity": 2.281,
+              "centroid": [
+                198.73,
+                66.44
+              ],
+              "axisDegrees": 70.3,
+              "axisRatio": 1.458,
+              "profile": "broken_mass",
+              "reliefContrast": 0.294871
+            },
+            {
+              "id": "cont_02",
+              "areaCells": 4030,
+              "coastEdges": 567,
+              "coastComplexity": 2.233,
+              "centroid": [
+                85.05,
+                76.4
+              ],
+              "axisDegrees": 99.3,
+              "axisRatio": 1.948,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.295293
+            }
+          ],
+          "chainShore": [
+            {
+              "areaCells": 90,
+              "coastEdges": 44,
+              "mainlandDistance": 18
+            },
+            {
+              "areaCells": 75,
+              "coastEdges": 40,
+              "mainlandDistance": 7
+            },
+            {
+              "areaCells": 71,
+              "coastEdges": 38,
+              "mainlandDistance": 10
+            },
+            {
+              "areaCells": 87,
+              "coastEdges": 44,
+              "mainlandDistance": 2
+            }
+          ],
+          "chainOfPeaks": [
+            [
+              126,
+              58
+            ],
+            [
+              120,
+              45
+            ],
+            [
+              116,
+              32
+            ],
+            [
+              112,
+              19
+            ]
+          ],
+          "chainTurnsDegrees": [
+            7.672,
+            0.0
+          ],
+          "crossTrackShifts": [
+            0,
+            -1,
+            -1,
+            -1
+          ],
+          "crustSupportGain": [
+            0,
+            0.006346,
+            0.00047,
+            0.00032
+          ]
+        },
+        "network": {
+          "routes": 15,
+          "sailings": 15,
+          "uniqueWaterFootprints": 15,
+          "waterSteps": 336,
+          "sharedWaterStepFraction": 0.19345,
+          "maximumRoutesOnWaterStep": 5,
+          "pairsWithDifferentTerminals": 45,
+          "pairJaccard": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.01433,
+            "max": 0.21154
+          },
+          "disjointPairCount": 37,
+          "graphNodeCount": 22,
+          "contextualBasinCount": 6,
+          "componentSizes": [
+            22
+          ],
+          "reachablePairFraction": 1.0,
+          "travelCost": {
+            "min": 0.186,
+            "p10": 0.412,
+            "median": 1.116,
+            "p90": 1.893,
+            "max": 2.562
+          },
+          "sampledTransit": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.33333,
+            "max": 0.33333
+          },
+          "harmonicCentrality": {
+            "min": 0.75781,
+            "p10": 0.76463,
+            "median": 0.91946,
+            "p90": 1.95684,
+            "max": 2.00747
+          },
+          "corridorClasses": {
+            "redundant": 8,
+            "mandatory": 4
+          },
+          "closurePairs": 43,
+          "blockedPairs": 20,
+          "altCosts": {
+            "min": 1.666,
+            "p10": 1.6886,
+            "median": 2.12,
+            "p90": 2.396,
+            "max": 2.568
+          },
+          "altPenalty": {
+            "min": 0.0,
+            "p10": 0.002,
+            "median": 0.011,
+            "p90": 0.1098,
+            "max": 0.116
+          }
+        },
+        "contrast": {
+          "score": 0.5728,
+          "scoreComponents": {
+            "center_strength": 0.7489,
+            "periphery_pressure": 0.4348,
+            "dual_presence": 0.5653,
+            "contrast_gap": 0.5918
+          },
+          "coreAnchorCount": 2,
+          "groups": {
+            "core": {
+              "nodes": 2,
+              "coreTravelCost": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "routeCoverageCount": {
+                "min": 5.0,
+                "p10": 5.0,
+                "median": 5.0,
+                "p90": 5.0,
+                "max": 5.0
+              },
+              "distanceFromCore": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "resupplyCost": {
+                "min": 0.0455,
+                "p10": 0.04555,
+                "median": 0.04575,
+                "p90": 0.04595,
+                "max": 0.046
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.1591,
+                "p10": 0.1592,
+                "median": 0.1596,
+                "p90": 0.16,
+                "max": 0.1601
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.6904,
+                "p10": 0.69072,
+                "median": 0.692,
+                "p90": 0.69328,
+                "max": 0.6936
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1828,
+                "p10": 0.18305,
+                "median": 0.18405,
+                "p90": 0.18505,
+                "max": 0.1853
+              },
+              "peripheryScore": {
+                "min": 0.1844,
+                "p10": 0.18448,
+                "median": 0.1848,
+                "p90": 0.18512,
+                "max": 0.1852
+              }
+            },
+            "island": {
+              "nodes": 4,
+              "coreTravelCost": {
+                "min": 2.43696,
+                "p10": 2.45201,
+                "median": 2.48844,
+                "p90": 2.49346,
+                "max": 2.49504
+              },
+              "routeCoverageCount": {
+                "min": 5.0,
+                "p10": 5.0,
+                "median": 5.0,
+                "p90": 5.0,
+                "max": 5.0
+              },
+              "distanceFromCore": {
+                "min": 0.9767,
+                "p10": 0.98273,
+                "median": 0.99735,
+                "p90": 0.99937,
+                "max": 1.0
+              },
+              "resupplyCost": {
+                "min": 0.5834,
+                "p10": 0.58832,
+                "median": 0.602,
+                "p90": 0.60504,
+                "max": 0.6054
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.4217,
+                "p10": 0.42902,
+                "median": 0.45615,
+                "p90": 0.46816,
+                "max": 0.469
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.3344,
+                "p10": 0.33443,
+                "median": 0.3388,
+                "p90": 0.34779,
+                "max": 0.3498
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.525,
+                "p10": 0.52737,
+                "median": 0.53815,
+                "p90": 0.54403,
+                "max": 0.5443
+              },
+              "peripheryScore": {
+                "min": 0.5027,
+                "p10": 0.5069,
+                "median": 0.5208,
+                "p90": 0.52588,
+                "max": 0.5263
+              }
+            },
+            "mainlandCoast": {
+              "nodes": 6,
+              "coreTravelCost": {
+                "min": 0.538,
+                "p10": 0.54152,
+                "median": 0.5468,
+                "p90": 0.55032,
+                "max": 0.55208
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.5,
+                "p90": 4.5,
+                "max": 5.0
+              },
+              "distanceFromCore": {
+                "min": 0.2156,
+                "p10": 0.217,
+                "median": 0.21915,
+                "p90": 0.2206,
+                "max": 0.2213
+              },
+              "resupplyCost": {
+                "min": 0.166,
+                "p10": 0.1793,
+                "median": 0.3253,
+                "p90": 0.34665,
+                "max": 0.3484
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2492,
+                "p10": 0.25485,
+                "median": 0.33215,
+                "p90": 0.35145,
+                "max": 0.3535
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.3919,
+                "p10": 0.40955,
+                "median": 0.5026,
+                "p90": 0.5139,
+                "max": 0.5146
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1194,
+                "p10": 0.12175,
+                "median": 0.1273,
+                "p90": 0.21455,
+                "max": 0.2208
+              },
+              "peripheryScore": {
+                "min": 0.2364,
+                "p10": 0.2425,
+                "median": 0.32345,
+                "p90": 0.34085,
+                "max": 0.342
+              }
+            }
+          },
+          "regionalSegments": 2,
+          "peripheryClusterCount": 4,
+          "phase2Recovery": 0.296039
+        }
+      }
+    },
+    {
+      "seed": 958614127,
+      "baseline": {
+        "seed": 958614127,
+        "exportedPhase2": true,
+        "passages": [
+          {
+            "id": "island_passage_23025_23525",
+            "status": "endpoint_confounded",
+            "width": 1,
+            "closedCells": 13,
+            "routesUsingFootprint": 1,
+            "beforeCells": 19,
+            "afterCells": null
+          },
+          {
+            "id": "island_passage_23525_24025",
+            "status": "endpoint_confounded",
+            "width": 4,
+            "closedCells": 45,
+            "routesUsingFootprint": 1,
+            "beforeCells": 19,
+            "afterCells": null
+          },
+          {
+            "id": "island_passage_24025_24525",
+            "status": "endpoint_confounded",
+            "width": 5,
+            "closedCells": 60,
+            "routesUsingFootprint": 1,
+            "beforeCells": 18,
+            "afterCells": null
+          },
+          {
+            "id": "island_passage_24525_25024",
+            "status": "endpoint_confounded",
+            "width": 6,
+            "closedCells": 78,
+            "routesUsingFootprint": 1,
+            "beforeCells": 6,
+            "afterCells": null
+          }
+        ],
+        "morphology": {
+          "landFraction": 0.2486,
+          "landComponentAreas": [
+            4264,
+            3262,
+            365,
+            80,
+            61,
+            41,
+            39,
+            32,
+            2
+          ],
+          "shorelineAttempts": 13,
+          "continents": [
+            {
+              "id": "cont_01",
+              "areaCells": 4264,
+              "coastEdges": 592,
+              "coastComplexity": 2.266,
+              "centroid": [
+                166.74,
+                28.62
+              ],
+              "axisDegrees": 178.3,
+              "axisRatio": 3.978,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.508655
+            },
+            {
+              "id": "cont_02",
+              "areaCells": 3262,
+              "coastEdges": 494,
+              "coastComplexity": 2.162,
+              "centroid": [
+                51.08,
+                68.61
+              ],
+              "axisDegrees": 50.3,
+              "axisRatio": 4.095,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.400139
+            }
+          ],
+          "chainShore": [
+            {
+              "areaCells": 80,
+              "coastEdges": 40,
+              "mainlandDistance": 49
+            },
+            {
+              "areaCells": 61,
+              "coastEdges": 36,
+              "mainlandDistance": 55
+            },
+            {
+              "areaCells": 41,
+              "coastEdges": 30,
+              "mainlandDistance": 55
+            },
+            {
+              "areaCells": 39,
+              "coastEdges": 28,
+              "mainlandDistance": 47
+            },
+            {
+              "areaCells": 32,
+              "coastEdges": 30,
+              "mainlandDistance": 37
+            }
+          ],
+          "chainOfPeaks": [
+            [
+              241,
+              89
+            ],
+            [
+              229,
+              91
+            ],
+            [
+              217,
+              93
+            ],
+            [
+              205,
+              95
+            ],
+            [
+              192,
+              97
+            ]
+          ],
+          "chainTurnsDegrees": [
+            0.0,
+            0.0,
+            0.716
+          ],
+          "crossTrackShifts": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "crustSupportGain": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "network": {
+          "routes": 21,
+          "sailings": 21,
+          "uniqueWaterFootprints": 21,
+          "waterSteps": 515,
+          "sharedWaterStepFraction": 0.67573,
+          "maximumRoutesOnWaterStep": 6,
+          "pairsWithDifferentTerminals": 105,
+          "pairJaccard": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.39655
+          },
+          "disjointPairCount": 100,
+          "graphNodeCount": 24,
+          "contextualBasinCount": 2,
+          "componentSizes": [
+            24
+          ],
+          "reachablePairFraction": 1.0,
+          "travelCost": {
+            "min": 0.18,
+            "p10": 0.5105,
+            "median": 1.2295,
+            "p90": 2.1055,
+            "max": 2.734
+          },
+          "sampledTransit": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.2381,
+            "max": 0.28571
+          },
+          "harmonicCentrality": {
+            "min": 0.69395,
+            "p10": 0.72125,
+            "median": 0.82042,
+            "p90": 1.71654,
+            "max": 1.7429
+          },
+          "corridorClasses": {
+            "redundant": 2,
+            "mandatory": 2,
+            "brittle": 1,
+            "mixed": 1
+          },
+          "closurePairs": 47,
+          "blockedPairs": 29,
+          "altCosts": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "altPenalty": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          }
+        },
+        "contrast": {
+          "score": 0.469,
+          "scoreComponents": {
+            "center_strength": 0.6835,
+            "periphery_pressure": 0.3259,
+            "dual_presence": 0.4237,
+            "contrast_gap": 0.5047
+          },
+          "coreAnchorCount": 2,
+          "groups": {
+            "core": {
+              "nodes": 2,
+              "coreTravelCost": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "resupplyCost": {
+                "min": 0.2265,
+                "p10": 0.22676,
+                "median": 0.2278,
+                "p90": 0.22884,
+                "max": 0.2291
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2522,
+                "p10": 0.25314,
+                "median": 0.2569,
+                "p90": 0.26066,
+                "max": 0.2616
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.7828,
+                "p10": 0.78497,
+                "median": 0.79365,
+                "p90": 0.80233,
+                "max": 0.8045
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1915,
+                "p10": 0.19199,
+                "median": 0.19395,
+                "p90": 0.19591,
+                "max": 0.1964
+              },
+              "peripheryScore": {
+                "min": 0.3133,
+                "p10": 0.31353,
+                "median": 0.31445,
+                "p90": 0.31537,
+                "max": 0.3156
+              }
+            },
+            "island": {
+              "nodes": 5,
+              "coreTravelCost": {
+                "min": 2.53816,
+                "p10": 2.54238,
+                "median": 2.58216,
+                "p90": 2.63531,
+                "max": 2.64376
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.6966,
+                "p10": 0.69776,
+                "median": 0.7087,
+                "p90": 0.72328,
+                "max": 0.7256
+              },
+              "resupplyCost": {
+                "min": 0.6078,
+                "p10": 0.60896,
+                "median": 0.6159,
+                "p90": 0.62746,
+                "max": 0.6305
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.4371,
+                "p10": 0.43934,
+                "median": 0.4438,
+                "p90": 0.46184,
+                "max": 0.4704
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.523,
+                "p10": 0.52588,
+                "median": 0.5309,
+                "p90": 0.53276,
+                "max": 0.5334
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1253,
+                "p10": 0.12626,
+                "median": 0.1281,
+                "p90": 0.13452,
+                "max": 0.138
+              },
+              "peripheryScore": {
+                "min": 0.4555,
+                "p10": 0.45666,
+                "median": 0.4604,
+                "p90": 0.47044,
+                "max": 0.4744
+              }
+            },
+            "mainlandCoast": {
+              "nodes": 6,
+              "coreTravelCost": {
+                "min": 0.54416,
+                "p10": 0.54592,
+                "median": 0.54944,
+                "p90": 0.55516,
+                "max": 0.55736
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.1493,
+                "p10": 0.1498,
+                "median": 0.15075,
+                "p90": 0.1524,
+                "max": 0.153
+              },
+              "resupplyCost": {
+                "min": 0.2973,
+                "p10": 0.2985,
+                "median": 0.3006,
+                "p90": 0.3042,
+                "max": 0.3044
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.292,
+                "p10": 0.2982,
+                "median": 0.306,
+                "p90": 0.31165,
+                "max": 0.3127
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.52,
+                "p10": 0.5208,
+                "median": 0.52285,
+                "p90": 0.52595,
+                "max": 0.5281
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1116,
+                "p10": 0.11215,
+                "median": 0.11535,
+                "p90": 0.20815,
+                "max": 0.2113
+              },
+              "peripheryScore": {
+                "min": 0.3095,
+                "p10": 0.30995,
+                "median": 0.31305,
+                "p90": 0.33075,
+                "max": 0.3335
+              }
+            }
+          },
+          "regionalSegments": 2,
+          "peripheryClusterCount": 5,
+          "phase2Recovery": 0.242346
+        }
+      },
+      "candidate": {
+        "seed": 958614127,
+        "exportedPhase2": true,
+        "passages": [
+          {
+            "id": "island_passage_23281_24037",
+            "status": "measured_detour",
+            "width": 1.236,
+            "closedCells": 1,
+            "routesUsingFootprint": 3,
+            "beforeCells": 46,
+            "afterCells": 50
+          },
+          {
+            "id": "island_passage_24037_24793",
+            "status": "measured_detour",
+            "width": 4.831,
+            "closedCells": 4,
+            "routesUsingFootprint": 1,
+            "beforeCells": 183,
+            "afterCells": 185
+          },
+          {
+            "id": "island_passage_24793_25293",
+            "status": "measured_detour",
+            "width": 5,
+            "closedCells": 5,
+            "routesUsingFootprint": 1,
+            "beforeCells": 170,
+            "afterCells": 172
+          },
+          {
+            "id": "island_passage_25293_25536",
+            "status": "measured_detour",
+            "width": 6,
+            "closedCells": 6,
+            "routesUsingFootprint": 6,
+            "beforeCells": 19,
+            "afterCells": 21
+          }
+        ],
+        "morphology": {
+          "landFraction": 0.24878,
+          "landComponentAreas": [
+            4265,
+            3264,
+            366,
+            78,
+            60,
+            41,
+            40,
+            36,
+            2
+          ],
+          "shorelineAttempts": 13,
+          "continents": [
+            {
+              "id": "cont_01",
+              "areaCells": 4265,
+              "coastEdges": 592,
+              "coastComplexity": 2.266,
+              "centroid": [
+                166.75,
+                28.62
+              ],
+              "axisDegrees": 178.3,
+              "axisRatio": 3.977,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.508655
+            },
+            {
+              "id": "cont_02",
+              "areaCells": 3264,
+              "coastEdges": 494,
+              "coastComplexity": 2.162,
+              "centroid": [
+                51.08,
+                68.62
+              ],
+              "axisDegrees": 50.2,
+              "axisRatio": 4.09,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.400139
+            }
+          ],
+          "chainShore": [
+            {
+              "areaCells": 78,
+              "coastEdges": 40,
+              "mainlandDistance": 50
+            },
+            {
+              "areaCells": 60,
+              "coastEdges": 38,
+              "mainlandDistance": 57
+            },
+            {
+              "areaCells": 41,
+              "coastEdges": 30,
+              "mainlandDistance": 58
+            },
+            {
+              "areaCells": 40,
+              "coastEdges": 28,
+              "mainlandDistance": 50
+            },
+            {
+              "areaCells": 36,
+              "coastEdges": 30,
+              "mainlandDistance": 38
+            }
+          ],
+          "chainOfPeaks": [
+            [
+              241,
+              90
+            ],
+            [
+              229,
+              93
+            ],
+            [
+              217,
+              96
+            ],
+            [
+              205,
+              98
+            ],
+            [
+              192,
+              99
+            ]
+          ],
+          "chainTurnsDegrees": [
+            0.0,
+            4.574,
+            5.064
+          ],
+          "crossTrackShifts": [
+            -1,
+            -2,
+            -3,
+            -3,
+            -2
+          ],
+          "crustSupportGain": [
+            -0.00195,
+            0.013396,
+            0.034744,
+            0.020171,
+            0.008175
+          ]
+        },
+        "network": {
+          "routes": 21,
+          "sailings": 21,
+          "uniqueWaterFootprints": 21,
+          "waterSteps": 747,
+          "sharedWaterStepFraction": 0.52075,
+          "maximumRoutesOnWaterStep": 6,
+          "pairsWithDifferentTerminals": 105,
+          "pairJaccard": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.01965,
+            "max": 0.24444
+          },
+          "disjointPairCount": 91,
+          "graphNodeCount": 24,
+          "contextualBasinCount": 2,
+          "componentSizes": [
+            24
+          ],
+          "reachablePairFraction": 1.0,
+          "travelCost": {
+            "min": 0.177,
+            "p10": 0.5265,
+            "median": 1.255,
+            "p90": 2.25,
+            "max": 2.9
+          },
+          "sampledTransit": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.28571,
+            "max": 0.28571
+          },
+          "harmonicCentrality": {
+            "min": 0.7045,
+            "p10": 0.70752,
+            "median": 0.81273,
+            "p90": 1.67177,
+            "max": 1.70904
+          },
+          "corridorClasses": {
+            "redundant": 6,
+            "mandatory": 5
+          },
+          "closurePairs": 52,
+          "blockedPairs": 30,
+          "altCosts": {
+            "min": 1.641,
+            "p10": 1.6828,
+            "median": 2.3305,
+            "p90": 2.8315,
+            "max": 3.063
+          },
+          "altPenalty": {
+            "min": 0.002,
+            "p10": 0.004,
+            "median": 0.0165,
+            "p90": 0.1183,
+            "max": 0.134
+          }
+        },
+        "contrast": {
+          "score": 0.5419,
+          "scoreComponents": {
+            "center_strength": 0.6827,
+            "periphery_pressure": 0.4224,
+            "dual_presence": 0.5492,
+            "contrast_gap": 0.5526
+          },
+          "coreAnchorCount": 2,
+          "groups": {
+            "core": {
+              "nodes": 2,
+              "coreTravelCost": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "routeCoverageCount": {
+                "min": 6.0,
+                "p10": 6.0,
+                "median": 6.0,
+                "p90": 6.0,
+                "max": 6.0
+              },
+              "distanceFromCore": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "resupplyCost": {
+                "min": 0.0465,
+                "p10": 0.04676,
+                "median": 0.0478,
+                "p90": 0.04884,
+                "max": 0.0491
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.1622,
+                "p10": 0.16314,
+                "median": 0.1669,
+                "p90": 0.17066,
+                "max": 0.1716
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.6621,
+                "p10": 0.66416,
+                "median": 0.6724,
+                "p90": 0.68064,
+                "max": 0.6827
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1865,
+                "p10": 0.1868,
+                "median": 0.188,
+                "p90": 0.1892,
+                "max": 0.1895
+              },
+              "peripheryScore": {
+                "min": 0.1855,
+                "p10": 0.18568,
+                "median": 0.1864,
+                "p90": 0.18712,
+                "max": 0.1873
+              }
+            },
+            "island": {
+              "nodes": 5,
+              "coreTravelCost": {
+                "min": 2.54784,
+                "p10": 2.54995,
+                "median": 2.58216,
+                "p90": 2.6457,
+                "max": 2.65168
+              },
+              "routeCoverageCount": {
+                "min": 6.0,
+                "p10": 6.0,
+                "median": 6.0,
+                "p90": 6.0,
+                "max": 6.0
+              },
+              "distanceFromCore": {
+                "min": 0.9608,
+                "p10": 0.9616,
+                "median": 0.9738,
+                "p90": 0.99776,
+                "max": 1.0
+              },
+              "resupplyCost": {
+                "min": 0.5765,
+                "p10": 0.57738,
+                "median": 0.5838,
+                "p90": 0.6026,
+                "max": 0.605
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.4221,
+                "p10": 0.42446,
+                "median": 0.4281,
+                "p90": 0.45308,
+                "max": 0.4592
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.3379,
+                "p10": 0.34014,
+                "median": 0.3455,
+                "p90": 0.34844,
+                "max": 0.3486
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.5262,
+                "p10": 0.52648,
+                "median": 0.5287,
+                "p90": 0.5373,
+                "max": 0.5397
+              },
+              "peripheryScore": {
+                "min": 0.5003,
+                "p10": 0.50142,
+                "median": 0.5048,
+                "p90": 0.51958,
+                "max": 0.5225
+              }
+            },
+            "mainlandCoast": {
+              "nodes": 6,
+              "coreTravelCost": {
+                "min": 0.54768,
+                "p10": 0.549,
+                "median": 0.5512,
+                "p90": 0.55516,
+                "max": 0.55736
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.5,
+                "p90": 5.5,
+                "max": 6.0
+              },
+              "distanceFromCore": {
+                "min": 0.2065,
+                "p10": 0.207,
+                "median": 0.20785,
+                "p90": 0.20935,
+                "max": 0.2102
+              },
+              "resupplyCost": {
+                "min": 0.1539,
+                "p10": 0.16645,
+                "median": 0.3188,
+                "p90": 0.33655,
+                "max": 0.3366
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2329,
+                "p10": 0.23425,
+                "median": 0.3159,
+                "p90": 0.3309,
+                "max": 0.3332
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.3993,
+                "p10": 0.41335,
+                "median": 0.51135,
+                "p90": 0.5208,
+                "max": 0.5216
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1125,
+                "p10": 0.1148,
+                "median": 0.11905,
+                "p90": 0.2063,
+                "max": 0.2109
+              },
+              "peripheryScore": {
+                "min": 0.2238,
+                "p10": 0.23045,
+                "median": 0.3164,
+                "p90": 0.33035,
+                "max": 0.3313
+              }
+            }
+          },
+          "regionalSegments": 2,
+          "peripheryClusterCount": 5,
+          "phase2Recovery": 0.233093
+        }
+      }
+    },
+    {
+      "seed": 2345998979,
+      "baseline": {
+        "seed": 2345998979,
+        "exportedPhase2": true,
+        "passages": [
+          {
+            "id": "island_passage_3737_6555",
+            "status": "endpoint_confounded",
+            "width": 1,
+            "closedCells": 10,
+            "routesUsingFootprint": 1,
+            "beforeCells": 22,
+            "afterCells": null
+          },
+          {
+            "id": "island_passage_12189_15007",
+            "status": "endpoint_confounded",
+            "width": 2,
+            "closedCells": 21,
+            "routesUsingFootprint": 1,
+            "beforeCells": 17,
+            "afterCells": null
+          },
+          {
+            "id": "island_passage_15007_17824",
+            "status": "endpoint_confounded",
+            "width": 3,
+            "closedCells": 32,
+            "routesUsingFootprint": 1,
+            "beforeCells": 5,
+            "afterCells": null
+          }
+        ],
+        "morphology": {
+          "landFraction": 0.36996,
+          "landComponentAreas": [
+            9371,
+            2054,
+            297,
+            166,
+            69,
+            62,
+            57,
+            47
+          ],
+          "shorelineAttempts": 7,
+          "continents": [
+            {
+              "id": "cont_01",
+              "areaCells": 9371,
+              "coastEdges": 719,
+              "coastComplexity": 1.857,
+              "centroid": [
+                62.66,
+                55.61
+              ],
+              "axisDegrees": 156.1,
+              "axisRatio": 1.296,
+              "profile": "broken_mass",
+              "reliefContrast": 0.498958
+            },
+            {
+              "id": "cont_02",
+              "areaCells": 2054,
+              "coastEdges": 284,
+              "coastComplexity": 1.567,
+              "centroid": [
+                198.54,
+                93.48
+              ],
+              "axisDegrees": 166.6,
+              "axisRatio": 3.303,
+              "profile": "broad_mass",
+              "reliefContrast": 0.447376
+            }
+          ],
+          "chainShore": [
+            {
+              "areaCells": 69,
+              "coastEdges": 36,
+              "mainlandDistance": 25
+            },
+            {
+              "areaCells": 166,
+              "coastEdges": 78,
+              "mainlandDistance": 27
+            },
+            {
+              "areaCells": 62,
+              "coastEdges": 34,
+              "mainlandDistance": 29
+            },
+            {
+              "areaCells": 57,
+              "coastEdges": 36,
+              "mainlandDistance": 26
+            },
+            {
+              "areaCells": 47,
+              "coastEdges": 32,
+              "mainlandDistance": 15
+            }
+          ],
+          "chainOfPeaks": [
+            [
+              153,
+              14
+            ],
+            [
+              155,
+              25
+            ],
+            [
+              157,
+              47
+            ],
+            [
+              159,
+              58
+            ],
+            [
+              160,
+              69
+            ]
+          ],
+          "chainTurnsDegrees": [
+            5.11,
+            5.11,
+            5.11
+          ],
+          "crossTrackShifts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "crustSupportGain": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "network": {
+          "routes": 21,
+          "sailings": 21,
+          "uniqueWaterFootprints": 21,
+          "waterSteps": 392,
+          "sharedWaterStepFraction": 0.54592,
+          "maximumRoutesOnWaterStep": 6,
+          "pairsWithDifferentTerminals": 105,
+          "pairJaccard": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.05155,
+            "max": 0.52308
+          },
+          "disjointPairCount": 84,
+          "graphNodeCount": 24,
+          "contextualBasinCount": 2,
+          "componentSizes": [
+            24
+          ],
+          "reachablePairFraction": 1.0,
+          "travelCost": {
+            "min": 0.169,
+            "p10": 0.4365,
+            "median": 1.1205,
+            "p90": 2.038,
+            "max": 2.685
+          },
+          "sampledTransit": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.28571,
+            "max": 0.28571
+          },
+          "harmonicCentrality": {
+            "min": 0.72278,
+            "p10": 0.75143,
+            "median": 0.87956,
+            "p90": 1.87576,
+            "max": 1.93136
+          },
+          "corridorClasses": {
+            "redundant": 2,
+            "mandatory": 3
+          },
+          "closurePairs": 35,
+          "blockedPairs": 23,
+          "altCosts": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "altPenalty": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          }
+        },
+        "contrast": {
+          "score": 0.4755,
+          "scoreComponents": {
+            "center_strength": 0.7019,
+            "periphery_pressure": 0.3266,
+            "dual_presence": 0.4246,
+            "contrast_gap": 0.5143
+          },
+          "coreAnchorCount": 2,
+          "groups": {
+            "core": {
+              "nodes": 2,
+              "coreTravelCost": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "resupplyCost": {
+                "min": 0.2265,
+                "p10": 0.22671,
+                "median": 0.22755,
+                "p90": 0.22839,
+                "max": 0.2286
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2532,
+                "p10": 0.25392,
+                "median": 0.2568,
+                "p90": 0.25968,
+                "max": 0.2604
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.7947,
+                "p10": 0.79521,
+                "median": 0.79725,
+                "p90": 0.79929,
+                "max": 0.7998
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1923,
+                "p10": 0.19255,
+                "median": 0.19355,
+                "p90": 0.19455,
+                "max": 0.1948
+              },
+              "peripheryScore": {
+                "min": 0.3128,
+                "p10": 0.31317,
+                "median": 0.31465,
+                "p90": 0.31613,
+                "max": 0.3165
+              }
+            },
+            "island": {
+              "nodes": 5,
+              "coreTravelCost": {
+                "min": 2.44928,
+                "p10": 2.45421,
+                "median": 2.47744,
+                "p90": 2.54907,
+                "max": 2.55928
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.6881,
+                "p10": 0.6895,
+                "median": 0.6961,
+                "p90": 0.71616,
+                "max": 0.719
+              },
+              "resupplyCost": {
+                "min": 0.6044,
+                "p10": 0.6046,
+                "median": 0.6068,
+                "p90": 0.62694,
+                "max": 0.6307
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.428,
+                "p10": 0.43484,
+                "median": 0.4477,
+                "p90": 0.47304,
+                "max": 0.4814
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.5188,
+                "p10": 0.52124,
+                "median": 0.5283,
+                "p90": 0.53332,
+                "max": 0.5364
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1208,
+                "p10": 0.12416,
+                "median": 0.1296,
+                "p90": 0.14028,
+                "max": 0.1438
+              },
+              "peripheryScore": {
+                "min": 0.4514,
+                "p10": 0.45376,
+                "median": 0.4589,
+                "p90": 0.47412,
+                "max": 0.4782
+              }
+            },
+            "mainlandCoast": {
+              "nodes": 6,
+              "coreTravelCost": {
+                "min": 0.54152,
+                "p10": 0.5424,
+                "median": 0.54988,
+                "p90": 0.55648,
+                "max": 0.56088
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.1521,
+                "p10": 0.15235,
+                "median": 0.1545,
+                "p90": 0.15635,
+                "max": 0.1576
+              },
+              "resupplyCost": {
+                "min": 0.2969,
+                "p10": 0.29745,
+                "median": 0.3031,
+                "p90": 0.3108,
+                "max": 0.314
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2892,
+                "p10": 0.29115,
+                "median": 0.30405,
+                "p90": 0.32985,
+                "max": 0.3398
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.5107,
+                "p10": 0.5142,
+                "median": 0.52385,
+                "p90": 0.5287,
+                "max": 0.5298
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1061,
+                "p10": 0.1096,
+                "median": 0.12325,
+                "p90": 0.20675,
+                "max": 0.2099
+              },
+              "peripheryScore": {
+                "min": 0.3049,
+                "p10": 0.3081,
+                "median": 0.3214,
+                "p90": 0.33,
+                "max": 0.3329
+              }
+            }
+          },
+          "regionalSegments": 2,
+          "peripheryClusterCount": 5,
+          "phase2Recovery": 0.233699
+        }
+      },
+      "candidate": {
+        "seed": 2345998979,
+        "exportedPhase2": true,
+        "passages": [
+          {
+            "id": "island_passage_3738_6556",
+            "status": "measured_detour",
+            "width": 1,
+            "closedCells": 1,
+            "routesUsingFootprint": 4,
+            "beforeCells": 55,
+            "afterCells": 81
+          },
+          {
+            "id": "island_passage_6556_12191",
+            "status": "measured_detour",
+            "width": 2,
+            "closedCells": 2,
+            "routesUsingFootprint": 1,
+            "beforeCells": 66,
+            "afterCells": 80
+          },
+          {
+            "id": "island_passage_12191_15010",
+            "status": "measured_detour",
+            "width": 2.162,
+            "closedCells": 2,
+            "routesUsingFootprint": 7,
+            "beforeCells": 17,
+            "afterCells": 25
+          }
+        ],
+        "morphology": {
+          "landFraction": 0.36993,
+          "landComponentAreas": [
+            9369,
+            2054,
+            297,
+            168,
+            69,
+            59,
+            58,
+            48
+          ],
+          "shorelineAttempts": 7,
+          "continents": [
+            {
+              "id": "cont_01",
+              "areaCells": 9369,
+              "coastEdges": 719,
+              "coastComplexity": 1.857,
+              "centroid": [
+                62.66,
+                55.6
+              ],
+              "axisDegrees": 156.1,
+              "axisRatio": 1.296,
+              "profile": "broken_mass",
+              "reliefContrast": 0.498958
+            },
+            {
+              "id": "cont_02",
+              "areaCells": 2054,
+              "coastEdges": 284,
+              "coastComplexity": 1.567,
+              "centroid": [
+                198.54,
+                93.48
+              ],
+              "axisDegrees": 166.6,
+              "axisRatio": 3.303,
+              "profile": "broad_mass",
+              "reliefContrast": 0.447376
+            }
+          ],
+          "chainShore": [
+            {
+              "areaCells": 69,
+              "coastEdges": 36,
+              "mainlandDistance": 26
+            },
+            {
+              "areaCells": 168,
+              "coastEdges": 80,
+              "mainlandDistance": 28
+            },
+            {
+              "areaCells": 59,
+              "coastEdges": 36,
+              "mainlandDistance": 32
+            },
+            {
+              "areaCells": 58,
+              "coastEdges": 36,
+              "mainlandDistance": 25
+            },
+            {
+              "areaCells": 48,
+              "coastEdges": 30,
+              "mainlandDistance": 15
+            }
+          ],
+          "chainOfPeaks": [
+            [
+              154,
+              14
+            ],
+            [
+              156,
+              25
+            ],
+            [
+              159,
+              47
+            ],
+            [
+              162,
+              58
+            ],
+            [
+              163,
+              69
+            ]
+          ],
+          "chainTurnsDegrees": [
+            2.54,
+            7.49,
+            10.061
+          ],
+          "crossTrackShifts": [
+            -1,
+            -1,
+            -2,
+            -2,
+            -3,
+            -3
+          ],
+          "crustSupportGain": [
+            -0.000143,
+            0.000775,
+            0.013073,
+            -0.008981,
+            0.013928,
+            0.020686
+          ]
+        },
+        "network": {
+          "routes": 21,
+          "sailings": 21,
+          "uniqueWaterFootprints": 21,
+          "waterSteps": 571,
+          "sharedWaterStepFraction": 0.43082,
+          "maximumRoutesOnWaterStep": 8,
+          "pairsWithDifferentTerminals": 105,
+          "pairJaccard": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.1025,
+            "max": 0.425
+          },
+          "disjointPairCount": 71,
+          "graphNodeCount": 24,
+          "contextualBasinCount": 2,
+          "componentSizes": [
+            24
+          ],
+          "reachablePairFraction": 1.0,
+          "travelCost": {
+            "min": 0.168,
+            "p10": 0.49,
+            "median": 1.1535,
+            "p90": 2.063,
+            "max": 2.763
+          },
+          "sampledTransit": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.28571,
+            "max": 0.28571
+          },
+          "harmonicCentrality": {
+            "min": 0.71362,
+            "p10": 0.74208,
+            "median": 0.84233,
+            "p90": 1.79412,
+            "max": 1.83755
+          },
+          "corridorClasses": {
+            "redundant": 5,
+            "mandatory": 5
+          },
+          "closurePairs": 54,
+          "blockedPairs": 30,
+          "altCosts": {
+            "min": 1.642,
+            "p10": 1.6935,
+            "median": 2.258,
+            "p90": 2.5531,
+            "max": 3.13
+          },
+          "altPenalty": {
+            "min": 0.0,
+            "p10": 0.003,
+            "median": 0.019,
+            "p90": 0.1393,
+            "max": 0.144
+          }
+        },
+        "contrast": {
+          "score": 0.5592,
+          "scoreComponents": {
+            "center_strength": 0.7011,
+            "periphery_pressure": 0.4375,
+            "dual_presence": 0.5687,
+            "contrast_gap": 0.5693
+          },
+          "coreAnchorCount": 2,
+          "groups": {
+            "core": {
+              "nodes": 2,
+              "coreTravelCost": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "routeCoverageCount": {
+                "min": 6.0,
+                "p10": 6.0,
+                "median": 6.0,
+                "p90": 6.0,
+                "max": 6.0
+              },
+              "distanceFromCore": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "resupplyCost": {
+                "min": 0.0465,
+                "p10": 0.04671,
+                "median": 0.04755,
+                "p90": 0.04839,
+                "max": 0.0486
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.1632,
+                "p10": 0.16392,
+                "median": 0.1668,
+                "p90": 0.16968,
+                "max": 0.1704
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.6726,
+                "p10": 0.67328,
+                "median": 0.676,
+                "p90": 0.67872,
+                "max": 0.6794
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1878,
+                "p10": 0.18784,
+                "median": 0.188,
+                "p90": 0.18816,
+                "max": 0.1882
+              },
+              "peripheryScore": {
+                "min": 0.1851,
+                "p10": 0.18542,
+                "median": 0.1867,
+                "p90": 0.18798,
+                "max": 0.1883
+              }
+            },
+            "island": {
+              "nodes": 5,
+              "coreTravelCost": {
+                "min": 2.5408,
+                "p10": 2.54502,
+                "median": 2.55664,
+                "p90": 2.57213,
+                "max": 2.57248
+              },
+              "routeCoverageCount": {
+                "min": 6.0,
+                "p10": 6.0,
+                "median": 6.0,
+                "p90": 6.0,
+                "max": 6.0
+              },
+              "distanceFromCore": {
+                "min": 0.9877,
+                "p10": 0.98934,
+                "median": 0.9938,
+                "p90": 0.99988,
+                "max": 1.0
+              },
+              "resupplyCost": {
+                "min": 0.5937,
+                "p10": 0.59446,
+                "median": 0.5962,
+                "p90": 0.60278,
+                "max": 0.6033
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.4217,
+                "p10": 0.42954,
+                "median": 0.4445,
+                "p90": 0.45812,
+                "max": 0.4628
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.3364,
+                "p10": 0.33848,
+                "median": 0.3432,
+                "p90": 0.34934,
+                "max": 0.3531
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.5227,
+                "p10": 0.52634,
+                "median": 0.5325,
+                "p90": 0.53936,
+                "max": 0.5422
+              },
+              "peripheryScore": {
+                "min": 0.5066,
+                "p10": 0.509,
+                "median": 0.5146,
+                "p90": 0.52138,
+                "max": 0.5231
+              }
+            },
+            "mainlandCoast": {
+              "nodes": 6,
+              "coreTravelCost": {
+                "min": 0.54328,
+                "p10": 0.54504,
+                "median": 0.54988,
+                "p90": 0.55736,
+                "max": 0.56088
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 6.0,
+                "max": 6.0
+              },
+              "distanceFromCore": {
+                "min": 0.2112,
+                "p10": 0.2119,
+                "median": 0.21375,
+                "p90": 0.21665,
+                "max": 0.218
+              },
+              "resupplyCost": {
+                "min": 0.155,
+                "p10": 0.1579,
+                "median": 0.33315,
+                "p90": 0.3442,
+                "max": 0.3478
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2282,
+                "p10": 0.23735,
+                "median": 0.3148,
+                "p90": 0.3453,
+                "max": 0.3567
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.3973,
+                "p10": 0.40005,
+                "median": 0.5148,
+                "p90": 0.52575,
+                "max": 0.5276
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1084,
+                "p10": 0.11125,
+                "median": 0.12485,
+                "p90": 0.2109,
+                "max": 0.2141
+              },
+              "peripheryScore": {
+                "min": 0.2218,
+                "p10": 0.22555,
+                "median": 0.32395,
+                "p90": 0.3378,
+                "max": 0.3429
+              }
+            }
+          },
+          "regionalSegments": 2,
+          "peripheryClusterCount": 5,
+          "phase2Recovery": 0.226578
+        }
+      }
+    },
+    {
+      "seed": 3900041903,
+      "baseline": {
+        "seed": 3900041903,
+        "exportedPhase2": true,
+        "passages": [
+          {
+            "id": "island_passage_5822_7880",
+            "status": "endpoint_confounded",
+            "width": 4,
+            "closedCells": 44,
+            "routesUsingFootprint": 1,
+            "beforeCells": 17,
+            "afterCells": null
+          },
+          {
+            "id": "island_passage_7880_9683",
+            "status": "endpoint_confounded",
+            "width": 4.831,
+            "closedCells": 57,
+            "routesUsingFootprint": 1,
+            "beforeCells": 6,
+            "afterCells": null
+          }
+        ],
+        "morphology": {
+          "landFraction": 0.50891,
+          "landComponentAreas": [
+            11810,
+            2251,
+            1013,
+            633,
+            358,
+            183,
+            143,
+            117,
+            71,
+            50,
+            47
+          ],
+          "shorelineAttempts": 1,
+          "continents": [
+            {
+              "id": "cont_01",
+              "areaCells": 11810,
+              "coastEdges": 939,
+              "coastComplexity": 2.16,
+              "centroid": [
+                149.43,
+                67.92
+              ],
+              "axisDegrees": 151.8,
+              "axisRatio": 1.605,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.362054
+            },
+            {
+              "id": "cont_02",
+              "areaCells": 2251,
+              "coastEdges": 211,
+              "coastComplexity": 1.112,
+              "centroid": [
+                9.56,
+                67.66
+              ],
+              "axisDegrees": 88.8,
+              "axisRatio": 5.566,
+              "profile": "broken_mass",
+              "reliefContrast": 0.16894
+            },
+            {
+              "id": "cont_03",
+              "areaCells": 1013,
+              "coastEdges": 195,
+              "coastComplexity": 1.532,
+              "centroid": [
+                61.51,
+                18.42
+              ],
+              "axisDegrees": 46.2,
+              "axisRatio": 2.392,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.165091
+            }
+          ],
+          "chainShore": [
+            {
+              "areaCells": 71,
+              "coastEdges": 38,
+              "mainlandDistance": 9
+            },
+            {
+              "areaCells": 50,
+              "coastEdges": 32,
+              "mainlandDistance": 15
+            },
+            {
+              "areaCells": 47,
+              "coastEdges": 32,
+              "mainlandDistance": 15
+            }
+          ],
+          "chainOfPeaks": [
+            [
+              190,
+              22
+            ],
+            [
+              200,
+              30
+            ],
+            [
+              211,
+              37
+            ]
+          ],
+          "chainTurnsDegrees": [
+            6.189
+          ],
+          "crossTrackShifts": [
+            0,
+            0,
+            0
+          ],
+          "crustSupportGain": [
+            0,
+            0,
+            0
+          ]
+        },
+        "network": {
+          "routes": 7,
+          "sailings": 7,
+          "uniqueWaterFootprints": 7,
+          "waterSteps": 91,
+          "sharedWaterStepFraction": 0.45055,
+          "maximumRoutesOnWaterStep": 3,
+          "pairsWithDifferentTerminals": 9,
+          "pairJaccard": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "disjointPairCount": 9,
+          "graphNodeCount": 27,
+          "contextualBasinCount": 6,
+          "componentSizes": [
+            14,
+            13
+          ],
+          "reachablePairFraction": 0.48148,
+          "travelCost": {
+            "min": 0.182,
+            "p10": 0.4654,
+            "median": 1.036,
+            "p90": 1.8592,
+            "max": 2.477
+          },
+          "sampledTransit": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.14286,
+            "max": 0.42857
+          },
+          "harmonicCentrality": {
+            "min": 0.36536,
+            "p10": 0.41096,
+            "median": 0.49159,
+            "p90": 0.90008,
+            "max": 0.97215
+          },
+          "corridorClasses": {
+            "redundant": 1,
+            "mandatory": 2
+          },
+          "closurePairs": 11,
+          "blockedPairs": 8,
+          "altCosts": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "altPenalty": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          }
+        },
+        "contrast": {
+          "score": 0.4815,
+          "scoreComponents": {
+            "center_strength": 0.7176,
+            "periphery_pressure": 0.3278,
+            "dual_presence": 0.4261,
+            "contrast_gap": 0.5227
+          },
+          "coreAnchorCount": 3,
+          "groups": {
+            "core": {
+              "nodes": 3,
+              "coreTravelCost": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "resupplyCost": {
+                "min": 0.2219,
+                "p10": 0.22246,
+                "median": 0.2247,
+                "p90": 0.23094,
+                "max": 0.2325
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.229,
+                "p10": 0.23214,
+                "median": 0.2447,
+                "p90": 0.2691,
+                "max": 0.2752
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.8058,
+                "p10": 0.80746,
+                "median": 0.8141,
+                "p90": 0.82754,
+                "max": 0.8309
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.082,
+                "p10": 0.08598,
+                "median": 0.1019,
+                "p90": 0.17118,
+                "max": 0.1885
+              },
+              "peripheryScore": {
+                "min": 0.2815,
+                "p10": 0.28522,
+                "median": 0.3001,
+                "p90": 0.30874,
+                "max": 0.3109
+              }
+            },
+            "island": {
+              "nodes": 3,
+              "coreTravelCost": {
+                "min": 2.48008,
+                "p10": 2.48606,
+                "median": 2.51,
+                "p90": 2.51774,
+                "max": 2.51968
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.7046,
+                "p10": 0.7063,
+                "median": 0.7131,
+                "p90": 0.71534,
+                "max": 0.7159
+              },
+              "resupplyCost": {
+                "min": 0.6183,
+                "p10": 0.61844,
+                "median": 0.619,
+                "p90": 0.62116,
+                "max": 0.6217
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.4437,
+                "p10": 0.4473,
+                "median": 0.4617,
+                "p90": 0.46778,
+                "max": 0.4693
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.521,
+                "p10": 0.52172,
+                "median": 0.5246,
+                "p90": 0.53092,
+                "max": 0.5325
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1268,
+                "p10": 0.12852,
+                "median": 0.1354,
+                "p90": 0.13836,
+                "max": 0.1391
+              },
+              "peripheryScore": {
+                "min": 0.4615,
+                "p10": 0.46294,
+                "median": 0.4687,
+                "p90": 0.47006,
+                "max": 0.4704
+              }
+            },
+            "mainlandCoast": {
+              "nodes": 9,
+              "coreTravelCost": {
+                "min": 0.53008,
+                "p10": 0.53501,
+                "median": 0.54768,
+                "p90": 0.54979,
+                "max": 0.5512
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "distanceFromCore": {
+                "min": 0.1506,
+                "p10": 0.15204,
+                "median": 0.1556,
+                "p90": 0.1562,
+                "max": 0.1566
+              },
+              "resupplyCost": {
+                "min": 0.2976,
+                "p10": 0.29984,
+                "median": 0.3091,
+                "p90": 0.31024,
+                "max": 0.3108
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2966,
+                "p10": 0.30124,
+                "median": 0.3297,
+                "p90": 0.33122,
+                "max": 0.3325
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.5132,
+                "p10": 0.51328,
+                "median": 0.514,
+                "p90": 0.5249,
+                "max": 0.5265
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1079,
+                "p10": 0.11006,
+                "median": 0.1226,
+                "p90": 0.14368,
+                "max": 0.2236
+              },
+              "peripheryScore": {
+                "min": 0.3061,
+                "p10": 0.30842,
+                "median": 0.3211,
+                "p90": 0.3267,
+                "max": 0.3463
+              }
+            }
+          },
+          "regionalSegments": 3,
+          "peripheryClusterCount": 3,
+          "phase2Recovery": 0.307978
+        }
+      },
+      "candidate": {
+        "seed": 3900041903,
+        "exportedPhase2": true,
+        "passages": [
+          {
+            "id": "island_passage_5311_7369",
+            "status": "measured_detour",
+            "width": 4.657,
+            "closedCells": 3,
+            "routesUsingFootprint": 2,
+            "beforeCells": 14,
+            "afterCells": 42
+          },
+          {
+            "id": "island_passage_7369_9683",
+            "status": "measured_detour",
+            "width": 5.403,
+            "closedCells": 4,
+            "routesUsingFootprint": 2,
+            "beforeCells": 7,
+            "afterCells": 37
+          },
+          {
+            "id": "island_passage_5311_cont_01",
+            "status": "measured_detour",
+            "width": 7.062,
+            "closedCells": 6,
+            "routesUsingFootprint": 3,
+            "beforeCells": 14,
+            "afterCells": 42
+          },
+          {
+            "id": "island_passage_7369_cont_01",
+            "status": "measured_detour",
+            "width": 6.81,
+            "closedCells": 5,
+            "routesUsingFootprint": 3,
+            "beforeCells": 17,
+            "afterCells": 21
+          }
+        ],
+        "morphology": {
+          "landFraction": 0.50903,
+          "landComponentAreas": [
+            11809,
+            2251,
+            1013,
+            633,
+            358,
+            183,
+            143,
+            117,
+            76,
+            50,
+            47
+          ],
+          "shorelineAttempts": 1,
+          "continents": [
+            {
+              "id": "cont_01",
+              "areaCells": 11809,
+              "coastEdges": 939,
+              "coastComplexity": 2.16,
+              "centroid": [
+                149.43,
+                67.92
+              ],
+              "axisDegrees": 151.8,
+              "axisRatio": 1.605,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.362054
+            },
+            {
+              "id": "cont_02",
+              "areaCells": 2251,
+              "coastEdges": 211,
+              "coastComplexity": 1.112,
+              "centroid": [
+                9.56,
+                67.66
+              ],
+              "axisDegrees": 88.8,
+              "axisRatio": 5.566,
+              "profile": "broken_mass",
+              "reliefContrast": 0.16894
+            },
+            {
+              "id": "cont_03",
+              "areaCells": 1013,
+              "coastEdges": 195,
+              "coastComplexity": 1.532,
+              "centroid": [
+                61.51,
+                18.42
+              ],
+              "axisDegrees": 46.2,
+              "axisRatio": 2.392,
+              "profile": "crescent_mass",
+              "reliefContrast": 0.165091
+            }
+          ],
+          "chainShore": [
+            {
+              "areaCells": 76,
+              "coastEdges": 42,
+              "mainlandDistance": 8
+            },
+            {
+              "areaCells": 50,
+              "coastEdges": 30,
+              "mainlandDistance": 11
+            },
+            {
+              "areaCells": 47,
+              "coastEdges": 32,
+              "mainlandDistance": 15
+            }
+          ],
+          "chainOfPeaks": [
+            [
+              191,
+              20
+            ],
+            [
+              201,
+              28
+            ],
+            [
+              211,
+              37
+            ]
+          ],
+          "chainTurnsDegrees": [
+            3.327
+          ],
+          "crossTrackShifts": [
+            -2,
+            -2,
+            0
+          ],
+          "crustSupportGain": [
+            0.011976,
+            0.010634,
+            0
+          ]
+        },
+        "network": {
+          "routes": 7,
+          "sailings": 7,
+          "uniqueWaterFootprints": 7,
+          "waterSteps": 85,
+          "sharedWaterStepFraction": 0.4,
+          "maximumRoutesOnWaterStep": 3,
+          "pairsWithDifferentTerminals": 9,
+          "pairJaccard": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.04651,
+            "max": 0.23256
+          },
+          "disjointPairCount": 8,
+          "graphNodeCount": 27,
+          "contextualBasinCount": 6,
+          "componentSizes": [
+            14,
+            13
+          ],
+          "reachablePairFraction": 0.48148,
+          "travelCost": {
+            "min": 0.186,
+            "p10": 0.4218,
+            "median": 1.019,
+            "p90": 1.783,
+            "max": 2.477
+          },
+          "sampledTransit": {
+            "min": 0.0,
+            "p10": 0.0,
+            "median": 0.0,
+            "p90": 0.42857,
+            "max": 0.42857
+          },
+          "harmonicCentrality": {
+            "min": 0.37327,
+            "p10": 0.41435,
+            "median": 0.49159,
+            "p90": 0.94366,
+            "max": 1.01747
+          },
+          "corridorClasses": {
+            "redundant": 5,
+            "mandatory": 3
+          },
+          "closurePairs": 22,
+          "blockedPairs": 9,
+          "altCosts": {
+            "min": 1.678,
+            "p10": 1.6854,
+            "median": 2.14,
+            "p90": 2.166,
+            "max": 2.22
+          },
+          "altPenalty": {
+            "min": 0.0,
+            "p10": 0.0004,
+            "median": 0.007,
+            "p90": 0.054,
+            "max": 0.068
+          }
+        },
+        "contrast": {
+          "score": 0.573,
+          "scoreComponents": {
+            "center_strength": 0.717,
+            "periphery_pressure": 0.4487,
+            "dual_presence": 0.5834,
+            "contrast_gap": 0.5829
+          },
+          "coreAnchorCount": 3,
+          "groups": {
+            "core": {
+              "nodes": 3,
+              "coreTravelCost": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "routeCoverageCount": {
+                "min": 1.0,
+                "p10": 1.0,
+                "median": 1.0,
+                "p90": 2.6,
+                "max": 3.0
+              },
+              "distanceFromCore": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 0.0,
+                "max": 0.0
+              },
+              "resupplyCost": {
+                "min": 0.0447,
+                "p10": 0.06814,
+                "median": 0.1619,
+                "p90": 0.17038,
+                "max": 0.1725
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.1547,
+                "p10": 0.16356,
+                "median": 0.199,
+                "p90": 0.23596,
+                "max": 0.2452
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.6936,
+                "p10": 0.70804,
+                "median": 0.7658,
+                "p90": 0.78588,
+                "max": 0.7909
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.0794,
+                "p10": 0.08338,
+                "median": 0.0993,
+                "p90": 0.16506,
+                "max": 0.1815
+              },
+              "peripheryScore": {
+                "min": 0.1825,
+                "p10": 0.19372,
+                "median": 0.2386,
+                "p90": 0.25356,
+                "max": 0.2573
+              }
+            },
+            "island": {
+              "nodes": 3,
+              "coreTravelCost": {
+                "min": 2.46952,
+                "p10": 2.47726,
+                "median": 2.50824,
+                "p90": 2.51669,
+                "max": 2.5188
+              },
+              "routeCoverageCount": {
+                "min": 3.0,
+                "p10": 3.0,
+                "median": 3.0,
+                "p90": 3.0,
+                "max": 3.0
+              },
+              "distanceFromCore": {
+                "min": 0.9804,
+                "p10": 0.98348,
+                "median": 0.9958,
+                "p90": 0.99916,
+                "max": 1.0
+              },
+              "resupplyCost": {
+                "min": 0.594,
+                "p10": 0.59468,
+                "median": 0.5974,
+                "p90": 0.60012,
+                "max": 0.6008
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.4332,
+                "p10": 0.43768,
+                "median": 0.4556,
+                "p90": 0.45664,
+                "max": 0.4569
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.3364,
+                "p10": 0.33696,
+                "median": 0.3392,
+                "p90": 0.34672,
+                "max": 0.3486
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.5277,
+                "p10": 0.52976,
+                "median": 0.538,
+                "p90": 0.54008,
+                "max": 0.5406
+              },
+              "peripheryScore": {
+                "min": 0.5114,
+                "p10": 0.51278,
+                "median": 0.5183,
+                "p90": 0.51974,
+                "max": 0.5201
+              }
+            },
+            "mainlandCoast": {
+              "nodes": 9,
+              "coreTravelCost": {
+                "min": 0.53008,
+                "p10": 0.53501,
+                "median": 0.5468,
+                "p90": 0.54979,
+                "max": 0.5512
+              },
+              "routeCoverageCount": {
+                "min": 0.0,
+                "p10": 0.0,
+                "median": 0.0,
+                "p90": 1.4,
+                "max": 3.0
+              },
+              "distanceFromCore": {
+                "min": 0.2104,
+                "p10": 0.2124,
+                "median": 0.2171,
+                "p90": 0.21824,
+                "max": 0.2188
+              },
+              "resupplyCost": {
+                "min": 0.1648,
+                "p10": 0.25992,
+                "median": 0.3322,
+                "p90": 0.34362,
+                "max": 0.3437
+              },
+              "weatherAdjustedIsolation": {
+                "min": 0.2599,
+                "p10": 0.29982,
+                "median": 0.3183,
+                "p90": 0.34714,
+                "max": 0.3477
+              },
+              "autonomousSurvivalScore": {
+                "min": 0.3927,
+                "p10": 0.45718,
+                "median": 0.514,
+                "p90": 0.52678,
+                "max": 0.5279
+              },
+              "lossInCollapseLikelihood": {
+                "min": 0.1087,
+                "p10": 0.1099,
+                "median": 0.1232,
+                "p90": 0.14444,
+                "max": 0.219
+              },
+              "peripheryScore": {
+                "min": 0.2354,
+                "p10": 0.28212,
+                "median": 0.323,
+                "p90": 0.33846,
+                "max": 0.3387
+              }
+            }
+          },
+          "regionalSegments": 3,
+          "peripheryClusterCount": 3,
+          "phase2Recovery": 0.295026
+        }
+      }
+    }
+  ],
+  "baselineRevision": "90125cf0462a3159971334479b9f035843c61563",
+  "candidateRevision": "808ac3afca90fc82b7d5a040f8049c0b7100f881"
+}

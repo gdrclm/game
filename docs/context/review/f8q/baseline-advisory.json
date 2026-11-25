@@ -1,0 +1,544 @@
+{
+  "revision": "04f5b5c4980c9835b039e356713f2b0b138df30c",
+  "attempted": 19,
+  "usable": 19,
+  "failed": [],
+  "continentCounts": {
+    "2": 16,
+    "3": 3
+  },
+  "archipelagoCounts": {
+    "1": 19
+  },
+  "chainIslandCounts": {
+    "3": 9,
+    "4": 6,
+    "5": 1,
+    "6": 3
+  },
+  "routeCounts": {
+    "7": 1,
+    "10": 7,
+    "15": 7,
+    "21": 1,
+    "28": 3
+  },
+  "shorelineAttempts": {
+    "1": 11,
+    "2": 1,
+    "3": 1,
+    "6": 1,
+    "10": 2,
+    "11": 3
+  },
+  "centerPeripheryRange": [
+    0.4546,
+    0.4902
+  ],
+  "centerPeripheryWarningSeeds": [
+    42,
+    137,
+    2026,
+    4194307,
+    271828183,
+    698377633,
+    1258291229,
+    1908874353,
+    2576980379,
+    3405691582,
+    4286578687,
+    73537,
+    16908799,
+    422095321,
+    894213317,
+    1536241709,
+    2269445513,
+    3071624507,
+    4011398309
+  ],
+  "historyPotentialRange": [
+    0.6639,
+    0.7021
+  ],
+  "recoveryRange": [
+    0.180434,
+    0.3012
+  ],
+  "note": "Counts describe sampling, not independent evidence of morphology or historical diversity.",
+  "live": [
+    {
+      "seed": 42,
+      "passages": [
+        {
+          "passageId": "island_passage_23598_26168",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_26168_28994",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 137,
+      "passages": [
+        {
+          "passageId": "island_passage_25502_28057",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_28057_30612",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 2026,
+      "passages": [
+        {
+          "passageId": "island_passage_11765_14319",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_14319_16873",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 4194307,
+      "passages": [
+        {
+          "passageId": "island_passage_30193_27374",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_27374_22246",
+          "endpointInsideClosure": false,
+          "bypassTravelCells": 22,
+          "routeCount": 1,
+          "status": "measured_detour"
+        },
+        {
+          "passageId": "island_passage_22246_19682",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_19682_16863",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 271828183,
+      "passages": [
+        {
+          "passageId": "island_passage_9686_11980",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_11980_14531",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_14531_17081",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 698377633,
+      "passages": [
+        {
+          "passageId": "island_passage_21129_18049",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_18049_14712",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_14712_11632",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 1258291229,
+      "passages": [
+        {
+          "passageId": "island_passage_27305_29109",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_29109_30657",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 1908874353,
+      "passages": [
+        {
+          "passageId": "island_passage_29138_26329",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_26329_23520",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_23520_20455",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_20455_17647",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_17647_14838",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 2576980379,
+      "passages": [
+        {
+          "passageId": "island_passage_25568_23764",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_23764_21703",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 3405691582,
+      "passages": [
+        {
+          "passageId": "island_passage_15727_18295",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_18295_20608",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 4286578687,
+      "passages": [
+        {
+          "passageId": "island_passage_20191_18897",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_18897_17603",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 73537,
+      "passages": [
+        {
+          "passageId": "island_passage_3316_4583",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_4583_5594",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_5594_6605",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_6605_7616",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_7616_8626",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 16908799,
+      "passages": [
+        {
+          "passageId": "island_passage_21000_21271",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_21271_21542",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_21542_21813",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 422095321,
+      "passages": [
+        {
+          "passageId": "island_passage_10790_12851",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_12851_14655",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_14655_16716",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 894213317,
+      "passages": [
+        {
+          "passageId": "island_passage_30424_26582",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_26582_22739",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_22739_18897",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 1536241709,
+      "passages": [
+        {
+          "passageId": "island_passage_30629_27816",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_19376_16562",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_16562_13749",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_13749_10936",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 2269445513,
+      "passages": [
+        {
+          "passageId": "island_passage_3108_5933",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_5933_8759",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 3071624507,
+      "passages": [
+        {
+          "passageId": "island_passage_11493_14044",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_14044_16595",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    },
+    {
+      "seed": 4011398309,
+      "passages": [
+        {
+          "passageId": "island_passage_10368_13952",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_13952_17536",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        },
+        {
+          "passageId": "island_passage_17536_21119",
+          "endpointInsideClosure": true,
+          "bypassTravelCells": null,
+          "routeCount": 1,
+          "status": "endpoint_confounded"
+        }
+      ]
+    }
+  ],
+  "liveRevision": "90125cf0462a3159971334479b9f035843c61563"
+}

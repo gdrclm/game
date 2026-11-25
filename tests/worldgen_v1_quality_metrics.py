@@ -34,8 +34,10 @@ class World:
         for edge in self.edges.values():
             cost = max(0.01, edge.get("traversalCost", edge["coarseRouteCost"]))
             left, right = edge["fromNodeId"], edge["toNodeId"]
-            self.adjacency[left].append((right, cost))
-            self.adjacency[right].append((left, cost))
+            extra = 0.08 if edge["transitionEdge"] else 0
+            isolation_weight = round(0.12 + cost * 0.88 + extra, 6)
+            self.adjacency[left].append((right, cost, isolation_weight))
+            self.adjacency[right].append((left, cost, isolation_weight))
 
     def field(self, name):
         return next((row["payload"] for row in self.debug["fieldSnapshots"]
@@ -96,7 +98,7 @@ class World:
             steps.update((min(a, b), max(a, b)) for a, b in itertools.pairwise(cells))
         return steps
 
-    def distances(self, source_ids):
+    def distances(self, source_ids, *, for_isolation=False):
         costs = dict.fromkeys(source_ids, 0)
         queue = [(0, source) for source in source_ids]
         heapq.heapify(queue)
@@ -104,8 +106,8 @@ class World:
             cost, node = heapq.heappop(queue)
             if cost > costs[node]:
                 continue
-            for other, weight in self.adjacency[node]:
-                new_cost = cost + weight
+            for other, travel_cost, isolation_weight in self.adjacency[node]:
+                new_cost = cost + (isolation_weight if for_isolation else travel_cost)
                 if new_cost < costs.get(other, math.inf):
                     costs[other] = new_cost
                     heapq.heappush(queue, (new_cost, other))
@@ -156,13 +158,17 @@ def summarize_morphology(world):
     bodies = world.land_bodies()
     published = world.outputs["continentBodies"]["continentBodies"]
     retained = {cell: continent["recordDraft"]["continentId"] for continent in published for cell in continent["cellIndices"]}
-    mainland = []
+    mainland = {}
     for cells in bodies:
         overlap = Counter(retained[cell] for cell in cells if cell in retained)
-        if overlap and overlap.most_common(1)[0][1] > len(cells) / 2:
-            mainland.append((cells, overlap.most_common(1)[0][0]))
+        if overlap:
+            cid, overlap_count = overlap.most_common(1)[0]
+            if overlap_count > len(cells) / 2:
+                # Components arrive in size order. Smaller shards of the same
+                # published continent remain visible in the component histogram.
+                mainland.setdefault(cid, cells)
     distances = np.full(world.land.size, -1, dtype=int)
-    queue = [cell for cells, _ in mainland for cell in cells]
+    queue = [cell for cells in mainland.values() for cell in cells]
     distances[queue] = 0
     for cell in queue:
         for neighbor in world.neighbors(cell):
@@ -171,7 +177,7 @@ def summarize_morphology(world):
                 queue.append(neighbor)
     continents = []
     shapes = {continent["recordDraft"]["continentId"]: continent for continent in published}
-    for cells, cid in mainland:
+    for cid, cells in mainland.items():
         xy = world.points(cells)
         covariance = np.cov(xy, rowvar=False)
         eig, direction = np.linalg.eigh(covariance)
@@ -213,7 +219,7 @@ def summarize_network(world):
         if {a["fromNodeId"], a["toNodeId"]}.isdisjoint({b["fromNodeId"], b["toNodeId"]}):
             overlaps.append(len(x & y) / len(x | y))
     available = {node_id for node_id, node in world.nodes.items()
-                 if node_id in world.adjacency or node["nodeType"] != "sea_region"}
+                 if node_id in world.adjacency or node["nodeType"] not in {"sea_region", "marine_region"}}
     contextual_nodes = len(world.nodes) - len(available)
     paths = {node: world.distances([node]) for node in sorted(available)}
     unvisited = available.copy()
@@ -250,7 +256,7 @@ def summarize_network(world):
 def summarize_contrast(world):
     iso = world.outputs["isolationAnalysis"]
     cores = set(iso["coreAnchorNodeIds"])
-    core_cost = world.distances(cores)
+    core_cost = world.distances(cores, for_isolation=True)
     island_ports = {p["coastalNodeId"] for p in world.topology["ports"] if p["islandId"]}
     groups = defaultdict(list)
     for row in iso["nodeIsolationRows"]:
