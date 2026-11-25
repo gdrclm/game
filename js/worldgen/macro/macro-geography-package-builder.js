@@ -509,6 +509,24 @@
         });
     }
 
+    function mergeRoutePassages(route, crossings, edgesById) {
+        if (!crossings?.length || !route.regionPathPositions || route.through) return route.through || route.regionPathIds;
+        const positions = route.regionPathPositions.slice();
+        for (const { chokeId, restrictedCells } of crossings) {
+            for (const [index, edgeId] of route.edgePathIds.entries()) {
+                const edge = edgesById.get(edgeId);
+                if (!edge?.waterPathCellIndices) continue;
+                const path = edge.fromNodeId === route.nodePathIds[index]
+                    ? edge.waterPathCellIndices : edge.waterPathCellIndices.slice().reverse();
+                const firstCrossing = path.findIndex(cell => restrictedCells.has(cell));
+                if (firstCrossing < 0) continue;
+                positions.push([chokeId, index + (firstCrossing + 1) / (path.length + 1)]);
+                break;
+            }
+        }
+        return positions.sort((left, right) => left[1] - right[1]).map(([id]) => id);
+    }
+
     function buildMacroRouteRecords(input = {}) {
         const existingRecords = findInputRecordArray(input, 'macroRoutes');
         if (existingRecords.length) {
@@ -517,9 +535,17 @@
 
         const macroRoutes = findInputIntermediateOutput(input, 'macroRoutes') || {};
         const macroCorridors = findInputIntermediateOutput(input, 'macroCorridors') || {};
+        const chokepointLinks = findInputIntermediateOutput(input, 'chokepointRecords')?.recordLinks || [];
+        const chokeByPassage = new Map(chokepointLinks.map(link => [link.sourceReferenceId, link.chokepointId]));
+        const passages = findInputIntermediateOutput(input, 'coastalAccessTopology')?.islandPassages || [];
+        const crossings = new Map(passages.map(passage => [passage.passageId, new Set(passage.restrictedCellIndices)]));
+        const graphEdges = findInputIntermediateOutput(input, 'hybridConnectivityGraph')?.edges || [];
+        const edgesById = new Map(graphEdges.map(edge => [edge.edgeId, edge]));
         const routeRows = getArrayAtPaths(macroRoutes, ['candidateRoutes']);
         const corridorRows = getArrayAtPaths(macroCorridors, ['macroCorridors']);
         const corridorRowsByRouteId = new Map();
+        const outageByRouteId = new Map();
+        const crossingsByRoute = new Map();
 
         corridorRows.forEach((corridor) => {
             uniqueStrings(corridor.supportingRouteIds).forEach((routeId) => {
@@ -528,6 +554,17 @@
                 }
                 corridorRowsByRouteId.get(routeId).push(corridor);
             });
+            for (const sample of corridor.dependenceSampleRows || []) {
+                const impact = sample.blockedWithoutCorridor ? 1 : clampUnitInterval(sample.relativeDetourPenalty, 0);
+                outageByRouteId.set(sample.routeId, Math.max(outageByRouteId.get(sample.routeId) || 0, impact));
+                const chokeId = chokeByPassage.get(corridor.sourcePassageId);
+                const restrictedCells = crossings.get(corridor.sourcePassageId);
+                if (impact > 0 && chokeId && restrictedCells) {
+                    const related = crossingsByRoute.get(sample.routeId) || [];
+                    related.push({ chokeId, restrictedCells });
+                    crossingsByRoute.set(sample.routeId, related);
+                }
+            }
         });
 
         const zones = findInputIntermediateOutput(input, 'archipelagoMacroZones')?.macroZones || [];
@@ -537,9 +574,13 @@
         return routeRows.map((row, index) => {
             const routeId = normalizeString(row.routeId, `macro_route_${String(index + 1).padStart(3, '0')}`);
             const linkedCorridors = corridorRowsByRouteId.get(routeId) || [];
+            const measuredImpact = outageByRouteId.get(routeId);
             const sameContinent = row.fromContinentId && row.fromContinentId === row.toContinentId;
             const fromArea = sameContinent ? row.fromReliefRegionId : (row.fromContinentId || row.fromReliefRegionId);
             const toArea = sameContinent ? row.toReliefRegionId : (row.toContinentId || row.toReliefRegionId);
+            const cumulativeCost = normalizeNumber(row.totalRouteCost, Number.NaN);
+            const normalizedCost = Number.isFinite(cumulativeCost) && cumulativeCost >= 0
+                ? cumulativeCost / (1 + cumulativeCost) : row.meanEdgeRouteCost;
             return createRecord('createMacroRouteRecordSkeleton', {
                 routeId,
                 type: normalizeString(row.type || row.routeMode, 'hybrid_route'),
@@ -547,16 +588,16 @@
                     || row.fromSeaRegionId || row.fromRegionalSegmentId || row.fromNodeId, ''),
                 toRegion: normalizeString(row.toRegion || toArea || archipelagoByIslandGroup.get(row.toIslandGroupId)
                     || row.toSeaRegionId || row.toRegionalSegmentId || row.toNodeId, ''),
-                through: uniqueStrings(row.through || row.regionPathIds || row.nodePathIds || row.edgePathIds),
-                baseCost: clampUnitInterval(row.baseCost ?? row.meanEdgeRouteCost ?? row.totalRouteCost, 0.5),
+                through: uniqueStrings(mergeRoutePassages(row, crossingsByRoute.get(routeId), edgesById) || row.nodePathIds || row.edgePathIds),
+                baseCost: clampUnitInterval(row.baseCost ?? normalizedCost, 0.5),
                 fragility: clampUnitInterval(
                     row.fragility
-                    ?? averageUnit(linkedCorridors.map(corridor => Math.max(corridor.routeDependenceScore, corridor.structureFragilityScore)), 0.5),
+                    ?? Math.max(measuredImpact ?? 0, averageUnit(linkedCorridors.map(corridor => corridor.structureFragilityScore), 0.5)),
                     0.5
                 ),
                 redundancy: clampUnitInterval(
                     row.redundancy
-                    || (1 - averageUnit(linkedCorridors.map((corridor) => corridor.routeDependenceScore), 0.5)),
+                    ?? (measuredImpact === undefined ? 0.5 : 1 - measuredImpact),
                     0.5
                 ),
                 historicalImportance: clampUnitInterval(
@@ -689,7 +730,8 @@
         const zones = getArrayAtPaths(isolatedZones, ['zones']);
         return zones.map(zone => ({
             ...cloneValue(zone),
-            seaRegionIds: uniqueStrings((zone.nodeIds || []).map(id => nodesById.get(id)?.seaRegionId))
+            seaRegionIds: uniqueStrings((zone.nodeIds || []).map(id => nodesById.get(id)?.seaRegionId)),
+            reliefRegionIds: uniqueStrings((zone.nodeIds || []).map(id => nodesById.get(id)?.reliefRegionId))
         }));
     }
 

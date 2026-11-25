@@ -798,7 +798,7 @@
             throw new Error('[worldgen/phase2] RecoveryReliefSynthesis requires Phase2InputBundle.recordCollections.structural.macroRoutes.');
         }
 
-        return inputBundle.recordCollections.structural.macroRoutes;
+        return phase2.bindMacroRouteCarriers(inputBundle.recordCollections.structural.macroRoutes, input.phase2RecordBindingLayer);
     }
 
     function resolveChokepoints(input = {}) {
@@ -1254,8 +1254,9 @@
         const baseCost = clamp01(macroRoute.baseCost);
         const fragility = clamp01(macroRoute.fragility);
         const redundancy = clamp01(macroRoute.redundancy);
+        const transitRegionCount = uniqueStrings(macroRoute.through).filter(id => !chokepointIds.includes(id)).length;
         const routeSpanAnchor = clamp01(Math.max(
-            uniqueStrings(macroRoute.through).length / 4,
+            transitRegionCount / 4,
             reliefRegionIds.length / 3,
             seaRegionIds.length / 2,
             chokepointIds.length / 2
@@ -1266,7 +1267,7 @@
             chokepointIds.length / 2
         ));
         const routeLengthFactor = clamp01(Math.max(
-            uniqueStrings(macroRoute.through).length / 8,
+            transitRegionCount / 8,
             reliefRegionIds.length / 5,
             seaRegionIds.length / 4
         ));
@@ -1969,13 +1970,17 @@
     function buildEnvironmentalRhythmSynthesisAxis(fieldId, domainLayers, componentWeights, description, deterministicSeed) {
         const components = Object.entries(componentWeights).map(([componentId, component]) => {
             const value = getRhythmFieldMean(domainLayers, component.domainId, component.fieldId);
+            const field = domainLayers[component.domainId]?.[component.fieldId];
+            const inverse = component.inverse && field && field.summary?.recordCount !== 0;
+            const support = inverse ? 1 - value : value;
             return Object.freeze({
                 componentId,
                 domainId: component.domainId,
                 fieldId: component.fieldId,
                 weight: roundValue(component.weight),
                 value: roundValue(value),
-                weightedValue: roundValue(value * component.weight)
+                ...(inverse && { inverse: true }),
+                weightedValue: roundValue(support * component.weight)
             });
         });
         const totalWeight = components.reduce((sum, component) => sum + component.weight, 0);
@@ -1987,7 +1992,7 @@
         const stabilizationDelay = fieldId === 'recoveryProfile'
             ? getRhythmFieldMean(domainLayers, 'recovery', 'stabilizationInterval') : 0;
         const synthesizedValue = weightedSupport / (1 + stabilizationDelay);
-        const componentValues = components.map((component) => component.value);
+        const componentValues = components.map(component => component.inverse ? 1 - component.value : component.value);
         const componentSpread = componentValues.length
             ? Math.max(...componentValues) - Math.min(...componentValues)
             : 0;
@@ -2110,10 +2115,10 @@
                 domainLayers,
                 {
                     navigationWindowReliability: { domainId: 'navigation', fieldId: 'navigationWindowReliability', weight: 0.34 },
-                    blockedIntervalFrequency: { domainId: 'navigation', fieldId: 'blockedIntervalFrequency', weight: 0.28 },
+                    blockedIntervalFrequency: { domainId: 'navigation', fieldId: 'blockedIntervalFrequency', weight: 0.28, inverse: true },
                     safeRouteIntervalStrength: { domainId: 'navigation', fieldId: 'safeRouteIntervalStrength', weight: 0.38 }
                 },
-                'Synthesized navigation rhythm while preserving timing windows, closures, and safe intervals.',
+                'Opportunity for navigable windows, combining reliability, time open, and safe intervals.',
                 deterministicSeed
             ),
             scarcityRhythm: buildEnvironmentalRhythmSynthesisAxis(
@@ -2133,10 +2138,10 @@
                 {
                     predictability: { domainId: 'predictability', fieldId: 'predictability', weight: 0.36 },
                     temporalTrustworthiness: { domainId: 'predictability', fieldId: 'temporalTrustworthiness', weight: 0.32 },
-                    cadenceIrregularity: { domainId: 'predictability', fieldId: 'cadenceIrregularity', weight: 0.16 },
-                    ruptureFrequency: { domainId: 'predictability', fieldId: 'ruptureFrequency', weight: 0.16 }
+                    cadenceIrregularity: { domainId: 'predictability', fieldId: 'cadenceIrregularity', weight: 0.16, inverse: true },
+                    ruptureFrequency: { domainId: 'predictability', fieldId: 'ruptureFrequency', weight: 0.16, inverse: true }
                 },
-                'Synthesized predictability profile while preserving explicit trust and cadence-readability meaning.',
+                'Predictable timing from trustworthiness, regularity, and the persistence of cycles.',
                 deterministicSeed
             ),
             ruptureProfile: buildEnvironmentalRhythmSynthesisAxis(
@@ -2372,7 +2377,7 @@
         const isolatedZoneIds = uniqueStrings(continentIds.flatMap((continentId) => {
             const zoneIds = (context.isolatedZoneIdsByContinent || {})[continentId];
             return Array.isArray(zoneIds) ? zoneIds : [];
-        }));
+        }).concat(context.isolatedZoneIdsByReliefRegion[reliefRegionId] || []));
 
         const climateExposurePressure = meanByRecordIds(context.climateScores.climateExposurePressure, climateBandIds);
         const waterStress = meanByRecordIds(context.hydrologyScores.waterStress, riverBasinIds);
@@ -2838,6 +2843,10 @@
                     routeIdsByReliefRegion: buildRouteIdsByReliefRegion(macroRoutes),
                     chokepointIdsByReliefRegion: buildChokepointIdsByReliefRegion(chokepoints),
                     isolatedZoneIdsByContinent: buildIsolatedZoneIdsByContinent(isolatedZones),
+                    isolatedZoneIdsByReliefRegion: isolatedZones.reduce((index, zone) => {
+                        for (const id of uniqueStrings(zone.reliefRegionIds)) (index[id] ||= []).push(zone.zoneId);
+                        return index;
+                    }, Object.create(null)),
                     climateScores: {
                         climateExposurePressure: createScoreMap(
                             (((domainLayers.climate || {}).climateExposurePressure || {}).perBandScores)

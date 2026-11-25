@@ -82,8 +82,9 @@
         const openWater = new Uint8Array(land.length);
         collectComponents(land, width, height, 0).filter(body => body.touchesBorder)
             .forEach(body => body.cells.forEach(cell => { openWater[cell] = 1; }));
-        const selected = locateHotspotPeaks(hotspotSeeds, bounds, openWater, distance, elevation, cutoff)[0];
-        if (!selected) return { elevation, hotspotChain: null };
+        const track = locateHotspotPeaks(hotspotSeeds, bounds, openWater, distance, elevation, cutoff)[0];
+        if (!track) return { elevation, hotspotChain: null };
+        const selected = { ...track, peaks: macro.bendHotspotTrack(track, bounds, openWater, distance, elevation, cutoff) };
 
         const raised = elevation.slice();
         for (const peak of selected.peaks) {

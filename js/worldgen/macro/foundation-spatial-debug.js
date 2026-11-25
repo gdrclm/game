@@ -20,11 +20,18 @@
         ['marineCarving', 'archipelagoFragmentationSummary'],
         ['marineCarving', 'straitCarvingSummary'],
         ['continentalCohesion', 'regionalSegmentationAnalysis'],
+        ['continentalCohesion', 'corePotentialAnalysis'],
+        ['continentalCohesion', 'continentalCohesionSummaries'],
+        ['continentalCohesion', 'fracturedPeripheryAnalysis'],
         ['connectivityGraph', 'coastalAccessTopology'],
         ['connectivityGraph', 'macroRoutes'],
         ['connectivityGraph', 'macroCorridors'],
         ['chokepoints', 'chokepointRecords'],
-        ['archipelagoSignificance', 'archipelagoMacroZones']
+        ['isolationPeriphery', 'isolationAnalysis'],
+        ['isolationPeriphery', 'peripheryClusters'],
+        ['archipelagoSignificance', 'archipelagoMacroZones'],
+        ['strategicRegionSynthesis', 'strategicRegionCandidates'],
+        ['validationRebalance', 'macroValidationDiagnostics']
     ];
 
     function buildFoundationSpatialDebug(input, makeEntry, categories) {

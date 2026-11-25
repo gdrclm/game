@@ -18,7 +18,7 @@
     }
 
     function selectPorts(component, context, limit, favoredCell = -1) {
-        const { width, height, values, seaByCell, opportunity, landContinentByCell, profileByCluster } = context;
+        const { width, height, values, seaByCell, opportunity, landContinentByCell, reliefByCell, profileByCluster } = context;
         const scale = Math.min(width, height);
         const candidatesByWaterCell = new Map();
         for (const landCellIndex of component.cells) {
@@ -50,7 +50,7 @@
                 basinType: sea.basinType,
                 islandId: component.islandId || '',
                 islandGroupId: component.islandGroupId || '',
-                reliefRegionId: component.reliefRegionId || '',
+                reliefRegionId: reliefByCell[landCellIndex] || component.reliefRegionId || '',
                 anchorCellIndex: landCellIndex,
                 landCellIndex,
                 waterCellIndex,
@@ -67,6 +67,34 @@
             });
         }
         return ports;
+    }
+
+    function findApproachShorelines(mainlands, islands, context) {
+        const { width, height, values, seaByCell } = context;
+        const reach = Math.min(width, height) * 0.13;
+        const islandsBounds = islands.map(({ cellIndices }) => {
+            const points = cellIndices.map(cell => cellPoint(cell, width));
+            return {
+                minX: Math.min(...points.map(point => point.x)) - reach,
+                maxX: Math.max(...points.map(point => point.x)) + reach,
+                minY: Math.min(...points.map(point => point.y)) - reach,
+                maxY: Math.max(...points.map(point => point.y)) + reach
+            };
+        });
+        return mainlands.flatMap(body => {
+            const seaRegionByShoreCell = {};
+            for (const cell of body.cells) {
+                const { x, y } = cellPoint(cell, width);
+                if (!islandsBounds.some(bounds => x >= bounds.minX && x <= bounds.maxX
+                    && y >= bounds.minY && y <= bounds.maxY)) continue;
+                forEachCardinalNeighbor(cell, width, values.length, neighbor => {
+                    const sea = seaByCell[neighbor];
+                    if (!values[neighbor] && sea?.touchesWorldEdge) seaRegionByShoreCell[cell] ??= sea.recordDraft.seaRegionId;
+                });
+            }
+            const shoreCellIndices = Object.keys(seaRegionByShoreCell).map(Number);
+            return shoreCellIndices.length ? [{ continentId: body.continentId, shoreCellIndices, seaRegionByShoreCell }] : [];
+        });
     }
 
     function buildCoastalAccessTopology({ mask, continentBodies, seaClusters, coastalOpportunity, clusterProfiles, hotspotChain, reliefRegionBodies }) {
@@ -92,7 +120,7 @@
             for (const cell of region.cellIndices) reliefByCell[cell] = region.reliefRegionId;
         }
         const context = {
-            width, height, values, seaByCell, landContinentByCell,
+            width, height, values, seaByCell, landContinentByCell, reliefByCell,
             opportunity: coastalOpportunity?.values,
             profileByCluster: new Map(clusterProfiles.map(profile => [profile.seaRegionClusterId, profile]))
         };
@@ -136,6 +164,7 @@
             worldBounds: { width, height },
             ports,
             islands,
+            approachShorelines: findApproachShorelines([...mainlandById.values()], islands, context),
             islandGroupId: islands.length >= 2 ? islands[0].islandGroupId : null,
             sourceHotspotSeedId: hotspotChain?.hotspotSeedId || null,
             summary: {

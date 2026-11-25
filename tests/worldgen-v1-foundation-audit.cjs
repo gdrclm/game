@@ -8,6 +8,7 @@ const { mkdirSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
 const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
+const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture } = require('./worldgen-v1-quality.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -84,6 +85,8 @@ check('Phase 2 fixture harness', () => {
     assert.equal(result.overallStatus, 'pass');
     return { smoke: result.smokeSuite.summary, regression: result.regressionSuite.summary };
 });
+check('Physical passage closure and terminal negative controls', () => verifyPassageFixture(macro));
+check('Hotspot curvature follows shallow crust at fixed plate drift', () => verifyHotspotFixture(macro));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;
@@ -105,11 +108,40 @@ function inspectGeometry(result) {
         });
     }
     const routeIds = new Set(result.phase1.macroGeographyPackage.macroRoutes.map(route => route.routeId));
-    const corridorSummary = geometry(debug, 'macroCorridors').summary;
+    const corridors = geometry(debug, 'macroCorridors');
+    const corridorSummary = corridors.summary;
+    const checkedPassages = inspectPassageEndpoints(topology, sea, mask);
+    assert(checkedPassages.every(check => check.recordedBypassMatches
+        && ['disconnected_after_closure', 'measured_detour'].includes(check.status)), 'Unproven passage dependence');
+    const sampledCosts = new Map(geometry(debug, 'macroRoutes').candidateRoutes.map(route => [route.routeId, route.totalRouteCost]));
+    for (const corridor of corridors.macroCorridors) {
+        for (const sample of corridor.dependenceSampleRows) {
+            if (sample.blockedWithoutCorridor) continue;
+            const originalCost = sampledCosts.get(sample.routeId);
+            assert(sample.alternativeRouteCost >= originalCost - 0.001, sample.routeId);
+            const expectedPenalty = Math.min(1, Math.max(0, (sample.alternativeRouteCost - originalCost) / originalCost));
+            assert(Math.abs(sample.relativeDetourPenalty - expectedPenalty) < 0.0001, sample.routeId);
+        }
+    }
     const verifiedPassages = topology.islandPassages.filter(passage =>
         passage.routeIds.every(id => routeIds.has(id)) && passage.shoreCellIndices.every(isLand)
         && !isLand(passage.cellIndex) && (passage.bypassTravelCells === null || passage.bypassTravelCells > passage.travelCells)
     );
+    for (const passage of verifiedPassages) {
+        const [shoreA, shoreB] = passage.shoreCellIndices;
+        const section = [shoreA, ...passage.restrictedCellIndices, shoreB];
+        assert(section.slice(1, -1).every(cell => !isLand(cell)), passage.passageId);
+        assert(section.slice(1).every((cell, index) => {
+            const previous = section[index];
+            return Math.max(Math.abs(cell % width - previous % width), Math.abs(Math.floor(cell / width) - Math.floor(previous / width))) === 1;
+        }), passage.passageId);
+        assert(passage.corridorIds.length > 0 && passage.corridorIds.every(id =>
+            corridors.macroCorridors.find(corridor => corridor.corridorId === id)?.sourcePassageId === passage.passageId), passage.passageId);
+        assert(topology.islands.some(island => island.cellIndices.includes(shoreA)), passage.passageId);
+        assert(topology.islands.some(island => island.cellIndices.includes(shoreB) && !island.cellIndices.includes(shoreA))
+            || topology.approachShorelines.some(body => body.continentId === passage.shoreContinentId
+                && body.shoreCellIndices.includes(shoreB)), passage.passageId);
+    }
     assert(verifiedPassages.length >= 2, `Need two route-backed constrictions with measured detours, found ${verifiedPassages.length}`);
     assert(corridorSummary.brittleCorridorCount >= 1 && corridorSummary.redundantCorridorCount >= 1, 'Need brittle and redundant corridors');
     assert.equal(result.diagnostics.maritime.status, 'pass', 'Maritime diagnostics lack supported cases');
@@ -221,9 +253,21 @@ for (const seed of seeds) {
         }
     } catch (error) {
         const evidence = error.evidence || first?.diagnostics;
+        let repeatedFailureMatches;
+        if (!first && error.phase) {
+            try {
+                worldgenFoundation.runWorldGenFoundation(seed);
+                repeatedFailureMatches = false;
+            } catch (repeatError) {
+                repeatedFailureMatches = repeatError.phase === error.phase && repeatError.message === error.message
+                    && hash([repeatError.evidence?.phase1Report, repeatError.evidence?.phase2Report])
+                    === hash([evidence?.phase1Report, evidence?.phase2Report]);
+            }
+        }
         report.seeds.push({
             seed, pass: false, elapsedMs: Math.round(performance.now() - start),
             phase: error.phase || 'audit', message: error.message, issues: error.cause?.issues,
+            repeatedFailureMatches,
             phase1Report: evidence?.phase1Report, phase2Failures: failedChecks(evidence?.phase2Report),
             maritime: evidence?.maritime
         });

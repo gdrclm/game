@@ -467,7 +467,7 @@
             }),
             primaryCarrierLeadRefs: Object.freeze({}),
             primaryCarrierRefs: Object.freeze({ seaRegions: 'seaRegionIds' }),
-            secondaryContextRefs: Object.freeze({ continents: 'continentIds' }),
+            secondaryContextRefs: Object.freeze({ continents: 'continentIds', reliefRegions: 'reliefRegionIds' }),
             mixedLeadRefFields: Object.freeze([]),
             mixedArrayRefFields: Object.freeze([]),
             excludedSemanticFields: Object.freeze([
@@ -3060,6 +3060,26 @@
         assertPhase2RecordBindingLayer
     });
 
+    function bindMacroRouteCarriers(routes, bindingLayer) {
+        const routeContext = bindingLayer?.secondaryContextTables?.byRecordType?.macroRoutes?.byRecordId;
+        if (!routeContext) return routes;
+        return routes.map(route => {
+            const mixed = routeContext[route.routeId]?.mixedCanonicalRefs;
+            if (!mixed) return route;
+            const fields = {
+                reliefRegionIds: 'reliefRegions', seaRegionIds: 'seaRegions', riverBasinIds: 'riverBasins',
+                chokepointIds: 'chokepoints'
+            };
+            const carriers = Object.entries(fields).map(([field, type]) => [
+                field, uniqueStrings([
+                    ...(Array.isArray(route[field]) ? route[field] : []),
+                    ...Object.values(mixed).flatMap(bucket => bucket.primaryCarrierRefs[type] || bucket.secondaryContextRefs[type] || [])
+                ])
+            ]);
+            return { ...route, ...Object.fromEntries(carriers) };
+        });
+    }
+
     Object.assign(phase2, {
         getPhase2BindingModuleStub,
         getPhase2RecordBindingLayerContract,
@@ -3072,6 +3092,7 @@
         createPhase2CanonicalRecordIndexTable,
         createPhase2PrimaryCarrierContextTables,
         createPhase2SecondaryContextTables,
+        bindMacroRouteCarriers,
         createPhase2RecordBindingLayer,
         validatePhase2RecordBindingLayer,
         assertPhase2RecordBindingLayer

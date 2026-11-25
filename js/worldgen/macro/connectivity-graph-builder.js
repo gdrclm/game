@@ -664,6 +664,7 @@
         const connectivityFriction = roundValue(1 - clampUnitInterval(edge.coarseConnectivityStrength, 0));
         const edgeType = normalizeString(edge.edgeType, '');
         const isMarineEdge = edge.seaGraphEdge === true;
+        const isNavigableLane = edgeType === 'navigable_sea_lane';
         const isTransitionEdge = edgeType === 'land_sea_transition';
         const isCoastalEdge = edgeType.indexOf('coastal') >= 0 || isTransitionEdge;
         const baseRouteCost = roundValue(
@@ -671,24 +672,24 @@
                 : edgeType === 'coastal_terminal_attachment' ? 0.32
                 : edgeType === 'interbasin_link' ? 0.38
                 : edgeType === 'coastal_sea_attachment' ? 0.34
-                : edgeType === 'navigable_sea_lane' ? 0.08 + edge.distanceRatio * 0.6
+                : isNavigableLane ? 0.08 + edge.distanceRatio * 0.6
                 : isTransitionEdge ? 0.44
                 : 0.3
         );
         const driverWeights = {
-            connectivity_friction: connectivityFriction * 0.28,
+            connectivity_friction: (isNavigableLane ? edge.distanceRatio : connectivityFriction) * 0.28,
             climate_stress: climateStress * (isMarineEdge ? 0.14 : 0.2),
             storm_exposure: stormExposure * (isMarineEdge || isTransitionEdge ? 0.18 : 0.08),
             coastal_decay: coastalDecayBurden * (isCoastalEdge ? 0.16 : 0.06),
             choke_penalty: chokePressure * (isMarineEdge || isTransitionEdge ? 0.16 : 0.04)
         };
         const facilitationRelief = coastalOpportunityRelief * (isCoastalEdge ? 0.14 : 0.05);
-        const coarseRouteCost = roundValue(clampUnitInterval(
+        const travelCost = roundValue(
             baseRouteCost
             + Object.values(driverWeights).reduce((sum, value) => sum + value, 0)
-            - facilitationRelief,
-            0
-        ));
+            - facilitationRelief
+        );
+        const coarseRouteCost = clampUnitInterval(travelCost, 0);
 
         return {
             edgeId: normalizeString(edge.edgeId, ''),
@@ -701,6 +702,7 @@
             landGraphEdge: Boolean(edge.landGraphEdge),
             seaGraphEdge: Boolean(edge.seaGraphEdge),
             coarseRouteCost,
+            ...(isNavigableLane && { traversalCost: travelCost }),
             routeCostClass: classifyRouteCost(coarseRouteCost),
             routeCostComputed: true,
             climateStress,
@@ -800,6 +802,7 @@
                     ...cloneValue(edge),
                     routeCostComputed: Boolean(edgeCost.routeCostComputed),
                     coarseRouteCost: roundValue(edgeCost.coarseRouteCost),
+                    ...(Number.isFinite(edgeCost.traversalCost) && { traversalCost: edgeCost.traversalCost }),
                     routeCostClass: normalizeString(edgeCost.routeCostClass, ''),
                     dominantRouteCostDriverIds: Array.isArray(edgeCost.dominantRouteCostDriverIds)
                         ? edgeCost.dominantRouteCostDriverIds.slice()
@@ -859,7 +862,7 @@
             entry.node.nodeRole === 'major_inland_node' || entry.routeEndpointScore >= 0.62
         ));
         const endpointPool = majorPool.length >= 2 ? majorPool : inlandNodes;
-        const islandEndpoints = hybridNodes.filter(node => node.nodeRole === 'coastal_sea_terminal' && node.islandId);
+        const islandEndpoints = hybridNodes.filter(node => node.nodeRole === 'coastal_land_terminal' && node.islandId);
         const selectedEntries = [];
         const selectedNodeIds = new Set();
         const coveredContinents = new Set();
@@ -917,7 +920,9 @@
         });
 
         return selectedEntries.slice(0, endpointLimit).map((entry, endpointIndex) => ({
-            endpointId: `route_endpoint_${normalizeString(entry.node.sourceRegionalSegmentId, normalizeString(entry.node.nodeId, 'unknown'))}`,
+            endpointId: entry.node.islandId
+                ? `route_endpoint_sea_terminal_${entry.node.sourceCoastalNodeId}`
+                : `route_endpoint_${normalizeString(entry.node.sourceRegionalSegmentId, normalizeString(entry.node.nodeId, 'unknown'))}`,
             nodeId: normalizeString(entry.node.nodeId, ''),
             nodeRole: normalizeString(entry.node.nodeRole, ''),
             seaRegionId: normalizeString(entry.node.seaRegionId, ''),
@@ -932,7 +937,7 @@
         }));
     }
 
-    function buildHybridAdjacency(hybridConnectivityGraph = {}, routeCostSurface = {}, excludedEdgeIds = null) {
+    function buildHybridAdjacency(hybridConnectivityGraph = {}, routeCostSurface = {}, excludedEdgeIds = null, detourCosts = new Map()) {
         const adjacency = new Map();
         const hybridEdges = Array.isArray(hybridConnectivityGraph.edges) ? hybridConnectivityGraph.edges.slice() : [];
         const edgeCostLookup = buildLookupById(routeCostSurface && routeCostSurface.edgeCosts, 'edgeId');
@@ -957,10 +962,10 @@
                     return;
                 }
 
-                const edgeCost = edgeCostLookup.get(edgeId) || edge;
+                const edgeCost = detourCosts.get(edgeId) || edgeCostLookup.get(edgeId) || edge;
                 const traversalCost = roundMetric(Math.max(
                     0.01,
-                    normalizeNumber(edgeCost.coarseRouteCost, normalizeNumber(edge.coarseRouteCost, 0.2))
+                    normalizeNumber(edgeCost.traversalCost ?? edgeCost.coarseRouteCost, normalizeNumber(edge.coarseRouteCost, 0.2))
                 ));
                 const adjacencyEntry = {
                     edgeId,
@@ -1133,7 +1138,7 @@
         return selectDominantDriverIds(driverWeights, 3);
     }
 
-    function buildMacroRoutes(hybridConnectivityGraph = {}, routeCostSurface = {}) {
+    function buildMacroRoutes(hybridConnectivityGraph = {}, routeCostSurface = {}, seaRegionByCell = []) {
         const majorRouteEndpoints = selectMajorRouteEndpoints(hybridConnectivityGraph, MAX_MAJOR_ROUTE_ENDPOINTS);
         const adjacency = buildHybridAdjacency(hybridConnectivityGraph, routeCostSurface);
         const nodeLookup = buildLookupById(hybridConnectivityGraph && hybridConnectivityGraph.nodes, 'nodeId');
@@ -1176,6 +1181,19 @@
                     edgeCosts.reduce((maxValue, edgeCost) => Math.max(maxValue, clampUnitInterval(edgeCost.coarseRouteCost, 0)), 0)
                 );
                 const routeMode = classifySampledRouteMode(landEdgeCount, seaEdgeCount, transitionEdgeCount);
+                const regionPathPositions = new Map();
+                for (const [index, node] of nodePath.entries()) {
+                    for (const id of [node.continentId, node.reliefRegionId, node.seaRegionId]) {
+                        if (id && !regionPathPositions.has(id)) regionPathPositions.set(id, index);
+                    }
+                    const leg = routeEdges[index];
+                    if (!leg?.waterPathCellIndices) continue;
+                    const path = leg.fromNodeId === node.nodeId ? leg.waterPathCellIndices : leg.waterPathCellIndices.slice().reverse();
+                    path.forEach((cell, cellIndex) => {
+                        const id = seaRegionByCell[cell];
+                        if (id && !regionPathPositions.has(id)) regionPathPositions.set(id, index + (cellIndex + 1) / (path.length + 1));
+                    });
+                }
 
                 candidateRoutes.push({
                     routeId: `macro_route_${String(candidateRoutes.length + 1).padStart(3, '0')}`,
@@ -1200,9 +1218,8 @@
                         .map((node) => normalizeString(node.sourceCoastalNodeId, ''))
                         .filter(Boolean)
                         .sort(),
-                    regionPathIds: [...new Set(nodePath.flatMap(node => [
-                        node.continentId, node.reliefRegionId, node.seaRegionId
-                    ]).filter(Boolean))],
+                    regionPathIds: [...regionPathPositions.keys()],
+                    regionPathPositions: [...regionPathPositions.entries()],
                     hopCount: sampledRoute.hopCount,
                     totalRouteCost: sampledRoute.totalRouteCost,
                     meanEdgeRouteCost,
@@ -1336,31 +1353,23 @@
         ));
     }
 
-    function analyzeCorridorDependence(corridor = {}, macroRoutes = {}, hybridConnectivityGraph = {}, routeCostSurface = {}, passage) {
+    function analyzeCorridorDependence(corridor = {}, macroRoutes = {}, hybridConnectivityGraph = {}, routeCostSurface = {}, closure) {
         const candidateRoutes = Array.isArray(macroRoutes && macroRoutes.candidateRoutes)
             ? macroRoutes.candidateRoutes
             : [];
         const endpointLookup = buildLookupById(macroRoutes && macroRoutes.majorRouteEndpoints, 'endpointId');
-        const excludedEdgeIdSet = new Set(
-            (Array.isArray(corridor.corridorEdgeIds) ? corridor.corridorEdgeIds : [])
-                .map((edgeId) => normalizeString(edgeId, ''))
-                .filter(Boolean)
-        );
-        if (passage) {
-            const closedCells = new Set(passage.restrictedCellIndices);
-            for (const edge of hybridConnectivityGraph.edges) {
-                if (edge.waterPathCellIndices?.some(cell => closedCells.has(cell))) excludedEdgeIdSet.add(edge.edgeId);
-            }
-        }
+        const excludedEdgeIdSet = closure?.blockedEdgeIds || new Set(corridor.corridorEdgeIds);
+        const affectedEdgeIds = closure?.affectedEdgeIds || excludedEdgeIdSet;
         const affectedRoutes = candidateRoutes.filter((route) => (
             Array.isArray(route.edgePathIds)
-                ? route.edgePathIds.some((edgeId) => excludedEdgeIdSet.has(normalizeString(edgeId, '')))
+                ? route.edgePathIds.some((edgeId) => affectedEdgeIds.has(normalizeString(edgeId, '')))
                 : false
         ));
         const adjacencyWithoutCorridor = buildHybridAdjacency(
             hybridConnectivityGraph,
             routeCostSurface,
-            excludedEdgeIdSet
+            excludedEdgeIdSet,
+            closure?.detourCosts
         );
         const alternativeRouteRows = [];
         let blockedRouteCount = 0;
@@ -1387,7 +1396,7 @@
             }
 
             const baselineRouteCost = Math.max(0.001, normalizeNumber(route.totalRouteCost, 0.001));
-            const detourPenalty = Math.max(0, normalizeNumber(alternativeRoute.totalCost, 0) - baselineRouteCost);
+            const detourPenalty = Math.max(0, alternativeRoute.totalRouteCost - baselineRouteCost);
             const relativeDetourPenalty = roundValue(clampUnitInterval(detourPenalty / baselineRouteCost, 0));
             if (relativeDetourPenalty >= 0.38) {
                 severeDetourCount += 1;
@@ -1396,7 +1405,7 @@
             alternativeRouteRows.push({
                 routeId: normalizeString(route.routeId, ''),
                 blockedWithoutCorridor: false,
-                alternativeRouteCost: roundMetric(normalizeNumber(alternativeRoute.totalCost, 0)),
+                alternativeRouteCost: alternativeRoute.totalRouteCost,
                 relativeDetourPenalty,
                 alternativeEdgePathIds: Array.isArray(alternativeRoute.edgePathIds)
                     ? alternativeRoute.edgePathIds.slice()
@@ -1482,7 +1491,26 @@
         };
     }
 
-    function buildMacroCorridors(macroRoutes = {}, hybridConnectivityGraph = {}, routeCostSurface = {}, islandPassages = []) {
+    function evaluateCorridorClosure({ restrictedCells, blockedEdgeIds }, mask, hybridGraph, nodePressures, straitPressure) {
+        const changes = restrictedCells.size ? macro.measureChangedLanes(mask, hybridGraph.edges, restrictedCells) : new Map();
+        const detourCosts = new Map();
+        for (const edge of hybridGraph.edges) {
+            const change = changes.get(edge.edgeId);
+            if (!change) continue;
+            if (!change.alternative) {
+                blockedEdgeIds.add(edge.edgeId);
+                continue;
+            }
+            const { distanceRatio } = change.alternative;
+            detourCosts.set(edge.edgeId, computeHybridEdgeRouteCost({
+                ...edge, distanceRatio, coarseConnectivityStrength: Math.max(0, 1 - distanceRatio)
+            }, nodePressures, straitPressure));
+        }
+        return { affectedEdgeIds: new Set([...blockedEdgeIds, ...changes.keys()]), blockedEdgeIds, detourCosts };
+    }
+
+    function buildMacroCorridors(macroRoutes = {}, hybridConnectivityGraph = {}, routeCostSurface = {}, islandPassages = [],
+        mask, straitPressure) {
         const candidateRoutes = Array.isArray(macroRoutes && macroRoutes.candidateRoutes)
             ? macroRoutes.candidateRoutes
             : [];
@@ -1516,7 +1544,12 @@
             });
         });
 
-        const passageByEdgeId = new Map(islandPassages.map(passage => [passage.hybridEdgeId, passage]));
+        const passagesByEdgeId = new Map();
+        for (const passage of islandPassages) {
+            const related = passagesByEdgeId.get(passage.hybridEdgeId) || [];
+            related.push(passage);
+            passagesByEdgeId.set(passage.hybridEdgeId, related);
+        }
         const maxRouteCount = Math.max(1, candidateRoutes.length);
         const qualifyingEdges = Array.from(edgeSupportByEdgeId.values())
             .map((edgeSupport) => {
@@ -1541,7 +1574,7 @@
                     edgeCost
                 };
             })
-            .filter(edgeSupport => passageByEdgeId.has(edgeSupport.edgeId) || edgeSupport.usageCount >= 2 || edgeSupport.supportScore >= 0.42)
+            .filter(edgeSupport => passagesByEdgeId.has(edgeSupport.edgeId) || edgeSupport.usageCount >= 2 || edgeSupport.supportScore >= 0.42)
             .sort((left, right) => (
                 right.supportScore - left.supportScore
                 || right.usageCount - left.usageCount
@@ -1594,10 +1627,12 @@
                 const toNodeId = normalizeString(getNestedValue(currentEdgeSupport.edge, 'toNodeId'), '');
                 [fromNodeId, toNodeId].filter(Boolean).forEach((nodeId) => {
                     corridorNodeIds.add(nodeId);
-                    if (passageByEdgeId.has(currentEdgeId)) return;
-                    const connectedEdgeIds = nodeToEdgeIds.get(nodeId) || [];
+                    if (passagesByEdgeId.has(currentEdgeId)) return;
+                    const connectedEdgeIds = (nodeToEdgeIds.get(nodeId) || []).filter(id => !passagesByEdgeId.has(id));
+                    // A junction joins services, but loss of one branch is a different outage.
+                    if (connectedEdgeIds.length !== 2) return;
                     connectedEdgeIds.forEach((connectedEdgeId) => {
-                        if (!passageByEdgeId.has(connectedEdgeId) && !visitedEdgeIds.has(connectedEdgeId)) {
+                        if (!visitedEdgeIds.has(connectedEdgeId)) {
                             edgeQueue.push(connectedEdgeId);
                         }
                     });
@@ -1657,11 +1692,24 @@
             });
         });
 
-        const classifiedCorridors = corridors.map((corridor) => ({
-            ...corridor,
-            ...analyzeCorridorDependence(corridor, macroRoutes, hybridConnectivityGraph, routeCostSurface,
-                passageByEdgeId.get(corridor.corridorEdgeIds[0]))
-        }));
+        const nodePressures = buildLookupById(routeCostSurface.nodePressures, 'nodeId');
+        let nextCorridorIndex = corridors.length + 1;
+        const classifiedCorridors = corridors.flatMap(corridor => {
+            const passages = passagesByEdgeId.get(corridor.corridorEdgeIds[0]) || [null];
+            return passages.map((passage, index) => {
+                const outage = passage
+                    ? { restrictedCells: new Set(passage.restrictedCellIndices), blockedEdgeIds: new Set() }
+                    : mask && macro.collectCorridorOutage(hybridConnectivityGraph.edges, new Set(corridor.corridorEdgeIds), mask);
+                const closure = outage && evaluateCorridorClosure(outage, mask, hybridConnectivityGraph, nodePressures, straitPressure);
+                return {
+                    ...corridor,
+                    ...(index > 0 && { corridorId: `macro_corridor_${String(nextCorridorIndex++).padStart(3, '0')}` }),
+                    ...(passage && { sourcePassageId: passage.passageId }),
+                    closedWaterCellCount: outage?.restrictedCells.size || 0,
+                    ...analyzeCorridorDependence(corridor, macroRoutes, hybridConnectivityGraph, routeCostSurface, closure)
+                };
+            });
+        });
 
         classifiedCorridors.sort((left, right) => (
             right.supportScore - left.supportScore
@@ -1805,6 +1853,9 @@
             nodeType: 'coastal_terminal',
             nodeRole: 'coastal_land_terminal',
             sourceCoastalNodeId: normalizeString(coastalNode.coastalNodeId, ''),
+            islandId: coastalNode.islandId || '',
+            islandGroupId: coastalNode.islandGroupId || '',
+            reliefRegionId: coastalNode.reliefRegionId || '',
             continentId: normalizeString(
                 coastalNode.continentId,
                 attachment ? normalizeString(attachment.node.continentId, '') : ''
@@ -2703,11 +2754,12 @@
         const dependencyAvailability = describeConnectivityGraphDependencyAvailability(input);
         const connectivityGraphBuildPlan = buildConnectivityGraphPlan(input, dependencyAvailability);
         const mask = findInputField(input, 'coastJaggednessControlledLandWaterMaskField');
+        const seaClusters = getSeaClusterList(findInputIntermediateOutput(input, 'seaRegionClusters') || {},
+            findInputIntermediateOutput(input, 'seaNavigabilityTagging') || {});
         const accessTopology = macro.buildCoastalAccessTopology({
             mask,
             continentBodies: findInputIntermediateOutput(input, 'continentBodies')?.continentBodies,
-            seaClusters: getSeaClusterList(findInputIntermediateOutput(input, 'seaRegionClusters') || {},
-                findInputIntermediateOutput(input, 'seaNavigabilityTagging') || {}),
+            seaClusters,
             coastalOpportunity: findInputField(input, 'coastalOpportunityMap'),
             clusterProfiles: findInputIntermediateOutput(input, 'coastalOpportunityProfile')?.clusterProfiles || [],
             reliefRegionBodies: findInputIntermediateOutput(input, 'reliefRegionExtraction')?.reliefRegionBodies || [],
@@ -2730,17 +2782,23 @@
             hybridConnectivityGraphBase,
             routeCostSurface
         );
+        const seaRegionByCell = [];
+        for (const cluster of seaClusters) {
+            for (const cell of cluster.cellIndices || []) seaRegionByCell[cell] = cluster.recordDraft.seaRegionId;
+        }
         const macroRoutes = buildMacroRoutes(
             hybridConnectivityGraph,
-            routeCostSurface
+            routeCostSurface,
+            seaRegionByCell
         );
         const islandPassages = macro.findIslandPassages(
-            accessTopology, seaConnectivityGraph, hybridConnectivityGraph, macroRoutes, mask
+            accessTopology, hybridConnectivityGraph, macroRoutes, mask
         );
-        const macroCorridors = buildMacroCorridors(macroRoutes, hybridConnectivityGraph, routeCostSurface, islandPassages);
+        const macroCorridors = buildMacroCorridors(macroRoutes, hybridConnectivityGraph, routeCostSurface, islandPassages,
+            mask, buildStraitPressureContext(findInputIntermediateOutput(input, 'straitCarvingSummary') || {}));
         for (const passage of islandPassages) {
             passage.corridorIds = macroCorridors.macroCorridors
-                .filter(corridor => corridor.corridorEdgeIds.includes(passage.hybridEdgeId))
+                .filter(corridor => corridor.sourcePassageId === passage.passageId)
                 .map(corridor => corridor.corridorId);
         }
         return {

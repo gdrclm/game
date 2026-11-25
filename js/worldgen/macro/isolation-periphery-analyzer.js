@@ -541,7 +541,7 @@
     }
 
     function buildRouteCoverageLookup(macroRoutes = {}) {
-        const routeRows = Array.isArray(macroRoutes && macroRoutes.routes) ? macroRoutes.routes : [];
+        const routeRows = Array.isArray(macroRoutes.candidateRoutes) ? macroRoutes.candidateRoutes : [];
         const counts = new Map();
 
         routeRows.forEach((routeRow) => {
@@ -666,14 +666,11 @@
 
             const edgeId = normalizeString(edge.edgeId, '');
             const edgeCost = edgeId ? edgeCostLookup.get(edgeId) : null;
-            const coarseRouteCost = clampUnitInterval(
-                getNestedValue(edgeCost, 'coarseRouteCost', getNestedValue(edge, 'coarseRouteCost', Number.NaN)),
-                Number.NaN
-            );
+            const travelCost = edgeCost?.traversalCost ?? edge.traversalCost ?? edgeCost?.coarseRouteCost ?? edge.coarseRouteCost;
             const coarseConnectivityStrength = clampUnitInterval(edge.coarseConnectivityStrength, 0.5);
             const transitionPenalty = Boolean(edge.transitionEdge) ? 0.08 : 0;
-            const baseWeight = Number.isFinite(coarseRouteCost)
-                ? (0.12 + (coarseRouteCost * 0.88))
+            const baseWeight = Number.isFinite(travelCost)
+                ? (0.12 + (travelCost * 0.88))
                 : (0.2 + ((1 - coarseConnectivityStrength) * 0.7));
             const edgeWeight = roundValue(Math.max(0.04, baseWeight + transitionPenalty), 6);
 
@@ -830,16 +827,9 @@
         const finiteDistances = hybridNodes
             .map((node) => normalizeNumber(rawDistances.get(normalizeString(node.nodeId, '')), Number.NaN))
             .filter((value) => Number.isFinite(value));
-        const finiteMaxDistance = finiteDistances.reduce((maxValue, distance) => Math.max(maxValue, distance), 0);
-        const unreachableDistance = finiteMaxDistance > 0 ? finiteMaxDistance + 1 : 1;
-        const normalizedDistanceDenominator = hybridNodes.length > 0
-            ? hybridNodes.reduce((maxValue, node) => {
-                const nodeId = normalizeString(node.nodeId, '');
-                const rawDistance = normalizeNumber(rawDistances.get(nodeId), Number.POSITIVE_INFINITY);
-                const resolvedDistance = Number.isFinite(rawDistance) ? rawDistance : unreachableDistance;
-                return Math.max(maxValue, resolvedDistance);
-            }, 0)
-            : 1;
+        // Metadata-only marine basins have no travel edges. Unreachable nodes
+        // must not compress the scale of the nodes with real access to a core.
+        const normalizedDistanceDenominator = Math.max(1, ...finiteDistances);
         const routeCoverageMax = Math.max(1, normalizeInteger(routeCoverageLookup.maxCount, 0));
 
         const nodeRows = hybridNodes.map((node) => {
@@ -854,11 +844,8 @@
             const resolvedCorePotential = resolveNodeCorePotential(node, corePotentialLookup);
             const meanInteriorPassability = clampUnitInterval(node.meanInteriorPassability, 0.5);
             const rawDistance = normalizeNumber(rawDistances.get(nodeId), Number.POSITIVE_INFINITY);
-            const distanceFromCore = roundValue(clampUnitInterval(
-                (Number.isFinite(rawDistance) ? rawDistance : unreachableDistance)
-                / Math.max(1, normalizedDistanceDenominator),
-                0
-            ));
+            const distanceFromCore = Number.isFinite(rawDistance)
+                ? roundValue(clampUnitInterval(rawDistance / normalizedDistanceDenominator, 0)) : 1;
             const routePressureScore = roundValue(clampUnitInterval(
                 getNestedValue(nodePressure, 'routePressureScore', 0),
                 0
@@ -983,6 +970,7 @@
                 chokepointTradeDependency,
                 chokepointBypassDifficulty,
                 chokepointCollapseSensitivity,
+                coreTravelCost: Number.isFinite(rawDistance) ? rawDistance : null,
                 distanceFromCore,
                 resupplyCost,
                 weatherAdjustedIsolation,

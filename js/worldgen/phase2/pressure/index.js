@@ -1109,7 +1109,7 @@
             throw new Error('[worldgen/phase2] TravelExposureGenerator requires Phase2InputBundle.recordCollections.structural.macroRoutes.');
         }
 
-        return inputBundle.recordCollections.structural.macroRoutes;
+        return phase2.bindMacroRouteCarriers(inputBundle.recordCollections.structural.macroRoutes, input.phase2RecordBindingLayer);
     }
 
     function resolveChokepoints(input = {}) {
@@ -1781,7 +1781,7 @@
         const seaRegionIds = uniqueStrings(macroRoute.seaRegionIds);
         const chokepointIds = uniqueStrings(macroRoute.chokepointIds);
         const riverBasinIds = uniqueStrings(macroRoute.riverBasinIds);
-        const throughIds = uniqueStrings(macroRoute.through);
+        const throughIds = uniqueStrings(macroRoute.through).filter(id => !chokepointIds.includes(id));
 
         const baseCost = clamp01(macroRoute.baseCost);
         const fragility = clamp01(macroRoute.fragility);

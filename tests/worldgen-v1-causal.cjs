@@ -64,6 +64,31 @@ function runCausalChecks(systems, canonical, saveStormPair) {
     assert(pressure(highWeatherOutput) > pressure(lowWeatherOutput), 'Phase 2 storm break risk did not respond');
     assert(rhythm(highWeatherOutput) > rhythm(lowWeatherOutput), 'Phase 2 storm cadence did not respond');
     assert.deepEqual(lowWeatherOutput.pressureFieldPackage.domains.terrain, highWeatherOutput.pressureFieldPackage.domains.terrain);
+    const travel = output => output.pressureFieldPackage.domains.travel.travelExposure.perRouteScores;
+    const navigation = output => output.environmentalRhythmPackage.domains.navigation.navigationWindowReliability.perRouteScores;
+    const root = canonical.phase1.macroGeographyPackage;
+    const marineRoute = root.macroRoutes.find(route => route.through.some(id => root.seaRegions.some(sea => sea.seaRegionId === id)));
+    assert(marineRoute, 'Expected a physically traced marine route');
+    const travelRecord = travel(lowWeatherOutput).find(row => row.recordId === marineRoute.routeId);
+    const navigationRecord = navigation(lowWeatherOutput).find(row => row.recordId === marineRoute.routeId);
+    assert(travelRecord.seaRegionIds.length && travelRecord.reliefRegionIds.length, 'Phase 2 travel lost canonical route carriers');
+    assert.deepEqual(navigationRecord.seaRegionIds, travelRecord.seaRegionIds);
+    assert.deepEqual(navigationRecord.reliefRegionIds, travelRecord.reliefRegionIds);
+    const domainLayers = canonical.phase2.environmentalRhythmPackage.domains;
+    const navigationAtClosureFrequency = frequency => phase2.createEnvironmentalRhythmSynthesis({
+        deterministicSeed: rhythmSeed
+    }).run({ rhythmDomainLayers: {
+        ...domainLayers,
+        navigation: {
+            ...domainLayers.navigation,
+            blockedIntervalFrequency: {
+                ...domainLayers.navigation.blockedIntervalFrequency,
+                summary: { ...domainLayers.navigation.blockedIntervalFrequency.summary, mean: frequency }
+            }
+        }
+    } }).synthesized.navigationRhythm.summary.mean;
+    const navigationWindows = [navigationAtClosureFrequency(0.1), navigationAtClosureFrequency(0.9)];
+    assert(navigationWindows[1] < navigationWindows[0], 'Increasing closures cannot improve navigation windows');
 
     const fragilityLow = intervene('routeFragilityBias', 0.1);
     const fragilityHigh = intervene('routeFragilityBias', 0.9);
@@ -107,6 +132,12 @@ function runCausalChecks(systems, canonical, saveStormPair) {
     const result = {
         seed: phase0Bundle.worldSeedProfile.worldSeed,
         fixedSubseeds: { macroGeographySeed, pressureSeed, rhythmSeed },
+        routeCarriers: {
+            routeId: marineRoute.routeId,
+            seaRegionIds: travelRecord.seaRegionIds,
+            reliefRegionIds: travelRecord.reliefRegionIds,
+            navigationWindows
+        },
         environmentalVolatility: {
             values: [0.1, 0.9],
             changedStormCells,

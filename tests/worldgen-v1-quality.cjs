@@ -26,33 +26,125 @@ function summarizeQuality(report) {
         note:'Counts describe sampling, not independent evidence of morphology or historical diversity.'
     };
 }
-function inspectPassageEndpoints(topology, seaGraph) {
+function waterNeighbors(mask, cell) {
+    const { width, values, threshold } = mask;
+    const neighbors = [cell - width, cell + width];
+    if (cell % width > 0) neighbors.push(cell - 1);
+    if (cell % width < width - 1) neighbors.push(cell + 1);
+    return neighbors.filter(index => index >= 0 && index < values.length && values[index] < threshold);
+}
+
+function waterDistance(mask, start, target, blocked) {
+    const distances = new Int32Array(mask.values.length).fill(-1);
+    const queue = [start];
+    distances[start] = 0;
+    for (let cursor = 0; cursor < queue.length; cursor += 1) {
+        const cell = queue[cursor];
+        if (cell === target) return distances[cell];
+        for (const neighbor of waterNeighbors(mask, cell)) {
+            if (blocked.has(neighbor) || distances[neighbor] >= 0) continue;
+            distances[neighbor] = distances[cell] + 1;
+            queue.push(neighbor);
+        }
+    }
+    return null;
+}
+
+function inspectPassageEndpoints(topology, seaGraph, mask) {
     const byId=new Map((seaGraph.edges||[]).map(edge=>[edge.edgeId,edge]));
     return (topology.islandPassages||[]).map(passage=>{
         const path=byId.get(passage.seaEdgeId)?.waterPathCellIndices;
         const blocked=new Set(passage.restrictedCellIndices||[]);
-        const endpointInsideClosure=path?.length
-            ? blocked.has(path[0])||blocked.has(path[path.length-1]) : null;
+        const terminals = path?.length > 1 ? [path[0], path.at(-1)] : [];
+        const endpointInsideClosure = terminals.length ? terminals.some(cell => blocked.has(cell)) : null;
+        const lostAccess = mask && terminals.some(cell => !waterNeighbors(mask, cell).some(neighbor => !blocked.has(neighbor)));
+        const bypass = mask && terminals.length && !endpointInsideClosure && !lostAccess
+            ? waterDistance(mask, ...terminals, blocked) : passage.bypassTravelCells;
         return {
             passageId:passage.passageId,
             endpointInsideClosure,
-            bypassTravelCells:passage.bypassTravelCells,
+            bypassTravelCells: bypass,
+            travelCells: passage.travelCells,
+            recordedBypassMatches: bypass === passage.bypassTravelCells,
             routeCount:passage.routeIds?.length||0,
             status: endpointInsideClosure===null?'missing_path':
                 endpointInsideClosure?'endpoint_confounded':
-                passage.bypassTravelCells===null?'disconnected_after_closure':'measured_detour'
+                lostAccess ? 'terminal_access_confounded' :
+                bypass === null ? 'disconnected_after_closure' :
+                bypass > passage.travelCells ? 'measured_detour' : 'no_detour'
         };
     });
 }
 function inspectLive(systems, seed) {
-    const result=systems.worldgenFoundation.runWorldGenFoundation(seed,{includeDebugArtifacts:true});
-    const debug=result.diagnostics.physicalWorldDebugBundle;
+    let debug;
+    let failure;
+    try {
+        debug = systems.worldgenFoundation.runWorldGenFoundation(seed, { includeDebugArtifacts: true }).diagnostics.physicalWorldDebugBundle;
+    } catch (error) {
+        debug = error.evidence?.physicalWorldDebugBundle;
+        if (!debug) throw error;
+        failure = error.message;
+    }
     const topology=debug.intermediateOutputs.find(entry=>entry.artifactId==='foundation_geometry_coastalAccessTopology')?.payload;
     const sea=debug.graphSnapshots.find(entry=>entry.sourceLayerId==='seaConnectivityGraph')?.payload;
+    const mask = debug.fieldSnapshots.find(entry => entry.payload.fieldId === 'coastJaggednessControlledLandWaterMaskField')?.payload;
     if(!topology||!sea)throw Error('Missing topology or sea graph for '+seed);
-    return {seed,passages:inspectPassageEndpoints(topology,sea)};
+    return { seed, ...(failure && { error: failure }), passages: inspectPassageEndpoints(topology, sea, mask) };
 }
-module.exports={summarizeQuality,inspectPassageEndpoints,inspectLive};
+
+function verifyPassageFixture(worldgenMacro) {
+    const assert = require('node:assert/strict');
+    // A one-cell gate between two headlands. Removing either wharf instead is a confounded experiment.
+    const values = ['..#..', '..#..', '.....', '..#..', '..#..'].join('').split('').map(cell => Number(cell === '#'));
+    const mask = { width: 5, height: 5, values, threshold: 1 };
+    const edge = { edgeId: 'lane', waterPathCellIndices: [10, 11, 12, 13, 14], waterTravelCells: 4 };
+    const seaGraph = { edges: [edge] };
+    const inspect = (cut, bypassTravelCells) => inspectPassageEndpoints({ islandPassages: [{
+        seaEdgeId: 'lane', restrictedCellIndices: cut, travelCells: 4, bypassTravelCells
+    }] }, seaGraph, mask)[0].status;
+    assert.equal(inspect([10], null), 'endpoint_confounded');
+    assert.equal(inspect([5, 11, 15], null), 'terminal_access_confounded');
+    assert.equal(inspect([12], null), 'disconnected_after_closure');
+    assert.equal(inspect([1], 4), 'no_detour');
+    assert.equal(worldgenMacro.measureChangedLanes(mask, seaGraph.edges, new Set([10])).get('lane').endpointsAccessible, false);
+    assert.equal(worldgenMacro.measureChangedLanes(mask, seaGraph.edges, new Set([12])).get('lane').alternative, null);
+    const withOuterPassage = { ...mask, values: mask.values.slice() };
+    withOuterPassage.values[2] = 0;
+    assert.equal(waterDistance(withOuterPassage, 10, 14, new Set([12])), 8);
+    const detour = worldgenMacro.measureChangedLanes(withOuterPassage, seaGraph.edges, new Set([12]), { includePaths: true }).get('lane');
+    assert(detour.endpointsAccessible);
+    assert.equal(detour.alternative.waterTravelCells, 8);
+    assert(!detour.alternative.waterPathCellIndices.includes(12));
+    return ['terminal cell rejected', 'terminal access rejected', 'disconnection', 'no effect', 'alternate water path'];
+}
+
+function verifyHotspotFixture(worldgenMacro) {
+    const assert = require('node:assert/strict');
+    const bounds = { width: 128, height: 96 };
+    const { width, height } = bounds;
+    const peaks = [30, 42, 54, 66, 78].map((x, driftStep) => ({
+        x, y: 40, cellIndex: 40 * width + x, radius: 5, driftStep, waterDepth: 0.3
+    }));
+    const track = { peaks, offset: 0, hotspot: { trailVector: { x: 1, y: 0 } } };
+    const flat = Array(width * height).fill(0.2);
+    const openWater = new Uint8Array(flat.length).fill(1);
+    const offshoreDistance = new Uint8Array(flat.length).fill(12);
+    const cutoff = 0.5;
+    assert.deepEqual(worldgenMacro.bendHotspotTrack(track, bounds, openWater, offshoreDistance, flat, cutoff), peaks);
+    const shelf = flat.map((value, index) => {
+        const x = index % width;
+        const y = Math.floor(index / width);
+        const crest = 40 + Math.round(2 * Math.sin((x - 30) / 15));
+        return value + Math.max(0, 3 - Math.abs(y - crest)) * 0.021;
+    });
+    const bent = worldgenMacro.bendHotspotTrack(track, bounds, openWater, offshoreDistance, shelf, cutoff);
+    assert(bent.some(peak => peak.crossTrackShift !== 0));
+    assert(new Set(bent.map(peak => peak.crossTrackShift)).size > 1);
+    assert(bent.every((peak, index) => peak.driftStep === peaks[index].driftStep && peak.unbentCellIndex === peaks[index].cellIndex));
+    return { flatPreservesDrift: true, tiltedShelfShiftsPeaks: bent.map(peak => peak.crossTrackShift) };
+}
+
+module.exports={summarizeQuality,inspectPassageEndpoints,inspectLive,verifyPassageFixture,verifyHotspotFixture};
 if(require.main===module){
     const fs=require('node:fs');
     const args=process.argv.slice(2);

@@ -28,6 +28,7 @@
         strategicRegionIds: ['strategicRegions']
     };
     const spatialCollections = ['continents', 'reliefRegions', 'seaRegions', 'archipelagoRegions'];
+    const routeWaypoints = [...spatialCollections, 'chokepoints'];
     const spatialFields = ['adjacentRegions', 'fromRegion', 'toRegion', 'through'];
 
     function assertFoundationRecordReferences(geography) {
@@ -45,7 +46,8 @@
         for (const [collection, [idField]] of Object.entries(collections)) {
             for (const row of geography[collection]) {
                 for (const [field, value] of Object.entries(row)) {
-                    const targets = targetsByField[field] || (spatialFields.includes(field) ? spatialCollections : null);
+                    const targets = collection === 'macroRoutes' && field === 'through'
+                        ? routeWaypoints : targetsByField[field] || (spatialFields.includes(field) ? spatialCollections : null);
                     if (!targets) continue;
                     for (const ref of Array.isArray(value) ? value : [value].filter(Boolean)) {
                         if (!targets.some(target => ids[target].has(ref))) {
