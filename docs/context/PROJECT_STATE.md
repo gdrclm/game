@@ -21,3 +21,7 @@
 ## Следующая инженерная итерация F8-R
 
 Независимо проверены отчёты F8-Q и CI 45692803868 (failure). CI ранее охватывал только 19 старых seed, а 2764796977 не входил в обязательный прогон. Расширен `--cohort regression` до всех 31 известных миров. При отклонённом Phase 2 экспорте опциональная диагностика сохраняет upstream-пакеты, binding, промежуточные pressure/rhythm-кандидаты и отчёты rebalance (не канонический экспорт). Изменений формул и порогов нет. [F8-R](FOUNDATION_RECOVERY_CLOSURE.md) — трассировка локальных причин, исправление и повторная проверка. Новая CI-проверка ожидает результатов; не считать технический блок закрытым.
+
+## Global technical objective
+
+CI 45694140871 on 63693c8 completed with both known Phase 2 failures. Author requested a broad autonomous Phase 0–2 iteration including terrain and bathymetry, not only recovery. See [global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). F8-T/C/D/S/V are pre-acceptance engineering tasks. No new generator work or tests claimed by this documentation update. F8/F9 and Phase 3 remain gated.
