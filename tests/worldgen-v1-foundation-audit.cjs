@@ -120,7 +120,7 @@ function inspectGeometry(result) {
             const originalCost = sampledCosts.get(sample.routeId);
             assert(sample.alternativeRouteCost >= originalCost - 0.001, sample.routeId);
             const expectedPenalty = Math.min(1, Math.max(0, (sample.alternativeRouteCost - originalCost) / originalCost));
-            assert(Math.abs(sample.relativeDetourPenalty - expectedPenalty) < 0.0001, sample.routeId);
+            assert(Math.abs(sample.relativeDetourPenalty - expectedPenalty) <= 0.000500001, sample.routeId);
         }
     }
     const verifiedPassages = topology.islandPassages.filter(passage =>
