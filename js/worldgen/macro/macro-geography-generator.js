@@ -647,6 +647,52 @@
         );
     }
 
+    // Developer-only intervention; all upstream outputs and RNG are held fixed.
+    function diagnoseMaritimeCounterfactual(stageContext) {
+        function generate(value) {
+            return macro.generateArchipelagoSignificance({
+                ...stageContext,
+                phase1Constraints: {
+                    ...(stageContext.phase1Constraints || {}),
+                    maritimeDependence: value
+                }
+            }).outputs.intermediateOutputs.archipelagoMacroZones.macroZones;
+        }
+        const low = generate(0.1), high = generate(0.9);
+        const highById = new Map(high.map(row => [row.archipelagoId, row]));
+        const rows = low.map(row => {
+            const next = highById.get(row.archipelagoId);
+            const stable = Boolean(next)
+                && JSON.stringify(row.cellIndices) === JSON.stringify(next.cellIndices)
+                && JSON.stringify(row.macroRouteIds) === JSON.stringify(next.macroRouteIds)
+                && row.fragility === next.fragility
+                && row.contestScore === next.contestScore;
+            return {
+                archipelagoId: row.archipelagoId,
+                opportunity: row.maritimeInfluence.opportunity,
+                low: row.connectiveValue,
+                high: next ? next.connectiveValue : null,
+                geometryAndControlsStable: stable
+            };
+        });
+        const supported = rows.filter(row => row.opportunity > 0);
+        const stable = low.length === high.length && rows.every(row => row.geometryAndControlsStable);
+        const directional = supported.every(row => row.high > row.low);
+        const noFalseInfluence = rows.filter(row => row.opportunity === 0).every(row => row.high === row.low);
+        return {
+            intervention: 'maritimeDependence',
+            lowValue: 0.1,
+            highValue: 0.9,
+            fixedMacroSeed: stageContext.macroSeed,
+            supportedCount: supported.length,
+            stable,
+            directional,
+            noFalseInfluence,
+            status: !stable || !directional || !noFalseInfluence ? 'fail' : supported.length ? 'pass' : 'not_exercised',
+            rows
+        };
+    }
+
     function generateMacroGeographyEndToEnd(input = {}) {
         const normalizedSeed = typeof macro.normalizeSeed === 'function'
             ? macro.normalizeSeed(hasOwn(input, 'macroSeed') ? input.macroSeed : input.seed)
@@ -725,7 +771,10 @@
             macroGeographyHandoffPackage,
             endToEndDebugExport,
             downstreamIntegrationHook,
-            stageOutputIndex: buildStageOutputIndex(stageBundles)
+            stageOutputIndex: buildStageOutputIndex(stageBundles),
+            ...(input.includeCausalDiagnostics === true
+                ? { causalDiagnostics: diagnoseMaritimeCounterfactual(stageContext) }
+                : {})
         });
     }
 

@@ -622,7 +622,8 @@
     function computeArchipelagoSignificanceMetrics(
         macroZone = {},
         supportContext = {},
-        isolationSignals = {}
+        isolationSignals = {},
+        maritimeDependence = 0.5
     ) {
         const routeRows = Array.isArray(supportContext.routeRows) ? supportContext.routeRows : [];
         const corridorRows = Array.isArray(supportContext.corridorRows) ? supportContext.corridorRows : [];
@@ -663,7 +664,7 @@
         const collapseIsolation = clampUnitInterval(isolationSignals.meanLossInCollapseLikelihood, 0);
         const peripheryPressure = clampUnitInterval(isolationSignals.meanPeripheryPressure, 0);
         const autonomousSurvival = clampUnitInterval(isolationSignals.meanAutonomousSurvivalScore, 0);
-        const connectiveValue = roundValue(clampUnitInterval(
+        const physicalConnectiveValue = roundValue(clampUnitInterval(
             (routeSupport * 0.24)
             + (corridorSupport * 0.18)
             + (corridorStrength * 0.14)
@@ -673,6 +674,22 @@
             + (chokepointTrade * 0.06),
             0
         ));
+        // World-level dependence changes strategic value, never physical geometry.
+        // No supported marine routes means no demand-derived bonus or penalty.
+        const maritimeDemand = clampUnitInterval(maritimeDependence, 0.5);
+        const maritimeOpportunity = roundValue(routeSupport * marineAssistedShare * seaRegionReach);
+        const maritimeShift = 0.20 * (maritimeDemand * 2 - 1) * maritimeOpportunity;
+        const connectiveValue = roundValue(clampUnitInterval(
+            physicalConnectiveValue + maritimeShift * (maritimeShift >= 0
+                ? 1 - physicalConnectiveValue : physicalConnectiveValue), 0
+        ));
+        const maritimeInfluence = {
+            sourceField: 'maritimeDependence',
+            sourceValue: maritimeDemand,
+            opportunity: maritimeOpportunity,
+            baselineConnectiveValue: physicalConnectiveValue,
+            delta: roundValue(connectiveValue - physicalConnectiveValue)
+        };
         const contestScore = roundValue(clampUnitInterval(
             (chokepointControl * 0.28)
             + (chokepointTrade * 0.24)
@@ -734,6 +751,7 @@
             peripheryPressure,
             autonomousSurvival,
             connectiveValue,
+            maritimeInfluence,
             fragility,
             colonizationAppeal,
             contestScore,
@@ -1240,7 +1258,10 @@
             const significanceMetrics = computeArchipelagoSignificanceMetrics(
                 baseMacroZone,
                 supportContext,
-                isolationSignals
+                isolationSignals,
+                input.phase1Constraints?.maritimeDependence
+                    ?? input.macroSeedProfile?.maritimeDependence
+                    ?? 0.5
             );
             const roleSeedHints = buildArchipelagoRoleSeedHints(
                 baseMacroZone,
@@ -1284,6 +1305,7 @@
                 strongestRunScore,
                 detectionConfidence,
                 connectiveValue: significanceMetrics.connectiveValue,
+                maritimeInfluence: cloneValue(significanceMetrics.maritimeInfluence),
                 fragility: significanceMetrics.fragility,
                 colonizationAppeal: significanceMetrics.colonizationAppeal,
                 contestScore: significanceMetrics.contestScore,
@@ -1460,6 +1482,7 @@
         getArchipelagoSignificanceInputContract,
         getArchipelagoSignificanceOutputContract,
         describeArchipelagoDependencyAvailability,
+        computeArchipelagoSignificanceMetrics,
         generateArchipelagoSignificance
     });
 })();
