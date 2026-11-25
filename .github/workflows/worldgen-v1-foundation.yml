@@ -1,0 +1,29 @@
+name: WorldGen V1 foundation baseline
+on:
+  push:
+    branches:
+      - worldgen/v1-foundation-closure
+    paths:
+      - 'js/worldgen/**'
+      - 'index.html'
+      - 'tests/worldgen-v1-foundation-audit.cjs'
+      - '.github/workflows/worldgen-v1-foundation.yml'
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run foundation diagnostics
+        run: node tests/worldgen-v1-foundation-audit.cjs > worldgen-foundation-report.json
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldgen-foundation-report
+          path: worldgen-foundation-report.json
