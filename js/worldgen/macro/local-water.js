@@ -1,6 +1,48 @@
 (() => {
     const macro = window.Game.systems.worldgenMacro;
     const round = value => Number(value.toFixed(6));
+    const SURFACE_WATER = -1;
+
+    function measureSurfaceWaterSpills(branches, saddles) {
+        const parents = new Map([[SURFACE_WATER, SURFACE_WATER]]);
+        const links = new Map([[SURFACE_WATER, []]]);
+        for (const [id, branch] of branches) {
+            branch.retentionToSurfaceWater = null;
+            parents.set(id, id);
+            links.set(id, []);
+        }
+        const rootOf = id => {
+            while (parents.get(id) !== id) {
+                const parent = parents.get(id);
+                parents.set(id, parents.get(parent));
+                id = parents.get(id);
+            }
+            return id;
+        };
+        // Contract monotone catchments into a graph. The minimum spanning
+        // forest keeps a minimum-highest-saddle path to existing water.
+        for (const { from, to, elevation } of Array.from(saddles.values()).sort((a, b) => a.elevation - b.elevation)) {
+            const fromRoot = rootOf(from);
+            const toRoot = rootOf(to);
+            if (fromRoot === toRoot) continue;
+            parents.set(fromRoot, toRoot);
+            links.get(from).push({ id: to, elevation });
+            links.get(to).push({ id: from, elevation });
+        }
+        const queue = [{ id: SURFACE_WATER, parent: null, elevation: 0 }];
+        for (let cursor = 0; cursor < queue.length; cursor += 1) {
+            const node = queue[cursor];
+            for (const link of links.get(node.id)) {
+                if (link.id === node.parent) continue;
+                const elevation = Math.max(node.elevation, link.elevation);
+                const branch = branches.get(link.id);
+                if (branch.receiver === 'local_depression') {
+                    branch.retentionToSurfaceWater = { spillElevation: elevation, storageSpace: 0 };
+                }
+                queue.push({ id: link.id, parent: node.id, elevation });
+            }
+        }
+    }
 
     function measureLocalWater({ signed, width, subdivision = 1, drainage, wetness, seasonality }) {
         const size = signed.length;
@@ -14,6 +56,7 @@
         const input = new Float64Array(size);
         const lowInput = new Float64Array(size);
         const land = [];
+        const saddles = new Map();
 
         for (let cell = 0; cell < size; cell += 1) {
             if (terminal[cell] < 0) continue;
@@ -25,13 +68,22 @@
             branch.lowInputPotential += lowInput[cell];
             const next = downstream[cell];
             if (next >= 0 && terminal[next] >= 0 && drainage.runoffPotentialByCell[cell] > 0) tributaries[next] += 1;
-            if (branch.receiver !== 'local_depression') continue;
             macro.forEachCardinalNeighbor(cell, width, size, neighbor => {
-                if (terminal[neighbor] === terminal[cell]) return;
+                const to = terminal[neighbor];
+                if (to === terminal[cell] || (to < 0 && signed[neighbor] > 0)) return;
                 const sill = Math.max(signed[cell], signed[neighbor]);
-                branch.spillElevation = Math.min(branch.spillElevation ?? Infinity, sill);
+                if (branch.receiver === 'local_depression') {
+                    branch.spillElevation = Math.min(branch.spillElevation ?? Infinity, sill);
+                }
+                if (to >= 0 && neighbor < cell) return;
+                const from = terminal[cell];
+                const key = Math.min(from, to) * size + Math.max(from, to);
+                if (!saddles.has(key) || sill < saddles.get(key).elevation) {
+                    saddles.set(key, { from, to, elevation: sill });
+                }
             });
         }
+        measureSurfaceWaterSpills(branches, saddles);
 
         const sourceCells = [];
         for (let cell = 0; cell < size; cell += 1) {
@@ -40,6 +92,8 @@
             if (branch.spillElevation !== null) {
                 branch.storageSpace += Math.max(0, branch.spillElevation - signed[cell]) * cellArea;
             }
+            const retention = branch.retentionToSurfaceWater;
+            if (retention) retention.storageSpace += Math.max(0, retention.spillElevation - signed[cell]) * cellArea;
             const receivesWater = cell === terminal[cell] && branch.receiver === 'local_depression'
                 && branch.spillElevation > signed[cell] && branch.inputPotential > 0;
             if (receivesWater || tributaries[cell] >= 2) {
@@ -89,7 +143,8 @@
 
     function createWaterAccessSummary() {
         return { landCellCount: 0, sourceCellCount: 0, reachableCellCount: 0, inputPotential: 0,
-            lowInputPotential: 0, storageSpace: 0, distance: 0, ascent: 0, sourceFlow: 0, sourceLowFlow: 0 };
+            lowInputPotential: 0, storageSpace: 0, storageSpaceToSurfaceWater: 0,
+            distance: 0, ascent: 0, sourceFlow: 0, sourceLowFlow: 0 };
     }
 
     function addWaterAccessCell(summary, water, cell) {
@@ -97,8 +152,13 @@
         summary.sourceCellCount += water.hasSource[cell];
         summary.inputPotential += water.input[cell];
         summary.lowInputPotential += water.lowInput[cell];
-        const sill = water.branches.get(water.terminal[cell]).spillElevation;
+        const branch = water.branches.get(water.terminal[cell]);
+        const sill = branch.spillElevation;
         if (sill !== null) summary.storageSpace += Math.max(0, sill - water.signed[cell]) * water.cellArea;
+        if (branch.retentionToSurfaceWater) {
+            summary.storageSpaceToSurfaceWater += Math.max(0, branch.retentionToSurfaceWater.spillElevation
+                - water.signed[cell]) * water.cellArea;
+        }
         if (water.distance[cell] < 0) return;
         summary.reachableCellCount += 1;
         summary.distance += water.distance[cell] / water.subdivision;
@@ -110,7 +170,7 @@
 
     function summarizeWaterAccess({ distance, ascent, sourceFlow, sourceLowFlow, ...row }) {
         return { ...row, inputPotential: round(row.inputPotential), lowInputPotential: round(row.lowInputPotential),
-            storageSpace: round(row.storageSpace),
+            storageSpace: round(row.storageSpace), storageSpaceToSurfaceWater: round(row.storageSpaceToSurfaceWater),
             meanDistance: row.reachableCellCount ? round(distance / row.reachableCellCount) : null,
             meanAscent: row.reachableCellCount ? round(ascent / row.reachableCellCount) : null,
             meanSourceFlow: row.reachableCellCount ? round(sourceFlow / row.reachableCellCount) : null,
@@ -118,8 +178,11 @@
     }
 
     function serializeDrainageBranch(branch) {
+        const retention = branch.retentionToSurfaceWater;
         return { ...branch, inputPotential: round(branch.inputPotential), lowInputPotential: round(branch.lowInputPotential),
-            storageSpace: round(branch.storageSpace) };
+            storageSpace: round(branch.storageSpace), retentionToSurfaceWater: retention && {
+                spillElevation: retention.spillElevation, storageSpace: round(retention.storageSpace)
+            } };
     }
 
     const nonnegative = value => Number.isFinite(value) && value >= 0;
@@ -133,12 +196,20 @@
             && nonnegative(row.inputPotential) && row.inputPotential <= landCells / subdivision ** 2 + 1e-6
             && nonnegative(row.lowInputPotential) && row.lowInputPotential <= row.inputPotential
             && nonnegative(row.storageSpace)
+            && (row.storageSpaceToSurfaceWater === undefined || nonnegative(row.storageSpaceToSurfaceWater))
             && (row.reachableCellCount ? nonnegative(row.meanDistance) && nonnegative(row.meanAscent)
                 : row.meanDistance === null && row.meanAscent === null)
             && (row.meanSourceFlow === undefined && row.meanSourceLowFlow === undefined
                 || (row.reachableCellCount ? nonnegative(row.meanSourceFlow) && nonnegative(row.meanSourceLowFlow)
                     && row.meanSourceLowFlow <= row.meanSourceFlow + 1e-6
                     : row.meanSourceFlow === null && row.meanSourceLowFlow === null));
+    }
+
+    function validRetentionToSurfaceWater(row) {
+        const retention = row.retentionToSurfaceWater;
+        return retention == null || (row.receiver === 'local_depression' && nonnegative(row.spillElevation)
+            && nonnegative(retention.spillElevation) && retention.spillElevation >= row.spillElevation
+            && nonnegative(retention.storageSpace) && retention.storageSpace >= row.storageSpace);
     }
 
     function validateDrainageCoverage(coverage, bounds) {
@@ -163,6 +234,7 @@
                 || !nonnegative(row.inputPotential) || row.inputPotential > row.contributingCells + 1e-6
                 || !nonnegative(row.lowInputPotential) || row.lowInputPotential > row.inputPotential
                 || !nonnegative(row.storageSpace) || (row.spillElevation !== null && !nonnegative(row.spillElevation))
+                || !validRetentionToSurfaceWater(row)
                 || (row.spillElevation === null && row.storageSpace > 0)
                 || (depression ? next !== -1 : !['ocean', 'inland_water'].includes(row.receiver) || !inside(next)
                     || row.spillElevation !== null || Math.abs(cell % bounds.width - next % bounds.width)
@@ -207,5 +279,6 @@
     }
 
     Object.assign(macro, { measureLocalWater, createWaterAccessSummary, addWaterAccessCell, summarizeWaterAccess,
-        serializeDrainageBranch, validateDrainageCoverage, validateWaterAccessSummary, traceDryLandAccess });
+        serializeDrainageBranch, validateDrainageCoverage, validateWaterAccessSummary, validRetentionToSurfaceWater,
+        traceDryLandAccess });
 })();

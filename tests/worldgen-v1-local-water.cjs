@@ -33,8 +33,24 @@ function verifyLocalWaterFixture(macro) {
     const taller = measure(raisedRim, 0.25, 0);
     assert(taller.branches.get(16).storageSpace > wet.branches.get(16).storageSpace);
     assert.equal(taller.branches.get(16).inputPotential, wet.branches.get(16).inputPotential);
+    const joinedBowls = [-0.1, 0.8, 0.2, 0.5, 0.1, 0.9, -0.1];
+    for (const terminal of [2, 4]) {
+        const branch = measure(joinedBowls, 0.25, 0).branches.get(terminal);
+        assert.equal(branch.spillElevation, 0.5);
+        assert.equal(branch.retentionToSurfaceWater.spillElevation, 0.8);
+        assert(branch.retentionToSurfaceWater.storageSpace > branch.storageSpace);
+        const lowerBank = joinedBowls.slice();
+        lowerBank[5] = 0.6;
+        const opened = measure(lowerBank, 0.25, 0).branches.get(terminal);
+        assert.equal(opened.spillElevation, 0.5);
+        assert.equal(opened.retentionToSurfaceWater.spillElevation, 0.6);
+        assert(opened.retentionToSurfaceWater.storageSpace < branch.retentionToSurfaceWater.storageSpace);
+    }
+    const sealed = measure([0.9, 0.8, 0.2, 0.5, 0.1, 0.9, 0.95], 0.25, 0);
+    assert.equal(sealed.branches.get(4).retentionToSurfaceWater, null);
+    assert.equal(sealed.branches.get(4).spillElevation, 0.5);
     return { retainedSpaceRequiresRelief: true, dryBowlHasNoSupply: true, seasonChangesLowInputOnly: true,
-        accessCannotCrossWater: true };
+        accessCannotCrossWater: true, nestedBowlsRequireSecondSaddle: true, sealedBowlHasNoMeasuredExit: true };
 }
 
 function inspectLocalWater(result, macro) {
@@ -77,7 +93,9 @@ function inspectLocalWater(result, macro) {
         largestBranchArea: Math.max(...water.branches.map(branch => branch.contributingCells)),
         reliefWithSources: Object.values(water.reliefRegions).filter(row => row.sourceCellCount > 0).length,
         islandsWithSources: islandEnvironment.records.filter(row => row.waterAccess.sourceCellCount > 0).length,
-        islandsWithRetention: islandEnvironment.records.filter(row => row.waterAccess.storageSpace > 0).length
+        islandsWithRetention: islandEnvironment.records.filter(row => row.waterAccess.storageSpace > 0).length,
+        depressionsWithHigherWaterSpill: water.branches.filter(branch =>
+            branch.retentionToSurfaceWater?.spillElevation > branch.spillElevation).length
     };
 }
 

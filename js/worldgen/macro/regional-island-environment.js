@@ -83,10 +83,11 @@
         const byId = new Map(records.map(row => [row.islandId, { record: row, summary: macro.createWaterAccessSummary() }]));
         for (const cell of landCells) macro.addWaterAccessCell(byId.get(islandByCell[cell]).summary, water, cell);
         for (const outlet of drainage.outlets.sort((a, b) => a.outletCellIndex - b.outletCellIndex)) {
-            const { lowInputPotential, spillElevation, storageSpace } = macro.serializeDrainageBranch(water.branches.get(outlet.outletCellIndex));
+            const { lowInputPotential, spillElevation, storageSpace, retentionToSurfaceWater } =
+                macro.serializeDrainageBranch(water.branches.get(outlet.outletCellIndex));
             byId.get(islandByCell[outlet.outletCellIndex]).record.catchments.push({
                 ...toIslandCatchment(outlet, drainage.runoffPotentialByCell, grid.subdivision),
-                lowInputPotential, spillElevation, storageSpace
+                lowInputPotential, spillElevation, storageSpace, retentionToSurfaceWater
             });
         }
         for (const { record, summary } of byId.values()) {
@@ -155,6 +156,7 @@
             const outlets=new Set();
             let lowInput = 0;
             let storageSpace = 0;
+            let storageSpaceToSurfaceWater = 0;
             for(const c of row.catchments){
                 const next=c?.receivingCellIndex, cell=c?.outletCellIndex;
                 let adjacent=false;
@@ -167,6 +169,7 @@
                 }
                 if (row.waterAccess && (!Number.isFinite(c.lowInputPotential) || c.lowInputPotential < 0
                     || c.lowInputPotential > c.runoffPotential + 1e-6 || !Number.isFinite(c.storageSpace) || c.storageSpace < 0
+                    || !macro.validRetentionToSurfaceWater(c)
                     || (c.spillElevation === null ? c.storageSpace !== 0
                         : !Number.isFinite(c.spillElevation) || c.receiver !== 'local_depression'
                             || (signed && c.spillElevation < signed[cell])))) {
@@ -174,6 +177,7 @@
                 }
                 lowInput += c.lowInputPotential ?? 0;
                 storageSpace += c.storageSpace ?? 0;
+                storageSpaceToSurfaceWater += c.retentionToSurfaceWater?.storageSpace ?? 0;
                 outlets.add(cell);counted+=c.contributingCells;runoff+=c.runoffPotential;
             }
             if(counted!==row.landCellCount||Math.abs(runoff-row.runoffPotential)>(row.catchments.length+1)*1e-6
@@ -182,7 +186,9 @@
             if (row.waterAccess !== undefined && (!macro.validateWaterAccessSummary(row.waterAccess, row.landCellCount, grid.subdivision)
                 || Math.abs(row.waterAccess.inputPotential - row.runoffPotential) > 1e-6
                 || Math.abs(row.waterAccess.lowInputPotential - lowInput) > (row.catchments.length + 1) * 1e-6
-                || Math.abs(row.waterAccess.storageSpace - storageSpace) > (row.catchments.length + 1) * 1e-6)) {
+                || Math.abs(row.waterAccess.storageSpace - storageSpace) > (row.catchments.length + 1) * 1e-6
+                || (row.waterAccess.storageSpaceToSurfaceWater !== undefined &&
+                    Math.abs(row.waterAccess.storageSpaceToSurfaceWater - storageSpaceToSurfaceWater) > (row.catchments.length + 1) * 1e-6))) {
                 errors.push(`Regional access or retention disagrees with catchments in ${row.islandId}.`);
             }
             if (!macro.validateIslandPhysicalSetting(row.physicalSetting, island, landfalls.get(row.islandId), linkCounts.get(row.islandId) || 0)) {
