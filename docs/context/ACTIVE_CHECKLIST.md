@@ -33,4 +33,5 @@ Active global objective: [WORLDGEN_PHASE0_2_GLOBAL_GOAL.md](WORLDGEN_PHASE0_2_GL
 - [ ] F8-T regional carrier closure: verify canonical physical source records, complete island footprints/shorelines/measurements and connected eligible counts on current CI; then establish per-island environmental carriers (climate, freshwater, local access) before historical consumers. Keep area sensitivity advisory until author approves playable scale. No Phase 16 implementation.
 
 - [x] F8-T island environment: inherited climate, local downhill catchments and coverage-weighted Phase 2 projection passed CI on 40 worlds and repeat export on eight local worlds. [Evidence](review/f8t/archipelago/saddle-audit.json)
+- [x] F8-T regional fragmentation: measured traces reconnect two erosion fragments and one fault fragment when only the drowned cells of their originating process are restored. [Evidence](review/f8t/archipelago/fragment-audit.json)
 - [ ] F8-T local environmental limits: detailed local climate, freshwater persistence and island recovery/access still require physical interpretation. Keep unmatched macro climate cells visible in subsequent work.

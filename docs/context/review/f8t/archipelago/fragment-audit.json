@@ -1,0 +1,260 @@
+{
+  "revision": "03949c0ab2446c3b50d51b8c3288ccc02564b92e",
+  "worlds": [
+    {
+      "seed": 2220939230,
+      "islandId": "regional_island_1691_613",
+      "anchor": {
+        "x": 211.375,
+        "y": 76.625
+      },
+      "areaMacroCellUnits": 0.140625,
+      "physicalOrigin": {
+        "mechanism": "erosional_fragment",
+        "sourcePlateId": "plate_05",
+        "macroIslandIds": [],
+        "restoredSeparationPath": [
+          31807,
+          31390,
+          30973
+        ],
+        "regionalVentIds": [],
+        "inheritedLandCells": 9,
+        "volcanicRaisedCells": 0,
+        "faultRaisedCells": 0,
+        "neighboringFaultCutEdges": 0,
+        "neighboringErosionCutEdges": 12
+      },
+      "grid": {
+        "originX": 197,
+        "originY": 67,
+        "subdivision": 8,
+        "width": 417,
+        "height": 481
+      },
+      "pathSamples": [
+        {
+          "regionalCell": 31807,
+          "inheritedElevation": 0.0010664999717846513,
+          "finalElevation": 6.155007577035576e-05,
+          "changeMechanism": "unchanged"
+        },
+        {
+          "regionalCell": 31390,
+          "inheritedElevation": 0.0013409062521532178,
+          "finalElevation": -0.00044635654194280505,
+          "changeMechanism": "erosion"
+        },
+        {
+          "regionalCell": 30973,
+          "inheritedElevation": 0.0016153125325217843,
+          "finalElevation": 0.000525621697306633,
+          "changeMechanism": "unchanged"
+        }
+      ],
+      "connectedAreaSensitivity": [
+        {
+          "minAreaMacroCellUnits": 0.125,
+          "islandCount": 87,
+          "openWaterLandfallCount": 87,
+          "largestConnectedEligibleCount": 87
+        },
+        {
+          "minAreaMacroCellUnits": 0.25,
+          "islandCount": 75,
+          "openWaterLandfallCount": 75,
+          "largestConnectedEligibleCount": 75
+        },
+        {
+          "minAreaMacroCellUnits": 0.5,
+          "islandCount": 53,
+          "openWaterLandfallCount": 53,
+          "largestConnectedEligibleCount": 53
+        },
+        {
+          "minAreaMacroCellUnits": 1,
+          "islandCount": 26,
+          "openWaterLandfallCount": 26,
+          "largestConnectedEligibleCount": 26
+        }
+      ]
+    },
+    {
+      "seed": 2546155002,
+      "islandId": "regional_island_1251_668",
+      "anchor": {
+        "x": 156.375,
+        "y": 83.5
+      },
+      "areaMacroCellUnits": 0.1875,
+      "physicalOrigin": {
+        "mechanism": "fault_fragment",
+        "sourcePlateId": "plate_07",
+        "macroIslandIds": [],
+        "restoredSeparationPath": [
+          89725,
+          90246,
+          90767,
+          91288,
+          91287,
+          91286
+        ],
+        "regionalVentIds": [],
+        "inheritedLandCells": 12,
+        "volcanicRaisedCells": 0,
+        "faultRaisedCells": 0,
+        "neighboringFaultCutEdges": 7,
+        "neighboringErosionCutEdges": 0
+      },
+      "grid": {
+        "originX": 142,
+        "originY": 62,
+        "subdivision": 8,
+        "width": 521,
+        "height": 337
+      },
+      "pathSamples": [
+        {
+          "regionalCell": 89725,
+          "inheritedElevation": 0.0022688123863190413,
+          "finalElevation": 0.0011974553344771266,
+          "changeMechanism": "unchanged"
+        },
+        {
+          "regionalCell": 90246,
+          "inheritedElevation": 0.0015697344206273556,
+          "finalElevation": -0.0010140883969143033,
+          "changeMechanism": "fault"
+        },
+        {
+          "regionalCell": 90767,
+          "inheritedElevation": 0.0008706562221050262,
+          "finalElevation": -0.0017704478232190013,
+          "changeMechanism": "fault"
+        },
+        {
+          "regionalCell": 91288,
+          "inheritedElevation": 0.0001715781254461035,
+          "finalElevation": -0.0008623773464933038,
+          "changeMechanism": "fault"
+        },
+        {
+          "regionalCell": 91287,
+          "inheritedElevation": 2.487500023562461e-05,
+          "finalElevation": -0.0006034905673004687,
+          "changeMechanism": "fault"
+        },
+        {
+          "regionalCell": 91286,
+          "inheritedElevation": 0.0004693593655247241,
+          "finalElevation": 0.0001496173208579421,
+          "changeMechanism": "unchanged"
+        }
+      ],
+      "connectedAreaSensitivity": [
+        {
+          "minAreaMacroCellUnits": 0.125,
+          "islandCount": 63,
+          "openWaterLandfallCount": 63,
+          "largestConnectedEligibleCount": 63
+        },
+        {
+          "minAreaMacroCellUnits": 0.25,
+          "islandCount": 47,
+          "openWaterLandfallCount": 47,
+          "largestConnectedEligibleCount": 47
+        },
+        {
+          "minAreaMacroCellUnits": 0.5,
+          "islandCount": 29,
+          "openWaterLandfallCount": 29,
+          "largestConnectedEligibleCount": 29
+        },
+        {
+          "minAreaMacroCellUnits": 1,
+          "islandCount": 10,
+          "openWaterLandfallCount": 10,
+          "largestConnectedEligibleCount": 10
+        }
+      ]
+    },
+    {
+      "seed": 792866484,
+      "islandId": "regional_island_1605_182",
+      "anchor": {
+        "x": 200.625,
+        "y": 22.75
+      },
+      "areaMacroCellUnits": 0.203125,
+      "physicalOrigin": {
+        "mechanism": "erosional_fragment",
+        "sourcePlateId": "plate_01",
+        "macroIslandIds": [],
+        "restoredSeparationPath": [
+          59044,
+          59045,
+          59046
+        ],
+        "regionalVentIds": [],
+        "inheritedLandCells": 13,
+        "volcanicRaisedCells": 0,
+        "faultRaisedCells": 0,
+        "neighboringFaultCutEdges": 0,
+        "neighboringErosionCutEdges": 13
+      },
+      "grid": {
+        "originX": 151,
+        "originY": 8,
+        "subdivision": 8,
+        "width": 497,
+        "height": 305
+      },
+      "pathSamples": [
+        {
+          "regionalCell": 59044,
+          "inheritedElevation": 0.0005811874871142209,
+          "finalElevation": 4.4554519263328984e-05,
+          "changeMechanism": "unchanged"
+        },
+        {
+          "regionalCell": 59045,
+          "inheritedElevation": 0.0007124687545001507,
+          "finalElevation": -0.0004932984011247754,
+          "changeMechanism": "erosion"
+        },
+        {
+          "regionalCell": 59046,
+          "inheritedElevation": 0.0008437500218860805,
+          "finalElevation": 0.0008437500218860805,
+          "changeMechanism": "unchanged"
+        }
+      ],
+      "connectedAreaSensitivity": [
+        {
+          "minAreaMacroCellUnits": 0.125,
+          "islandCount": 62,
+          "openWaterLandfallCount": 62,
+          "largestConnectedEligibleCount": 62
+        },
+        {
+          "minAreaMacroCellUnits": 0.25,
+          "islandCount": 45,
+          "openWaterLandfallCount": 45,
+          "largestConnectedEligibleCount": 45
+        },
+        {
+          "minAreaMacroCellUnits": 0.5,
+          "islandCount": 27,
+          "openWaterLandfallCount": 27,
+          "largestConnectedEligibleCount": 27
+        },
+        {
+          "minAreaMacroCellUnits": 1,
+          "islandCount": 12,
+          "openWaterLandfallCount": 12,
+          "largestConnectedEligibleCount": 12
+        }
+      ]
+    }
+  ]
+}
