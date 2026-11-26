@@ -1123,5 +1123,423 @@
       "seed": 3271942068,
       "message": "Inherited island offshore_island_30353 was removed or merged"
     }
-  ]
+  ],
+  "macroComparison": {
+    "baseline": "7f82ae1d",
+    "compares": [
+      {
+        "seed": 42,
+        "canonicalRootWithoutRegionalBlockEqual": true,
+        "comparedCollections": {
+          "macroRoutes": true,
+          "chokepoints": true,
+          "coastalOpportunityMap": true,
+          "isolatedZones": true,
+          "seaRegions": true,
+          "riverBasins": true,
+          "environmentalCoverage": true
+        },
+        "handoffEqual": true
+      },
+      {
+        "seed": 137,
+        "canonicalRootWithoutRegionalBlockEqual": true,
+        "comparedCollections": {
+          "macroRoutes": true,
+          "chokepoints": true,
+          "coastalOpportunityMap": true,
+          "isolatedZones": true,
+          "seaRegions": true,
+          "riverBasins": true,
+          "environmentalCoverage": true
+        },
+        "handoffEqual": true
+      },
+      {
+        "seed": 2026,
+        "canonicalRootWithoutRegionalBlockEqual": true,
+        "comparedCollections": {
+          "macroRoutes": true,
+          "chokepoints": true,
+          "coastalOpportunityMap": true,
+          "isolatedZones": true,
+          "seaRegions": true,
+          "riverBasins": true,
+          "environmentalCoverage": true
+        },
+        "handoffEqual": true
+      },
+      {
+        "seed": 16908799,
+        "canonicalRootWithoutRegionalBlockEqual": true,
+        "comparedCollections": {
+          "macroRoutes": true,
+          "chokepoints": true,
+          "coastalOpportunityMap": true,
+          "isolatedZones": true,
+          "seaRegions": true,
+          "riverBasins": true,
+          "environmentalCoverage": true
+        },
+        "handoffEqual": true
+      },
+      {
+        "seed": 2764796977,
+        "canonicalRootWithoutRegionalBlockEqual": true,
+        "comparedCollections": {
+          "macroRoutes": true,
+          "chokepoints": true,
+          "coastalOpportunityMap": true,
+          "isolatedZones": true,
+          "seaRegions": true,
+          "riverBasins": true,
+          "environmentalCoverage": true
+        },
+        "handoffEqual": true
+      },
+      {
+        "seed": 1908874353,
+        "canonicalRootWithoutRegionalBlockEqual": true,
+        "comparedCollections": {
+          "macroRoutes": true,
+          "chokepoints": true,
+          "coastalOpportunityMap": true,
+          "isolatedZones": true,
+          "seaRegions": true,
+          "riverBasins": true,
+          "environmentalCoverage": true
+        },
+        "handoffEqual": true
+      },
+      {
+        "seed": 2576980379,
+        "canonicalRootWithoutRegionalBlockEqual": true,
+        "comparedCollections": {
+          "macroRoutes": true,
+          "chokepoints": true,
+          "coastalOpportunityMap": true,
+          "isolatedZones": true,
+          "seaRegions": true,
+          "riverBasins": true,
+          "environmentalCoverage": true
+        },
+        "handoffEqual": true
+      },
+      {
+        "seed": 3508323923,
+        "canonicalRootWithoutRegionalBlockEqual": true,
+        "comparedCollections": {
+          "macroRoutes": true,
+          "chokepoints": true,
+          "coastalOpportunityMap": true,
+          "isolatedZones": true,
+          "seaRegions": true,
+          "riverBasins": true,
+          "environmentalCoverage": true
+        },
+        "handoffEqual": true
+      }
+    ]
+  },
+  "uint32Edges": {
+    "revision": "19652beda4556a8f58d1e91a85086061ea2b015f",
+    "node": "v22.23.5",
+    "passed": 7,
+    "seeds": [
+      {
+        "seed": 0,
+        "pass": true,
+        "determinism": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true
+        },
+        "regionalArchipelago": {
+          "islandCount": 77,
+          "originCounts": {
+            "inherited": 3,
+            "volcanic_satellite": 74,
+            "fault_uplift": 0,
+            "erosional_fragment": 0,
+            "shelf_remnant": 0
+          },
+          "largestWaterConnectedComponent": 77,
+          "areaSensitivity": [
+            {
+              "minAreaMacroCellUnits": 0.125,
+              "islandCount": 77,
+              "openWaterLandfallCount": 77
+            },
+            {
+              "minAreaMacroCellUnits": 0.25,
+              "islandCount": 64,
+              "openWaterLandfallCount": 64
+            },
+            {
+              "minAreaMacroCellUnits": 0.5,
+              "islandCount": 46,
+              "openWaterLandfallCount": 46
+            },
+            {
+              "minAreaMacroCellUnits": 1,
+              "islandCount": 16,
+              "openWaterLandfallCount": 16
+            }
+          ]
+        }
+      },
+      {
+        "seed": 1,
+        "pass": true,
+        "determinism": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true
+        },
+        "regionalArchipelago": {
+          "islandCount": 102,
+          "originCounts": {
+            "inherited": 3,
+            "volcanic_satellite": 99,
+            "fault_uplift": 0,
+            "erosional_fragment": 0,
+            "shelf_remnant": 0
+          },
+          "largestWaterConnectedComponent": 102,
+          "areaSensitivity": [
+            {
+              "minAreaMacroCellUnits": 0.125,
+              "islandCount": 102,
+              "openWaterLandfallCount": 102
+            },
+            {
+              "minAreaMacroCellUnits": 0.25,
+              "islandCount": 87,
+              "openWaterLandfallCount": 87
+            },
+            {
+              "minAreaMacroCellUnits": 0.5,
+              "islandCount": 55,
+              "openWaterLandfallCount": 55
+            },
+            {
+              "minAreaMacroCellUnits": 1,
+              "islandCount": 15,
+              "openWaterLandfallCount": 15
+            }
+          ]
+        }
+      },
+      {
+        "seed": 2,
+        "pass": true,
+        "determinism": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true
+        },
+        "regionalArchipelago": {
+          "islandCount": 69,
+          "originCounts": {
+            "inherited": 3,
+            "volcanic_satellite": 66,
+            "fault_uplift": 0,
+            "erosional_fragment": 0,
+            "shelf_remnant": 0
+          },
+          "largestWaterConnectedComponent": 69,
+          "areaSensitivity": [
+            {
+              "minAreaMacroCellUnits": 0.125,
+              "islandCount": 69,
+              "openWaterLandfallCount": 69
+            },
+            {
+              "minAreaMacroCellUnits": 0.25,
+              "islandCount": 59,
+              "openWaterLandfallCount": 59
+            },
+            {
+              "minAreaMacroCellUnits": 0.5,
+              "islandCount": 43,
+              "openWaterLandfallCount": 43
+            },
+            {
+              "minAreaMacroCellUnits": 1,
+              "islandCount": 20,
+              "openWaterLandfallCount": 20
+            }
+          ]
+        }
+      },
+      {
+        "seed": 2147483647,
+        "pass": true,
+        "determinism": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true
+        },
+        "regionalArchipelago": {
+          "islandCount": 65,
+          "originCounts": {
+            "inherited": 3,
+            "volcanic_satellite": 62,
+            "fault_uplift": 0,
+            "erosional_fragment": 0,
+            "shelf_remnant": 0
+          },
+          "largestWaterConnectedComponent": 65,
+          "areaSensitivity": [
+            {
+              "minAreaMacroCellUnits": 0.125,
+              "islandCount": 65,
+              "openWaterLandfallCount": 65
+            },
+            {
+              "minAreaMacroCellUnits": 0.25,
+              "islandCount": 58,
+              "openWaterLandfallCount": 58
+            },
+            {
+              "minAreaMacroCellUnits": 0.5,
+              "islandCount": 41,
+              "openWaterLandfallCount": 41
+            },
+            {
+              "minAreaMacroCellUnits": 1,
+              "islandCount": 22,
+              "openWaterLandfallCount": 22
+            }
+          ]
+        }
+      },
+      {
+        "seed": 2147483648,
+        "pass": true,
+        "determinism": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true
+        },
+        "regionalArchipelago": {
+          "islandCount": 149,
+          "originCounts": {
+            "inherited": 4,
+            "volcanic_satellite": 145,
+            "fault_uplift": 0,
+            "erosional_fragment": 0,
+            "shelf_remnant": 0
+          },
+          "largestWaterConnectedComponent": 149,
+          "areaSensitivity": [
+            {
+              "minAreaMacroCellUnits": 0.125,
+              "islandCount": 149,
+              "openWaterLandfallCount": 149
+            },
+            {
+              "minAreaMacroCellUnits": 0.25,
+              "islandCount": 129,
+              "openWaterLandfallCount": 129
+            },
+            {
+              "minAreaMacroCellUnits": 0.5,
+              "islandCount": 101,
+              "openWaterLandfallCount": 101
+            },
+            {
+              "minAreaMacroCellUnits": 1,
+              "islandCount": 48,
+              "openWaterLandfallCount": 48
+            }
+          ]
+        }
+      },
+      {
+        "seed": 4294967294,
+        "pass": true,
+        "determinism": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true
+        },
+        "regionalArchipelago": {
+          "islandCount": 75,
+          "originCounts": {
+            "inherited": 3,
+            "volcanic_satellite": 72,
+            "fault_uplift": 0,
+            "erosional_fragment": 0,
+            "shelf_remnant": 0
+          },
+          "largestWaterConnectedComponent": 75,
+          "areaSensitivity": [
+            {
+              "minAreaMacroCellUnits": 0.125,
+              "islandCount": 75,
+              "openWaterLandfallCount": 75
+            },
+            {
+              "minAreaMacroCellUnits": 0.25,
+              "islandCount": 56,
+              "openWaterLandfallCount": 56
+            },
+            {
+              "minAreaMacroCellUnits": 0.5,
+              "islandCount": 45,
+              "openWaterLandfallCount": 45
+            },
+            {
+              "minAreaMacroCellUnits": 1,
+              "islandCount": 17,
+              "openWaterLandfallCount": 17
+            }
+          ]
+        }
+      },
+      {
+        "seed": 4294967295,
+        "pass": true,
+        "determinism": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true
+        },
+        "regionalArchipelago": {
+          "islandCount": 110,
+          "originCounts": {
+            "inherited": 4,
+            "volcanic_satellite": 106,
+            "fault_uplift": 0,
+            "erosional_fragment": 0,
+            "shelf_remnant": 0
+          },
+          "largestWaterConnectedComponent": 110,
+          "areaSensitivity": [
+            {
+              "minAreaMacroCellUnits": 0.125,
+              "islandCount": 110,
+              "openWaterLandfallCount": 110
+            },
+            {
+              "minAreaMacroCellUnits": 0.25,
+              "islandCount": 82,
+              "openWaterLandfallCount": 82
+            },
+            {
+              "minAreaMacroCellUnits": 0.5,
+              "islandCount": 45,
+              "openWaterLandfallCount": 45
+            },
+            {
+              "minAreaMacroCellUnits": 1,
+              "islandCount": 9,
+              "openWaterLandfallCount": 9
+            }
+          ]
+        }
+      }
+    ]
+  }
 }
