@@ -284,8 +284,374 @@
       ]
     },
     "regression": {
-      "knownFailureSeed": 137,
-      "observedGate": "Phase 1 choke usefulness"
+      "accepted": 42,
+      "attempted": 43,
+      "issues": [
+        {
+          "seed": 137,
+          "phase": "phase1",
+          "message": "[worldgen/foundation] phase1: Invalid Phase 1 handoff."
+        }
+      ],
+      "controls": [
+        {
+          "name": "Phase 0 official intake and seed tamper rejection",
+          "pass": true,
+          "details": true
+        },
+        {
+          "name": "Maritime demand requires supported sea routes",
+          "pass": true,
+          "details": [
+            0.3585,
+            0.3717,
+            0.394
+          ]
+        },
+        {
+          "name": "Phase 2 fixture harness",
+          "pass": true,
+          "details": {
+            "smoke": {
+              "total": 4,
+              "passed": 4,
+              "failed": 0,
+              "status": "pass"
+            },
+            "regression": {
+              "total": 6,
+              "passed": 6,
+              "failed": 0,
+              "status": "pass"
+            }
+          }
+        },
+        {
+          "name": "Physical passage closure and terminal negative controls",
+          "pass": true,
+          "details": [
+            "terminal cell rejected",
+            "terminal access rejected",
+            "disconnection",
+            "no effect",
+            "alternate water path"
+          ]
+        },
+        {
+          "name": "A coast node must enter a connected water segment",
+          "pass": true,
+          "details": {
+            "isolatedBorderWaterRejected": true
+          }
+        },
+        {
+          "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+          "pass": true,
+          "details": {
+            "flatPreservesDrift": true,
+            "tiltedShelfShiftsPeaks": [
+              0,
+              1,
+              2,
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "name": "Land-weighted pressure and local recovery timing",
+          "pass": true,
+          "details": {
+            "splitPreservesPressure": 0.625,
+            "splitPreservesRecovery": 0.35,
+            "recoveryByDelayLocation": [
+              0.35,
+              0.625
+            ]
+          }
+        },
+        {
+          "name": "Signed final terrain and carved-bed controls",
+          "pass": true,
+          "details": {
+            "assignments": [
+              "original",
+              "cleanup_submergence",
+              "cleanup_fill",
+              "marine_carving",
+              "marine_accretion"
+            ],
+            "alteredBedFollowsAvailableWater": true
+          }
+        },
+        {
+          "name": "Final downhill routing and water receiver controls",
+          "pass": true,
+          "details": {
+            "terminalTypes": [
+              "ocean",
+              "inland_water",
+              "local_depression"
+            ]
+          }
+        },
+        {
+          "name": "Saddles require both rising and falling transects",
+          "pass": true,
+          "details": {
+            "saddleRequiresOppositeSlopes": true
+          }
+        },
+        {
+          "name": "Regional landfalls require open water",
+          "pass": true,
+          "details": {
+            "enclosedWaterRejected": true
+          }
+        },
+        {
+          "name": "Regional surface requires local physical support",
+          "pass": true,
+          "details": {
+            "noUnsupportedEmergence": true,
+            "faultUpliftExercised": true,
+            "erosionExercised": true,
+            "inheritedSaddlePreservesIndependentUplift": true,
+            "independentlyRestoredSeparation": true
+          }
+        },
+        {
+          "name": "Regional carrier capacity and complete raster-backed island geometry",
+          "pass": true,
+          "details": {
+            "distinctWaterNetworks": true,
+            "smallTransitIslandAllowed": true,
+            "completeLandComponent": true,
+            "completeShoreline": true,
+            "measuredElevation": true
+          }
+        },
+        {
+          "name": "Regional drainage conserves land and responds to wetness",
+          "pass": true,
+          "details": {
+            "drainageConservesArea": true,
+            "wetnessChangesRunoffNotGeometry": true,
+            "depressionNotAssumedWater": true
+          }
+        },
+        {
+          "name": "Immutable handoffs and fail-closed Phase 2",
+          "pass": true,
+          "details": {
+            "invalidRootRejected": true,
+            "invalidCoverageRejected": true,
+            "unresolvedReferenceRejected": true,
+            "invalidExportBlocked": true,
+            "noPhase2AfterFailedPhase1": true,
+            "rejectedCandidateDiagnosticOnly": true
+          }
+        },
+        {
+          "name": "Fixed-seed upstream interventions",
+          "pass": true,
+          "details": {
+            "seed": 42,
+            "fixedSubseeds": {
+              "macroGeographySeed": 363947094,
+              "pressureSeed": 4107865506,
+              "rhythmSeed": 306034812
+            },
+            "routeCarriers": {
+              "routeId": "macro_route_001",
+              "seaRegionIds": [
+                "sea_01"
+              ],
+              "reliefRegionIds": [
+                "relief_001",
+                "relief_002"
+              ],
+              "navigationWindows": [
+                0.714637,
+                0.443514
+              ]
+            },
+            "environmentalVolatility": {
+              "values": [
+                0.1,
+                0.9
+              ],
+              "changedStormCells": 21973,
+              "physicalControls": [
+                "platePressureField",
+                "coastJaggednessControlledLandWaterMaskField",
+                "seaLevelAppliedElevationField",
+                "temperatureColdLoadField",
+                "wetnessField"
+              ],
+              "seaRegionId": "sea_01",
+              "seaStormPressure": [
+                0.4353152933278266,
+                0.47860202357857873
+              ],
+              "stormBreakRisk": [
+                0.126158,
+                0.129639
+              ],
+              "stormCadence": [
+                0.237196,
+                0.23785
+              ]
+            },
+            "routeFragilityBias": {
+              "values": [
+                0.1,
+                0.9
+              ],
+              "supportedRoutes": 10,
+              "susceptibility": [
+                [
+                  "macro_route_001",
+                  0.8255183999999999,
+                  0.8334815999999999
+                ],
+                [
+                  "macro_route_002",
+                  0.88,
+                  1
+                ],
+                [
+                  "macro_route_003",
+                  0.88,
+                  1
+                ],
+                [
+                  "macro_route_004",
+                  0.88,
+                  1
+                ],
+                [
+                  "macro_route_005",
+                  0.88,
+                  1
+                ],
+                [
+                  "macro_route_006",
+                  0.88,
+                  1
+                ],
+                [
+                  "macro_route_007",
+                  0.88,
+                  1
+                ],
+                [
+                  "macro_route_008",
+                  0.88,
+                  1
+                ],
+                [
+                  "macro_route_009",
+                  0.88,
+                  1
+                ],
+                [
+                  "macro_route_010",
+                  0.88,
+                  1
+                ]
+              ],
+              "phase2ControlsStable": true
+            },
+            "socialControls": [
+              {
+                "channel": "conflictPressure",
+                "phase1ControlsStable": true,
+                "phase2ReceivesSameInput": true
+              },
+              {
+                "channel": "collapseIntensity",
+                "phase1ControlsStable": true,
+                "phase2ReceivesSameInput": true
+              }
+            ],
+            "rainShadow": {
+              "namespace": "macro.climateEnvelope.rainShadow",
+              "fixedSeed": 1733297584,
+              "shadowedCells": [
+                0,
+                11058
+              ],
+              "mean": [
+                0,
+                0.081224
+              ]
+            },
+            "catchmentScale": {
+              "range": [
+                0.032,
+                0.42
+              ],
+              "riverBasinId": "basin_001",
+              "reliefRegionId": "relief_002",
+              "waterReliabilityInverse": [
+                0.517878,
+                0.04837
+              ],
+              "runoffSupport": [
+                0.076666,
+                0.163368
+              ],
+              "recoveryTempo": [
+                0.074644,
+                0.11362
+              ],
+              "foodClimateBandId": "climate_007",
+              "foodStress": [
+                0.199428,
+                0.083045
+              ],
+              "unchangedIndependentBands": 103,
+              "climateControlsStable": true
+            }
+          }
+        },
+        {
+          "name": "Recovery locality on seed 16908799",
+          "pass": true,
+          "details": {
+            "isolation": {
+              "zoneId": "iso_002",
+              "localId": "relief_004",
+              "unchangedPeer": "relief_002",
+              "stabilizationDrag": [
+                0.120483,
+                0.262024
+              ]
+            },
+            "transport": {
+              "routeId": "macro_route_001",
+              "reliefId": "relief_001",
+              "mobilitySupport": [
+                0.478944,
+                0.521204
+              ],
+              "regionsWithoutRouteBonus": [
+                "relief_004",
+                "relief_005",
+                "relief_006"
+              ]
+            },
+            "terrain": {
+              "reliefId": "relief_001",
+              "recoveryTempo": [
+                0.183902,
+                0.031112
+              ]
+            }
+          }
+        }
+      ]
     }
   },
   "pairedRows": [
