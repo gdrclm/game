@@ -17,6 +17,8 @@ Current engineering work only; past iterations and measurements are preserved in
 - [x] F8-S pinned checkpoint on `4ff1f8f`: 43/43 mandatory, 54/64 original stress, 7/7 edges, unchanged rejection causes. First independent cohort 16/16 on `dad7485`. [Maps and exact rejections](review/f8t/local-water/README.md)
 - [x] Linked-basin retention on `bd3eb9b`: capacity before first saddle and capacity on the spill path to existing water are distinct. Four focused worlds and an intentional rejection exercised.
 
+- [x] Sea boundary regression: retain polar boundary-only water as measured geometry and require an interior cell for a macro sea; `3840024598` now belongs to the mandatory cohort. [Evidence](review/f8t/closure/README.md)
+
 ## Active technical work (do not restart completed milestones)
 - [ ] F8-T water closure: validate how measured branches, local access, seasonal input and retention should alter environmental pressure/recovery. Retain 42, 16908799 and all confirmed regression controls; no global coefficient patch to force acceptance.
 - [ ] F8-T local environment: per-island water persistence/access, climate refinement and physical recovery interpretation; report unresolved data, not guessed potable-water availability.

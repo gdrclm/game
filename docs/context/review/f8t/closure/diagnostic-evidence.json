@@ -1,0 +1,116 @@
+{
+  "boundaryWater": {
+    "seed": 3840024598,
+    "beforeRevision": "b725d236a1b946f4ab0445b26ce65e5e57eab1ac",
+    "afterRevision": "094e9cb5bc840fb2dc29ef858a9662c28f8b0e27",
+    "beforeError": "[worldgen/foundation] phase1: [seaRegionRecord] \"primaryClimateBandId\" must be a non-empty string. [seaRegionRecord] \"climateBandIds\" must contain at least 1 item(s).",
+    "phase1Exported": true,
+    "phase2Exported": true,
+    "boundaryOnlyWater": [
+      {
+        "sourceBasinId": "open_ocean_04",
+        "cellIndices": [
+          254,
+          255
+        ]
+      }
+    ],
+    "preservedSurfaceAndClimate": {
+      "finalRelativeElevationField": true,
+      "coastJaggednessControlledLandWaterMaskField": true,
+      "oceanConnectivityMaskField": true,
+      "temperatureColdLoadField": true,
+      "wetnessField": true,
+      "seasonalityField": true,
+      "stormCorridorField": true
+    },
+    "seaRegionIds": [
+      "sea_01",
+      "sea_02",
+      "sea_03",
+      "sea_05",
+      "sea_06",
+      "sea_07"
+    ]
+  },
+  "pressureAndRhythm": {
+    "seed": 1665754063,
+    "revision": "b725d236a1b946f4ab0445b26ce65e5e57eab1ac",
+    "checks": [
+      {
+        "checkId": "phase2.distribution.pressure_rhythm_differentiation",
+        "status": "fail",
+        "message": "Pressure and rhythm layers are too distributionally similar and risk monotony.",
+        "details": [
+          "meanAbsDifference=0.036",
+          "pressureSpread=0.561",
+          "rhythmSpread=0.582"
+        ],
+        "affectedPaths": [
+          "pressureFieldPackage.synthesized",
+          "environmentalRhythmPackage.synthesized"
+        ],
+        "meta": {
+          "distributionValidation": true,
+          "meanAbsDifference": 0.035967,
+          "pressureSpread": 0.561335,
+          "rhythmSpread": 0.582463
+        }
+      }
+    ],
+    "ecologicalFragility": {
+      "relief_001": 0.29315,
+      "relief_002": 0.121123,
+      "relief_003": 0.058074,
+      "relief_004": 0.086438,
+      "relief_005": 0.084425,
+      "relief_006": 0.095282,
+      "relief_007": 0.12076,
+      "relief_008": 0.10121
+    },
+    "reliefPersistence": {
+      "relief_001": 0.112682,
+      "relief_002": 0.167255,
+      "relief_003": 0.399884,
+      "relief_004": 0.175568,
+      "relief_005": 0.384792,
+      "relief_006": 0.374688,
+      "relief_007": 0.157365,
+      "relief_008": 0.386531
+    },
+    "recoveryTempo": {
+      "relief_001": 0.099531,
+      "relief_002": 0.137248,
+      "relief_003": 0.193611,
+      "relief_004": 0.143249,
+      "relief_005": 0.191571,
+      "relief_006": 0.132726,
+      "relief_007": 0.122483,
+      "relief_008": 0.125013
+    },
+    "routeReliabilityInverse": {
+      "macro_route_001": 0.507399,
+      "macro_route_002": 0.573779,
+      "macro_route_003": 0.573709,
+      "macro_route_004": 0.541066,
+      "macro_route_005": 0.553069,
+      "macro_route_006": 0.552922,
+      "macro_route_007": 0.520673,
+      "macro_route_008": 0.548893,
+      "macro_route_009": 0.552372,
+      "macro_route_010": 0.552227
+    },
+    "navigationWindowReliability": {
+      "macro_route_001": 0.513775,
+      "macro_route_002": 0.371356,
+      "macro_route_003": 0.356438,
+      "macro_route_004": 0.415377,
+      "macro_route_005": 0.35474,
+      "macro_route_006": 0.340673,
+      "macro_route_007": 0.391549,
+      "macro_route_008": 0.317927,
+      "macro_route_009": 0.353843,
+      "macro_route_010": 0.334062
+    }
+  }
+}
