@@ -1,0 +1,1718 @@
+{
+  "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+  "node": "v22.23.5",
+  "terrainSource": "finalRelativeElevationField, finalDrainage, wetnessField and legacy watershed footprint",
+  "experimentalInput": "replace catchmentScale with catchmentScale * meanWetness / 0.12, capped at 1 in a Phase 2-only in-memory overlay",
+  "precipitationReference": "Maximum amplitude of the latitude wetness baseline",
+  "modelStatus": "research_only",
+  "worlds": [
+    {
+      "seed": 1054323503,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": false,
+      "recoveryMean": 0.316735,
+      "medianLandWetness": 0.00035099999999999997,
+      "meanLandWetness": 0.035426768538135596,
+      "landCells": 7552,
+      "closedDrainageFraction": 0.0,
+      "landFractionWithZeroWaterReliabilityInverse": 0.9717955508474576,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 3706,
+        "topologicalScale": 0.48963422685857655,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.029305769023205613,
+        "medianWetness": 0.00028,
+        "independentTerminalCount": 309,
+        "largestTerminalCellCount": 346,
+        "regularSeaDrainingFraction": 1.0,
+        "closedDepressionFraction": 0.0
+      },
+      "actualReceiverCounts": {
+        "local_depression": 0,
+        "inland_water": 0,
+        "ocean": 7552
+      },
+      "supportByRelief": {
+        "relief_001": 0.253619,
+        "relief_002": 0.448495,
+        "relief_003": 0.448495,
+        "relief_004": 0.060428,
+        "relief_005": 0.070816,
+        "relief_006": 0.070738
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 3706,
+          "topologicalScale": 0.48963422685857655,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.029305769023205613,
+          "medianWetness": 0.00028,
+          "independentTerminalCount": 309,
+          "largestTerminalCellCount": 346,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_002",
+          "area": 3633,
+          "topologicalScale": 0.48184339099432194,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.03815997660335811,
+          "medianWetness": 0,
+          "independentTerminalCount": 472,
+          "largestTerminalCellCount": 385,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_003",
+          "area": 85,
+          "topologicalScale": 0.011488181698138122,
+          "pressureReliabilityInverse": 0.547618,
+          "meanWetness": 0.09760929411764706,
+          "medianWetness": 0.05277,
+          "independentTerminalCount": 28,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_004",
+          "area": 68,
+          "topologicalScale": 0.009111316519212993,
+          "pressureReliabilityInverse": 0.532268,
+          "meanWetness": 0.06132997058823529,
+          "medianWetness": 0.0243495,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_005",
+          "area": 60,
+          "topologicalScale": 0.00792288392975043,
+          "pressureReliabilityInverse": 0.552079,
+          "meanWetness": 0.13055588333333332,
+          "medianWetness": 0.082792,
+          "independentTerminalCount": 22,
+          "largestTerminalCellCount": 4,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 1240171611,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": false,
+      "recoveryMean": 0.325517,
+      "medianLandWetness": 0.010259,
+      "meanLandWetness": 0.03818743952009441,
+      "landCells": 15253,
+      "closedDrainageFraction": 0.005507113354749885,
+      "landFractionWithZeroWaterReliabilityInverse": 0.589523372451321,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 8992,
+        "topologicalScale": 0.5893207695327837,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.02953639290480427,
+        "medianWetness": 0.0027670000000000004,
+        "independentTerminalCount": 627,
+        "largestTerminalCellCount": 399,
+        "regularSeaDrainingFraction": 0.9906583629893239,
+        "closedDepressionFraction": 0.009341637010676156
+      },
+      "actualReceiverCounts": {
+        "local_depression": 84,
+        "inland_water": 0,
+        "ocean": 15169
+      },
+      "supportByRelief": {
+        "relief_001": 0.39141,
+        "relief_002": 0.39141,
+        "relief_003": 0.204035,
+        "relief_004": 0.033958,
+        "relief_005": 0.020971,
+        "relief_006": 0.025629,
+        "relief_007": 0.097495
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 8992,
+          "topologicalScale": 0.5893207695327837,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.02953639290480427,
+          "medianWetness": 0.0027670000000000004,
+          "independentTerminalCount": 627,
+          "largestTerminalCellCount": 399,
+          "regularSeaDrainingFraction": 0.9906583629893239,
+          "closedDepressionFraction": 0.009341637010676156
+        },
+        {
+          "id": "basin_002",
+          "area": 4170,
+          "topologicalScale": 0.2733935348776338,
+          "pressureReliabilityInverse": 0.130117,
+          "meanWetness": 0.05250390383693046,
+          "medianWetness": 0.027942,
+          "independentTerminalCount": 364,
+          "largestTerminalCellCount": 349,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_003",
+          "area": 1575,
+          "topologicalScale": 0.10332417222876587,
+          "pressureReliabilityInverse": 0.299016,
+          "meanWetness": 0.022270005714285716,
+          "medianWetness": 0.007656,
+          "independentTerminalCount": 112,
+          "largestTerminalCellCount": 175,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_004",
+          "area": 274,
+          "topologicalScale": 0.01799502682894909,
+          "pressureReliabilityInverse": 0.500075,
+          "meanWetness": 0.10837044160583942,
+          "medianWetness": 0.0687965,
+          "independentTerminalCount": 38,
+          "largestTerminalCellCount": 13,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_005",
+          "area": 68,
+          "topologicalScale": 0.004449679361340139,
+          "pressureReliabilityInverse": 0.595926,
+          "meanWetness": 0.15205516176470588,
+          "medianWetness": 0.0982535,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_006",
+          "area": 56,
+          "topologicalScale": 0.003729878288182175,
+          "pressureReliabilityInverse": 0.650606,
+          "meanWetness": 0.19080403571428572,
+          "medianWetness": 0.1227955,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_008",
+          "area": 45,
+          "topologicalScale": 0.002944640753828033,
+          "pressureReliabilityInverse": 0.593007,
+          "meanWetness": 0.2386634222222222,
+          "medianWetness": 0.222967,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 4,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 16908799,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": true,
+      "recoveryMean": 0.189504,
+      "medianLandWetness": 0,
+      "meanLandWetness": 0.044835369402555544,
+      "landCells": 8687,
+      "closedDrainageFraction": 0.0,
+      "landFractionWithZeroWaterReliabilityInverse": 0.6140209508460919,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 5334,
+        "topologicalScale": 0.6136807069895558,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.04169876715410573,
+        "medianWetness": 0.0,
+        "independentTerminalCount": 702,
+        "largestTerminalCellCount": 271,
+        "regularSeaDrainingFraction": 0.9206974128233971,
+        "closedDepressionFraction": 0.0
+      },
+      "actualReceiverCounts": {
+        "local_depression": 0,
+        "inland_water": 2634,
+        "ocean": 6053
+      },
+      "supportByRelief": {
+        "relief_001": 0.161173,
+        "relief_002": 0.220318,
+        "relief_003": 0.198021,
+        "relief_004": 0.220318,
+        "relief_005": 0.238137,
+        "relief_006": 0.238137,
+        "relief_007": 0.068387,
+        "relief_008": 0.045587,
+        "relief_009": 0.046109,
+        "relief_010": 0.039541
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 5334,
+          "topologicalScale": 0.6136807069895558,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.04169876715410573,
+          "medianWetness": 0.0,
+          "independentTerminalCount": 702,
+          "largestTerminalCellCount": 271,
+          "regularSeaDrainingFraction": 0.9206974128233971,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_002",
+          "area": 935,
+          "topologicalScale": 0.10731091472512339,
+          "pressureReliabilityInverse": 0.680422,
+          "meanWetness": 0.040010605347593584,
+          "medianWetness": 0.003766,
+          "independentTerminalCount": 120,
+          "largestTerminalCellCount": 51,
+          "regularSeaDrainingFraction": 0.0010695187165775401,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_003",
+          "area": 895,
+          "topologicalScale": 0.1029496155170435,
+          "pressureReliabilityInverse": 0.236789,
+          "meanWetness": 0.06273656201117318,
+          "medianWetness": 0,
+          "independentTerminalCount": 140,
+          "largestTerminalCellCount": 107,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_004",
+          "area": 669,
+          "topologicalScale": 0.07678182026856421,
+          "pressureReliabilityInverse": 0.715343,
+          "meanWetness": 0.02549001494768311,
+          "medianWetness": 0,
+          "independentTerminalCount": 88,
+          "largestTerminalCellCount": 73,
+          "regularSeaDrainingFraction": 0.008968609865470852,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_005",
+          "area": 623,
+          "topologicalScale": 0.07150235280615173,
+          "pressureReliabilityInverse": 0.678986,
+          "meanWetness": 0.0354663948635634,
+          "medianWetness": 0.007988,
+          "independentTerminalCount": 60,
+          "largestTerminalCellCount": 73,
+          "regularSeaDrainingFraction": 0.014446227929373997,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_006",
+          "area": 85,
+          "topologicalScale": 0.009870308734075519,
+          "pressureReliabilityInverse": 0.545522,
+          "meanWetness": 0.12124417647058823,
+          "medianWetness": 0.020895,
+          "independentTerminalCount": 27,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_007",
+          "area": 54,
+          "topologicalScale": 0.0070010329392861245,
+          "pressureReliabilityInverse": 0.58896,
+          "meanWetness": 0.15787822222222225,
+          "medianWetness": 0.0998795,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_008",
+          "area": 49,
+          "topologicalScale": 0.00573855158957879,
+          "pressureReliabilityInverse": 0.596601,
+          "meanWetness": 0.15736132653061224,
+          "medianWetness": 0.079461,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 4,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_009",
+          "area": 43,
+          "topologicalScale": 0.005164696430620911,
+          "pressureReliabilityInverse": 0.560877,
+          "meanWetness": 0.18172611627906976,
+          "medianWetness": 0.120008,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 4,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 2094783996,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": false,
+      "recoveryMean": 0.349056,
+      "medianLandWetness": 0.004724,
+      "meanLandWetness": 0.03280618239653702,
+      "landCells": 15247,
+      "closedDrainageFraction": 0.2482455565029186,
+      "landFractionWithZeroWaterReliabilityInverse": 0.5502721846920706,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 8390,
+        "topologicalScale": 0.54940737345295,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.02569895387365912,
+        "medianWetness": 0.0016335,
+        "independentTerminalCount": 334,
+        "largestTerminalCellCount": 1608,
+        "regularSeaDrainingFraction": 0.6601907032181168,
+        "closedDepressionFraction": 0.3398092967818832
+      },
+      "actualReceiverCounts": {
+        "local_depression": 3785,
+        "inland_water": 0,
+        "ocean": 11462
+      },
+      "supportByRelief": {
+        "relief_001": 0.149041,
+        "relief_002": 0.44226,
+        "relief_003": 0.047454,
+        "relief_004": 0.041188,
+        "relief_005": 0.108244,
+        "relief_006": 0.032463,
+        "relief_007": 0.035362,
+        "relief_008": 0.43492
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 8390,
+          "topologicalScale": 0.54940737345295,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.02569895387365912,
+          "medianWetness": 0.0016335,
+          "independentTerminalCount": 334,
+          "largestTerminalCellCount": 1608,
+          "regularSeaDrainingFraction": 0.6601907032181168,
+          "closedDepressionFraction": 0.3398092967818832
+        },
+        {
+          "id": "basin_002",
+          "area": 2014,
+          "topologicalScale": 0.1321458974526881,
+          "pressureReliabilityInverse": 0.280871,
+          "meanWetness": 0.04689847964250248,
+          "medianWetness": 0.006605,
+          "independentTerminalCount": 168,
+          "largestTerminalCellCount": 148,
+          "regularSeaDrainingFraction": 0.9930486593843099,
+          "closedDepressionFraction": 0.006951340615690168
+        },
+        {
+          "id": "basin_003",
+          "area": 1176,
+          "topologicalScale": 0.07700870931831576,
+          "pressureReliabilityInverse": 0.152421,
+          "meanWetness": 0.013735597789115647,
+          "medianWetness": 0.0,
+          "independentTerminalCount": 11,
+          "largestTerminalCellCount": 368,
+          "regularSeaDrainingFraction": 0.5476190476190477,
+          "closedDepressionFraction": 0.4523809523809524
+        },
+        {
+          "id": "basin_004",
+          "area": 743,
+          "topologicalScale": 0.04865431209482025,
+          "pressureReliabilityInverse": 0.317717,
+          "meanWetness": 0.02756236608344549,
+          "medianWetness": 0.021119,
+          "independentTerminalCount": 40,
+          "largestTerminalCellCount": 149,
+          "regularSeaDrainingFraction": 0.9569313593539704,
+          "closedDepressionFraction": 0.04306864064602961
+        },
+        {
+          "id": "basin_005",
+          "area": 697,
+          "topologicalScale": 0.04577303385501932,
+          "pressureReliabilityInverse": 0.453251,
+          "meanWetness": 0.013920552367288378,
+          "medianWetness": 0.004528,
+          "independentTerminalCount": 41,
+          "largestTerminalCellCount": 162,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_006",
+          "area": 609,
+          "topologicalScale": 0.03987951018269923,
+          "pressureReliabilityInverse": 0.289198,
+          "meanWetness": 0.0035084630541871924,
+          "medianWetness": 0,
+          "independentTerminalCount": 8,
+          "largestTerminalCellCount": 348,
+          "regularSeaDrainingFraction": 0.4154351395730706,
+          "closedDepressionFraction": 0.5845648604269293
+        },
+        {
+          "id": "basin_007",
+          "area": 503,
+          "topologicalScale": 0.033658568528583586,
+          "pressureReliabilityInverse": 0.456121,
+          "meanWetness": 0.1117332564612326,
+          "medianWetness": 0.06893,
+          "independentTerminalCount": 95,
+          "largestTerminalCellCount": 55,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_011",
+          "area": 109,
+          "topologicalScale": 0.007137712003143212,
+          "pressureReliabilityInverse": 0.585985,
+          "meanWetness": 0.0946455871559633,
+          "medianWetness": 0.045116,
+          "independentTerminalCount": 31,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_014",
+          "area": 81,
+          "topologicalScale": 0.0054351384978063,
+          "pressureReliabilityInverse": 0.585166,
+          "meanWetness": 0.13327276543209876,
+          "medianWetness": 0.061658,
+          "independentTerminalCount": 26,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_015",
+          "area": 76,
+          "topologicalScale": 0.004976753323292516,
+          "pressureReliabilityInverse": 0.613978,
+          "meanWetness": 0.16839897368421053,
+          "medianWetness": 0.0855275,
+          "independentTerminalCount": 26,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_016",
+          "area": 69,
+          "topologicalScale": 0.004518368148778731,
+          "pressureReliabilityInverse": 0.590997,
+          "meanWetness": 0.20515128985507244,
+          "medianWetness": 0.13995,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 2461506081,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": true,
+      "recoveryMean": 0.291303,
+      "medianLandWetness": 0.0,
+      "meanLandWetness": 0.0351721131778058,
+      "landCells": 12688,
+      "closedDrainageFraction": 0.10458701134930642,
+      "landFractionWithZeroWaterReliabilityInverse": 0.5002364438839849,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 6347,
+        "topologicalScale": 0.499724691260914,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.03013403387427131,
+        "medianWetness": 0,
+        "independentTerminalCount": 433,
+        "largestTerminalCellCount": 425,
+        "regularSeaDrainingFraction": 0.9298881361273043,
+        "closedDepressionFraction": 0.056562155348983775
+      },
+      "actualReceiverCounts": {
+        "local_depression": 1327,
+        "inland_water": 748,
+        "ocean": 10613
+      },
+      "supportByRelief": {
+        "relief_001": 0.375377,
+        "relief_002": 0.332531,
+        "relief_003": 0.038131,
+        "relief_004": 0.051338,
+        "relief_005": 0.045731,
+        "relief_006": 0.209788,
+        "relief_007": 0.030752,
+        "relief_008": 0.026421,
+        "relief_009": 0.031057,
+        "relief_010": 0.209788,
+        "relief_011": 0.209788
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 6347,
+          "topologicalScale": 0.499724691260914,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.03013403387427131,
+          "medianWetness": 0,
+          "independentTerminalCount": 433,
+          "largestTerminalCellCount": 425,
+          "regularSeaDrainingFraction": 0.9298881361273043,
+          "closedDepressionFraction": 0.056562155348983775
+        },
+        {
+          "id": "basin_002",
+          "area": 4535,
+          "topologicalScale": 0.357114764414379,
+          "pressureReliabilityInverse": 0.086307,
+          "meanWetness": 0.03320678919514884,
+          "medianWetness": 0,
+          "independentTerminalCount": 363,
+          "largestTerminalCellCount": 467,
+          "regularSeaDrainingFraction": 0.8458654906284454,
+          "closedDepressionFraction": 0.15413450937155457
+        },
+        {
+          "id": "basin_003",
+          "area": 1104,
+          "topologicalScale": 0.08684024227169039,
+          "pressureReliabilityInverse": 0.57093,
+          "meanWetness": 0.007099214673913043,
+          "medianWetness": 0.0,
+          "independentTerminalCount": 36,
+          "largestTerminalCellCount": 273,
+          "regularSeaDrainingFraction": 0.15670289855072464,
+          "closedDepressionFraction": 0.24365942028985507
+        },
+        {
+          "id": "basin_005",
+          "area": 94,
+          "topologicalScale": 0.0073940061354518995,
+          "pressureReliabilityInverse": 0.576418,
+          "meanWetness": 0.12105223404255319,
+          "medianWetness": 0.057208499999999995,
+          "independentTerminalCount": 28,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_006",
+          "area": 82,
+          "topologicalScale": 0.00668606937780225,
+          "pressureReliabilityInverse": 0.586758,
+          "meanWetness": 0.14608520731707317,
+          "medianWetness": 0.080454,
+          "independentTerminalCount": 26,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_007",
+          "area": 75,
+          "topologicalScale": 0.0058994729804137495,
+          "pressureReliabilityInverse": 0.604445,
+          "meanWetness": 0.09803986666666667,
+          "medianWetness": 0.034442,
+          "independentTerminalCount": 26,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_009",
+          "area": 56,
+          "topologicalScale": 0.00479823802406985,
+          "pressureReliabilityInverse": 0.618749,
+          "meanWetness": 0.1873392857142857,
+          "medianWetness": 0.125576,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_010",
+          "area": 49,
+          "topologicalScale": 0.003932981986942499,
+          "pressureReliabilityInverse": 0.622229,
+          "meanWetness": 0.24028993877551022,
+          "medianWetness": 0.176023,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 4,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_011",
+          "area": 45,
+          "topologicalScale": 0.0035396837882482497,
+          "pressureReliabilityInverse": 0.584034,
+          "meanWetness": 0.2475024222222222,
+          "medianWetness": 0.22877,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 4,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 2917478163,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": false,
+      "recoveryMean": 0.302663,
+      "medianLandWetness": 0.015711,
+      "meanLandWetness": 0.035888790052019406,
+      "landCells": 17109,
+      "closedDrainageFraction": 0.299433046934362,
+      "landFractionWithZeroWaterReliabilityInverse": 0.7652697410719504,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 7340,
+        "topologicalScale": 0.4289383061927275,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.024800610217983653,
+        "medianWetness": 0.0,
+        "independentTerminalCount": 348,
+        "largestTerminalCellCount": 826,
+        "regularSeaDrainingFraction": 0.6395095367847411,
+        "closedDepressionFraction": 0.36049046321525885
+      },
+      "actualReceiverCounts": {
+        "local_depression": 5123,
+        "inland_water": 0,
+        "ocean": 11986
+      },
+      "supportByRelief": {
+        "relief_001": 0.248507,
+        "relief_002": 0.377781,
+        "relief_003": 0.272483,
+        "relief_004": 0.016808,
+        "relief_005": 0.031318,
+        "relief_006": 0.032226,
+        "relief_007": 0.042934
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 7340,
+          "topologicalScale": 0.4289383061927275,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.024800610217983653,
+          "medianWetness": 0.0,
+          "independentTerminalCount": 348,
+          "largestTerminalCellCount": 826,
+          "regularSeaDrainingFraction": 0.6395095367847411,
+          "closedDepressionFraction": 0.36049046321525885
+        },
+        {
+          "id": "basin_002",
+          "area": 5753,
+          "topologicalScale": 0.3361933111539135,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.05082213332174518,
+          "medianWetness": 0.034796,
+          "independentTerminalCount": 369,
+          "largestTerminalCellCount": 882,
+          "regularSeaDrainingFraction": 0.7411785155571007,
+          "closedDepressionFraction": 0.2588214844428994
+        },
+        {
+          "id": "basin_003",
+          "area": 1490,
+          "topologicalScale": 0.0869666725033561,
+          "pressureReliabilityInverse": 0.28179,
+          "meanWetness": 0.0126977,
+          "medianWetness": 0.0,
+          "independentTerminalCount": 45,
+          "largestTerminalCellCount": 577,
+          "regularSeaDrainingFraction": 0.5724832214765101,
+          "closedDepressionFraction": 0.42751677852348996
+        },
+        {
+          "id": "basin_004",
+          "area": 1304,
+          "topologicalScale": 0.07616879705830852,
+          "pressureReliabilityInverse": 0.269412,
+          "meanWetness": 0.026473037576687116,
+          "medianWetness": 0.003415,
+          "independentTerminalCount": 64,
+          "largestTerminalCellCount": 190,
+          "regularSeaDrainingFraction": 0.8619631901840491,
+          "closedDepressionFraction": 0.13803680981595093
+        },
+        {
+          "id": "basin_005",
+          "area": 688,
+          "topologicalScale": 0.040214790171015,
+          "pressureReliabilityInverse": 0.450642,
+          "meanWetness": 0.06098635610465116,
+          "medianWetness": 0.0728985,
+          "independentTerminalCount": 9,
+          "largestTerminalCellCount": 198,
+          "regularSeaDrainingFraction": 0.751453488372093,
+          "closedDepressionFraction": 0.24854651162790697
+        },
+        {
+          "id": "basin_007",
+          "area": 96,
+          "topologicalScale": 0.005778322535457888,
+          "pressureReliabilityInverse": 0.584274,
+          "meanWetness": 0.0829841875,
+          "medianWetness": 0.0327975,
+          "independentTerminalCount": 28,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_009",
+          "area": 89,
+          "topologicalScale": 0.005194653592482344,
+          "pressureReliabilityInverse": 0.618817,
+          "meanWetness": 0.12361113483146068,
+          "medianWetness": 0.07673,
+          "independentTerminalCount": 28,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_010",
+          "area": 69,
+          "topologicalScale": 0.0040273157065312554,
+          "pressureReliabilityInverse": 0.598088,
+          "meanWetness": 0.14416826086956522,
+          "medianWetness": 0.093524,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_011",
+          "area": 54,
+          "topologicalScale": 0.0032101791863654934,
+          "pressureReliabilityInverse": 0.666806,
+          "meanWetness": 0.1646695925925926,
+          "medianWetness": 0.103276,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 3206964149,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": false,
+      "recoveryMean": 0.295885,
+      "medianLandWetness": 0.012918,
+      "meanLandWetness": 0.03923828111414045,
+      "landCells": 13571,
+      "closedDrainageFraction": 0.23844963525163954,
+      "landFractionWithZeroWaterReliabilityInverse": 0.37079065654704885,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 5032,
+        "topologicalScale": 0.37051206592113006,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.02166454252782194,
+        "medianWetness": 0.001921,
+        "independentTerminalCount": 201,
+        "largestTerminalCellCount": 1256,
+        "regularSeaDrainingFraction": 0.6671303656597775,
+        "closedDepressionFraction": 0.3328696343402226
+      },
+      "actualReceiverCounts": {
+        "local_depression": 3236,
+        "inland_water": 0,
+        "ocean": 10335
+      },
+      "supportByRelief": {
+        "relief_001": 0.268716,
+        "relief_002": 0.275647,
+        "relief_003": 0.305721,
+        "relief_004": 0.021338,
+        "relief_005": 0.032334,
+        "relief_006": 0.051971,
+        "relief_007": 0.051971,
+        "relief_008": 0.033823
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 5032,
+          "topologicalScale": 0.37051206592113006,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.02166454252782194,
+          "medianWetness": 0.001921,
+          "independentTerminalCount": 201,
+          "largestTerminalCellCount": 1256,
+          "regularSeaDrainingFraction": 0.6671303656597775,
+          "closedDepressionFraction": 0.3328696343402226
+        },
+        {
+          "id": "basin_002",
+          "area": 4896,
+          "topologicalScale": 0.36050618010594465,
+          "pressureReliabilityInverse": 0.060036,
+          "meanWetness": 0.029052345179738565,
+          "medianWetness": 0.0058935,
+          "independentTerminalCount": 204,
+          "largestTerminalCellCount": 844,
+          "regularSeaDrainingFraction": 0.6811683006535948,
+          "closedDepressionFraction": 0.3188316993464052
+        },
+        {
+          "id": "basin_003",
+          "area": 2795,
+          "topologicalScale": 0.20600353148911124,
+          "pressureReliabilityInverse": 0.11308,
+          "meanWetness": 0.07206213166368515,
+          "medianWetness": 0.049606,
+          "independentTerminalCount": 245,
+          "largestTerminalCellCount": 359,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_004",
+          "area": 286,
+          "topologicalScale": 0.021115361977633904,
+          "pressureReliabilityInverse": 0.484296,
+          "meanWetness": 0.0009168601398601399,
+          "medianWetness": 0.0,
+          "independentTerminalCount": 18,
+          "largestTerminalCellCount": 76,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_006",
+          "area": 96,
+          "topologicalScale": 0.007136550912301354,
+          "pressureReliabilityInverse": 0.571803,
+          "meanWetness": 0.14045684375,
+          "medianWetness": 0.06819800000000001,
+          "independentTerminalCount": 29,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_007",
+          "area": 97,
+          "topologicalScale": 0.007136550912301354,
+          "pressureReliabilityInverse": 0.571803,
+          "meanWetness": 0.12058894845360824,
+          "medianWetness": 0.060911,
+          "independentTerminalCount": 28,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_008",
+          "area": 78,
+          "topologicalScale": 0.005738669805768099,
+          "pressureReliabilityInverse": 0.61983,
+          "meanWetness": 0.12451260256410257,
+          "medianWetness": 0.083756,
+          "independentTerminalCount": 27,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_009",
+          "area": 63,
+          "topologicalScale": 0.005002942907592701,
+          "pressureReliabilityInverse": 0.615044,
+          "meanWetness": 0.17807101587301588,
+          "medianWetness": 0.123211,
+          "independentTerminalCount": 23,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_010",
+          "area": 50,
+          "topologicalScale": 0.003752207180694526,
+          "pressureReliabilityInverse": 0.648745,
+          "meanWetness": 0.1975969,
+          "medianWetness": 0.14148,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 3928839710,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": false,
+      "recoveryMean": 0.311762,
+      "medianLandWetness": 0.0,
+      "meanLandWetness": 0.03508285996427153,
+      "landCells": 10076,
+      "closedDrainageFraction": 0.0758237395791981,
+      "landFractionWithZeroWaterReliabilityInverse": 0.7348154029376737,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 7404,
+        "topologicalScale": 0.734059405940594,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.024798518368449485,
+        "medianWetness": 0.0,
+        "independentTerminalCount": 627,
+        "largestTerminalCellCount": 525,
+        "regularSeaDrainingFraction": 0.8968125337655322,
+        "closedDepressionFraction": 0.10318746623446785
+      },
+      "actualReceiverCounts": {
+        "local_depression": 764,
+        "inland_water": 0,
+        "ocean": 9312
+      },
+      "supportByRelief": {
+        "relief_001": 0.387855,
+        "relief_002": 0.032812,
+        "relief_003": 0.387855,
+        "relief_004": 0.05405,
+        "relief_005": 0.187845,
+        "relief_006": 0.053578,
+        "relief_007": 0.387855,
+        "relief_008": 0.05405,
+        "relief_009": 0.039362,
+        "relief_010": 0.028554
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 7404,
+          "topologicalScale": 0.734059405940594,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.024798518368449485,
+          "medianWetness": 0.0,
+          "independentTerminalCount": 627,
+          "largestTerminalCellCount": 525,
+          "regularSeaDrainingFraction": 0.8968125337655322,
+          "closedDepressionFraction": 0.10318746623446785
+        },
+        {
+          "id": "basin_002",
+          "area": 2304,
+          "topologicalScale": 0.22871287128712872,
+          "pressureReliabilityInverse": 0.17908,
+          "meanWetness": 0.04796952690972222,
+          "medianWetness": 0.0058685000000000005,
+          "independentTerminalCount": 310,
+          "largestTerminalCellCount": 137,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_003",
+          "area": 72,
+          "topologicalScale": 0.007227722772277228,
+          "pressureReliabilityInverse": 0.567662,
+          "meanWetness": 0.15185966666666667,
+          "medianWetness": 0.0792645,
+          "independentTerminalCount": 25,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_004",
+          "area": 67,
+          "topologicalScale": 0.006831683168316832,
+          "pressureReliabilityInverse": 0.559824,
+          "meanWetness": 0.1289075671641791,
+          "medianWetness": 0.075085,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_005",
+          "area": 68,
+          "topologicalScale": 0.006831683168316832,
+          "pressureReliabilityInverse": 0.559824,
+          "meanWetness": 0.2053503088235294,
+          "medianWetness": 0.1368205,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_006",
+          "area": 57,
+          "topologicalScale": 0.00603960396039604,
+          "pressureReliabilityInverse": 0.601567,
+          "meanWetness": 0.1947274736842105,
+          "medianWetness": 0.133465,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_007",
+          "area": 57,
+          "topologicalScale": 0.005643564356435643,
+          "pressureReliabilityInverse": 0.622884,
+          "meanWetness": 0.11451333333333333,
+          "medianWetness": 0.097127,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_008",
+          "area": 47,
+          "topologicalScale": 0.004653465346534653,
+          "pressureReliabilityInverse": 0.626894,
+          "meanWetness": 0.1745452553191489,
+          "medianWetness": 0.108198,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 4,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 4144686569,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": false,
+      "recoveryMean": 0.476997,
+      "medianLandWetness": 0.006953,
+      "meanLandWetness": 0.03652775392184826,
+      "landCells": 14024,
+      "closedDrainageFraction": 0.2539931545921278,
+      "landFractionWithZeroWaterReliabilityInverse": 0.6707786651454649,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 9407,
+        "topologicalScale": 0.6705103566090114,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.022524458169448282,
+        "medianWetness": 0,
+        "independentTerminalCount": 443,
+        "largestTerminalCellCount": 927,
+        "regularSeaDrainingFraction": 0.6213458063144467,
+        "closedDepressionFraction": 0.3786541936855533
+      },
+      "actualReceiverCounts": {
+        "local_depression": 3562,
+        "inland_water": 0,
+        "ocean": 10462
+      },
+      "supportByRelief": {
+        "relief_001": 0.665397,
+        "relief_002": 0.317386,
+        "relief_003": 0.665397,
+        "relief_004": 0.040679,
+        "relief_005": 0.033757,
+        "relief_006": 0.665397,
+        "relief_007": 0.035657
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 9407,
+          "topologicalScale": 0.6705103566090114,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.022524458169448282,
+          "medianWetness": 0,
+          "independentTerminalCount": 443,
+          "largestTerminalCellCount": 927,
+          "regularSeaDrainingFraction": 0.6213458063144467,
+          "closedDepressionFraction": 0.3786541936855533
+        },
+        {
+          "id": "basin_002",
+          "area": 3924,
+          "topologicalScale": 0.2795216741405082,
+          "pressureReliabilityInverse": 0.039556,
+          "meanWetness": 0.05222604510703364,
+          "medianWetness": 0.0281845,
+          "independentTerminalCount": 356,
+          "largestTerminalCellCount": 195,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_005",
+          "area": 74,
+          "topologicalScale": 0.005338458253256459,
+          "pressureReliabilityInverse": 0.585429,
+          "meanWetness": 0.2060932162162162,
+          "medianWetness": 0.1390375,
+          "independentTerminalCount": 26,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_006",
+          "area": 70,
+          "topologicalScale": 0.004982561036372696,
+          "pressureReliabilityInverse": 0.608165,
+          "meanWetness": 0.2343379,
+          "medianWetness": 0.16087400000000002,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_007",
+          "area": 66,
+          "topologicalScale": 0.004769022706242437,
+          "pressureReliabilityInverse": 0.59533,
+          "meanWetness": 0.19990081818181818,
+          "medianWetness": 0.143447,
+          "independentTerminalCount": 23,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": true,
+      "recoveryMean": 0.180365,
+      "medianLandWetness": 0.000492,
+      "meanLandWetness": 0.03559882751273737,
+      "landCells": 10795,
+      "closedDrainageFraction": 0.037239462714219546,
+      "landFractionWithZeroWaterReliabilityInverse": 0.0,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 4387,
+        "topologicalScale": 0.40622978094093726,
+        "pressureReliabilityInverse": 0.059726,
+        "meanWetness": 0.029208616594483705,
+        "medianWetness": 0,
+        "independentTerminalCount": 448,
+        "largestTerminalCellCount": 214,
+        "regularSeaDrainingFraction": 0.8687029860952815,
+        "closedDepressionFraction": 0.007978117164349213
+      },
+      "actualReceiverCounts": {
+        "local_depression": 402,
+        "inland_water": 4461,
+        "ocean": 5932
+      },
+      "supportByRelief": {
+        "relief_001": 0.17439,
+        "relief_002": 0.161887,
+        "relief_003": 0.182861,
+        "relief_004": 0.041304,
+        "relief_005": 0.020226,
+        "relief_006": 0.045173
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 4387,
+          "topologicalScale": 0.40622978094093726,
+          "pressureReliabilityInverse": 0.059726,
+          "meanWetness": 0.029208616594483705,
+          "medianWetness": 0,
+          "independentTerminalCount": 448,
+          "largestTerminalCellCount": 214,
+          "regularSeaDrainingFraction": 0.8687029860952815,
+          "closedDepressionFraction": 0.007978117164349213
+        },
+        {
+          "id": "basin_002",
+          "area": 2438,
+          "topologicalScale": 0.22617617155005085,
+          "pressureReliabilityInverse": 0.15587,
+          "meanWetness": 0.04663500369155045,
+          "medianWetness": 0.013711000000000001,
+          "independentTerminalCount": 277,
+          "largestTerminalCellCount": 247,
+          "regularSeaDrainingFraction": 0.7579983593109105,
+          "closedDepressionFraction": 0.10131255127153405
+        },
+        {
+          "id": "basin_003",
+          "area": 1475,
+          "topologicalScale": 0.13633422682318144,
+          "pressureReliabilityInverse": 0.596763,
+          "meanWetness": 0.020624498305084747,
+          "medianWetness": 0,
+          "independentTerminalCount": 126,
+          "largestTerminalCellCount": 157,
+          "regularSeaDrainingFraction": 0.04203389830508475,
+          "closedDepressionFraction": 0.02305084745762712
+        },
+        {
+          "id": "basin_004",
+          "area": 862,
+          "topologicalScale": 0.0796746464553101,
+          "pressureReliabilityInverse": 0.69233,
+          "meanWetness": 0.04034671229698376,
+          "medianWetness": 0.017344,
+          "independentTerminalCount": 86,
+          "largestTerminalCellCount": 99,
+          "regularSeaDrainingFraction": 0.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_005",
+          "area": 858,
+          "topologicalScale": 0.0793049265181625,
+          "pressureReliabilityInverse": 0.645685,
+          "meanWetness": 0.02787965384615385,
+          "medianWetness": 0.014463,
+          "independentTerminalCount": 75,
+          "largestTerminalCellCount": 93,
+          "regularSeaDrainingFraction": 0.024475524475524476,
+          "closedDepressionFraction": 0.07459207459207459
+        },
+        {
+          "id": "basin_006",
+          "area": 616,
+          "topologicalScale": 0.056936870320732046,
+          "pressureReliabilityInverse": 0.714873,
+          "meanWetness": 0.05359629383116884,
+          "medianWetness": 0.0351745,
+          "independentTerminalCount": 49,
+          "largestTerminalCellCount": 63,
+          "regularSeaDrainingFraction": 0.05032467532467533,
+          "closedDepressionFraction": 0.03571428571428571
+        },
+        {
+          "id": "basin_007",
+          "area": 63,
+          "topologicalScale": 0.006100378962935576,
+          "pressureReliabilityInverse": 0.581043,
+          "meanWetness": 0.09343246031746032,
+          "medianWetness": 0.050731,
+          "independentTerminalCount": 23,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_008",
+          "area": 48,
+          "topologicalScale": 0.0047139291986320365,
+          "pressureReliabilityInverse": 0.569531,
+          "meanWetness": 0.16320895833333335,
+          "medianWetness": 0.131849,
+          "independentTerminalCount": 21,
+          "largestTerminalCellCount": 4,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_009",
+          "area": 48,
+          "topologicalScale": 0.004529069230058231,
+          "pressureReliabilityInverse": 0.671273,
+          "meanWetness": 0.13747222916666665,
+          "medianWetness": 0.0829315,
+          "independentTerminalCount": 20,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 4286438917,
+      "revision": "0e17f43005f10646c5d41f75fd6116fd45eeb18d",
+      "exported": false,
+      "recoveryMean": 0.374138,
+      "medianLandWetness": 0.000798,
+      "meanLandWetness": 0.03689342238235032,
+      "landCells": 11241,
+      "closedDrainageFraction": 0.18049995551997153,
+      "landFractionWithZeroWaterReliabilityInverse": 0.7816030602259585,
+      "majorCanonicalBasin": {
+        "id": "basin_001",
+        "area": 8786,
+        "topologicalScale": 0.7811612215909091,
+        "pressureReliabilityInverse": 0,
+        "meanWetness": 0.030396716253129976,
+        "medianWetness": 0.0,
+        "independentTerminalCount": 591,
+        "largestTerminalCellCount": 1264,
+        "regularSeaDrainingFraction": 0.7690644206692465,
+        "closedDepressionFraction": 0.23093557933075348
+      },
+      "actualReceiverCounts": {
+        "local_depression": 2029,
+        "inland_water": 0,
+        "ocean": 9212
+      },
+      "supportByRelief": {
+        "relief_001": 0.498801,
+        "relief_002": 0.498801,
+        "relief_003": 0.281505,
+        "relief_004": 0.048734,
+        "relief_005": 0.049083,
+        "relief_006": 0.281505,
+        "relief_007": 0.048734
+      },
+      "basins": [
+        {
+          "id": "basin_001",
+          "area": 8786,
+          "topologicalScale": 0.7811612215909091,
+          "pressureReliabilityInverse": 0,
+          "meanWetness": 0.030396716253129976,
+          "medianWetness": 0.0,
+          "independentTerminalCount": 591,
+          "largestTerminalCellCount": 1264,
+          "regularSeaDrainingFraction": 0.7690644206692465,
+          "closedDepressionFraction": 0.23093557933075348
+        },
+        {
+          "id": "basin_002",
+          "area": 2233,
+          "topologicalScale": 0.19877485795454544,
+          "pressureReliabilityInverse": 0.114001,
+          "meanWetness": 0.0488613394536498,
+          "medianWetness": 0.008069,
+          "independentTerminalCount": 212,
+          "largestTerminalCellCount": 336,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_003",
+          "area": 85,
+          "topologicalScale": 0.0078125,
+          "pressureReliabilityInverse": 0.58697,
+          "meanWetness": 0.1607781294117647,
+          "medianWetness": 0.075744,
+          "independentTerminalCount": 28,
+          "largestTerminalCellCount": 6,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_004",
+          "area": 69,
+          "topologicalScale": 0.006125710227272727,
+          "pressureReliabilityInverse": 0.568968,
+          "meanWetness": 0.1493030144927536,
+          "medianWetness": 0.096694,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        },
+        {
+          "id": "basin_005",
+          "area": 68,
+          "topologicalScale": 0.006125710227272727,
+          "pressureReliabilityInverse": 0.568968,
+          "meanWetness": 0.21438223529411765,
+          "medianWetness": 0.14784049999999999,
+          "independentTerminalCount": 24,
+          "largestTerminalCellCount": 5,
+          "regularSeaDrainingFraction": 1.0,
+          "closedDepressionFraction": 0.0
+        }
+      ]
+    }
+  ],
+  "fixedWorldPressureComparison": [
+    {
+      "seed": 1054323503,
+      "before": 0.316735,
+      "after": 0.214446,
+      "beforePassed": false,
+      "afterStatus": "pass",
+      "failedGates": []
+    },
+    {
+      "seed": 1240171611,
+      "before": 0.325517,
+      "after": 0.224024,
+      "beforePassed": false,
+      "afterStatus": "pass",
+      "failedGates": []
+    },
+    {
+      "seed": 16908799,
+      "before": 0.189504,
+      "after": 0.139028,
+      "beforePassed": true,
+      "afterStatus": "fail",
+      "failedGates": [
+        {
+          "id": "phase2.distribution.relief_presence",
+          "status": "fail",
+          "details": [
+            "recoveryProfileMean=0.139",
+            "recoveryFieldMax=0.218",
+            "recoveryFieldSpread=0.134"
+          ]
+        },
+        {
+          "id": "phase2.gameplay.relief_relevance",
+          "status": "fail",
+          "details": [
+            "signalCount=2",
+            "recoveryProfile=0.139",
+            "reliefPersistence=0.218"
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 2094783996,
+      "before": 0.349056,
+      "after": 0.214532,
+      "beforePassed": false,
+      "afterStatus": "pass",
+      "failedGates": []
+    },
+    {
+      "seed": 2461506081,
+      "before": 0.291303,
+      "after": 0.192052,
+      "beforePassed": true,
+      "afterStatus": "pass",
+      "failedGates": []
+    },
+    {
+      "seed": 2917478163,
+      "before": 0.302663,
+      "after": 0.206981,
+      "beforePassed": false,
+      "afterStatus": "pass",
+      "failedGates": []
+    },
+    {
+      "seed": 3206964149,
+      "before": 0.295885,
+      "after": 0.202594,
+      "beforePassed": false,
+      "afterStatus": "pass",
+      "failedGates": []
+    },
+    {
+      "seed": 3928839710,
+      "before": 0.311762,
+      "after": 0.198462,
+      "beforePassed": false,
+      "afterStatus": "pass",
+      "failedGates": []
+    },
+    {
+      "seed": 4144686569,
+      "before": 0.476997,
+      "after": 0.309987,
+      "beforePassed": false,
+      "afterStatus": "pass",
+      "failedGates": []
+    },
+    {
+      "seed": 42,
+      "before": 0.180365,
+      "after": 0.1247,
+      "beforePassed": true,
+      "afterStatus": "fail",
+      "failedGates": [
+        {
+          "id": "phase2.distribution.relief_presence",
+          "status": "fail",
+          "details": [
+            "recoveryProfileMean=0.125",
+            "recoveryFieldMax=0.187",
+            "recoveryFieldSpread=0.105"
+          ]
+        },
+        {
+          "id": "phase2.gameplay.relief_relevance",
+          "status": "fail",
+          "details": [
+            "signalCount=2",
+            "recoveryProfile=0.125",
+            "reliefPersistence=0.187"
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 4286438917,
+      "before": 0.374138,
+      "after": 0.248204,
+      "beforePassed": false,
+      "afterStatus": "pass",
+      "failedGates": []
+    }
+  ],
+  "extendedAtmosphericFetchComparison": {
+    "baseRevision": "7f13f93152d06aad1d1393aa71f12033486a53d0",
+    "node": "v22.23.5",
+    "rows": [
+      {
+        "seed": 1665754063,
+        "before": 0.26342,
+        "after": 0.202787,
+        "beforePassed": false,
+        "afterStatus": "fail",
+        "failedGates": [
+          {
+            "id": "phase2.distribution.pressure_rhythm_differentiation",
+            "status": "fail",
+            "details": [
+              "meanAbsDifference=0.017",
+              "pressureSpread=0.538",
+              "rhythmSpread=0.513"
+            ]
+          }
+        ]
+      },
+      {
+        "seed": 16908799,
+        "before": 0.192322,
+        "after": 0.192711,
+        "beforePassed": true,
+        "afterStatus": "pass",
+        "failedGates": []
+      },
+      {
+        "seed": 180816365,
+        "before": 0.250418,
+        "after": 0.18574,
+        "beforePassed": true,
+        "afterStatus": "pass",
+        "failedGates": []
+      },
+      {
+        "seed": 2461506081,
+        "before": 0.291706,
+        "after": 0.247946,
+        "beforePassed": true,
+        "afterStatus": "pass",
+        "failedGates": []
+      },
+      {
+        "seed": 2964753490,
+        "before": 0.185211,
+        "after": 0.165997,
+        "beforePassed": true,
+        "afterStatus": "fail",
+        "failedGates": [
+          {
+            "id": "phase2.distribution.relief_presence",
+            "status": "fail",
+            "details": [
+              "recoveryProfileMean=0.166",
+              "recoveryFieldMax=0.220",
+              "recoveryFieldSpread=0.128"
+            ]
+          },
+          {
+            "id": "phase2.gameplay.relief_relevance",
+            "status": "fail",
+            "details": [
+              "signalCount=2",
+              "recoveryProfile=0.166",
+              "reliefPersistence=0.220"
+            ]
+          }
+        ]
+      },
+      {
+        "seed": 3740851705,
+        "before": 0.175739,
+        "after": 0.159015,
+        "beforePassed": true,
+        "afterStatus": "pass",
+        "failedGates": []
+      },
+      {
+        "seed": 4144686569,
+        "before": 0.466227,
+        "after": 0.405302,
+        "beforePassed": false,
+        "afterStatus": "rebalance_required",
+        "failedGates": [
+          {
+            "id": "phase2.design.tension_vs_relief",
+            "status": "rebalance_required",
+            "details": [
+              "pressureMean=0.214",
+              "recoveryMean=0.405",
+              "tensionReliefDelta=-0.191"
+            ]
+          }
+        ]
+      },
+      {
+        "seed": 42,
+        "before": 0.17887,
+        "after": 0.165136,
+        "beforePassed": true,
+        "afterStatus": "pass",
+        "failedGates": []
+      }
+    ]
+  }
+}
