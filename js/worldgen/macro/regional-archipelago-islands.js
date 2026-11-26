@@ -29,6 +29,76 @@
         return components;
     }
 
+    function preserveRegionalWaterSeparations(surface, islands, macroWidth) {
+        const { grid, signed, inherited, mechanisms } = surface;
+        const { width, height, subdivision, originX, originY } = grid;
+        const roots = new Int32Array(signed.length).fill(-1);
+        const labels = new Int32Array(signed.length);
+        const uplifted = [];
+        let restoredCount = 0;
+        function root(cell) {
+            while (roots[cell] !== cell) {
+                roots[cell] = roots[roots[cell]];
+                cell = roots[cell];
+            }
+            return cell;
+        }
+        function merge(cell, neighbor) {
+            if (roots[neighbor] < 0) return;
+            const a = root(cell);
+            const b = root(neighbor);
+            if (a === b) return;
+            roots[a] = b;
+            labels[b] ||= labels[a];
+        }
+
+        // The outer land and every named offshore body are distinct constraints.
+        for (const [index, island] of islands.entries()) {
+            for (const cell of island.cellIndices) {
+                const x = (cell % macroWidth - originX) * subdivision;
+                const y = (Math.floor(cell / macroWidth) - originY) * subdivision;
+                labels[y * width + x] = index + 2;
+            }
+        }
+        for (let cell = 0; cell < signed.length; cell += 1) {
+            if (signed[cell] <= 0) continue;
+            const x = cell % width;
+            const y = Math.floor(cell / width);
+            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) labels[cell] = 1;
+            if (inherited[cell] <= 0 && !labels[cell]) {
+                uplifted.push(cell);
+                continue;
+            }
+            roots[cell] = cell;
+            if (x > 0) merge(cell, cell - 1);
+            if (y > 0) merge(cell, cell - width);
+        }
+
+        // Retain the strongest supported uplift first. At a connection that
+        // would consume an inherited separation, use the measured parent bed.
+        uplifted.sort((a, b) => signed[b] - signed[a] || a - b);
+        for (const cell of uplifted) {
+            let label = 0;
+            let wouldJoin = false;
+            macro.forEachCardinalNeighbor(cell, width, signed.length, neighbor => {
+                if (roots[neighbor] < 0) return;
+                const neighboringLabel = labels[root(neighbor)];
+                wouldJoin ||= Boolean(label && neighboringLabel && label !== neighboringLabel);
+                label ||= neighboringLabel;
+            });
+            if (wouldJoin) {
+                signed[cell] = inherited[cell];
+                mechanisms[cell] = 4;
+                restoredCount += 1;
+                continue;
+            }
+            roots[cell] = cell;
+            labels[cell] = label;
+            macro.forEachCardinalNeighbor(cell, width, signed.length, neighbor => merge(cell, neighbor));
+        }
+        return restoredCount;
+    }
+
     function encodeLandRuns(cells, width) {
         const runs = [];
         for (const cell of cells.sort((a, b) => a - b)) {
@@ -139,4 +209,5 @@
     }
 
     macro.extractRegionalArchipelagoIslands = extractRegionalArchipelagoIslands;
+    macro.preserveRegionalWaterSeparations = preserveRegionalWaterSeparations;
 })();

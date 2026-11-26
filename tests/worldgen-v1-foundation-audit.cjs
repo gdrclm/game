@@ -26,7 +26,7 @@ const recoveryRegression = regression.concat(3508323923);
 const knownPhysical = [1122193213, 2337086253, 4144686569, 1665754063, 2727244283, 2964753490, 4085637119,
     3019978005, 1240171611, 3928839710, 1054323503, 2094783996, 2402593754, 2917478163, 3206964149, 4286438917];
 const foundationRegression = recoveryRegression.concat(2337086253, 2727244283, 2964753490, 4085637119);
-const regionalRegression = foundationRegression.concat(2856344, 1880886041, 3271942068);
+const regionalRegression = foundationRegression.concat(2856344, 640306144, 1880886041, 3271942068);
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 const stress = Array.from({ length: 64 }, (_, index) => {
     const digest = createHash('sha256').update(`Paths/F8-S/2026-11-26/${index}`).digest();
@@ -35,7 +35,7 @@ const stress = Array.from({ length: 64 }, (_, index) => {
 assert.equal(new Set(regression).size, 31, 'Regression cohort must preserve all reviewed seeds');
 assert.equal(new Set(recoveryRegression).size, 32, 'Recovery regression must include the F8-R area case');
 assert.equal(new Set(foundationRegression).size, 36, 'Foundation regression must include the physical repairs');
-assert.equal(new Set(regionalRegression).size, 39, 'Regional regression must include the inherited island conflicts');
+assert.equal(new Set(regionalRegression).size, 40, 'Regional regression must include the inherited island conflicts');
 const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression,
     'foundation-regression': foundationRegression, 'regional-regression': regionalRegression,
     'known-physical': knownPhysical, edges,

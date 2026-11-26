@@ -127,7 +127,25 @@ function verifyRegionalProcessFixture(macro) {
     const wetSource = { ...source, bed: { ...source.bed, values: new Array(cells).fill(0.002) } };
     const eroded = macro.buildRegionalArchipelagoSurface({ ...wetSource, storm: new Array(cells).fill(1) });
     assert(eroded.mechanisms.some((value, index) => value === 3 && eroded.signed[index] <= 0));
-    return { noUnsupportedEmergence: true, faultUpliftExercised: true, erosionExercised: true };
+
+    const grid = { originX: 0, originY: 0, width: 7, height: 5, subdivision: 1 };
+    const inherited = new Array(35).fill(-0.02);
+    inherited[15] = 0.3;
+    inherited[19] = 0.3;
+    const signed = [...inherited];
+    signed[16] = 0.08;
+    signed[17] = 0.01;
+    signed[18] = 0.06;
+    signed[29] = 0.05;
+    const mechanisms = new Uint8Array(35);
+    const separated = macro.preserveRegionalWaterSeparations({ grid, signed, inherited, mechanisms },
+        [{ cellIndices: [15] }, { cellIndices: [19] }], 7);
+    assert.equal(separated, 1);
+    assert.equal(signed[17], inherited[17]);
+    assert.equal(mechanisms[17], 4);
+    assert.deepEqual([signed[16], signed[18], signed[29]], [0.08, 0.06, 0.05]);
+    return { noUnsupportedEmergence: true, faultUpliftExercised: true, erosionExercised: true,
+        inheritedSaddlePreservesIndependentUplift: true };
 }
 
 module.exports = { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture };

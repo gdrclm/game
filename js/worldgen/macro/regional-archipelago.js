@@ -28,6 +28,11 @@
         const processAttempts = [];
         const inheritedPeakById = new Map((topology?.islands || []).map(row => [row.islandId, row.peakCellIndex]));
         const scaleByPeak = new Map();
+        const getUnresolved = () => {
+            const separateIds = new Set(extracted.islandRecords.flatMap(row =>
+                row.physicalOrigin.macroIslandIds.length === 1 ? row.physicalOrigin.macroIslandIds : []));
+            return inheritedIds.filter(id => !separateIds.has(id));
+        };
         let unresolvedMacroIslandIds = [];
         for (const attenuation of [1, 0.75, 0.5, 0.25, 0, null]) {
             for (const id of unresolvedMacroIslandIds) {
@@ -39,10 +44,16 @@
             });
             if (!surface) return null;
             extracted = macro.extractRegionalArchipelagoIslands(surface, topology, chain, bed.width, plateSeeds);
-            const separateIds = new Set(extracted.islandRecords.flatMap(row =>
-                row.physicalOrigin.macroIslandIds.length === 1 ? row.physicalOrigin.macroIslandIds : []));
-            unresolvedMacroIslandIds = inheritedIds.filter(id => !separateIds.has(id));
+            unresolvedMacroIslandIds = getUnresolved();
             processAttempts.push({ processScale, localScales: Object.fromEntries(scaleByPeak), unresolvedMacroIslandIds });
+            if (attenuation === 1 && unresolvedMacroIslandIds.length) {
+                const restoredSeparationCells = macro.preserveRegionalWaterSeparations(surface, topology.islands, bed.width);
+                if (restoredSeparationCells) {
+                    extracted = macro.extractRegionalArchipelagoIslands(surface, topology, chain, bed.width, plateSeeds);
+                    unresolvedMacroIslandIds = getUnresolved();
+                    processAttempts.push({ processScale, localScales: {}, restoredSeparationCells, unresolvedMacroIslandIds });
+                }
+            }
             if (!unresolvedMacroIslandIds.length) break;
         }
         const { islandRecords, originCounts, minimumApproximatedAreaCells } = extracted;
