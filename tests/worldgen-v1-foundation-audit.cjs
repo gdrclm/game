@@ -239,6 +239,9 @@ function testHandoffs(result) {
     nearby.waterPathCellIndices[0] = port.landCell;
     assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: regional }).isValid,
         'A regional water path that reaches land must fail Phase 1 validation');
+    const changedRegionalSeed = { ...geography.regionalArchipelago,
+        regionalSeed: (geography.regionalArchipelago.regionalSeed + 1) >>> 0 };
+    assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: changedRegionalSeed }).isValid);
     const noExport = phase2.createPhase2ExportEnvelopeShell().run({
         ...result.phase2, validationReport: { ...result.phase2.validationReport, finalStatus: 'fail' }
     });

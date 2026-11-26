@@ -87,6 +87,10 @@
             || !Array.isArray(value.waterNetwork.landfalls)) {
             return ['Invalid regional archipelago version, parent, or record lists.'];
         }
+        if (value.seedNamespace !== SEED_NAMESPACE
+            || value.regionalSeed !== macro.deriveMacroSubSeed(geography.macroSeed, SEED_NAMESPACE)) {
+            return ['Regional archipelago seed does not match its parent namespace.'];
+        }
         const { grid } = value;
         const size = grid?.width * grid?.height;
         if (!Number.isSafeInteger(size) || size <= 0 || !Number.isSafeInteger(grid.subdivision) || grid.subdivision <= 0
@@ -117,6 +121,10 @@
                 continue;
             }
             ids.add(row.islandId);
+            const anchorX = row.anchor.x * grid.subdivision;
+            const anchorY = row.anchor.y * grid.subdivision;
+            const localX = anchorX - grid.originX * grid.subdivision;
+            const localY = anchorY - grid.originY * grid.subdivision;
             const land = new Set();
             for (const run of row.landRuns) {
                 if (!Array.isArray(run) || !inside(run[0]) || !Number.isSafeInteger(run[1])
@@ -134,6 +142,11 @@
             if (land.size !== row.areaCells || row.shoreEdges.some(edge =>
                 !Array.isArray(edge) || !land.has(edge[0]) || !inside(edge[1]) || !adjacent(edge[0], edge[1]))) {
                 errors.push(`Regional island area or shoreline contradicts its footprint in ${row.islandId}.`);
+            }
+            if (!Number.isSafeInteger(localX) || !Number.isSafeInteger(localY)
+                || localX < 0 || localX >= grid.width || localY < 0 || localY >= grid.height
+                || !land.has(localY * grid.width + localX) || row.islandId !== `regional_island_${anchorX}_${anchorY}`) {
+                errors.push(`Regional island anchor does not resolve to its footprint in ${row.islandId}.`);
             }
             islandLand.set(row.islandId, land);
         }
