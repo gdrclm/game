@@ -29,6 +29,8 @@
             min: Infinity, max: -Infinity, sum: 0
         }]));
         let shelteredLandCells = 0;
+        let shelteredStormTotal = 0;
+        let exposedStormTotal = 0;
         let barrierSum = 0;
         let reachableLandCells = 0;
         let travelDistance = 0;
@@ -48,7 +50,12 @@
             }
             const [windX, windY] = readWind(cell);
             const barrier = windwardBarrier(surface, cell, windX, windY);
-            if (barrier > 0) shelteredLandCells += 1;
+            if (barrier > 0) {
+                shelteredLandCells += 1;
+                shelteredStormTotal += local.storm;
+            } else {
+                exposedStormTotal += local.storm;
+            }
             barrierSum += barrier;
             if (landTravel.distance[cell] >= 0) {
                 reachableLandCells += 1;
@@ -59,7 +66,10 @@
         const climateRange = Object.fromEntries(Object.entries(ranges).map(([key, range]) => [key, {
             min: round(range.min), mean: round(range.sum / cells.length), max: round(range.max)
         }]));
-        return { climateRange, terrainShelter: { shelteredLandCells, meanUpwindBarrierSlope: round(barrierSum / cells.length) },
+        const exposedLandCells = cells.length - shelteredLandCells;
+        return { climateRange, terrainShelter: { shelteredLandCells, meanUpwindBarrierSlope: round(barrierSum / cells.length),
+            meanStormOnShelteredLand: shelteredLandCells ? round(shelteredStormTotal / shelteredLandCells) : null,
+            meanStormOnExposedLand: exposedLandCells ? round(exposedStormTotal / exposedLandCells) : null },
             transport: { landfallCellIndex: landfall?.landCell ?? null, seaLinkCount, reachableLandCells,
                 meanDistanceToLandfall: reachableLandCells ? round(travelDistance / reachableLandCells) : null,
                 meanAscentToLandfall: reachableLandCells ? round(travelAscent / reachableLandCells) : null } };
@@ -72,9 +82,18 @@
             && range.mean >= range.min && range.mean <= range.max && range.max <= 1;
         const sheltered = setting?.terrainShelter?.shelteredLandCells;
         const transport = setting?.transport;
+        const storm = setting?.climateRange?.storm;
+        const shelteredStorm = setting?.terrainShelter?.meanStormOnShelteredLand;
+        const exposedStorm = setting?.terrainShelter?.meanStormOnExposedLand;
+        const exposed = island.areaCells - sheltered;
+        const validStorm = (value, cells) => cells ? Number.isFinite(value) && storm.min <= value && value <= storm.max
+            : value === null;
         return climateChannels.every(key => rangeIsValid(setting?.climateRange?.[key]))
             && Number.isSafeInteger(sheltered) && sheltered >= 0 && sheltered <= island.areaCells
             && nonnegative(setting.terrainShelter.meanUpwindBarrierSlope)
+            && (shelteredStorm === undefined && exposedStorm === undefined
+                || (validStorm(shelteredStorm, sheltered) && validStorm(exposedStorm, exposed)
+                    && Math.abs((shelteredStorm * sheltered + exposedStorm * exposed) / island.areaCells - storm.mean) <= 2e-6))
             && transport?.landfallCellIndex === (landfall?.landCell ?? null) && transport.seaLinkCount === seaLinkCount
             && (landfall ? transport.reachableLandCells === island.areaCells && nonnegative(transport.meanDistanceToLandfall)
                 && nonnegative(transport.meanAscentToLandfall) : transport.reachableLandCells === 0

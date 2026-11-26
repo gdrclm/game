@@ -128,9 +128,12 @@ function verifyIslandExposureFixture(macro) {
     inherited[11] = 0.8;
     inherited[12] = 0.2;
     inherited[13] = 0.2;
-    const settings = (signed, wind) => macro.measureIslandPhysicalSetting({ cells: [12],
+    const settings = (signed, wind, cells = [12]) => macro.measureIslandPhysicalSetting({ cells,
         surface: { signed, inherited, grid: { width, height: 5, subdivision: 1 } },
-        readClimate: (_, channel) => channel === 'temperature' ? 0.7 : 0.5,
+        readClimate: (cell, channel) => {
+            if (channel === 'storm') return cell === 12 ? 0.7 : 0.2;
+            return channel === 'temperature' ? 0.7 : 0.5;
+        },
         readWind: () => [wind, 0],
         landTravel: macro.traceDryLandAccess(signed, width, cell => signed[cell] > 0, [13]),
         landfall: { landCell: 13 }, seaLinkCount: 2 });
@@ -138,6 +141,13 @@ function verifyIslandExposureFixture(macro) {
     const exposed = settings(inherited, -1);
     assert.equal(sheltered.terrainShelter.shelteredLandCells, 1);
     assert.equal(exposed.terrainShelter.shelteredLandCells, 0);
+    const mixed = settings(inherited, 1, [11, 12, 13]);
+    const reversed = settings(inherited, -1, [11, 12, 13]);
+    assert.deepEqual(mixed.climateRange.storm, reversed.climateRange.storm);
+    assert.equal(mixed.terrainShelter.meanStormOnShelteredLand, 0.7);
+    assert.equal(mixed.terrainShelter.meanStormOnExposedLand, 0.2);
+    assert.equal(reversed.terrainShelter.meanStormOnShelteredLand, null);
+    assert.equal(reversed.terrainShelter.meanStormOnExposedLand, mixed.climateRange.storm.mean);
     assert.equal(sheltered.transport.meanDistanceToLandfall, 1);
     const raised = inherited.slice();
     raised[12] += 0.3;
