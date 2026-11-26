@@ -191,6 +191,15 @@
                     Math.abs(row.waterAccess.storageSpaceToSurfaceWater - storageSpaceToSurfaceWater) > (row.catchments.length + 1) * 1e-6))) {
                 errors.push(`Regional access or retention disagrees with catchments in ${row.islandId}.`);
             }
+            if (row.waterAccess?.allocatedSupplyPerArea !== undefined) {
+                const access = row.waterAccess;
+                const servedArea = access.reachableCellCount / grid.subdivision ** 2;
+                const tolerance = (servedArea + 1) * 1e-6;
+                if (access.allocatedSupplyPerArea * servedArea > access.inputPotential + tolerance
+                    || access.allocatedLowSupplyPerArea * servedArea > access.lowInputPotential + tolerance) {
+                    errors.push(`Allocated water supply exceeds measured island input in ${row.islandId}.`);
+                }
+            }
             if (!macro.validateIslandPhysicalSetting(row.physicalSetting, island, landfalls.get(row.islandId), linkCounts.get(row.islandId) || 0)) {
                 errors.push(`Regional terrain, local climate or landfall access is invalid in ${row.islandId}.`);
             }

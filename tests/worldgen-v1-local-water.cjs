@@ -49,8 +49,27 @@ function verifyLocalWaterFixture(macro) {
     const sealed = measure([0.9, 0.8, 0.2, 0.5, 0.1, 0.9, 0.95], 0.25, 0);
     assert.equal(sealed.branches.get(4).retentionToSurfaceWater, null);
     assert.equal(sealed.branches.get(4).spillElevation, 0.5);
+
+    const valley = new Array(49).fill(0.95);
+    valley[3] = -0.1;
+    for (let row = 1; row <= 5; row += 1) {
+        const spine = row * width + 3;
+        valley[spine] = 0.1 * row;
+        valley[spine - 1] = valley[spine + 1] = valley[spine] + 0.08;
+    }
+    const budget = measure(valley, 0.25, 0.75);
+    assert(budget.hasSource[10] && budget.hasSource[17]);
+    assert(budget.allocatedLowInput[10] < budget.lowFlow[10]);
+    const summary = macro.createWaterAccessSummary();
+    for (const cell of budget.terminal.keys()) {
+        if (budget.terminal[cell] >= 0) macro.addWaterAccessCell(summary, budget, cell);
+    }
+    assert(summary.allocatedSupply <= summary.inputPotential);
+    assert(summary.allocatedLowSupply <= summary.lowInputPotential);
+    assert(Math.abs(summary.allocatedSupply / 4 - summary.allocatedLowSupply) < 1e-9);
     return { retainedSpaceRequiresRelief: true, dryBowlHasNoSupply: true, seasonChangesLowInputOnly: true,
-        accessCannotCrossWater: true, nestedBowlsRequireSecondSaddle: true, sealedBowlHasNoMeasuredExit: true };
+        accessCannotCrossWater: true, nestedBowlsRequireSecondSaddle: true, sealedBowlHasNoMeasuredExit: true,
+        nestedSourcesDoNotDoubleCountUpstreamWater: true };
 }
 
 function inspectLocalWater(result, macro) {
@@ -86,6 +105,10 @@ function inspectLocalWater(result, macro) {
     for (const row of islandEnvironment.records) {
         assert.equal(row.waterAccess.landCellCount, row.landCellCount);
         assert.deepEqual(projection.get(row.islandId).waterAccess, row.waterAccess);
+        const access = row.waterAccess;
+        const coveredArea = access.reachableCellCount / geography.regionalArchipelago.grid.subdivision ** 2;
+        assert(access.allocatedSupplyPerArea * coveredArea <= access.inputPotential + (coveredArea + 1) * 1e-6);
+        assert(access.allocatedLowSupplyPerArea * coveredArea <= access.lowInputPotential + (coveredArea + 1) * 1e-6);
         if (row.physicalSetting) assert.deepEqual(projection.get(row.islandId).physicalSetting, row.physicalSetting);
     }
     return {

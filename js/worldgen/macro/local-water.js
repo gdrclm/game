@@ -102,14 +102,28 @@
             }
         }
         const lowFlow = lowInput.slice();
+        const allocatedInput = input.slice();
+        const allocatedLowInput = lowInput.slice();
         land.sort((a, b) => signed[b] - signed[a] || a - b);
         for (const cell of land) {
             const next = downstream[cell];
-            if (next >= 0 && terminal[next] >= 0) lowFlow[next] += lowFlow[cell];
+            if (next < 0 || terminal[next] < 0) continue;
+            lowFlow[next] += lowFlow[cell];
+            // Each contribution belongs to its first potential collection
+            // point. Upstream potential must not be allocated a second time.
+            if (!hasSource[cell]) {
+                allocatedInput[next] += allocatedInput[cell];
+                allocatedLowInput[next] += allocatedLowInput[cell];
+            }
         }
         const access = traceDryLandAccess(signed, width, cell => terminal[cell] >= 0, sourceCells);
+        const areaServed = new Uint32Array(size);
+        for (const cell of land) {
+            const source = access.sourceCell[cell];
+            if (source >= 0) areaServed[source] += 1;
+        }
         return { branches, terminal, hasSource, ...access, input, lowInput, lowFlow, flow: drainage.runoffPotentialByCell,
-            subdivision, signed, cellArea };
+            subdivision, signed, cellArea, allocatedInput, allocatedLowInput, areaServed };
     }
 
     function traceDryLandAccess(signed, width, isLand, sourceCells) {
@@ -144,7 +158,7 @@
     function createWaterAccessSummary() {
         return { landCellCount: 0, sourceCellCount: 0, reachableCellCount: 0, inputPotential: 0,
             lowInputPotential: 0, storageSpace: 0, storageSpaceToSurfaceWater: 0,
-            distance: 0, ascent: 0, sourceFlow: 0, sourceLowFlow: 0 };
+            distance: 0, ascent: 0, sourceFlow: 0, sourceLowFlow: 0, allocatedSupply: 0, allocatedLowSupply: 0 };
     }
 
     function addWaterAccessCell(summary, water, cell) {
@@ -166,15 +180,20 @@
         const source = water.sourceCell[cell];
         summary.sourceFlow += water.flow[source] * water.cellArea;
         summary.sourceLowFlow += water.lowFlow[source];
+        const servicedArea = water.areaServed[source] * water.cellArea;
+        summary.allocatedSupply += water.allocatedInput[source] / servicedArea;
+        summary.allocatedLowSupply += water.allocatedLowInput[source] / servicedArea;
     }
 
-    function summarizeWaterAccess({ distance, ascent, sourceFlow, sourceLowFlow, ...row }) {
+    function summarizeWaterAccess({ distance, ascent, sourceFlow, sourceLowFlow, allocatedSupply, allocatedLowSupply, ...row }) {
         return { ...row, inputPotential: round(row.inputPotential), lowInputPotential: round(row.lowInputPotential),
             storageSpace: round(row.storageSpace), storageSpaceToSurfaceWater: round(row.storageSpaceToSurfaceWater),
             meanDistance: row.reachableCellCount ? round(distance / row.reachableCellCount) : null,
             meanAscent: row.reachableCellCount ? round(ascent / row.reachableCellCount) : null,
             meanSourceFlow: row.reachableCellCount ? round(sourceFlow / row.reachableCellCount) : null,
-            meanSourceLowFlow: row.reachableCellCount ? round(sourceLowFlow / row.reachableCellCount) : null };
+            meanSourceLowFlow: row.reachableCellCount ? round(sourceLowFlow / row.reachableCellCount) : null,
+            allocatedSupplyPerArea: row.reachableCellCount ? round(allocatedSupply / row.reachableCellCount) : null,
+            allocatedLowSupplyPerArea: row.reachableCellCount ? round(allocatedLowSupply / row.reachableCellCount) : null };
     }
 
     function serializeDrainageBranch(branch) {
@@ -202,7 +221,11 @@
             && (row.meanSourceFlow === undefined && row.meanSourceLowFlow === undefined
                 || (row.reachableCellCount ? nonnegative(row.meanSourceFlow) && nonnegative(row.meanSourceLowFlow)
                     && row.meanSourceLowFlow <= row.meanSourceFlow + 1e-6
-                    : row.meanSourceFlow === null && row.meanSourceLowFlow === null));
+                    : row.meanSourceFlow === null && row.meanSourceLowFlow === null))
+            && (row.allocatedSupplyPerArea === undefined && row.allocatedLowSupplyPerArea === undefined
+                || (row.reachableCellCount ? nonnegative(row.allocatedSupplyPerArea) && nonnegative(row.allocatedLowSupplyPerArea)
+                    && row.allocatedLowSupplyPerArea <= row.allocatedSupplyPerArea + 1e-6
+                    : row.allocatedSupplyPerArea === null && row.allocatedLowSupplyPerArea === null));
     }
 
     function validRetentionToSurfaceWater(row) {
@@ -225,6 +248,8 @@
         const totals = { reliefRegionCells: {}, riverBasinCells: {} };
         const carriers = { reliefRegionCells: coverage.reliefRegions, riverBasinCells: coverage.riverBasins };
         let totalLand = 0;
+        let totalInput = 0;
+        let totalLowInput = 0;
         for (const row of water.branches) {
             const cell = row?.outletCellIndex;
             const next = row?.receivingCellIndex;
@@ -244,6 +269,8 @@
             }
             seen.add(cell);
             totalLand += row.contributingCells;
+            totalInput += row.inputPotential;
+            totalLowInput += row.lowInputPotential;
             for (const [field, collection] of Object.entries(carriers)) {
                 if (!isRecord(row[field])) {
                     errors.push(`Missing drainage branch intersections at ${row.catchmentId}.${field}.`);
@@ -270,10 +297,20 @@
         if (Object.keys(water.reliefRegions).length !== Object.keys(coverage.reliefRegions).length) {
             errors.push('Local water access does not cover the relief records.');
         }
+        let supply = 0;
+        let lowSupply = 0;
         for (const [id, row] of Object.entries(coverage.reliefRegions)) {
-            if (!validateWaterAccessSummary(water.reliefRegions[id], row?.landCellCount)) {
+            const access = water.reliefRegions[id];
+            if (!validateWaterAccessSummary(access, row?.landCellCount)) {
                 errors.push(`Invalid local water access for ${id}.`);
+                continue;
             }
+            supply += (access.allocatedSupplyPerArea ?? 0) * access.reachableCellCount;
+            lowSupply += (access.allocatedLowSupplyPerArea ?? 0) * access.reachableCellCount;
+        }
+        const roundingTolerance = (totalLand + seen.size) * 1e-6;
+        if (supply > totalInput + roundingTolerance || lowSupply > totalLowInput + roundingTolerance) {
+            errors.push('Allocated relief water supply exceeds measured incoming water.');
         }
         return errors;
     }
