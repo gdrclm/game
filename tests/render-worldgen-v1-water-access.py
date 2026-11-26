@@ -153,24 +153,79 @@ def render_island_environment(snapshot):
     return fig
 
 
+def render_linked_basins(snapshot):
+    debug = snapshot['diagnostics']['physicalWorldDebugBundle']
+    regional = next(row['payload'] for row in debug['intermediateOutputs']
+                    if row['sourceLayerId'] == 'regionalArchipelagoSurface')
+    grid = regional['grid']
+    shape = (grid['height'], grid['width'])
+    record = max(regional['islandEnvironment']['records'], key=lambda row:
+                 row['waterAccess']['storageSpaceToSurfaceWater'] - row['waterAccess']['storageSpace'])
+    island = next(row for row in regional['islandRecords'] if row['islandId'] == record['islandId'])
+    relief = np.asarray(regional['signedRelativeElevation']).reshape(shape)
+    cells = np.concatenate([np.arange(start, start + length) for start, length in island['landRuns']])
+    y, x = np.divmod(cells, shape[1])
+    branches = [row for row in record['catchments'] if row['retentionToSurfaceWater']
+                and row['retentionToSurfaceWater']['spillElevation'] > row['spillElevation']]
+    if not branches:
+        raise ValueError(f"Seed {snapshot['seed']} has no measured linked basins on this regional surface")
+    branches.sort(key=lambda row: row['outletCellIndex'])
+    points = np.asarray([row['outletCellIndex'] for row in branches])
+    py, px = np.divmod(points, shape[1])
+    fig, (terrain, levels) = plt.subplots(1, 2, figsize=(13, 7.6), facecolor=PAPER)
+    fig.subplots_adjust(left=.088, right=.95, top=.82, bottom=.15, wspace=.3)
+    fig.text(.087, .943, f"Paths  /  Связанные впадины  /  {snapshot['seed']}", fontsize=21,
+             color=INK, fontweight='semibold')
+    fig.text(.087, .901, f"{snapshot['revision'][:12]}  ·  {record['islandId']}  ·  региональная сетка ×{grid['subdivision']}",
+             fontsize=9, color=INK)
+    map_panel(fig, terrain, 'Рельеф и дно локальных впадин', relief, 'BrBG_r',
+              'Нормированная отметка над уровнем моря', vmin=-.15, vmax=.15)
+    terrain.contour(relief, [0], colors=INK, linewidths=.55, alpha=.6)
+    terrain.set_xlim(x.min() - 6, x.max() + 6)
+    terrain.set_ylim(y.max() + 6, y.min() - 6)
+    terrain.scatter(px, py, s=18, c='#761f40', edgecolors=PAPER, linewidths=.7)
+    levels.set_title('Порог первой впадины и путь к водоёму', loc='left', fontsize=11,
+                     color=INK, fontweight='semibold', pad=8)
+    position = np.arange(len(branches))
+    sill = [row['spillElevation'] for row in branches]
+    surface = [row['retentionToSurfaceWater']['spillElevation'] for row in branches]
+    levels.hlines(position, sill, surface, color='#658b8c', linewidth=2)
+    levels.scatter(sill, position, s=24, c='#23767a', label='Первое седло')
+    levels.scatter(surface, position, s=24, c='#761f40', label='Выход к воде')
+    levels.set(xlabel='Нормированная высота пути перелива', ylabel='Впадины по порядку с севера на юг',
+               yticks=[], facecolor=PAPER)
+    levels.grid(axis='x', linewidth=.4)
+    levels.legend(loc='best', frameon=False)
+    water = record['waterAccess']
+    fig.text(.087, .084, f"Оценка вместимости  ·  под первыми седлами {water['storageSpace']:.6f}"
+             f"  ·  до связного перелива к воде {water['storageSpaceToSurfaceWater']:.6f}", fontsize=10, color=INK)
+    fig.text(.087, .041, 'Точки на карте показывают дно впадин. Вместимость измерена по рельефу без модели просачивания и испарения.',
+             fontsize=9, color=INK)
+    return fig
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('snapshots', type=Path)
     parser.add_argument('output', type=Path)
     parser.add_argument('seeds', nargs='+', type=int)
-    parser.add_argument('--island-environment', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--island-environment', action='store_true')
+    mode.add_argument('--linked-basins', action='store_true')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    filename, title, renderer = (
-        ('island-environment', 'Природная среда островов', render_island_environment)
-        if args.island_environment else ('local-water-atlas', 'Сток и доступ к воде', render)
-    )
+    filename, image_name, title, renderer = 'local-water-atlas', 'water-access', 'Сток и доступ к воде', render
+    if args.island_environment:
+        filename = image_name = 'island-environment'
+        title, renderer = 'Природная среда островов', render_island_environment
+    if args.linked_basins:
+        filename = image_name = 'linked-basins'
+        title, renderer = 'Связанные впадины', render_linked_basins
     with PdfPages(args.output / f'{filename}.pdf', metadata={'Title': f'Paths · {title}'}) as pdf:
         for seed in args.seeds:
             snapshot = json.loads((args.snapshots / f'seed-{seed}.json').read_text())
             fig = renderer(snapshot)
             pdf.savefig(fig, dpi=140)
-            image_name = 'island-environment' if args.island_environment else 'water-access'
             fig.savefig(args.output / f'{image_name}-{seed}.png', dpi=135)
             plt.close(fig)
 
