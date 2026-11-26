@@ -1,0 +1,5529 @@
+{
+  "before": "c5f3fbb28f6524ed5db14702af325a09e508f94c",
+  "after": "7f82ae1d527c3e16aae3f4234a7c77283db616b6",
+  "node": "v22.23.5",
+  "seeds": 32,
+  "sameByMetric": {
+    "landRatio": 32,
+    "continentCells": 32,
+    "seaBasinTypes": 32,
+    "islandAreas": 32,
+    "passageWidths": 28,
+    "shorelinePercentile": 32,
+    "shorelineAttempts": 32,
+    "coastalPorts": 32,
+    "seaLanes": 32,
+    "brittleCorridors": 31,
+    "redundantCorridors": 31
+  },
+  "checkpoints": [
+    {
+      "name": "Phase 0 official intake and seed tamper rejection",
+      "pass": true,
+      "details": true
+    },
+    {
+      "name": "Maritime demand requires supported sea routes",
+      "pass": true,
+      "details": [
+        0.3585,
+        0.3717,
+        0.394
+      ]
+    },
+    {
+      "name": "Phase 2 fixture harness",
+      "pass": true,
+      "details": {
+        "smoke": {
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "status": "pass"
+        },
+        "regression": {
+          "total": 6,
+          "passed": 6,
+          "failed": 0,
+          "status": "pass"
+        }
+      }
+    },
+    {
+      "name": "Physical passage closure and terminal negative controls",
+      "pass": true,
+      "details": [
+        "terminal cell rejected",
+        "terminal access rejected",
+        "disconnection",
+        "no effect",
+        "alternate water path"
+      ]
+    },
+    {
+      "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+      "pass": true,
+      "details": {
+        "flatPreservesDrift": true,
+        "tiltedShelfShiftsPeaks": [
+          0,
+          1,
+          2,
+          1,
+          0
+        ]
+      }
+    },
+    {
+      "name": "Land-weighted pressure and local recovery timing",
+      "pass": true,
+      "details": {
+        "splitPreservesPressure": 0.625,
+        "splitPreservesRecovery": 0.35,
+        "recoveryByDelayLocation": [
+          0.35,
+          0.625
+        ]
+      }
+    },
+    {
+      "name": "Signed final terrain and carved-bed controls",
+      "pass": true,
+      "details": {
+        "assignments": [
+          "original",
+          "cleanup_submergence",
+          "cleanup_fill",
+          "marine_carving",
+          "marine_accretion"
+        ],
+        "alteredBedFollowsAvailableWater": true
+      }
+    },
+    {
+      "name": "Final downhill routing and water receiver controls",
+      "pass": true,
+      "details": {
+        "terminalTypes": [
+          "ocean",
+          "inland_water",
+          "local_depression"
+        ]
+      }
+    },
+    {
+      "name": "Immutable handoffs and fail-closed Phase 2",
+      "pass": true,
+      "details": {
+        "invalidRootRejected": true,
+        "invalidCoverageRejected": true,
+        "unresolvedReferenceRejected": true,
+        "invalidExportBlocked": true,
+        "noPhase2AfterFailedPhase1": true,
+        "rejectedCandidateDiagnosticOnly": true
+      }
+    },
+    {
+      "name": "Fixed-seed upstream interventions",
+      "pass": true,
+      "details": {
+        "seed": 42,
+        "fixedSubseeds": {
+          "macroGeographySeed": 363947094,
+          "pressureSeed": 4107865506,
+          "rhythmSeed": 306034812
+        },
+        "routeCarriers": {
+          "routeId": "macro_route_001",
+          "seaRegionIds": [
+            "sea_01"
+          ],
+          "reliefRegionIds": [
+            "relief_001",
+            "relief_002"
+          ],
+          "navigationWindows": [
+            0.729753,
+            0.464833
+          ]
+        },
+        "environmentalVolatility": {
+          "values": [
+            0.1,
+            0.9
+          ],
+          "changedStormCells": 21973,
+          "physicalControls": [
+            "platePressureField",
+            "coastJaggednessControlledLandWaterMaskField",
+            "seaLevelAppliedElevationField",
+            "temperatureColdLoadField",
+            "wetnessField"
+          ],
+          "seaRegionId": "sea_01",
+          "seaStormPressure": [
+            0.44126315689571427,
+            0.48550968426474994
+          ],
+          "stormBreakRisk": [
+            0.126827,
+            0.130371
+          ],
+          "stormCadence": [
+            0.171081,
+            0.1715
+          ]
+        },
+        "routeFragilityBias": {
+          "values": [
+            0.1,
+            0.9
+          ],
+          "supportedRoutes": 10,
+          "susceptibility": [
+            [
+              "macro_route_001",
+              0.47,
+              0.53
+            ],
+            [
+              "macro_route_002",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_003",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_004",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_005",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_006",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_007",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_008",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_009",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_010",
+              0.88,
+              1
+            ]
+          ],
+          "phase2ControlsStable": true
+        },
+        "socialControls": [
+          {
+            "channel": "conflictPressure",
+            "phase1ControlsStable": true,
+            "phase2ReceivesSameInput": true
+          },
+          {
+            "channel": "collapseIntensity",
+            "phase1ControlsStable": true,
+            "phase2ReceivesSameInput": true
+          }
+        ],
+        "rainShadow": {
+          "namespace": "macro.climateEnvelope.rainShadow",
+          "fixedSeed": 1733297584,
+          "shadowedCells": [
+            0,
+            11058
+          ],
+          "mean": [
+            0,
+            0.081224
+          ]
+        },
+        "catchmentScale": {
+          "range": [
+            0.032,
+            0.42
+          ],
+          "riverBasinId": "basin_001",
+          "reliefRegionId": "relief_002",
+          "waterReliabilityInverse": [
+            0.517878,
+            0.04837
+          ],
+          "runoffSupport": [
+            0.076666,
+            0.163368
+          ],
+          "recoveryTempo": [
+            0.073709,
+            0.112328
+          ],
+          "foodClimateBandId": "climate_006",
+          "foodStress": [
+            0.185306,
+            0.066949
+          ],
+          "unchangedIndependentBands": 117,
+          "climateControlsStable": true
+        }
+      }
+    },
+    {
+      "name": "Recovery locality on seed 16908799",
+      "pass": true,
+      "details": {
+        "isolation": {
+          "zoneId": "iso_002",
+          "localId": "relief_004",
+          "unchangedPeer": "relief_002",
+          "stabilizationDrag": [
+            0.121204,
+            0.262836
+          ]
+        },
+        "transport": {
+          "routeId": "macro_route_001",
+          "reliefId": "relief_001",
+          "mobilitySupport": [
+            0.50901,
+            0.551269
+          ],
+          "regionsWithoutRouteBonus": [
+            "relief_004",
+            "relief_005",
+            "relief_006"
+          ]
+        },
+        "terrain": {
+          "reliefId": "relief_001",
+          "recoveryTempo": [
+            0.186757,
+            0.031633
+          ]
+        }
+      }
+    }
+  ],
+  "overall": true,
+  "peakRssKiB": 795136,
+  "seedsById": [
+    {
+      "seed": 42,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "ece13b235e7d0540d40a2214192e4fc6fd083feff5658c4809fbff98d13cdbdd",
+        "phase1": "f4477d48f5cc34201e66a277d33628bfe0eeec24c4684a907217e2c64a5b52b0",
+        "phase2": "aecbfec71cbc1af4e1d1a82691cd6bffe1fa32b2030a5f9f5f4fa8f6a0fde9ea"
+      },
+      "terrain": {
+        "deepest": -0.248656,
+        "highest": 0.266008,
+        "origins": {
+          "original": 32744,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 24,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 21973,
+          "coastal_lowland": 1519,
+          "lowland": 1732,
+          "plain": 3740,
+          "hill": 1598,
+          "plateau": 0,
+          "mountain": 2010,
+          "basin": 0,
+          "incised_valley": 63,
+          "slope": 133,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 10795,
+          "inland_water": 1371,
+          "shelf": 594,
+          "continental_slope": 4310,
+          "open_basin": 10931,
+          "deep_basin": 4390,
+          "submarine_ridge": 281,
+          "volcanic_flank": 96
+        },
+        "hotspotSupportCells": 259,
+        "drainage": {
+          "landCellCount": 10795,
+          "reachCellCount": 390,
+          "landCellsByReceiver": {
+            "local_depression": 402,
+            "inland_water": 4461,
+            "ocean": 5932
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.205767,
+            0.582456,
+            0.895336
+          ],
+          "wetnessField": [
+            0,
+            0.000492,
+            0.221033
+          ],
+          "stormCorridorField": [
+            0.045109,
+            0.060505,
+            0.108726
+          ],
+          "seasonalityField": [
+            0.374351,
+            0.537738,
+            0.651804
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 7,
+          "dry_polar_seasonal": 2,
+          "arid_polar": 53,
+          "dry_polar": 7,
+          "arid_cold": 1020,
+          "dry_cold": 98,
+          "subhumid_cold": 2,
+          "arid_cool_temperate": 2317,
+          "dry_cool_temperate": 48,
+          "subhumid_cool_temperate": 38,
+          "arid_temperate": 2166,
+          "dry_temperate": 94,
+          "subhumid_temperate": 49,
+          "subhumid_warm_temperate": 39,
+          "arid_warm_temperate": 1746,
+          "dry_warm_temperate": 129,
+          "arid_subtropical": 2314,
+          "dry_subtropical": 135,
+          "subhumid_subtropical": 69,
+          "humid_subtropical": 24,
+          "arid_tropical": 394,
+          "dry_tropical": 24,
+          "subhumid_tropical": 14,
+          "humid_tropical": 6
+        },
+        "localRecoveryTempo": [
+          0.105551,
+          0.116969,
+          0.125951
+        ],
+        "localSurvivabilityPressure": [
+          0.209533,
+          0.209533,
+          0.209533
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 242,
+        "recovery": 0.180365
+      },
+      "map": {
+        "landRatio": 0.329437255859375,
+        "continentCells": [
+          6732,
+          3921
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea",
+          "inland_sea",
+          "inland_sea",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          48,
+          48,
+          63
+        ],
+        "passageWidths": [
+          6.0710678118654755,
+          7.602325267042627,
+          7.944271909999159,
+          7.246211251235321
+        ],
+        "shorelinePercentile": 0.674898,
+        "shorelineAttempts": 6,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "firstMs": 15646,
+      "repeatMs": 12605
+    },
+    {
+      "seed": 137,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "211c569e874d4b39ab53165234297ce8ba2ebd99e9a08b0b3487266146a11bb4",
+        "phase1": "1460cb637453d7a3c29715a67fe0869432f1ac3c1636f40517bdb6b04592a5a4",
+        "phase2": "27ea42fda64ba74b8eb7eae9bfc650720f6e26a040f2d238f0d621c60571a76f"
+      },
+      "terrain": {
+        "deepest": -0.216249,
+        "highest": 0.177243,
+        "origins": {
+          "original": 32752,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 16,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 25722,
+          "coastal_lowland": 1107,
+          "lowland": 953,
+          "plain": 3048,
+          "hill": 1214,
+          "plateau": 0,
+          "mountain": 597,
+          "basin": 0,
+          "incised_valley": 37,
+          "slope": 90,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 7046,
+          "inland_water": 408,
+          "shelf": 613,
+          "continental_slope": 3509,
+          "open_basin": 8454,
+          "deep_basin": 12455,
+          "submarine_ridge": 194,
+          "volcanic_flank": 89
+        },
+        "hotspotSupportCells": 219,
+        "drainage": {
+          "landCellCount": 7046,
+          "reachCellCount": 361,
+          "landCellsByReceiver": {
+            "local_depression": 1294,
+            "inland_water": 1779,
+            "ocean": 3973
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.27782,
+            0.630595,
+            0.8999
+          ],
+          "wetnessField": [
+            0,
+            0.000451,
+            0.243666
+          ],
+          "stormCorridorField": [
+            0.045931,
+            0.061718,
+            0.114932
+          ],
+          "seasonalityField": [
+            0.373495,
+            0.529947,
+            0.646632
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar": 12,
+          "dry_polar": 2,
+          "arid_cold": 245,
+          "dry_cold": 68,
+          "subhumid_cold": 2,
+          "arid_cool_temperate": 1267,
+          "subhumid_cool_temperate": 40,
+          "dry_cool_temperate": 47,
+          "subhumid_temperate": 38,
+          "arid_temperate": 1610,
+          "dry_temperate": 40,
+          "arid_warm_temperate": 1396,
+          "dry_warm_temperate": 94,
+          "subhumid_warm_temperate": 38,
+          "arid_subtropical": 1593,
+          "dry_subtropical": 93,
+          "subhumid_subtropical": 52,
+          "humid_subtropical": 26,
+          "arid_tropical": 327,
+          "subhumid_tropical": 6,
+          "dry_tropical": 10,
+          "humid_tropical": 6,
+          "dry_polar_seasonal": 7,
+          "arid_polar_seasonal": 27
+        },
+        "localRecoveryTempo": [
+          0.094354,
+          0.141315,
+          0.153816
+        ],
+        "localSurvivabilityPressure": [
+          0.186474,
+          0.186474,
+          0.186474
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 159,
+        "recovery": 0.234416
+      },
+      "map": {
+        "landRatio": 0.21502685546875,
+        "continentCells": [
+          5628,
+          1300
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          51,
+          43,
+          36
+        ],
+        "passageWidths": [
+          3.1231056256176606,
+          4,
+          9
+        ],
+        "shorelinePercentile": 0.788579,
+        "shorelineAttempts": 11,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "firstMs": 15107,
+      "repeatMs": 13280
+    },
+    {
+      "seed": 2026,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "bb16b6000e71ea627ceb5da92e6fb29d0b5662fedd0b96062b2065f771dd002d",
+        "phase1": "aa4523531e7d8e0181cd671d882e44800d2ec32f0cdee87808a22c06cd10cacd",
+        "phase2": "8696902af6df5ba9940e0f7f0d3de60ac6488b1623298fe3523b04d454898c53"
+      },
+      "terrain": {
+        "deepest": -0.136316,
+        "highest": 0.305185,
+        "origins": {
+          "original": 32740,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 28,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 17181,
+          "coastal_lowland": 1623,
+          "lowland": 1230,
+          "plain": 5238,
+          "hill": 2482,
+          "plateau": 6,
+          "mountain": 2014,
+          "basin": 651,
+          "incised_valley": 162,
+          "slope": 2181,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 15587,
+          "inland_water": 93,
+          "shelf": 8413,
+          "continental_slope": 1100,
+          "open_basin": 7356,
+          "deep_basin": 212,
+          "submarine_ridge": 3,
+          "volcanic_flank": 4
+        },
+        "hotspotSupportCells": 287,
+        "drainage": {
+          "landCellCount": 15587,
+          "reachCellCount": 1811,
+          "landCellsByReceiver": {
+            "local_depression": 977,
+            "inland_water": 3091,
+            "ocean": 11519
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.066047,
+            0.540059,
+            0.887145
+          ],
+          "wetnessField": [
+            0,
+            0.002998,
+            0.190659
+          ],
+          "stormCorridorField": [
+            0.042398,
+            0.059153,
+            0.104422
+          ],
+          "seasonalityField": [
+            0.376216,
+            0.542802,
+            0.667523
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 651,
+          "dry_polar_seasonal": 55,
+          "arid_polar": 443,
+          "dry_polar": 41,
+          "arid_cold": 1728,
+          "dry_cold": 153,
+          "arid_cool_temperate": 3067,
+          "dry_cool_temperate": 72,
+          "subhumid_cool_temperate": 49,
+          "arid_temperate": 2999,
+          "subhumid_temperate": 48,
+          "dry_temperate": 89,
+          "arid_warm_temperate": 2645,
+          "dry_warm_temperate": 149,
+          "subhumid_warm_temperate": 62,
+          "arid_subtropical": 2674,
+          "dry_subtropical": 95,
+          "subhumid_subtropical": 75,
+          "humid_subtropical": 12,
+          "arid_tropical": 444,
+          "dry_tropical": 13,
+          "subhumid_tropical": 13,
+          "humid_tropical": 9,
+          "subhumid_cold": 1
+        },
+        "localRecoveryTempo": [
+          0.109746,
+          0.118782,
+          0.175935
+        ],
+        "localSurvivabilityPressure": [
+          0.185979,
+          0.185979,
+          0.185979
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 269,
+        "recovery": 0.23149
+      },
+      "map": {
+        "landRatio": 0.475677490234375,
+        "continentCells": [
+          8003,
+          7203
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water",
+          "enclosed_water",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          97,
+          89,
+          69
+        ],
+        "passageWidths": [
+          1.2360679774997898,
+          1.8284271247461903,
+          8.433981132056603,
+          8.219544457292887
+        ],
+        "shorelinePercentile": 0.531295,
+        "shorelineAttempts": 3,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 4,
+        "redundantCorridors": 5
+      },
+      "firstMs": 17312,
+      "repeatMs": 14359
+    },
+    {
+      "seed": 4194307,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "e7bf9472e53490692f9044146d7333e8334ea186be4210600fa89d5ef440ea61",
+        "phase1": "c1a3f7c6e57ca6bb1c96dbede01c53b3fc26be72ae4b29ba27bd64a38a3bc229",
+        "phase2": "fa49048e1a4ca4fab90f1e9099ce73ebea181b8021f747607b9758fb93fadc54"
+      },
+      "terrain": {
+        "deepest": -0.138474,
+        "highest": 0.273728,
+        "origins": {
+          "original": 32669,
+          "cleanup_submergence": 70,
+          "cleanup_fill": 0,
+          "marine_carving": 29,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 17046,
+          "coastal_lowland": 668,
+          "lowland": 503,
+          "plain": 6116,
+          "hill": 3896,
+          "plateau": 5,
+          "mountain": 1045,
+          "basin": 325,
+          "incised_valley": 629,
+          "slope": 2535,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 15722,
+          "inland_water": 205,
+          "shelf": 7626,
+          "continental_slope": 1536,
+          "open_basin": 7316,
+          "deep_basin": 318,
+          "submarine_ridge": 5,
+          "volcanic_flank": 40
+        },
+        "hotspotSupportCells": 489,
+        "drainage": {
+          "landCellCount": 15722,
+          "reachCellCount": 1238,
+          "landCellsByReceiver": {
+            "local_depression": 2778,
+            "inland_water": 2604,
+            "ocean": 10340
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.026456,
+            0.501268,
+            0.889716
+          ],
+          "wetnessField": [
+            0,
+            0.007289,
+            0.205553
+          ],
+          "stormCorridorField": [
+            0.039011,
+            0.058212,
+            0.103417
+          ],
+          "seasonalityField": [
+            0.37606,
+            0.54686,
+            0.718025
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 1251,
+          "dry_polar_seasonal": 59,
+          "arid_polar": 539,
+          "dry_polar": 30,
+          "arid_cold": 2230,
+          "dry_cold": 104,
+          "arid_cool_temperate": 2867,
+          "subhumid_cool_temperate": 48,
+          "dry_cool_temperate": 69,
+          "arid_temperate": 2496,
+          "subhumid_temperate": 48,
+          "dry_temperate": 88,
+          "arid_warm_temperate": 2278,
+          "dry_warm_temperate": 105,
+          "subhumid_warm_temperate": 39,
+          "arid_subtropical": 2649,
+          "dry_subtropical": 185,
+          "subhumid_subtropical": 146,
+          "humid_subtropical": 20,
+          "arid_tropical": 435,
+          "dry_tropical": 18,
+          "subhumid_tropical": 13,
+          "humid_tropical": 5
+        },
+        "localRecoveryTempo": [
+          0.102417,
+          0.136884,
+          0.155139
+        ],
+        "localSurvivabilityPressure": [
+          0.207406,
+          0.207406,
+          0.207406
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 246,
+        "recovery": 0.209509
+      },
+      "map": {
+        "landRatio": 0.47979736328125,
+        "continentCells": [
+          9630,
+          4981
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "enclosed_water",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          84,
+          185,
+          67,
+          54,
+          42
+        ],
+        "passageWidths": [
+          1,
+          1,
+          1.2360679774997898,
+          3.1231056256176606,
+          11.08304597359457,
+          3.1231056256176606,
+          8.848857801796104,
+          10.6619037896906
+        ],
+        "shorelinePercentile": 0.530443,
+        "shorelineAttempts": 1,
+        "coastalPorts": 11,
+        "seaLanes": 55,
+        "brittleCorridors": 5,
+        "redundantCorridors": 10
+      },
+      "firstMs": 18341,
+      "repeatMs": 10384
+    },
+    {
+      "seed": 271828183,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "ca49a93a7f5b80b958109b3115af4023d7ff697986de71e2454816687e0416b8",
+        "phase1": "86f19f4b979dc238cd02ffbde178dc8c4831ad8370ba3a178c19d9e7354baca9",
+        "phase2": "8eac99fd9c90a17e214cc37460d52cdd198967157a7d2ed4f59c60aba1382229"
+      },
+      "terrain": {
+        "deepest": -0.120743,
+        "highest": 0.199027,
+        "origins": {
+          "original": 32678,
+          "cleanup_submergence": 56,
+          "cleanup_fill": 0,
+          "marine_carving": 34,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 17436,
+          "coastal_lowland": 3020,
+          "lowland": 6860,
+          "plain": 1772,
+          "hill": 1642,
+          "plateau": 0,
+          "mountain": 0,
+          "basin": 514,
+          "incised_valley": 271,
+          "slope": 1253,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 15332,
+          "inland_water": 37,
+          "shelf": 10044,
+          "continental_slope": 1805,
+          "open_basin": 5480,
+          "deep_basin": 0,
+          "submarine_ridge": 0,
+          "volcanic_flank": 70
+        },
+        "hotspotSupportCells": 320,
+        "drainage": {
+          "landCellCount": 15332,
+          "reachCellCount": 1471,
+          "landCellsByReceiver": {
+            "local_depression": 963,
+            "inland_water": 2020,
+            "ocean": 12349
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.501642,
+            0.883268
+          ],
+          "wetnessField": [
+            0,
+            0.041915,
+            0.239252
+          ],
+          "stormCorridorField": [
+            0.037944,
+            0.059428,
+            0.114424
+          ],
+          "seasonalityField": [
+            0.377014,
+            0.547672,
+            0.720742
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 1893,
+          "dry_polar_seasonal": 113,
+          "arid_polar": 349,
+          "dry_polar": 32,
+          "arid_cold": 2186,
+          "dry_cold": 148,
+          "subhumid_cold": 4,
+          "arid_cool_temperate": 2258,
+          "dry_cool_temperate": 83,
+          "subhumid_cool_temperate": 40,
+          "subhumid_temperate": 76,
+          "arid_temperate": 2102,
+          "dry_temperate": 155,
+          "arid_warm_temperate": 2288,
+          "subhumid_warm_temperate": 74,
+          "dry_warm_temperate": 158,
+          "arid_subtropical": 2700,
+          "dry_subtropical": 185,
+          "subhumid_subtropical": 148,
+          "humid_subtropical": 21,
+          "arid_tropical": 291,
+          "dry_tropical": 12,
+          "subhumid_tropical": 8,
+          "humid_tropical": 8
+        },
+        "localRecoveryTempo": [
+          0.104679,
+          0.160213,
+          0.213532
+        ],
+        "localSurvivabilityPressure": [
+          0.127962,
+          0.193786,
+          0.193786
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 294,
+        "recovery": 0.209721
+      },
+      "map": {
+        "landRatio": 0.4678955078125,
+        "continentCells": [
+          10990,
+          2576
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "semi_enclosed_sea",
+          "enclosed_water",
+          "open_ocean",
+          "open_ocean",
+          "enclosed_water",
+          "semi_enclosed_sea"
+        ],
+        "islandAreas": [
+          70,
+          70,
+          56,
+          50
+        ],
+        "passageWidths": [
+          4,
+          4.656854249492381,
+          6.0710678118654755,
+          11.041594578792294
+        ],
+        "shorelinePercentile": 0.537029,
+        "shorelineAttempts": 1,
+        "coastalPorts": 10,
+        "seaLanes": 24,
+        "brittleCorridors": 4,
+        "redundantCorridors": 4
+      },
+      "firstMs": 12191,
+      "repeatMs": 11270
+    },
+    {
+      "seed": 698377633,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "0b4e76d37d4c2b27a67098da9aa601f98ea29a48c94ba757a081c36230879262",
+        "phase1": "504e57a9ae79530bd5b09a6ef7ec8dcfad524753aee836cf8cd7adca332747a6",
+        "phase2": "3b4c6e5359dd10dc12eb27a2ee110afc344a697d6b555a49dd4fd112fe778e8b"
+      },
+      "terrain": {
+        "deepest": -0.135429,
+        "highest": 0.330626,
+        "origins": {
+          "original": 32717,
+          "cleanup_submergence": 25,
+          "cleanup_fill": 0,
+          "marine_carving": 26,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 15074,
+          "coastal_lowland": 1314,
+          "lowland": 2134,
+          "plain": 4702,
+          "hill": 2307,
+          "plateau": 31,
+          "mountain": 3760,
+          "basin": 514,
+          "incised_valley": 243,
+          "slope": 2689,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 17694,
+          "inland_water": 653,
+          "shelf": 6335,
+          "continental_slope": 2107,
+          "open_basin": 4969,
+          "deep_basin": 904,
+          "submarine_ridge": 12,
+          "volcanic_flank": 94
+        },
+        "hotspotSupportCells": 342,
+        "drainage": {
+          "landCellCount": 17694,
+          "reachCellCount": 2391,
+          "landCellsByReceiver": {
+            "local_depression": 2773,
+            "inland_water": 1910,
+            "ocean": 13011
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.044603,
+            0.510131,
+            0.886806
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.1599
+          ],
+          "stormCorridorField": [
+            0.039481,
+            0.057511,
+            0.09899
+          ],
+          "seasonalityField": [
+            0.376283,
+            0.546427,
+            0.716823
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 1361,
+          "dry_polar_seasonal": 81,
+          "arid_polar": 328,
+          "dry_polar": 23,
+          "arid_cold": 2638,
+          "dry_cold": 110,
+          "arid_cool_temperate": 3263,
+          "dry_cool_temperate": 52,
+          "subhumid_cool_temperate": 33,
+          "arid_temperate": 2941,
+          "dry_temperate": 72,
+          "subhumid_temperate": 40,
+          "arid_warm_temperate": 2702,
+          "subhumid_warm_temperate": 61,
+          "dry_warm_temperate": 137,
+          "arid_subtropical": 3092,
+          "dry_subtropical": 129,
+          "subhumid_subtropical": 90,
+          "humid_subtropical": 26,
+          "arid_tropical": 484,
+          "dry_tropical": 12,
+          "subhumid_tropical": 12,
+          "humid_tropical": 5,
+          "subhumid_cold": 2
+        },
+        "localRecoveryTempo": [
+          0.088257,
+          0.124459,
+          0.183917
+        ],
+        "localSurvivabilityPressure": [
+          0.194357,
+          0.194357,
+          0.194357
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 272,
+        "recovery": 0.249708
+      },
+      "map": {
+        "landRatio": 0.53997802734375,
+        "continentCells": [
+          9545,
+          7861
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "open_ocean",
+          "semi_enclosed_sea"
+        ],
+        "islandAreas": [
+          74,
+          64,
+          54,
+          41
+        ],
+        "passageWidths": [
+          5.708203932499369,
+          8.486832980505138,
+          5.4031242374328485,
+          2
+        ],
+        "shorelinePercentile": 0.465741,
+        "shorelineAttempts": 1,
+        "coastalPorts": 10,
+        "seaLanes": 36,
+        "brittleCorridors": 4,
+        "redundantCorridors": 6
+      },
+      "firstMs": 12242,
+      "repeatMs": 10541
+    },
+    {
+      "seed": 1258291229,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "94ae1cdf940781e971b2e8fc83fadd192b82a756277fe058e85bd84b99eb3eae",
+        "phase1": "73ac5b9aa0c35a636cd73708349a29e7a06b41107b764fe934d5e5b4461fd38f",
+        "phase2": "c48ab64c9916e99fe931f6b524d2943ea9caf84bb90a92f9aa511be293770efb"
+      },
+      "terrain": {
+        "deepest": -0.139491,
+        "highest": 0.339583,
+        "origins": {
+          "original": 32742,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 26,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 16768,
+          "coastal_lowland": 1380,
+          "lowland": 1871,
+          "plain": 4663,
+          "hill": 2133,
+          "plateau": 30,
+          "mountain": 3005,
+          "basin": 310,
+          "incised_valley": 126,
+          "slope": 2482,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 16000,
+          "inland_water": 0,
+          "shelf": 7966,
+          "continental_slope": 1220,
+          "open_basin": 7352,
+          "deep_basin": 168,
+          "submarine_ridge": 3,
+          "volcanic_flank": 59
+        },
+        "hotspotSupportCells": 299,
+        "drainage": {
+          "landCellCount": 16000,
+          "reachCellCount": 2245,
+          "landCellsByReceiver": {
+            "local_depression": 2206,
+            "inland_water": 0,
+            "ocean": 13794
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.538686,
+            0.890473
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.15838
+          ],
+          "stormCorridorField": [
+            0.03985,
+            0.058091,
+            0.100045
+          ],
+          "seasonalityField": [
+            0.37506,
+            0.542777,
+            0.719992
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 1346,
+          "dry_polar_seasonal": 97,
+          "arid_polar": 467,
+          "dry_polar": 31,
+          "arid_cold": 1723,
+          "dry_cold": 105,
+          "arid_cool_temperate": 2651,
+          "subhumid_cool_temperate": 54,
+          "dry_cool_temperate": 64,
+          "arid_temperate": 2872,
+          "dry_temperate": 66,
+          "subhumid_temperate": 42,
+          "arid_warm_temperate": 2567,
+          "dry_warm_temperate": 87,
+          "subhumid_warm_temperate": 44,
+          "arid_subtropical": 3067,
+          "subhumid_subtropical": 58,
+          "dry_subtropical": 104,
+          "humid_subtropical": 19,
+          "arid_tropical": 516,
+          "dry_tropical": 5,
+          "subhumid_tropical": 7,
+          "humid_tropical": 7,
+          "subhumid_cold": 1
+        },
+        "localRecoveryTempo": [
+          0.098649,
+          0.133137,
+          0.232874
+        ],
+        "localSurvivabilityPressure": [
+          0.046175,
+          0.171873,
+          0.171873
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 232,
+        "recovery": 0.277191
+      },
+      "map": {
+        "landRatio": 0.48828125,
+        "continentCells": [
+          12987,
+          1904
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          88,
+          79,
+          69
+        ],
+        "passageWidths": [
+          4.385164807134505,
+          2.6055512754639896
+        ],
+        "shorelinePercentile": 0.518227,
+        "shorelineAttempts": 1,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 4
+      },
+      "firstMs": 6198,
+      "repeatMs": 5678
+    },
+    {
+      "seed": 1908874353,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "fae71b638c7a9f1e92c6ad75c604a0df6da1f84ba616ffe24a4d9800321e6cc3",
+        "phase1": "ccb1b71c419049b1e8222ab31222c2c0e0bf1d8fcbded05660c7629a52597d59",
+        "phase2": "29152ebd887ff895a6edce29d36dabeb98bdb71cdf8d12493a7e1506b2d7c2a8"
+      },
+      "terrain": {
+        "deepest": -0.219678,
+        "highest": 0.231816,
+        "origins": {
+          "original": 32741,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 27,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 22157,
+          "coastal_lowland": 535,
+          "lowland": 511,
+          "plain": 4462,
+          "hill": 2539,
+          "plateau": 6,
+          "mountain": 1228,
+          "basin": 0,
+          "incised_valley": 143,
+          "slope": 1187,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 10611,
+          "inland_water": 747,
+          "shelf": 258,
+          "continental_slope": 5532,
+          "open_basin": 13179,
+          "deep_basin": 2188,
+          "submarine_ridge": 64,
+          "volcanic_flank": 189
+        },
+        "hotspotSupportCells": 526,
+        "drainage": {
+          "landCellCount": 10611,
+          "reachCellCount": 299,
+          "landCellsByReceiver": {
+            "local_depression": 0,
+            "inland_water": 1750,
+            "ocean": 8861
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.234875,
+            0.592191,
+            0.885087
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.250111
+          ],
+          "stormCorridorField": [
+            0.045856,
+            0.061294,
+            0.115067
+          ],
+          "seasonalityField": [
+            0.377637,
+            0.536145,
+            0.649864
+          ]
+        },
+        "climateCellsByType": {
+          "arid_cold": 714,
+          "dry_cold": 138,
+          "arid_cool_temperate": 2111,
+          "dry_cool_temperate": 61,
+          "subhumid_cool_temperate": 40,
+          "subhumid_temperate": 61,
+          "arid_temperate": 2467,
+          "dry_temperate": 75,
+          "arid_warm_temperate": 2177,
+          "dry_warm_temperate": 125,
+          "subhumid_warm_temperate": 57,
+          "arid_subtropical": 1952,
+          "dry_subtropical": 142,
+          "humid_subtropical": 48,
+          "subhumid_subtropical": 79,
+          "arid_tropical": 261,
+          "humid_tropical": 12,
+          "dry_tropical": 22,
+          "subhumid_tropical": 13,
+          "subhumid_cold": 1,
+          "arid_polar": 2,
+          "dry_polar": 2,
+          "dry_cold_seasonal": 5,
+          "dry_polar_seasonal": 11,
+          "arid_polar_seasonal": 14,
+          "arid_cold_seasonal": 21
+        },
+        "localRecoveryTempo": [
+          0.113504,
+          0.126764,
+          0.168587
+        ],
+        "localSurvivabilityPressure": [
+          0.177696,
+          0.177696,
+          0.177696
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 264,
+        "recovery": 0.248782
+      },
+      "map": {
+        "landRatio": 0.323822021484375,
+        "continentCells": [
+          9287,
+          1011
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          67,
+          69,
+          61,
+          50,
+          45,
+          41
+        ],
+        "passageWidths": [
+          3.2426406871192857,
+          4.8309518948453,
+          5.4031242374328485,
+          7.062257748298549,
+          4.8309518948453,
+          15.278820596099706,
+          13.142135623730951
+        ],
+        "shorelinePercentile": 0.685724,
+        "shorelineAttempts": 10,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 6,
+        "redundantCorridors": 8
+      },
+      "firstMs": 7723,
+      "repeatMs": 7305
+    },
+    {
+      "seed": 2576980379,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "f173e902ef4a23cf637dc825a7c7dc74630df4ab14d49df846a8db884c7df76c",
+        "phase1": "e26e9a68b5dccc4d3767f345eaf6880f6ee82247d7b34190a8e2daccfb3c6ea2",
+        "phase2": "e0e6ec3cdda5d9caf45665fe067bbc1026906ffc3bfd0181206b4e1fceb4dd64"
+      },
+      "terrain": {
+        "deepest": -0.117922,
+        "highest": 0.255221,
+        "origins": {
+          "original": 32738,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 30,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 16629,
+          "coastal_lowland": 2677,
+          "lowland": 9467,
+          "plain": 1292,
+          "hill": 1068,
+          "plateau": 16,
+          "mountain": 225,
+          "basin": 470,
+          "incised_valley": 185,
+          "slope": 739,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 16139,
+          "inland_water": 0,
+          "shelf": 6890,
+          "continental_slope": 4285,
+          "open_basin": 5349,
+          "deep_basin": 0,
+          "submarine_ridge": 39,
+          "volcanic_flank": 66
+        },
+        "hotspotSupportCells": 287,
+        "drainage": {
+          "landCellCount": 16139,
+          "reachCellCount": 1659,
+          "landCellsByReceiver": {
+            "local_depression": 1350,
+            "inland_water": 0,
+            "ocean": 14789
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.324354,
+            0.823991
+          ],
+          "wetnessField": [
+            0,
+            0.025207,
+            0.193375
+          ],
+          "stormCorridorField": [
+            0.032528,
+            0.057657,
+            0.10581
+          ],
+          "seasonalityField": [
+            0.437561,
+            0.639142,
+            0.723239
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 3937,
+          "dry_polar_seasonal": 63,
+          "arid_polar": 892,
+          "dry_polar": 20,
+          "arid_cold": 2325,
+          "dry_cold": 117,
+          "arid_cool_temperate": 2917,
+          "dry_cool_temperate": 90,
+          "subhumid_cool_temperate": 58,
+          "arid_temperate": 2225,
+          "dry_temperate": 156,
+          "subhumid_temperate": 76,
+          "arid_warm_temperate": 1567,
+          "subhumid_warm_temperate": 64,
+          "dry_warm_temperate": 131,
+          "arid_subtropical": 1229,
+          "dry_subtropical": 97,
+          "subhumid_subtropical": 71,
+          "humid_subtropical": 16,
+          "arid_tropical": 76,
+          "dry_tropical": 7,
+          "subhumid_tropical": 4,
+          "humid_tropical": 1
+        },
+        "localRecoveryTempo": [
+          0.133104,
+          0.195804,
+          0.252111
+        ],
+        "localSurvivabilityPressure": [
+          0.060235,
+          0.172725,
+          0.172725
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 244,
+        "recovery": 0.209731
+      },
+      "map": {
+        "landRatio": 0.492523193359375,
+        "continentCells": [
+          8547,
+          4080,
+          2692
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          69,
+          71,
+          73
+        ],
+        "passageWidths": [
+          4,
+          4.8309518948453
+        ],
+        "shorelinePercentile": 0.513136,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "firstMs": 5611,
+      "repeatMs": 5538
+    },
+    {
+      "seed": 3405691582,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "eb90145c4b23d42423656d7d51a90d585cefd414f78a503e1dde20acac1e1ba8",
+        "phase1": "39cedd6b267711d815771af26b8d59d7048241576d71d78a7c3cd1c48fea150c",
+        "phase2": "a4fe81d15d8654ee1abfafaed46254ac3e1a1ac01c485b08b50a78995f6d0410"
+      },
+      "terrain": {
+        "deepest": -0.139776,
+        "highest": 0.366185,
+        "origins": {
+          "original": 32684,
+          "cleanup_submergence": 54,
+          "cleanup_fill": 0,
+          "marine_carving": 30,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 17291,
+          "coastal_lowland": 1124,
+          "lowland": 1272,
+          "plain": 4491,
+          "hill": 3311,
+          "plateau": 3,
+          "mountain": 1712,
+          "basin": 424,
+          "incised_valley": 286,
+          "slope": 2854,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 15477,
+          "inland_water": 0,
+          "shelf": 8078,
+          "continental_slope": 2799,
+          "open_basin": 6103,
+          "deep_basin": 284,
+          "submarine_ridge": 13,
+          "volcanic_flank": 14
+        },
+        "hotspotSupportCells": 195,
+        "drainage": {
+          "landCellCount": 15477,
+          "reachCellCount": 1446,
+          "landCellsByReceiver": {
+            "local_depression": 65,
+            "inland_water": 0,
+            "ocean": 15412
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.0122,
+            0.49032,
+            0.87618
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.201541
+          ],
+          "stormCorridorField": [
+            0.039382,
+            0.059667,
+            0.107726
+          ],
+          "seasonalityField": [
+            0.378519,
+            0.548084,
+            0.717024
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 1072,
+          "dry_polar_seasonal": 42,
+          "dry_polar": 39,
+          "arid_polar": 434,
+          "arid_cold": 1856,
+          "dry_cold": 87,
+          "arid_cool_temperate": 3421,
+          "subhumid_cold": 1,
+          "dry_cool_temperate": 65,
+          "subhumid_cool_temperate": 52,
+          "arid_temperate": 3269,
+          "subhumid_temperate": 56,
+          "dry_temperate": 103,
+          "arid_warm_temperate": 2162,
+          "subhumid_warm_temperate": 79,
+          "dry_warm_temperate": 159,
+          "arid_subtropical": 2008,
+          "dry_subtropical": 138,
+          "subhumid_subtropical": 91,
+          "humid_subtropical": 15,
+          "arid_tropical": 303,
+          "humid_tropical": 10,
+          "dry_tropical": 8,
+          "subhumid_tropical": 7
+        },
+        "localRecoveryTempo": [
+          0.105233,
+          0.116894,
+          0.149458
+        ],
+        "localSurvivabilityPressure": [
+          0.183017,
+          0.183017,
+          0.183017
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 256,
+        "recovery": 0.213819
+      },
+      "map": {
+        "landRatio": 0.472320556640625,
+        "continentCells": [
+          11870,
+          3276
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          45,
+          57,
+          69
+        ],
+        "passageWidths": [
+          7.944271909999159,
+          4
+        ],
+        "shorelinePercentile": 0.530428,
+        "shorelineAttempts": 2,
+        "coastalPorts": 9,
+        "seaLanes": 28,
+        "brittleCorridors": 3,
+        "redundantCorridors": 4
+      },
+      "firstMs": 10446,
+      "repeatMs": 11515
+    },
+    {
+      "seed": 4286578687,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "e589477ab0fedc8af772198cc59c18742c9ff87cb127448e2cc15bc7499e0013",
+        "phase1": "74722158ec8d2f3d77e15ef60ee86e52017d4468efc0b6a2623ae3008d79f995",
+        "phase2": "4c7da0c6f1edb33784bddccba97cb156d12fb5a7035033f537f5a92f7fe39d70"
+      },
+      "terrain": {
+        "deepest": -0.121508,
+        "highest": 0.303719,
+        "origins": {
+          "original": 32430,
+          "cleanup_submergence": 311,
+          "cleanup_fill": 0,
+          "marine_carving": 27,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 15426,
+          "coastal_lowland": 2186,
+          "lowland": 6839,
+          "plain": 3033,
+          "hill": 1922,
+          "plateau": 0,
+          "mountain": 1120,
+          "basin": 431,
+          "incised_valley": 98,
+          "slope": 1713,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 17342,
+          "inland_water": 1977,
+          "shelf": 5059,
+          "continental_slope": 2734,
+          "open_basin": 5599,
+          "deep_basin": 0,
+          "submarine_ridge": 0,
+          "volcanic_flank": 57
+        },
+        "hotspotSupportCells": 259,
+        "drainage": {
+          "landCellCount": 17342,
+          "reachCellCount": 2231,
+          "landCellsByReceiver": {
+            "local_depression": 2581,
+            "inland_water": 4425,
+            "ocean": 10336
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.371733,
+            0.861527
+          ],
+          "wetnessField": [
+            0,
+            0.00443,
+            0.144273
+          ],
+          "stormCorridorField": [
+            0.034089,
+            0.056678,
+            0.09333
+          ],
+          "seasonalityField": [
+            0.381815,
+            0.634648,
+            0.721679
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 3388,
+          "dry_polar_seasonal": 86,
+          "arid_cold_seasonal": 3,
+          "arid_polar": 311,
+          "arid_cold": 2844,
+          "dry_polar": 9,
+          "dry_cold": 84,
+          "arid_cool_temperate": 3811,
+          "dry_cool_temperate": 54,
+          "subhumid_cool_temperate": 26,
+          "arid_temperate": 2474,
+          "dry_temperate": 111,
+          "subhumid_temperate": 24,
+          "arid_warm_temperate": 1753,
+          "dry_warm_temperate": 114,
+          "subhumid_warm_temperate": 35,
+          "arid_subtropical": 1756,
+          "dry_subtropical": 137,
+          "subhumid_subtropical": 73,
+          "humid_subtropical": 11,
+          "arid_tropical": 222,
+          "dry_tropical": 8,
+          "subhumid_tropical": 5,
+          "humid_tropical": 3
+        },
+        "localRecoveryTempo": [
+          0.101548,
+          0.142584,
+          0.164961
+        ],
+        "localSurvivabilityPressure": [
+          0.217092,
+          0.217092,
+          0.217092
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 230,
+        "recovery": 0.191823
+      },
+      "map": {
+        "landRatio": 0.52923583984375,
+        "continentCells": [
+          13629,
+          3272
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "inland_sea",
+          "open_ocean",
+          "enclosed_water",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          68,
+          66,
+          68
+        ],
+        "passageWidths": [
+          5.324555320336759,
+          4.8309518948453
+        ],
+        "shorelinePercentile": 0.466709,
+        "shorelineAttempts": 1,
+        "coastalPorts": 9,
+        "seaLanes": 22,
+        "brittleCorridors": 4,
+        "redundantCorridors": 3
+      },
+      "firstMs": 14056,
+      "repeatMs": 8825
+    },
+    {
+      "seed": 73537,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "d2694cc7c46d2cd5482963feaee116003625a05b3f6178f3035b1a4a3ba6987a",
+        "phase1": "c8e9ef0d075d1a5176c0b84c30e31d80146c6934c7b87baf7aae10ac19960a33",
+        "phase2": "976acdfd5b3f085159606c23d6b02d8823e75755117ee062a95035d21754ad05"
+      },
+      "terrain": {
+        "deepest": -0.106166,
+        "highest": 0.290902,
+        "origins": {
+          "original": 32713,
+          "cleanup_submergence": 30,
+          "cleanup_fill": 0,
+          "marine_carving": 25,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 16001,
+          "coastal_lowland": 653,
+          "lowland": 774,
+          "plain": 5969,
+          "hill": 3440,
+          "plateau": 22,
+          "mountain": 2035,
+          "basin": 443,
+          "incised_valley": 311,
+          "slope": 3120,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 16767,
+          "inland_water": 347,
+          "shelf": 7127,
+          "continental_slope": 739,
+          "open_basin": 7748,
+          "deep_basin": 0,
+          "submarine_ridge": 0,
+          "volcanic_flank": 40
+        },
+        "hotspotSupportCells": 550,
+        "drainage": {
+          "landCellCount": 16767,
+          "reachCellCount": 1416,
+          "landCellsByReceiver": {
+            "local_depression": 888,
+            "inland_water": 5408,
+            "ocean": 10471
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.040409,
+            0.586687,
+            0.891767
+          ],
+          "wetnessField": [
+            0,
+            0.000953,
+            0.148347
+          ],
+          "stormCorridorField": [
+            0.040325,
+            0.058174,
+            0.099
+          ],
+          "seasonalityField": [
+            0.374945,
+            0.53617,
+            0.713523
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 889,
+          "dry_polar_seasonal": 28,
+          "arid_polar": 451,
+          "dry_polar": 30,
+          "arid_cold": 1421,
+          "dry_cold": 100,
+          "arid_cool_temperate": 2785,
+          "dry_cool_temperate": 78,
+          "subhumid_cool_temperate": 52,
+          "arid_temperate": 3136,
+          "subhumid_temperate": 53,
+          "dry_temperate": 75,
+          "arid_warm_temperate": 3240,
+          "dry_warm_temperate": 101,
+          "subhumid_warm_temperate": 40,
+          "arid_subtropical": 3481,
+          "dry_subtropical": 124,
+          "subhumid_subtropical": 74,
+          "humid_subtropical": 20,
+          "arid_tropical": 571,
+          "subhumid_tropical": 6,
+          "dry_tropical": 10,
+          "humid_tropical": 2
+        },
+        "localRecoveryTempo": [
+          0.090934,
+          0.133832,
+          0.143826
+        ],
+        "localSurvivabilityPressure": [
+          0.201782,
+          0.201782,
+          0.201782
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 264,
+        "recovery": 0.209966
+      },
+      "map": {
+        "landRatio": 0.511688232421875,
+        "continentCells": [
+          9380,
+          6846
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "enclosed_water",
+          "enclosed_water",
+          "enclosed_water",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          69,
+          89,
+          102,
+          87,
+          69,
+          54
+        ],
+        "passageWidths": [
+          4,
+          2,
+          2.1622776601683795,
+          3.1231056256176606,
+          5.324555320336759,
+          12.416407864998739,
+          7,
+          8.219544457292887,
+          13.317821063276352,
+          4.656854249492381
+        ],
+        "shorelinePercentile": 0.501058,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 6,
+        "redundantCorridors": 11
+      },
+      "firstMs": 11525,
+      "repeatMs": 10293
+    },
+    {
+      "seed": 16908799,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "8ac5eeb372c766880c6f48fb3408436c4141ffad064f31b3d9ac085e170bb341",
+        "phase1": "ca4eeacea8273fc4eec461b26cf976356fe6ca782a8dc57d341513954438625b",
+        "phase2": "23e25ba42d9ea2acb8c96e2dded7cb9b58a5caa2f0cacbcd1f4be2e0689e602a"
+      },
+      "terrain": {
+        "deepest": -0.294161,
+        "highest": 0.207334,
+        "origins": {
+          "original": 32742,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 26,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 24081,
+          "coastal_lowland": 858,
+          "lowland": 231,
+          "plain": 2690,
+          "hill": 982,
+          "plateau": 5,
+          "mountain": 3453,
+          "basin": 0,
+          "incised_valley": 50,
+          "slope": 418,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 8687,
+          "inland_water": 1479,
+          "shelf": 1788,
+          "continental_slope": 4262,
+          "open_basin": 7,
+          "deep_basin": 15340,
+          "submarine_ridge": 1040,
+          "volcanic_flank": 165
+        },
+        "hotspotSupportCells": 412,
+        "drainage": {
+          "landCellCount": 8687,
+          "reachCellCount": 235,
+          "landCellsByReceiver": {
+            "local_depression": 0,
+            "inland_water": 2634,
+            "ocean": 6053
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.285926,
+            0.615766,
+            0.897373
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.321916
+          ],
+          "stormCorridorField": [
+            0.046351,
+            0.063667,
+            0.123368
+          ],
+          "seasonalityField": [
+            0.37544,
+            0.534487,
+            0.646233
+          ]
+        },
+        "climateCellsByType": {
+          "arid_cold": 347,
+          "dry_cold": 60,
+          "arid_cool_temperate": 1772,
+          "dry_cool_temperate": 58,
+          "subhumid_cold": 1,
+          "subhumid_cool_temperate": 50,
+          "arid_temperate": 1951,
+          "subhumid_temperate": 71,
+          "dry_temperate": 99,
+          "dry_warm_temperate": 168,
+          "arid_warm_temperate": 1539,
+          "subhumid_warm_temperate": 79,
+          "humid_warm_temperate": 0,
+          "arid_subtropical": 1787,
+          "dry_subtropical": 183,
+          "subhumid_subtropical": 82,
+          "humid_subtropical": 48,
+          "humid_tropical": 14,
+          "arid_tropical": 337,
+          "dry_tropical": 24,
+          "subhumid_tropical": 17
+        },
+        "localRecoveryTempo": [
+          0.085998,
+          0.109085,
+          0.156617
+        ],
+        "localSurvivabilityPressure": [
+          0.1926,
+          0.1926,
+          0.1926
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 290,
+        "recovery": 0.189504
+      },
+      "map": {
+        "landRatio": 0.265106201171875,
+        "continentCells": [
+          7574,
+          897
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea",
+          "inland_sea",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          43,
+          54,
+          85,
+          49
+        ],
+        "passageWidths": [
+          7,
+          5,
+          7,
+          7.246211251235321
+        ],
+        "shorelinePercentile": 0.741486,
+        "shorelineAttempts": 11,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 6
+      },
+      "firstMs": 10526,
+      "repeatMs": 7911
+    },
+    {
+      "seed": 422095321,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "2de7c1b91c28a446acc653e1c871f1407e3f576b2ab56b70423185c8e7ab4005",
+        "phase1": "adcb26aa3b08e5041e50849d1ced385401070ecde979536d5a2c27d0e8af2749",
+        "phase2": "7745cbc2fcb71f3101303c54910c8b0d44edee06f7fcb21eaddf9f2b0792925f"
+      },
+      "terrain": {
+        "deepest": -0.235469,
+        "highest": 0.204628,
+        "origins": {
+          "original": 32752,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 16,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 25724,
+          "coastal_lowland": 539,
+          "lowland": 575,
+          "plain": 3420,
+          "hill": 1263,
+          "plateau": 10,
+          "mountain": 872,
+          "basin": 0,
+          "incised_valley": 89,
+          "slope": 276,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 7044,
+          "inland_water": 439,
+          "shelf": 526,
+          "continental_slope": 3165,
+          "open_basin": 17799,
+          "deep_basin": 3447,
+          "submarine_ridge": 197,
+          "volcanic_flank": 151
+        },
+        "hotspotSupportCells": 344,
+        "drainage": {
+          "landCellCount": 7044,
+          "reachCellCount": 301,
+          "landCellsByReceiver": {
+            "local_depression": 936,
+            "inland_water": 1720,
+            "ocean": 4388
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.276093,
+            0.679421,
+            0.900241
+          ],
+          "wetnessField": [
+            0,
+            0.002415,
+            0.284377
+          ],
+          "stormCorridorField": [
+            0.045457,
+            0.06038,
+            0.118451
+          ],
+          "seasonalityField": [
+            0.373434,
+            0.521931,
+            0.645982
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 10,
+          "dry_polar_seasonal": 2,
+          "arid_cold_seasonal": 15,
+          "dry_cold_seasonal": 2,
+          "arid_cold": 302,
+          "dry_cold": 43,
+          "arid_cool_temperate": 942,
+          "dry_cool_temperate": 22,
+          "subhumid_cold": 1,
+          "subhumid_cool_temperate": 20,
+          "arid_temperate": 1349,
+          "subhumid_temperate": 36,
+          "dry_temperate": 48,
+          "arid_warm_temperate": 1681,
+          "subhumid_warm_temperate": 53,
+          "dry_warm_temperate": 106,
+          "arid_subtropical": 1814,
+          "dry_subtropical": 127,
+          "subhumid_subtropical": 76,
+          "humid_subtropical": 35,
+          "arid_tropical": 318,
+          "dry_tropical": 18,
+          "subhumid_tropical": 13,
+          "humid_tropical": 11
+        },
+        "localRecoveryTempo": [
+          0.129197,
+          0.137619,
+          0.170426
+        ],
+        "localSurvivabilityPressure": [
+          0.185766,
+          0.185766,
+          0.185766
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 186,
+        "recovery": 0.242371
+      },
+      "map": {
+        "landRatio": 0.2149658203125,
+        "continentCells": [
+          3901,
+          2979
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          48,
+          49,
+          40,
+          40
+        ],
+        "passageWidths": [
+          8.486832980505138,
+          6.810249675906656,
+          8.219544457292887
+        ],
+        "shorelinePercentile": 0.790044,
+        "shorelineAttempts": 11,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 5
+      },
+      "firstMs": 5513,
+      "repeatMs": 4877
+    },
+    {
+      "seed": 894213317,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "04c462d30eb0065fa4a56795e73182a2ddb324264f9afd4d2427bd2ee29214fc",
+        "phase1": "22b7b357c6f1fdd7a4daceff1a57ec562c3dfe7012315f27387daecc6ef8cfe9",
+        "phase2": "77b6b5aa8e1456f2caa4cc76c5c66801fff335f2cd9591fad82442ce4a047dd2"
+      },
+      "terrain": {
+        "deepest": -0.216906,
+        "highest": 0.267564,
+        "origins": {
+          "original": 32749,
+          "cleanup_submergence": 1,
+          "cleanup_fill": 0,
+          "marine_carving": 18,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 24479,
+          "coastal_lowland": 485,
+          "lowland": 366,
+          "plain": 2983,
+          "hill": 1624,
+          "plateau": 0,
+          "mountain": 1763,
+          "basin": 0,
+          "incised_valley": 116,
+          "slope": 952,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 8289,
+          "inland_water": 38,
+          "shelf": 353,
+          "continental_slope": 4299,
+          "open_basin": 16433,
+          "deep_basin": 2838,
+          "submarine_ridge": 356,
+          "volcanic_flank": 162
+        },
+        "hotspotSupportCells": 416,
+        "drainage": {
+          "landCellCount": 8289,
+          "reachCellCount": 337,
+          "landCellsByReceiver": {
+            "local_depression": 840,
+            "inland_water": 1034,
+            "ocean": 6415
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.137406,
+            0.583332,
+            0.877612
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.212674
+          ],
+          "stormCorridorField": [
+            0.043134,
+            0.059598,
+            0.114474
+          ],
+          "seasonalityField": [
+            0.378038,
+            0.537999,
+            0.705116
+          ]
+        },
+        "climateCellsByType": {
+          "dry_cool_temperate": 46,
+          "subhumid_cool_temperate": 30,
+          "arid_cool_temperate": 1596,
+          "arid_temperate": 1651,
+          "subhumid_temperate": 54,
+          "dry_temperate": 80,
+          "arid_warm_temperate": 1663,
+          "dry_warm_temperate": 100,
+          "subhumid_warm_temperate": 48,
+          "arid_subtropical": 1569,
+          "dry_subtropical": 76,
+          "subhumid_subtropical": 36,
+          "humid_subtropical": 22,
+          "arid_tropical": 191,
+          "dry_tropical": 7,
+          "subhumid_tropical": 3,
+          "humid_tropical": 3,
+          "dry_cold": 41,
+          "arid_cold": 649,
+          "arid_polar_seasonal": 330,
+          "arid_cold_seasonal": 70,
+          "dry_cold_seasonal": 1,
+          "dry_polar_seasonal": 23
+        },
+        "localRecoveryTempo": [
+          0.120263,
+          0.142071,
+          0.176289
+        ],
+        "localSurvivabilityPressure": [
+          0.160726,
+          0.160726,
+          0.160726
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 165,
+        "recovery": 0.274464
+      },
+      "map": {
+        "landRatio": 0.252960205078125,
+        "continentCells": [
+          5777,
+          2291
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          82,
+          52,
+          51,
+          49
+        ],
+        "passageWidths": [
+          6,
+          7,
+          6
+        ],
+        "shorelinePercentile": 0.753753,
+        "shorelineAttempts": 10,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 5
+      },
+      "firstMs": 4614,
+      "repeatMs": 4942
+    },
+    {
+      "seed": 1536241709,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "d071e90448870b2167bba62890f133e904addc670b344cc344309bf83ed0014e",
+        "phase1": "98d50375a55e97af99527006c456bcff5b51259b2ca404491d8ec4003b561c7f",
+        "phase2": "9ccf00e007bf8d44f7e36eedac51ae110f73885460d54a1251de216c9a8e2a0e"
+      },
+      "terrain": {
+        "deepest": -0.125192,
+        "highest": 0.302851,
+        "origins": {
+          "original": 32737,
+          "cleanup_submergence": 5,
+          "cleanup_fill": 0,
+          "marine_carving": 26,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 16356,
+          "coastal_lowland": 2211,
+          "lowland": 4577,
+          "plain": 3765,
+          "hill": 1472,
+          "plateau": 24,
+          "mountain": 1940,
+          "basin": 420,
+          "incised_valley": 280,
+          "slope": 1723,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 16412,
+          "inland_water": 388,
+          "shelf": 7072,
+          "continental_slope": 1582,
+          "open_basin": 7215,
+          "deep_basin": 0,
+          "submarine_ridge": 10,
+          "volcanic_flank": 89
+        },
+        "hotspotSupportCells": 696,
+        "drainage": {
+          "landCellCount": 16412,
+          "reachCellCount": 2659,
+          "landCellsByReceiver": {
+            "local_depression": 2808,
+            "inland_water": 1474,
+            "ocean": 12130
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.488831,
+            0.883186
+          ],
+          "wetnessField": [
+            0,
+            0.005895,
+            0.166849
+          ],
+          "stormCorridorField": [
+            0.036205,
+            0.057298,
+            0.099994
+          ],
+          "seasonalityField": [
+            0.376935,
+            0.548421,
+            0.721032
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 2229,
+          "dry_polar_seasonal": 92,
+          "arid_polar": 375,
+          "dry_polar": 19,
+          "arid_cold": 2201,
+          "dry_cold": 137,
+          "arid_cool_temperate": 2609,
+          "dry_cool_temperate": 63,
+          "subhumid_cool_temperate": 29,
+          "arid_temperate": 2694,
+          "subhumid_temperate": 46,
+          "dry_temperate": 95,
+          "arid_warm_temperate": 2541,
+          "dry_warm_temperate": 102,
+          "subhumid_warm_temperate": 42,
+          "arid_subtropical": 2520,
+          "dry_subtropical": 110,
+          "subhumid_subtropical": 95,
+          "humid_subtropical": 13,
+          "arid_tropical": 385,
+          "humid_tropical": 4,
+          "subhumid_tropical": 4,
+          "dry_tropical": 7
+        },
+        "localRecoveryTempo": [
+          0.100965,
+          0.145006,
+          0.23517
+        ],
+        "localSurvivabilityPressure": [
+          0.08457,
+          0.19424,
+          0.19424
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 280,
+        "recovery": 0.237113
+      },
+      "map": {
+        "landRatio": 0.5008544921875,
+        "continentCells": [
+          13561,
+          1495
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "inland_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          69,
+          279,
+          76,
+          73,
+          50,
+          46
+        ],
+        "passageWidths": [
+          1.2360679774997898,
+          3,
+          1,
+          1.2360679774997898,
+          4.099019513592785
+        ],
+        "shorelinePercentile": 0.51646,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 6,
+        "redundantCorridors": 7
+      },
+      "firstMs": 7907,
+      "repeatMs": 9436
+    },
+    {
+      "seed": 2269445513,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "4c8d415ef7247f28f81338ce281715d3da8e40b3b1e535ec4b7ecd909cc51ad1",
+        "phase1": "944bad36ba79b9e28bc91c249c57f80d0a6af60aee07ee820dd79f4510ffba32",
+        "phase2": "6664901aeea17d11b5fb09e1a8303d76fa9d7732a44a5cfb3e25d2841fa890db"
+      },
+      "terrain": {
+        "deepest": -0.119601,
+        "highest": 0.286004,
+        "origins": {
+          "original": 32726,
+          "cleanup_submergence": 15,
+          "cleanup_fill": 0,
+          "marine_carving": 27,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 15187,
+          "coastal_lowland": 2573,
+          "lowland": 8468,
+          "plain": 2264,
+          "hill": 1140,
+          "plateau": 1,
+          "mountain": 841,
+          "basin": 540,
+          "incised_valley": 137,
+          "slope": 1617,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 17581,
+          "inland_water": 27,
+          "shelf": 6402,
+          "continental_slope": 4902,
+          "open_basin": 3795,
+          "deep_basin": 0,
+          "submarine_ridge": 0,
+          "volcanic_flank": 61
+        },
+        "hotspotSupportCells": 333,
+        "drainage": {
+          "landCellCount": 17581,
+          "reachCellCount": 2136,
+          "landCellsByReceiver": {
+            "local_depression": 3387,
+            "inland_water": 1119,
+            "ocean": 13075
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.432387,
+            0.87511
+          ],
+          "wetnessField": [
+            0,
+            0.008487,
+            0.151427
+          ],
+          "stormCorridorField": [
+            0.033066,
+            0.056639,
+            0.097878
+          ],
+          "seasonalityField": [
+            0.378262,
+            0.555004,
+            0.723176
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 4181,
+          "dry_polar_seasonal": 100,
+          "arid_polar": 586,
+          "dry_polar": 15,
+          "arid_cold": 1866,
+          "dry_cold": 53,
+          "arid_cool_temperate": 2328,
+          "dry_cool_temperate": 55,
+          "subhumid_cool_temperate": 31,
+          "arid_temperate": 2710,
+          "subhumid_temperate": 40,
+          "dry_temperate": 80,
+          "arid_warm_temperate": 2212,
+          "dry_warm_temperate": 122,
+          "subhumid_warm_temperate": 60,
+          "arid_subtropical": 2631,
+          "subhumid_subtropical": 84,
+          "dry_subtropical": 130,
+          "humid_subtropical": 26,
+          "arid_tropical": 242,
+          "dry_tropical": 11,
+          "humid_tropical": 7,
+          "subhumid_tropical": 11
+        },
+        "localRecoveryTempo": [
+          0.085741,
+          0.178135,
+          0.195551
+        ],
+        "localSurvivabilityPressure": [
+          0.061507,
+          0.191835,
+          0.191835
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 250,
+        "recovery": 0.212379
+      },
+      "map": {
+        "landRatio": 0.536529541015625,
+        "continentCells": [
+          13892,
+          1360,
+          1025
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean",
+          "enclosed_water",
+          "enclosed_water",
+          "open_ocean",
+          "enclosed_water",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          110,
+          75,
+          73
+        ],
+        "passageWidths": [
+          4,
+          5.4031242374328485,
+          9.816653826391969
+        ],
+        "shorelinePercentile": 0.470125,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 25,
+        "brittleCorridors": 3,
+        "redundantCorridors": 4
+      },
+      "firstMs": 9881,
+      "repeatMs": 9121
+    },
+    {
+      "seed": 3071624507,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "6c9d09d0fe76c05da3c75a6edcd48369afe9dca60ca2892d204aa15737af06d3",
+        "phase1": "8e7605afee240a06009a92456bf1498fda79865b7c9387e5f58f191ce0fd2b15",
+        "phase2": "9eeb81b132740da7831fae97d5025efed8f3d5726184b2238d632548dffd9496"
+      },
+      "terrain": {
+        "deepest": -0.12159,
+        "highest": 0.23412,
+        "origins": {
+          "original": 32662,
+          "cleanup_submergence": 75,
+          "cleanup_fill": 0,
+          "marine_carving": 31,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 14787,
+          "coastal_lowland": 2232,
+          "lowland": 7063,
+          "plain": 2832,
+          "hill": 2734,
+          "plateau": 0,
+          "mountain": 61,
+          "basin": 730,
+          "incised_valley": 421,
+          "slope": 1908,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 17981,
+          "inland_water": 3,
+          "shelf": 7796,
+          "continental_slope": 3026,
+          "open_basin": 3912,
+          "deep_basin": 0,
+          "submarine_ridge": 36,
+          "volcanic_flank": 14
+        },
+        "hotspotSupportCells": 227,
+        "drainage": {
+          "landCellCount": 17981,
+          "reachCellCount": 1416,
+          "landCellsByReceiver": {
+            "local_depression": 2233,
+            "inland_water": 258,
+            "ocean": 15490
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.444854,
+            0.881217
+          ],
+          "wetnessField": [
+            0,
+            0.017995,
+            0.191613
+          ],
+          "stormCorridorField": [
+            0.034274,
+            0.057134,
+            0.103908
+          ],
+          "seasonalityField": [
+            0.377708,
+            0.553132,
+            0.721881
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 3015,
+          "dry_polar_seasonal": 84,
+          "arid_polar": 744,
+          "dry_polar": 29,
+          "arid_cold": 2618,
+          "dry_cold": 130,
+          "subhumid_cold": 1,
+          "arid_cool_temperate": 2511,
+          "dry_cool_temperate": 49,
+          "subhumid_cool_temperate": 39,
+          "arid_temperate": 2474,
+          "subhumid_temperate": 56,
+          "dry_temperate": 107,
+          "arid_warm_temperate": 2451,
+          "subhumid_warm_temperate": 68,
+          "dry_warm_temperate": 134,
+          "arid_subtropical": 2805,
+          "dry_subtropical": 160,
+          "subhumid_subtropical": 138,
+          "humid_subtropical": 25,
+          "arid_tropical": 304,
+          "dry_tropical": 17,
+          "humid_tropical": 9,
+          "subhumid_tropical": 13
+        },
+        "localRecoveryTempo": [
+          0.11778,
+          0.172783,
+          0.272128
+        ],
+        "localSurvivabilityPressure": [
+          0.091985,
+          0.177538,
+          0.177538
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 299,
+        "recovery": 0.271251
+      },
+      "map": {
+        "landRatio": 0.548736572265625,
+        "continentCells": [
+          7547,
+          6267,
+          2569
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "enclosed_water",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          52,
+          67,
+          86
+        ],
+        "passageWidths": [
+          4.656854249492381,
+          3.2426406871192857,
+          12,
+          8.899494936611665
+        ],
+        "shorelinePercentile": 0.454307,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 3,
+        "redundantCorridors": 6
+      },
+      "firstMs": 9519,
+      "repeatMs": 9448
+    },
+    {
+      "seed": 4011398309,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "9d9d0d25b0c274cd9e11e1a308661e5ccc10b367e819ea412349f5c0c1ef861f",
+        "phase1": "56b914b073b7317b2715ca59bc4ad9cae42c16469dedd9daa14cb381094bad64",
+        "phase2": "bf80b746fdfe2767b7b1569f9680b669c1bc975e9fd7970f7f6158ba77c7b515"
+      },
+      "terrain": {
+        "deepest": -0.128296,
+        "highest": 0.282465,
+        "origins": {
+          "original": 32437,
+          "cleanup_submergence": 305,
+          "cleanup_fill": 0,
+          "marine_carving": 26,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 18324,
+          "coastal_lowland": 1925,
+          "lowland": 3832,
+          "plain": 3380,
+          "hill": 2197,
+          "plateau": 0,
+          "mountain": 614,
+          "basin": 565,
+          "incised_valley": 313,
+          "slope": 1618,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 14444,
+          "inland_water": 0,
+          "shelf": 8058,
+          "continental_slope": 2866,
+          "open_basin": 7280,
+          "deep_basin": 0,
+          "submarine_ridge": 43,
+          "volcanic_flank": 77
+        },
+        "hotspotSupportCells": 380,
+        "drainage": {
+          "landCellCount": 14444,
+          "reachCellCount": 1626,
+          "landCellsByReceiver": {
+            "local_depression": 2400,
+            "inland_water": 0,
+            "ocean": 12044
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.416206,
+            0.856709
+          ],
+          "wetnessField": [
+            0,
+            0.011612,
+            0.147203
+          ],
+          "stormCorridorField": [
+            0.034522,
+            0.05791,
+            0.097285
+          ],
+          "seasonalityField": [
+            0.38259,
+            0.555268,
+            0.723196
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 2404,
+          "dry_polar_seasonal": 91,
+          "arid_polar": 940,
+          "dry_polar": 46,
+          "arid_cold": 1758,
+          "dry_cold": 69,
+          "arid_cool_temperate": 2539,
+          "subhumid_cool_temperate": 29,
+          "dry_cool_temperate": 37,
+          "arid_temperate": 2460,
+          "subhumid_temperate": 43,
+          "dry_temperate": 82,
+          "arid_warm_temperate": 1966,
+          "subhumid_warm_temperate": 32,
+          "dry_warm_temperate": 70,
+          "arid_subtropical": 1533,
+          "dry_subtropical": 84,
+          "subhumid_subtropical": 60,
+          "humid_subtropical": 13,
+          "arid_tropical": 181,
+          "dry_tropical": 2,
+          "subhumid_tropical": 2,
+          "humid_tropical": 3
+        },
+        "localRecoveryTempo": [
+          0.117305,
+          0.195956,
+          0.212237
+        ],
+        "localSurvivabilityPressure": [
+          0.108184,
+          0.182023,
+          0.182023
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 200,
+        "recovery": 0.237444
+      },
+      "map": {
+        "landRatio": 0.4407958984375,
+        "continentCells": [
+          9307,
+          2577
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          110,
+          79,
+          66,
+          47
+        ],
+        "passageWidths": [
+          2,
+          6,
+          4,
+          14.811388300841896
+        ],
+        "shorelinePercentile": 0.558457,
+        "shorelineAttempts": 1,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 6
+      },
+      "firstMs": 5255,
+      "repeatMs": 3372
+    },
+    {
+      "seed": 40681987,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "7162d87bb518205f71e38b2c360afee992b69e3076a67bc250ede71acd94b702",
+        "phase1": "8edab95413b36cf3cfabd2e89713cc5506ab0a0ad94fba47678561477d594b61",
+        "phase2": "5ae80e49b827945fd0ed954b674fa366481adfd98824f64d84f23763265d4441"
+      },
+      "terrain": {
+        "deepest": -0.138426,
+        "highest": 0.346715,
+        "origins": {
+          "original": 32676,
+          "cleanup_submergence": 65,
+          "cleanup_fill": 0,
+          "marine_carving": 27,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 17894,
+          "coastal_lowland": 1295,
+          "lowland": 1074,
+          "plain": 4486,
+          "hill": 3053,
+          "plateau": 0,
+          "mountain": 1878,
+          "basin": 492,
+          "incised_valley": 142,
+          "slope": 2454,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 14874,
+          "inland_water": 136,
+          "shelf": 7409,
+          "continental_slope": 2097,
+          "open_basin": 8107,
+          "deep_basin": 99,
+          "submarine_ridge": 41,
+          "volcanic_flank": 5
+        },
+        "hotspotSupportCells": 179,
+        "drainage": {
+          "landCellCount": 14874,
+          "reachCellCount": 1769,
+          "landCellsByReceiver": {
+            "local_depression": 2376,
+            "inland_water": 1070,
+            "ocean": 11428
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.059575,
+            0.532485,
+            0.885062
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.165162
+          ],
+          "stormCorridorField": [
+            0.042965,
+            0.059197,
+            0.100488
+          ],
+          "seasonalityField": [
+            0.376164,
+            0.543395,
+            0.668807
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 620,
+          "dry_polar_seasonal": 55,
+          "arid_polar": 375,
+          "dry_polar": 56,
+          "arid_cold": 1471,
+          "dry_cold": 148,
+          "arid_cool_temperate": 3132,
+          "subhumid_cool_temperate": 47,
+          "dry_cool_temperate": 75,
+          "arid_temperate": 3022,
+          "dry_temperate": 66,
+          "subhumid_temperate": 43,
+          "arid_warm_temperate": 2435,
+          "dry_warm_temperate": 82,
+          "subhumid_warm_temperate": 37,
+          "arid_subtropical": 2666,
+          "dry_subtropical": 82,
+          "subhumid_subtropical": 39,
+          "humid_subtropical": 22,
+          "arid_tropical": 377,
+          "dry_tropical": 11,
+          "subhumid_tropical": 6,
+          "humid_tropical": 6,
+          "subhumid_cold": 1
+        },
+        "localRecoveryTempo": [
+          0.11449,
+          0.137725,
+          0.202805
+        ],
+        "localSurvivabilityPressure": [
+          0.169792,
+          0.169792,
+          0.169792
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 220,
+        "recovery": 0.271711
+      },
+      "map": {
+        "landRatio": 0.45391845703125,
+        "continentCells": [
+          7855,
+          6489
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea",
+          "semi_enclosed_sea",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          68,
+          57,
+          45
+        ],
+        "passageWidths": [
+          4.385164807134505,
+          3.4721359549995796,
+          7.062257748298549
+        ],
+        "shorelinePercentile": 0.548482,
+        "shorelineAttempts": 1,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "firstMs": 3413,
+      "repeatMs": 4116
+    },
+    {
+      "seed": 359393571,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "aa20cf8172bc23b8e8469cbb2aed034542dbbe4e1c1af0f66f39bd94d5d3f0f4",
+        "phase1": "a12fa5f3212c6d221936bcd5fc0fa1d67b9cf6a08383400273ebb67ae1e07420",
+        "phase2": "dfb2953663512233be714d5d7d877dc8c5e53e10b4587d38f1e249c194c82e25"
+      },
+      "terrain": {
+        "deepest": -0.187974,
+        "highest": 0.211885,
+        "origins": {
+          "original": 32743,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 25,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 24508,
+          "coastal_lowland": 475,
+          "lowland": 97,
+          "plain": 3515,
+          "hill": 3057,
+          "plateau": 0,
+          "mountain": 136,
+          "basin": 0,
+          "incised_valley": 90,
+          "slope": 890,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 8260,
+          "inland_water": 49,
+          "shelf": 1303,
+          "continental_slope": 3950,
+          "open_basin": 18357,
+          "deep_basin": 738,
+          "submarine_ridge": 42,
+          "volcanic_flank": 69
+        },
+        "hotspotSupportCells": 328,
+        "drainage": {
+          "landCellCount": 8260,
+          "reachCellCount": 396,
+          "landCellsByReceiver": {
+            "local_depression": 194,
+            "inland_water": 545,
+            "ocean": 7521
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.120396,
+            0.621354,
+            0.894934
+          ],
+          "wetnessField": [
+            0,
+            0.014494,
+            0.292643
+          ],
+          "stormCorridorField": [
+            0.044465,
+            0.061612,
+            0.121283
+          ],
+          "seasonalityField": [
+            0.374451,
+            0.531993,
+            0.660994
+          ]
+        },
+        "climateCellsByType": {
+          "dry_polar": 24,
+          "arid_polar": 148,
+          "arid_cold": 854,
+          "dry_cold": 79,
+          "arid_cool_temperate": 1198,
+          "subhumid_cool_temperate": 43,
+          "dry_cool_temperate": 47,
+          "arid_temperate": 1338,
+          "subhumid_temperate": 62,
+          "dry_temperate": 84,
+          "arid_warm_temperate": 1516,
+          "dry_warm_temperate": 149,
+          "subhumid_warm_temperate": 61,
+          "arid_subtropical": 1844,
+          "dry_subtropical": 142,
+          "subhumid_subtropical": 68,
+          "humid_subtropical": 36,
+          "arid_tropical": 300,
+          "subhumid_tropical": 9,
+          "dry_tropical": 12,
+          "humid_tropical": 8,
+          "dry_polar_seasonal": 25,
+          "arid_polar_seasonal": 213
+        },
+        "localRecoveryTempo": [
+          0.110875,
+          0.130867,
+          0.179239
+        ],
+        "localSurvivabilityPressure": [
+          0.186072,
+          0.186072,
+          0.186072
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 264,
+        "recovery": 0.257343
+      },
+      "map": {
+        "landRatio": 0.2520751953125,
+        "continentCells": [
+          6499,
+          1530
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          45,
+          56,
+          69,
+          81
+        ],
+        "passageWidths": [
+          5,
+          7.062257748298549,
+          4,
+          15.278820596099706,
+          11.727922061357857
+        ],
+        "shorelinePercentile": 0.754995,
+        "shorelineAttempts": 11,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 7
+      },
+      "firstMs": 5715,
+      "repeatMs": 6295
+    },
+    {
+      "seed": 801384629,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "e6b323dd63844e07df48cae09bcdd1e246059f82c448f4f3bd67a2be835908e2",
+        "phase1": "82b3e38cae36a37f51c1b3a8c933f7c81db387ca00b88c3f084bfa2e79c7fac9",
+        "phase2": "00bf6adeec6d3b3cccac4f16cab618f3799d6227740f3ec829252325c8c97f7e"
+      },
+      "terrain": {
+        "deepest": -0.1334,
+        "highest": 0.406644,
+        "origins": {
+          "original": 32730,
+          "cleanup_submergence": 12,
+          "cleanup_fill": 0,
+          "marine_carving": 26,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 16615,
+          "coastal_lowland": 1348,
+          "lowland": 1892,
+          "plain": 3453,
+          "hill": 2463,
+          "plateau": 0,
+          "mountain": 3575,
+          "basin": 524,
+          "incised_valley": 196,
+          "slope": 2702,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 16153,
+          "inland_water": 886,
+          "shelf": 6229,
+          "continental_slope": 2166,
+          "open_basin": 7121,
+          "deep_basin": 179,
+          "submarine_ridge": 0,
+          "volcanic_flank": 34
+        },
+        "hotspotSupportCells": 453,
+        "drainage": {
+          "landCellCount": 16153,
+          "reachCellCount": 1844,
+          "landCellsByReceiver": {
+            "local_depression": 3632,
+            "inland_water": 1389,
+            "ocean": 11132
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.518894,
+            0.878353
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.156877
+          ],
+          "stormCorridorField": [
+            0.037403,
+            0.057885,
+            0.099398
+          ],
+          "seasonalityField": [
+            0.37797,
+            0.545428,
+            0.719622
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 2062,
+          "dry_polar_seasonal": 74,
+          "arid_cold_seasonal": 246,
+          "dry_cold_seasonal": 5,
+          "arid_cold": 1609,
+          "dry_cold": 99,
+          "arid_cool_temperate": 2698,
+          "dry_cool_temperate": 65,
+          "subhumid_cool_temperate": 43,
+          "arid_temperate": 3315,
+          "subhumid_temperate": 49,
+          "dry_temperate": 98,
+          "arid_warm_temperate": 2740,
+          "dry_warm_temperate": 111,
+          "subhumid_warm_temperate": 44,
+          "arid_subtropical": 2345,
+          "dry_subtropical": 106,
+          "subhumid_subtropical": 82,
+          "humid_subtropical": 2,
+          "arid_tropical": 343,
+          "humid_tropical": 4,
+          "dry_tropical": 6,
+          "subhumid_tropical": 7
+        },
+        "localRecoveryTempo": [
+          0.07849,
+          0.14051,
+          0.168311
+        ],
+        "localSurvivabilityPressure": [
+          0.208543,
+          0.208543,
+          0.208543
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 267,
+        "recovery": 0.224268
+      },
+      "map": {
+        "landRatio": 0.492950439453125,
+        "continentCells": [
+          13140,
+          2609
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          86,
+          86,
+          73,
+          69,
+          64
+        ],
+        "passageWidths": [
+          2.6055512754639896,
+          3.2426406871192857,
+          1.8284271247461903,
+          3.2426406871192857
+        ],
+        "shorelinePercentile": 0.517605,
+        "shorelineAttempts": 2,
+        "coastalPorts": 11,
+        "seaLanes": 29,
+        "brittleCorridors": 5,
+        "redundantCorridors": 5
+      },
+      "firstMs": 5640,
+      "repeatMs": 4396
+    },
+    {
+      "seed": 1431655765,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "fccfd20c965b4308839a7fcc0736711be317799a404febdaab1404d01c84ffc7",
+        "phase1": "b688e10a142803c38ea7d9c64c9a3a445dd97acb200f251a30de6aaecaf170b9",
+        "phase2": "ee70a9eea95240db0ed60958b0da6138b9e3a2dfb9b419f16d312187e5a28f69"
+      },
+      "terrain": {
+        "deepest": -0.11839,
+        "highest": 0.204727,
+        "origins": {
+          "original": 32686,
+          "cleanup_submergence": 48,
+          "cleanup_fill": 0,
+          "marine_carving": 34,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 15123,
+          "coastal_lowland": 2790,
+          "lowland": 7464,
+          "plain": 2962,
+          "hill": 2206,
+          "plateau": 1,
+          "mountain": 0,
+          "basin": 575,
+          "incised_valley": 424,
+          "slope": 1223,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 17645,
+          "inland_water": 332,
+          "shelf": 8236,
+          "continental_slope": 2444,
+          "open_basin": 4058,
+          "deep_basin": 0,
+          "submarine_ridge": 9,
+          "volcanic_flank": 44
+        },
+        "hotspotSupportCells": 275,
+        "drainage": {
+          "landCellCount": 17645,
+          "reachCellCount": 1431,
+          "landCellsByReceiver": {
+            "local_depression": 1357,
+            "inland_water": 1942,
+            "ocean": 14346
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.401937,
+            0.878424
+          ],
+          "wetnessField": [
+            0,
+            0.027911,
+            0.197047
+          ],
+          "stormCorridorField": [
+            0.032868,
+            0.057424,
+            0.10452
+          ],
+          "seasonalityField": [
+            0.37814,
+            0.558035,
+            0.723022
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 3618,
+          "dry_polar_seasonal": 70,
+          "arid_polar": 981,
+          "dry_polar": 28,
+          "arid_cold": 2310,
+          "dry_cold": 102,
+          "arid_cool_temperate": 2520,
+          "subhumid_cold": 2,
+          "dry_cool_temperate": 86,
+          "subhumid_cool_temperate": 43,
+          "arid_temperate": 2621,
+          "subhumid_temperate": 65,
+          "dry_temperate": 147,
+          "arid_warm_temperate": 1846,
+          "subhumid_warm_temperate": 60,
+          "dry_warm_temperate": 157,
+          "arid_subtropical": 2362,
+          "dry_subtropical": 165,
+          "subhumid_subtropical": 127,
+          "humid_subtropical": 16,
+          "subhumid_tropical": 8,
+          "arid_tropical": 292,
+          "dry_tropical": 12,
+          "humid_tropical": 7
+        },
+        "localRecoveryTempo": [
+          0.103436,
+          0.15438,
+          0.232043
+        ],
+        "localSurvivabilityPressure": [
+          0.042114,
+          0.188785,
+          0.188785
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 320,
+        "recovery": 0.179534
+      },
+      "map": {
+        "landRatio": 0.538482666015625,
+        "continentCells": [
+          11699,
+          4549
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "inland_sea",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          74,
+          78,
+          63
+        ],
+        "passageWidths": [
+          4.099019513592785,
+          2.6055512754639896,
+          14.556349186104047
+        ],
+        "shorelinePercentile": 0.465698,
+        "shorelineAttempts": 1,
+        "coastalPorts": 9,
+        "seaLanes": 36,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "firstMs": 6914,
+      "repeatMs": 5802
+    },
+    {
+      "seed": 2018958301,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "9df925de5d1b4b17ece306b5a4c4aa759d39191f7e764af6045dbcf37ecd4c37",
+        "phase1": "cbfe8c822df08738b171c0c3a79f4474135cdb08947f7a2f6292d69285dddf9e",
+        "phase2": "ba88f52af364f4382141b02613bf853ac8c80aadc4cdb8d4ca6fbece58774d90"
+      },
+      "terrain": {
+        "deepest": -0.123398,
+        "highest": 0.27972,
+        "origins": {
+          "original": 32671,
+          "cleanup_submergence": 63,
+          "cleanup_fill": 0,
+          "marine_carving": 34,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 16119,
+          "coastal_lowland": 2158,
+          "lowland": 4230,
+          "plain": 3024,
+          "hill": 2840,
+          "plateau": 15,
+          "mountain": 717,
+          "basin": 626,
+          "incised_valley": 231,
+          "slope": 2808,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 16649,
+          "inland_water": 351,
+          "shelf": 8395,
+          "continental_slope": 2888,
+          "open_basin": 4422,
+          "deep_basin": 0,
+          "submarine_ridge": 21,
+          "volcanic_flank": 42
+        },
+        "hotspotSupportCells": 290,
+        "drainage": {
+          "landCellCount": 16649,
+          "reachCellCount": 1975,
+          "landCellsByReceiver": {
+            "local_depression": 528,
+            "inland_water": 1434,
+            "ocean": 14687
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.434164,
+            0.869929
+          ],
+          "wetnessField": [
+            0,
+            0.002378,
+            0.2229
+          ],
+          "stormCorridorField": [
+            0.035101,
+            0.05876,
+            0.109059
+          ],
+          "seasonalityField": [
+            0.380615,
+            0.554879,
+            0.722349
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 2715,
+          "dry_polar_seasonal": 95,
+          "arid_polar": 620,
+          "dry_polar": 29,
+          "arid_cold": 2163,
+          "dry_cold": 103,
+          "arid_cool_temperate": 2985,
+          "dry_cool_temperate": 57,
+          "subhumid_cool_temperate": 42,
+          "arid_temperate": 2696,
+          "dry_temperate": 158,
+          "subhumid_temperate": 74,
+          "arid_warm_temperate": 2033,
+          "dry_warm_temperate": 180,
+          "subhumid_warm_temperate": 84,
+          "arid_subtropical": 2013,
+          "dry_subtropical": 193,
+          "subhumid_subtropical": 129,
+          "humid_subtropical": 27,
+          "arid_tropical": 211,
+          "dry_tropical": 18,
+          "subhumid_tropical": 13,
+          "humid_tropical": 11
+        },
+        "localRecoveryTempo": [
+          0.111838,
+          0.151338,
+          0.162525
+        ],
+        "localSurvivabilityPressure": [
+          0.090788,
+          0.194032,
+          0.194032
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 300,
+        "recovery": 0.180991
+      },
+      "map": {
+        "landRatio": 0.508087158203125,
+        "continentCells": [
+          12720,
+          2892
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "inland_sea",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          65,
+          59,
+          59,
+          51
+        ],
+        "passageWidths": [
+          4.8309518948453,
+          5.324555320336759,
+          5.708203932499369,
+          15.278820596099706,
+          10
+        ],
+        "shorelinePercentile": 0.496215,
+        "shorelineAttempts": 1,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 7
+      },
+      "firstMs": 7070,
+      "repeatMs": 5053
+    },
+    {
+      "seed": 2764796977,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "6f27bed576a42dcc167f10d6b8167c76932d87318be984ee9be5b353b269ac1c",
+        "phase1": "170a65ce2372f0d6a3be77e08de32d5dcfa6959b11bc7d414f467a4723e5820a",
+        "phase2": "6c5fa2de35c6c92ee3934f91077b48336ecf255029a1755d6c768fc1f274a0b1"
+      },
+      "terrain": {
+        "deepest": -0.110863,
+        "highest": 0.262007,
+        "origins": {
+          "original": 32631,
+          "cleanup_submergence": 106,
+          "cleanup_fill": 0,
+          "marine_carving": 31,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 15852,
+          "coastal_lowland": 3202,
+          "lowland": 10769,
+          "plain": 812,
+          "hill": 537,
+          "plateau": 0,
+          "mountain": 280,
+          "basin": 454,
+          "incised_valley": 135,
+          "slope": 727,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 16916,
+          "inland_water": 0,
+          "shelf": 7233,
+          "continental_slope": 4851,
+          "open_basin": 3697,
+          "deep_basin": 0,
+          "submarine_ridge": 0,
+          "volcanic_flank": 71
+        },
+        "hotspotSupportCells": 328,
+        "drainage": {
+          "landCellCount": 16916,
+          "reachCellCount": 1664,
+          "landCellsByReceiver": {
+            "local_depression": 1799,
+            "inland_water": 0,
+            "ocean": 15117
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.290884,
+            0.863535
+          ],
+          "wetnessField": [
+            0,
+            0.029299,
+            0.205603
+          ],
+          "stormCorridorField": [
+            0.032542,
+            0.054682,
+            0.106575
+          ],
+          "seasonalityField": [
+            0.380716,
+            0.642412,
+            0.722594
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 4712,
+          "dry_polar_seasonal": 73,
+          "arid_cold": 3114,
+          "arid_polar": 251,
+          "dry_cold": 122,
+          "dry_polar": 5,
+          "subhumid_cool_temperate": 54,
+          "dry_cool_temperate": 88,
+          "arid_cool_temperate": 2713,
+          "subhumid_temperate": 56,
+          "dry_temperate": 113,
+          "arid_temperate": 1303,
+          "arid_warm_temperate": 1584,
+          "dry_warm_temperate": 167,
+          "subhumid_warm_temperate": 86,
+          "arid_subtropical": 2012,
+          "dry_subtropical": 138,
+          "subhumid_subtropical": 126,
+          "humid_subtropical": 8,
+          "arid_tropical": 169,
+          "dry_tropical": 10,
+          "subhumid_tropical": 8,
+          "humid_tropical": 1,
+          "arid_cold_seasonal": 3
+        },
+        "localRecoveryTempo": [
+          0.121206,
+          0.194564,
+          0.297417
+        ],
+        "localSurvivabilityPressure": [
+          0.129499,
+          0.180308,
+          0.180308
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 276,
+        "recovery": 0.270976
+      },
+      "map": {
+        "landRatio": 0.5162353515625,
+        "continentCells": [
+          9891,
+          5520
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          70,
+          68,
+          56,
+          54
+        ],
+        "passageWidths": [
+          4.8309518948453,
+          10.704699910719626,
+          5
+        ],
+        "shorelinePercentile": 0.487233,
+        "shorelineAttempts": 2,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 5
+      },
+      "firstMs": 4788,
+      "repeatMs": 4667
+    },
+    {
+      "seed": 3669891307,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "14f43b5adeb81bbc9a2fac5f9738c227b68298f72e7a3ee46ff47316039a41b0",
+        "phase1": "aa4f1088e37f35ad021d96a4ac882f2b4bdfc555b4a03575a5cfca27cc5ddab5",
+        "phase2": "262ed63ef3eae081ec330f470627186171e35b8e19d695e7bb7fe26706d4a063"
+      },
+      "terrain": {
+        "deepest": -0.181843,
+        "highest": 0.307852,
+        "origins": {
+          "original": 32739,
+          "cleanup_submergence": 3,
+          "cleanup_fill": 0,
+          "marine_carving": 26,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 23389,
+          "coastal_lowland": 677,
+          "lowland": 430,
+          "plain": 2560,
+          "hill": 2418,
+          "plateau": 0,
+          "mountain": 1855,
+          "basin": 0,
+          "incised_valley": 114,
+          "slope": 1325,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 9379,
+          "inland_water": 409,
+          "shelf": 2334,
+          "continental_slope": 3137,
+          "open_basin": 16633,
+          "deep_basin": 656,
+          "submarine_ridge": 137,
+          "volcanic_flank": 83
+        },
+        "hotspotSupportCells": 316,
+        "drainage": {
+          "landCellCount": 9379,
+          "reachCellCount": 547,
+          "landCellsByReceiver": {
+            "local_depression": 597,
+            "inland_water": 1790,
+            "ocean": 6992
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.193585,
+            0.568374,
+            0.8901
+          ],
+          "wetnessField": [
+            0,
+            0.002545,
+            0.245207
+          ],
+          "stormCorridorField": [
+            0.045296,
+            0.061727,
+            0.113868
+          ],
+          "seasonalityField": [
+            0.376579,
+            0.539477,
+            0.652892
+          ]
+        },
+        "climateCellsByType": {
+          "arid_cold": 668,
+          "dry_cold": 85,
+          "arid_cool_temperate": 1992,
+          "dry_cool_temperate": 42,
+          "subhumid_cold": 2,
+          "subhumid_cool_temperate": 31,
+          "arid_temperate": 2302,
+          "subhumid_temperate": 50,
+          "dry_temperate": 69,
+          "arid_warm_temperate": 1573,
+          "subhumid_warm_temperate": 48,
+          "dry_warm_temperate": 125,
+          "arid_subtropical": 1636,
+          "dry_subtropical": 135,
+          "subhumid_subtropical": 88,
+          "humid_subtropical": 23,
+          "arid_tropical": 271,
+          "dry_tropical": 15,
+          "humid_tropical": 8,
+          "subhumid_tropical": 11,
+          "arid_polar_seasonal": 147,
+          "arid_cold_seasonal": 27,
+          "dry_cold_seasonal": 9,
+          "dry_polar_seasonal": 22
+        },
+        "localRecoveryTempo": [
+          0.105006,
+          0.13063,
+          0.146467
+        ],
+        "localSurvivabilityPressure": [
+          0.18075,
+          0.18075,
+          0.18075
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 208,
+        "recovery": 0.206315
+      },
+      "map": {
+        "landRatio": 0.286224365234375,
+        "continentCells": [
+          5987,
+          3182
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          44,
+          57,
+          63,
+          69
+        ],
+        "passageWidths": [
+          6.0710678118654755,
+          3.2426406871192857,
+          4.656854249492381,
+          10.180339887498947
+        ],
+        "shorelinePercentile": 0.720103,
+        "shorelineAttempts": 11,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 6
+      },
+      "firstMs": 3862,
+      "repeatMs": 3972
+    },
+    {
+      "seed": 4264079171,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "fd609d98ec2eef9b15e8fde52cb3c4a15148f3bcbe9e72aafe1795d9224fd526",
+        "phase1": "15ced808aff2864128891cf1b4195e7143fa408314c095b1d155f253c750b2aa",
+        "phase2": "4e8735a461545096e0972cc46c1969c89a87a3069e1b67f354aa9638b30c0414"
+      },
+      "terrain": {
+        "deepest": -0.135487,
+        "highest": 0.340914,
+        "origins": {
+          "original": 32675,
+          "cleanup_submergence": 65,
+          "cleanup_fill": 0,
+          "marine_carving": 28,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 17681,
+          "coastal_lowland": 1336,
+          "lowland": 1421,
+          "plain": 4159,
+          "hill": 2721,
+          "plateau": 0,
+          "mountain": 1909,
+          "basin": 455,
+          "incised_valley": 420,
+          "slope": 2666,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 15087,
+          "inland_water": 102,
+          "shelf": 8101,
+          "continental_slope": 2158,
+          "open_basin": 7220,
+          "deep_basin": 56,
+          "submarine_ridge": 1,
+          "volcanic_flank": 43
+        },
+        "hotspotSupportCells": 521,
+        "drainage": {
+          "landCellCount": 15087,
+          "reachCellCount": 1378,
+          "landCellsByReceiver": {
+            "local_depression": 2616,
+            "inland_water": 1401,
+            "ocean": 11070
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.06872,
+            0.597846,
+            0.894894
+          ],
+          "wetnessField": [
+            0,
+            0.015819,
+            0.189207
+          ],
+          "stormCorridorField": [
+            0.041256,
+            0.057767,
+            0.105302
+          ],
+          "seasonalityField": [
+            0.374085,
+            0.534828,
+            0.715212
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 1043,
+          "dry_polar_seasonal": 84,
+          "arid_polar": 94,
+          "arid_cold": 1695,
+          "dry_polar": 7,
+          "dry_cold": 145,
+          "arid_cool_temperate": 1958,
+          "subhumid_cold": 0,
+          "dry_cool_temperate": 111,
+          "subhumid_cool_temperate": 64,
+          "arid_temperate": 2594,
+          "subhumid_temperate": 62,
+          "dry_temperate": 86,
+          "arid_warm_temperate": 2705,
+          "dry_warm_temperate": 94,
+          "subhumid_warm_temperate": 45,
+          "arid_subtropical": 3538,
+          "dry_subtropical": 111,
+          "subhumid_subtropical": 58,
+          "humid_subtropical": 16,
+          "arid_tropical": 558,
+          "subhumid_tropical": 7,
+          "dry_tropical": 8,
+          "humid_tropical": 4
+        },
+        "localRecoveryTempo": [
+          0.125244,
+          0.148436,
+          0.185051
+        ],
+        "localSurvivabilityPressure": [
+          0.178973,
+          0.178973,
+          0.178973
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 286,
+        "recovery": 0.279823
+      },
+      "map": {
+        "landRatio": 0.460418701171875,
+        "continentCells": [
+          8429,
+          5534
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "open_ocean",
+          "inland_sea"
+        ],
+        "islandAreas": [
+          69,
+          174,
+          69,
+          63,
+          53,
+          45
+        ],
+        "passageWidths": [
+          1.2360679774997898,
+          1,
+          2,
+          1.8284271247461903,
+          3.4721359549995796,
+          13.560219778561038,
+          4,
+          6.810249675906656,
+          13.212670403551897,
+          12.892443989449806
+        ],
+        "shorelinePercentile": 0.551244,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 66,
+        "brittleCorridors": 6,
+        "redundantCorridors": 12
+      },
+      "firstMs": 5157,
+      "repeatMs": 4650
+    },
+    {
+      "seed": 64847321,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "27600c05107853fe169b9356b03544eec89412f9b0132f28a2d5d915f1aed127",
+        "phase1": "c36c84c1f3b6ada11b9cdc479ed2500c4f6a50975918f6166831689767bf2753",
+        "phase2": "401a904c098dba390f02d9b633ed6e6386cfa39568c1862ce9afe2dc6c1988ce"
+      },
+      "terrain": {
+        "deepest": -0.123325,
+        "highest": 0.202761,
+        "origins": {
+          "original": 32675,
+          "cleanup_submergence": 57,
+          "cleanup_fill": 0,
+          "marine_carving": 36,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 18208,
+          "coastal_lowland": 2440,
+          "lowland": 4807,
+          "plain": 2735,
+          "hill": 2404,
+          "plateau": 0,
+          "mountain": 0,
+          "basin": 445,
+          "incised_valley": 554,
+          "slope": 1175,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 14560,
+          "inland_water": 1,
+          "shelf": 9371,
+          "continental_slope": 2989,
+          "open_basin": 5773,
+          "deep_basin": 0,
+          "submarine_ridge": 1,
+          "volcanic_flank": 73
+        },
+        "hotspotSupportCells": 412,
+        "drainage": {
+          "landCellCount": 14560,
+          "reachCellCount": 888,
+          "landCellsByReceiver": {
+            "local_depression": 314,
+            "inland_water": 33,
+            "ocean": 14213
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.367999,
+            0.881563
+          ],
+          "wetnessField": [
+            0,
+            0.026378,
+            0.24427
+          ],
+          "stormCorridorField": [
+            0.035469,
+            0.05831,
+            0.114445
+          ],
+          "seasonalityField": [
+            0.378067,
+            0.632481,
+            0.721907
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 2202,
+          "dry_polar_seasonal": 92,
+          "arid_polar": 782,
+          "dry_polar": 26,
+          "arid_cold": 2639,
+          "dry_cold": 101,
+          "arid_cool_temperate": 2575,
+          "subhumid_cold": 1,
+          "dry_cool_temperate": 91,
+          "subhumid_cool_temperate": 50,
+          "arid_temperate": 1394,
+          "subhumid_temperate": 66,
+          "dry_temperate": 137,
+          "dry_warm_temperate": 142,
+          "arid_warm_temperate": 1492,
+          "subhumid_warm_temperate": 66,
+          "arid_subtropical": 2015,
+          "dry_subtropical": 221,
+          "subhumid_subtropical": 155,
+          "humid_subtropical": 37,
+          "arid_tropical": 233,
+          "subhumid_tropical": 15,
+          "dry_tropical": 21,
+          "humid_tropical": 7
+        },
+        "localRecoveryTempo": [
+          0.124026,
+          0.159027,
+          0.278156
+        ],
+        "localSurvivabilityPressure": [
+          0.081845,
+          0.186997,
+          0.186997
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 308,
+        "recovery": 0.208062
+      },
+      "map": {
+        "landRatio": 0.4443359375,
+        "continentCells": [
+          8051,
+          4036
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "enclosed_water",
+          "semi_enclosed_sea",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          90,
+          75,
+          71,
+          87
+        ],
+        "passageWidths": [
+          4.8309518948453,
+          3.1231056256176606,
+          3,
+          6,
+          9,
+          1.2360679774997898
+        ],
+        "shorelinePercentile": 0.562814,
+        "shorelineAttempts": 2,
+        "coastalPorts": 10,
+        "seaLanes": 45,
+        "brittleCorridors": 4,
+        "redundantCorridors": 8
+      },
+      "firstMs": 5120,
+      "repeatMs": 5115
+    },
+    {
+      "seed": 958614127,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "8e2a563acc7986d52acefff2906c46503889ffd31b83b19675831fe1a38526a0",
+        "phase1": "0f28e5fa30a6ef295c25c12ebc7c43771e4fedd5b052bcf28abb17411e5fa55f",
+        "phase2": "4f77736d0ea06e357f387516cbe07177e301ec1ea507b64fe20d391919ff2b5f"
+      },
+      "terrain": {
+        "deepest": -0.222692,
+        "highest": 0.269117,
+        "origins": {
+          "original": 32741,
+          "cleanup_submergence": 3,
+          "cleanup_fill": 0,
+          "marine_carving": 24,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 24616,
+          "coastal_lowland": 622,
+          "lowland": 149,
+          "plain": 2907,
+          "hill": 2029,
+          "plateau": 0,
+          "mountain": 1617,
+          "basin": 0,
+          "incised_valley": 94,
+          "slope": 734,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 8152,
+          "inland_water": 71,
+          "shelf": 1016,
+          "continental_slope": 4953,
+          "open_basin": 15895,
+          "deep_basin": 2020,
+          "submarine_ridge": 511,
+          "volcanic_flank": 150
+        },
+        "hotspotSupportCells": 413,
+        "drainage": {
+          "landCellCount": 8152,
+          "reachCellCount": 343,
+          "landCellsByReceiver": {
+            "local_depression": 0,
+            "inland_water": 572,
+            "ocean": 7580
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.198326,
+            0.487776,
+            0.880725
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.290075
+          ],
+          "stormCorridorField": [
+            0.044483,
+            0.061659,
+            0.125801
+          ],
+          "seasonalityField": [
+            0.378269,
+            0.549265,
+            0.652786
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 21,
+          "dry_cold_seasonal": 4,
+          "arid_cold_seasonal": 15,
+          "arid_cold": 1038,
+          "dry_cold": 108,
+          "arid_cool_temperate": 2342,
+          "subhumid_cold": 2,
+          "dry_cool_temperate": 54,
+          "subhumid_cool_temperate": 46,
+          "arid_temperate": 1696,
+          "dry_temperate": 97,
+          "subhumid_temperate": 68,
+          "arid_warm_temperate": 961,
+          "subhumid_warm_temperate": 51,
+          "dry_warm_temperate": 103,
+          "arid_subtropical": 1112,
+          "dry_subtropical": 114,
+          "subhumid_subtropical": 55,
+          "humid_subtropical": 51,
+          "arid_tropical": 177,
+          "subhumid_tropical": 8,
+          "humid_tropical": 14,
+          "dry_tropical": 13,
+          "dry_polar_seasonal": 2
+        },
+        "localRecoveryTempo": [
+          0.125358,
+          0.1604,
+          0.178383
+        ],
+        "localSurvivabilityPressure": [
+          0.148396,
+          0.148396,
+          0.148396
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 223,
+        "recovery": 0.26258
+      },
+      "map": {
+        "landRatio": 0.248779296875,
+        "continentCells": [
+          4275,
+          3271
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          78,
+          60,
+          41,
+          40,
+          36
+        ],
+        "passageWidths": [
+          1.2360679774997898,
+          4.8309518948453,
+          5,
+          6
+        ],
+        "shorelinePercentile": 0.758428,
+        "shorelineAttempts": 13,
+        "coastalPorts": 11,
+        "seaLanes": 55,
+        "brittleCorridors": 5,
+        "redundantCorridors": 6
+      },
+      "firstMs": 5018,
+      "repeatMs": 4684
+    },
+    {
+      "seed": 2345998979,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "325c4f62459d473dc43722c060b501eea2dbec1008467d5cbefd914ec740a9c3",
+        "phase1": "44286c503d6a0dcae8f5964ec0bded5f53ea29c85aea3920b399c5fd5d24ee35",
+        "phase2": "b06e74e1d4f60dff5881bf60a756e8d081fbee75c338115a6fcfbc7cad826eea"
+      },
+      "terrain": {
+        "deepest": -0.15532,
+        "highest": 0.326528,
+        "origins": {
+          "original": 32744,
+          "cleanup_submergence": 0,
+          "cleanup_fill": 0,
+          "marine_carving": 24,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 20646,
+          "coastal_lowland": 362,
+          "lowland": 39,
+          "plain": 3911,
+          "hill": 2528,
+          "plateau": 4,
+          "mountain": 2712,
+          "basin": 54,
+          "incised_valley": 208,
+          "slope": 2304,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 12122,
+          "inland_water": 21,
+          "shelf": 5657,
+          "continental_slope": 2507,
+          "open_basin": 11442,
+          "deep_basin": 883,
+          "submarine_ridge": 30,
+          "volcanic_flank": 106
+        },
+        "hotspotSupportCells": 534,
+        "drainage": {
+          "landCellCount": 12122,
+          "reachCellCount": 977,
+          "landCellsByReceiver": {
+            "local_depression": 1788,
+            "inland_water": 1751,
+            "ocean": 8583
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0.192419,
+            0.568303,
+            0.883912
+          ],
+          "wetnessField": [
+            0,
+            0,
+            0.203932
+          ],
+          "stormCorridorField": [
+            0.044693,
+            0.060038,
+            0.108642
+          ],
+          "seasonalityField": [
+            0.37713,
+            0.539049,
+            0.6523
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 67,
+          "dry_polar_seasonal": 18,
+          "arid_polar": 73,
+          "dry_polar": 18,
+          "arid_cold": 1115,
+          "dry_cold": 106,
+          "arid_cool_temperate": 2620,
+          "subhumid_cool_temperate": 33,
+          "dry_cool_temperate": 41,
+          "arid_temperate": 2832,
+          "subhumid_temperate": 46,
+          "dry_temperate": 77,
+          "arid_warm_temperate": 2306,
+          "subhumid_warm_temperate": 60,
+          "dry_warm_temperate": 114,
+          "arid_subtropical": 1999,
+          "dry_subtropical": 133,
+          "subhumid_subtropical": 92,
+          "humid_subtropical": 27,
+          "arid_tropical": 317,
+          "dry_tropical": 11,
+          "humid_tropical": 8,
+          "subhumid_tropical": 9,
+          "subhumid_cold": 0
+        },
+        "localRecoveryTempo": [
+          0.089312,
+          0.133013,
+          0.201694
+        ],
+        "localSurvivabilityPressure": [
+          0.149806,
+          0.176582,
+          0.176582
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 234,
+        "recovery": 0.304541
+      },
+      "map": {
+        "landRatio": 0.36993408203125,
+        "continentCells": [
+          9380,
+          2062
+        ],
+        "seaBasinTypes": [
+          "open_ocean",
+          "enclosed_water"
+        ],
+        "islandAreas": [
+          69,
+          168,
+          59,
+          58,
+          48
+        ],
+        "passageWidths": [
+          1,
+          2,
+          2.1622776601683795
+        ],
+        "shorelinePercentile": 0.641741,
+        "shorelineAttempts": 7,
+        "coastalPorts": 11,
+        "seaLanes": 55,
+        "brittleCorridors": 5,
+        "redundantCorridors": 5
+      },
+      "firstMs": 4845,
+      "repeatMs": 3951
+    },
+    {
+      "seed": 3900041903,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "6c48ff5380c9354551a27a60b2506fb58b74ab895021c61f7e6ef5be6b84016a",
+        "phase1": "a7073a90f8c6b5ad7930263cb0c6d12f2b330f1e928021777c804f2659c5e5bc",
+        "phase2": "38744740e1548dc74986b69117ec31b87c89d54f08371f9f51f874287b810b11"
+      },
+      "terrain": {
+        "deepest": -0.117805,
+        "highest": 0.360897,
+        "origins": {
+          "original": 32649,
+          "cleanup_submergence": 86,
+          "cleanup_fill": 0,
+          "marine_carving": 33,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 16088,
+          "coastal_lowland": 3254,
+          "lowland": 10329,
+          "plain": 783,
+          "hill": 346,
+          "plateau": 0,
+          "mountain": 859,
+          "basin": 255,
+          "incised_valley": 84,
+          "slope": 770,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 16680,
+          "inland_water": 0,
+          "shelf": 8439,
+          "continental_slope": 3966,
+          "open_basin": 3636,
+          "deep_basin": 0,
+          "submarine_ridge": 1,
+          "volcanic_flank": 46
+        },
+        "hotspotSupportCells": 219,
+        "drainage": {
+          "landCellCount": 16680,
+          "reachCellCount": 1650,
+          "landCellsByReceiver": {
+            "local_depression": 2168,
+            "inland_water": 0,
+            "ocean": 14512
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.287865,
+            0.86178
+          ],
+          "wetnessField": [
+            0,
+            0.018442,
+            0.199957
+          ],
+          "stormCorridorField": [
+            0.032102,
+            0.055637,
+            0.106644
+          ],
+          "seasonalityField": [
+            0.381358,
+            0.64263,
+            0.723742
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 4149,
+          "dry_polar_seasonal": 87,
+          "arid_polar": 1321,
+          "dry_polar": 38,
+          "arid_cold": 2537,
+          "dry_cold": 106,
+          "subhumid_cold": 2,
+          "arid_cool_temperate": 2201,
+          "dry_cool_temperate": 89,
+          "subhumid_cool_temperate": 55,
+          "arid_temperate": 1831,
+          "subhumid_temperate": 61,
+          "dry_temperate": 109,
+          "arid_warm_temperate": 1628,
+          "subhumid_warm_temperate": 77,
+          "dry_warm_temperate": 159,
+          "arid_subtropical": 1839,
+          "subhumid_subtropical": 89,
+          "dry_subtropical": 116,
+          "humid_subtropical": 16,
+          "arid_tropical": 155,
+          "humid_tropical": 5,
+          "dry_tropical": 6,
+          "subhumid_tropical": 4
+        },
+        "localRecoveryTempo": [
+          0.115794,
+          0.156689,
+          0.357179
+        ],
+        "localSurvivabilityPressure": [
+          0.126787,
+          0.174571,
+          0.174571
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 278,
+        "recovery": 0.234636
+      },
+      "map": {
+        "landRatio": 0.509033203125,
+        "continentCells": [
+          11826,
+          2253,
+          1016
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          76,
+          50,
+          47
+        ],
+        "passageWidths": [
+          4.656854249492381,
+          5.4031242374328485,
+          7.062257748298549,
+          6.810249675906656
+        ],
+        "shorelinePercentile": 0.492697,
+        "shorelineAttempts": 1,
+        "coastalPorts": 12,
+        "seaLanes": 30,
+        "brittleCorridors": 3,
+        "redundantCorridors": 5
+      },
+      "firstMs": 4372,
+      "repeatMs": 4498
+    },
+    {
+      "seed": 3508323923,
+      "pass": true,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "hashes": {
+        "phase0": "2a33b9d695bd113f691e1fa7a0b20c0cd9287ab8a1f3befe703f914e33a099fa",
+        "phase1": "d4a2ccbf681100faad3d76bbb30e754564ea36c9db15b2e404c1eb882b9901c8",
+        "phase2": "93c2b255ba1d3d1c9ee020d3fdab9ce9c7cfbe0f65af761d3de1030a371ea5fb"
+      },
+      "terrain": {
+        "deepest": -0.13105,
+        "highest": 0.284661,
+        "origins": {
+          "original": 32667,
+          "cleanup_submergence": 73,
+          "cleanup_fill": 0,
+          "marine_carving": 28,
+          "marine_accretion": 0
+        },
+        "landForms": {
+          "water": 14847,
+          "coastal_lowland": 1330,
+          "lowland": 2815,
+          "plain": 5094,
+          "hill": 3972,
+          "plateau": 1,
+          "mountain": 729,
+          "basin": 916,
+          "incised_valley": 392,
+          "slope": 2672,
+          "saddle": 0
+        },
+        "seaForms": {
+          "land": 17921,
+          "inland_water": 16,
+          "shelf": 6492,
+          "continental_slope": 2333,
+          "open_basin": 5456,
+          "deep_basin": 443,
+          "submarine_ridge": 17,
+          "volcanic_flank": 90
+        },
+        "hotspotSupportCells": 570,
+        "drainage": {
+          "landCellCount": 17921,
+          "reachCellCount": 1916,
+          "landCellsByReceiver": {
+            "local_depression": 742,
+            "inland_water": 2346,
+            "ocean": 14833
+          }
+        }
+      },
+      "environment": {
+        "quantiles": [
+          0.05,
+          0.5,
+          0.95
+        ],
+        "landClimate": {
+          "temperatureColdLoadField": [
+            0,
+            0.516065,
+            0.882857
+          ],
+          "wetnessField": [
+            0,
+            0.009012,
+            0.135037
+          ],
+          "stormCorridorField": [
+            0.035755,
+            0.057283,
+            0.098397
+          ],
+          "seasonalityField": [
+            0.376644,
+            0.545417,
+            0.720784
+          ]
+        },
+        "climateCellsByType": {
+          "arid_polar_seasonal": 2643,
+          "dry_polar_seasonal": 54,
+          "arid_polar": 173,
+          "arid_cold": 1998,
+          "dry_polar": 13,
+          "dry_cold": 79,
+          "subhumid_cold": 0,
+          "arid_cool_temperate": 2821,
+          "dry_cool_temperate": 69,
+          "subhumid_cool_temperate": 57,
+          "arid_temperate": 3119,
+          "subhumid_temperate": 48,
+          "dry_temperate": 88,
+          "arid_warm_temperate": 2952,
+          "dry_warm_temperate": 93,
+          "subhumid_warm_temperate": 37,
+          "arid_subtropical": 3027,
+          "dry_subtropical": 120,
+          "subhumid_subtropical": 93,
+          "humid_subtropical": 13,
+          "arid_tropical": 404,
+          "subhumid_tropical": 6,
+          "dry_tropical": 7,
+          "humid_tropical": 6,
+          "arid_cold_seasonal": 1
+        },
+        "localRecoveryTempo": [
+          0.091973,
+          0.137658,
+          0.160413
+        ],
+        "localSurvivabilityPressure": [
+          0.184121,
+          0.208065,
+          0.208065
+        ]
+      },
+      "phase2": {
+        "status": "pass",
+        "bindingTargets": 303,
+        "recovery": 0.195852
+      },
+      "map": {
+        "landRatio": 0.546905517578125,
+        "continentCells": [
+          16422,
+          1044
+        ],
+        "seaBasinTypes": [
+          "semi_enclosed_sea",
+          "open_ocean",
+          "enclosed_water",
+          "open_ocean",
+          "enclosed_water",
+          "semi_enclosed_sea",
+          "semi_enclosed_sea",
+          "open_ocean",
+          "open_ocean"
+        ],
+        "islandAreas": [
+          89,
+          201,
+          71,
+          62,
+          54
+        ],
+        "passageWidths": [
+          2.6055512754639896,
+          2.6055512754639896,
+          4,
+          4.385164807134505,
+          12.416407864998739,
+          2.1622776601683795
+        ],
+        "shorelinePercentile": 0.464721,
+        "shorelineAttempts": 1,
+        "coastalPorts": 11,
+        "seaLanes": 45,
+        "brittleCorridors": 6,
+        "redundantCorridors": 7
+      },
+      "firstMs": 6057,
+      "repeatMs": 5342
+    }
+  ]
+}

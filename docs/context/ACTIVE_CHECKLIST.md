@@ -16,11 +16,11 @@ Only current work and acceptance. Historical implementation details belong in gi
 - [x] F7: Five read-only atlases and the fixed-seed storm comparison checked against actual PhysicalWorldDebugBundle and Phase 2 exports. See [author review packet](review/README.md).
 - [x] F8-Q: Investigate and refine physical passage closures, transport independence, morphology and center/periphery contrast. Compare the baseline and candidate on the same 27 seeds and four untouched seeds. Publish [maps, causes, and evidence](review/f8q/README.md).
 - [x] F8-R: Fix both original Phase 2 failures and the area-weighting regression `3508323923`. Verify all 31 known worlds plus two predeclared cohorts. CI passed 32/32. The holdouts passed 13/16 with three reproducible Phase 1 failures present on the baseline. [Recovery evidence and maps](review/f8r/README.md)
-- [ ] F8-T: Terrain and bathymetry capability audit, causal implementation of missing V1 coverage and actual maps.
-- [ ] F8-C: Phase 0–2 causal channel and handoff audit.
-- [ ] F8-D: Real-world physical and environmental diversity evidence.
-- [ ] F8-S: Full regression and predeclared fresh holdout stress tests; profile performance.
-- [ ] F8-V: Real visual evidence, coverage matrix and author review packet.
+- [ ] F8-T: Signed relief, morphology, bathymetry and final drainage are implemented and mapped. Canonical basin coverage and the straight tectonic footprints remain open. [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md)
+- [x] F8-C: Inventory all Phase 0 channels, evaluate 1,031 inputs and reverse order, verify fixed-seed causality and immutable fail-closed handoffs. The extreme storm case that crosses a Phase 1 validation limit is reported separately. [Evidence](review/f8t/README.md)
+- [ ] F8-D: Map and measure diversity, including the unresolved rectilinear stretches of coast, extreme water support and distinctions among physical opportunities.
+- [ ] F8-S: Two runs on the 32 original regressions pass, and four repaired cases are included in CI. The 64-seed stress suite and seven edge seeds have executed. Preserve and diagnose held-out failures before closing the technical gate.
+- [x] F8-V: Physical atlas for 13 actual worlds, including rejected candidates, source matrix, and evidence for author examination. [Packet](review/f8t/README.md)
 - [ ] F8: Author review of physical coherence, causal meaning, variation and downstream narrative potential. Record decision or requested rule changes and retest unseen seeds. Do not claim author acceptance.
 - [ ] F9: Final reconciliation of docs/code/tests/phase readiness; explicit approval before Phase 3 expansion or merge.
 

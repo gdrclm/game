@@ -1,0 +1,1977 @@
+{
+  "cohorts": {
+    "stress-0": {
+      "revision": "8e57dff2861303822afd47d17213dfbf66a2f77e",
+      "node": "v22.23.5",
+      "passed": 15,
+      "seedCount": 16,
+      "peakRssKiB": 785072,
+      "checks": [
+        {
+          "name": "Phase 0 official intake and seed tamper rejection",
+          "pass": true
+        },
+        {
+          "name": "Maritime demand requires supported sea routes",
+          "pass": true
+        },
+        {
+          "name": "Phase 2 fixture harness",
+          "pass": true
+        },
+        {
+          "name": "Physical passage closure and terminal negative controls",
+          "pass": true
+        },
+        {
+          "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+          "pass": true
+        },
+        {
+          "name": "Land-weighted pressure and local recovery timing",
+          "pass": true
+        },
+        {
+          "name": "Signed final terrain and carved-bed controls",
+          "pass": true
+        },
+        {
+          "name": "Final downhill routing and water receiver controls",
+          "pass": true
+        },
+        {
+          "name": "Saddles require both rising and falling transects",
+          "pass": true
+        },
+        {
+          "name": "Immutable handoffs and fail-closed Phase 2",
+          "pass": true
+        }
+      ],
+      "seeds": [
+        {
+          "seed": 2856344,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "06e05dae373c90a8d138e2944fd962f3f2a0a616f0b8d28d74e7e63206dd3af7",
+            "phase1": "f152ba538e30dc099b327eb59f46406f9107e8ba0e047fa2470042e0367b0a67",
+            "phase2": "db88a10963db2a992b24ef6cb7dcd1f4f2e14bea39366bf72b641e12c78323e5"
+          },
+          "firstMs": 9446,
+          "repeatMs": 5948
+        },
+        {
+          "seed": 318092342,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "dc79cf542aa3543240a73336d5d74bac39ba698265eb5498b7102fd0b001257a",
+            "phase1": "ea1c685a8f2ace453a1a2c574287248fcf66d570d5e9553b8120401c992825a7",
+            "phase2": "96f639dc92feda4d57486473d1c8ba5f97dd94a63ac2e01844044578ff09fc3f"
+          },
+          "firstMs": 5517,
+          "repeatMs": 7808
+        },
+        {
+          "seed": 560997137,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "53fe4395ef248502047a77520adc78cb340571b58d15e2c51a16fe85277be4c3",
+            "phase1": "968711267b8b430b6e7ce642724524e4a09dee7977764892d89274c27b70c3ed",
+            "phase2": "b7c0be59558ca38a98afe80a7c12bb8000c21a12715e858e78468bddafbe5196"
+          },
+          "firstMs": 10102,
+          "repeatMs": 6748
+        },
+        {
+          "seed": 822318635,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "2caa28a5dcef17eabeaaebf5bc5996e8f16dcd1a4a74a0f4fafb40441ed1c90d",
+            "phase1": "4d84318b2007db9ae16936e3f541aa5cff60261f198dfbff86bfdb553f275853",
+            "phase2": "8f61ccc879fbd823b50c31685b78a0cef5d2d840c7dc5e3f97e6a10fcbf84b80"
+          },
+          "firstMs": 5901,
+          "repeatMs": 5861
+        },
+        {
+          "seed": 1139020259,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "113ba2384250922aa85a03823e57ee1b3ec4ed750f57c4eeabd60853569dc526",
+            "phase1": "26a903684704977b73902b6263e05b4fb887f64f1de87a79613342c59de6b983",
+            "phase2": "39fdb08d07671be4030dde77e7116df3254950b3b40b879c0bc29cbf708fd028"
+          },
+          "firstMs": 5963,
+          "repeatMs": 5418
+        },
+        {
+          "seed": 1353719581,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "e6134d32355f8a34176847bf3a9762bd1c1291879f19067f6a1a135aa4e9345b",
+            "phase1": "13e5432c449f1b88a6478ab7f4b55a24927a2a2c9e4f222b14d05aef89f27178",
+            "phase2": "10bfdf05df6d224fb1f24204e32e98fe65f4c3804e81a4d2fbaf8507ea9b6a78"
+          },
+          "firstMs": 11129,
+          "repeatMs": 12808
+        },
+        {
+          "seed": 1665754063,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.distribution.pressure_rhythm_differentiation",
+              "status": "fail",
+              "details": [
+                "meanAbsDifference=0.036",
+                "pressureSpread=0.561",
+                "rhythmSpread=0.582"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 12599
+        },
+        {
+          "seed": 1880886041,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "7baf5fa4344d3217ee0926d996b8d20494b1ec60f35a2a4607af9db907c81a17",
+            "phase1": "4d33b467daf245fc92a63b78e081724fa6ba32a83c2859e7613b1f44c87a4f41",
+            "phase2": "5726fe703b4e7d6c76f776e35c84ba3953ca39a0937c4c6509b6ed6a1a75072d"
+          },
+          "firstMs": 5488,
+          "repeatMs": 5116
+        },
+        {
+          "seed": 2170157783,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "e6a492e4df7d9be8017d7747a5e4a0f8d2c7df4286038828035494ad3f03b4de",
+            "phase1": "9d7edd1638adea857554d31a84383b76b6a33cbb8885bdfb2d983b8c9b31db24",
+            "phase2": "b1624912ce088c3f2ace5a8c4092711c2709e798eb5d329df89b8dac0b1a38f5"
+          },
+          "firstMs": 4892,
+          "repeatMs": 4763
+        },
+        {
+          "seed": 2461506081,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "5af852ff5b383ed6befe4a59655dd63767c662c71958ac32d5c6c5628193a30e",
+            "phase1": "197d27d67d7c2a37771fa86f9821bda7b7f80d52b1d773434ccefe31604d18dc",
+            "phase2": "6e7c16ad36d19bab554d0ca961376a2f8ccf8374b846d10cc3ac3fa99fe8d96d"
+          },
+          "firstMs": 5841,
+          "repeatMs": 5910
+        },
+        {
+          "seed": 2727244283,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "dc65f6278521fc68655fa15b0cb85935f1b6045ed50bda9d7bf5549f8e92cc80",
+            "phase1": "9dc3a67b11d0ec74b9d1d7d7de4b332a442721504c4d6c9030b3051607553a02",
+            "phase2": "cdc180be6f38fe6861d07d894f3f82615b25c8ecc4610b5123299c4ad199faf7"
+          },
+          "firstMs": 6010,
+          "repeatMs": 5544
+        },
+        {
+          "seed": 2964753490,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "a2829f82f4d21d076e18acce64d0c09eb2a8264bdf52a6c64e38a529cde29f13",
+            "phase1": "f214003ad88cc62073c5adf61f0ae6a4431b2167006392fef6e5beabcd93e0aa",
+            "phase2": "41fa44a4672d5e6896dc4734306c620f84dce66ee62659a31d68c4ac721815c1"
+          },
+          "firstMs": 6508,
+          "repeatMs": 5800
+        },
+        {
+          "seed": 3271942068,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "ccf77c12b7b99a67d82159fc253c657ab4280792d1996a7123f992d696984191",
+            "phase1": "7bf0d91fdfd670287379a79c60ae92dd24e40d4d380bfc732c2743370b266ab8",
+            "phase2": "e7aff7049fc6cbb1a0fa3dd47194556c0d4f64655855e6ac19405cc18d3c61e2"
+          },
+          "firstMs": 12888,
+          "repeatMs": 15944
+        },
+        {
+          "seed": 3497266055,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "d4cce11d7f8e57c425f7209fbb7df6c7937e21c1b1a5abdf4569ce1683fe7525",
+            "phase1": "dda4e37828150c03e7898716248bda85a5ecb747c1517f1d8eaa7406968035fa",
+            "phase2": "a0614cc8def38ce97b84b116615367f0f146660f49f78dd31ccb16bad69192cc"
+          },
+          "firstMs": 10478,
+          "repeatMs": 10398
+        },
+        {
+          "seed": 3766715046,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "9ca1fa292652ed2144dcbecddea6891ba30a492c7fb806b10c5b6d29fd83e744",
+            "phase1": "1948e5770e0e507943efc43e514af52543b4005cd37967e5b1481dfeaef4e33d",
+            "phase2": "525b6a7e80773db1c05f1a0934247f77968d30d3665a3c2c730233cd959def35"
+          },
+          "firstMs": 16272,
+          "repeatMs": 7719
+        },
+        {
+          "seed": 4085637119,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "17cf92177562755ea7548aaea476a6c48621012787238ab5638dfae7ffc7cd0e",
+            "phase1": "76fcdc774210190724386c19d00f3e24610d2e5bc10e1ee28737c56915087e16",
+            "phase2": "d00569a2f24a022ed9e3997f517c5c7137d4b6e2ca0a2d803a7300c86d4b41b0"
+          },
+          "firstMs": 5838,
+          "repeatMs": 5706
+        }
+      ]
+    },
+    "stress-1": {
+      "revision": "8e57dff2861303822afd47d17213dfbf66a2f77e",
+      "node": "v22.23.5",
+      "passed": 15,
+      "seedCount": 16,
+      "peakRssKiB": 753908,
+      "checks": [
+        {
+          "name": "Phase 0 official intake and seed tamper rejection",
+          "pass": true
+        },
+        {
+          "name": "Maritime demand requires supported sea routes",
+          "pass": true
+        },
+        {
+          "name": "Phase 2 fixture harness",
+          "pass": true
+        },
+        {
+          "name": "Physical passage closure and terminal negative controls",
+          "pass": true
+        },
+        {
+          "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+          "pass": true
+        },
+        {
+          "name": "Land-weighted pressure and local recovery timing",
+          "pass": true
+        },
+        {
+          "name": "Signed final terrain and carved-bed controls",
+          "pass": true
+        },
+        {
+          "name": "Final downhill routing and water receiver controls",
+          "pass": true
+        },
+        {
+          "name": "Saddles require both rising and falling transects",
+          "pass": true
+        },
+        {
+          "name": "Immutable handoffs and fail-closed Phase 2",
+          "pass": true
+        }
+      ],
+      "seeds": [
+        {
+          "seed": 76598953,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "e3a5bc052f89112ce214b721565ad6edf8cc8c3eba2572f9746aa8f20b674617",
+            "phase1": "721071584b1c3d20abe7c8a7fad20c2bf3e35537df80bade8c1f70ef2659d560",
+            "phase2": "a0ffb9a93a32d08e6f0b9a43c3d4ea5c31b6f8ec06efcb1fe937fd82ce061d59"
+          },
+          "firstMs": 8509,
+          "repeatMs": 5866
+        },
+        {
+          "seed": 383299950,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "54a94362d1fe36c6346b842aedb4fee7fe45e876aecff3264ffb3d6b309af0ee",
+            "phase1": "ba74f28971d4014576cd4fccc8d3f688690aba1bb2584bb33d8ee25fff6cf7e2",
+            "phase2": "ddd5cd3a69a2b3651a5cdd24b091b0b3931056687cb72891b29a7c246125ed5e"
+          },
+          "firstMs": 8195,
+          "repeatMs": 8295
+        },
+        {
+          "seed": 640306144,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "01ab1208b1e85fc796bc7a7159bd0ebe6b3b76e60991ab43a29b8f840355cbd2",
+            "phase1": "00d6254bf506091e83aa6ef694afc4e6ea719c4895363cbcc68670c56370369b",
+            "phase2": "8ed4ea638465efa5246fc0e77a4f80acf58725a4f44f7cd14ee735c8c31f9f3c"
+          },
+          "firstMs": 7682,
+          "repeatMs": 10105
+        },
+        {
+          "seed": 883547113,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "bcb1a5e2720506900573ee10f6e8a910e80a98bdcf9d2807c59f6f278dca6a5a",
+            "phase1": "1e2f28988c574fa255e713ede7e6c12f2e75fcfff3cbb2012561d1af6b5e2ab5",
+            "phase2": "7a3e003e2cf336ba6f7aca9a3ed070a67c0b84ba0cd90e261f9d00306b15fab1"
+          },
+          "firstMs": 11924,
+          "repeatMs": 11983
+        },
+        {
+          "seed": 1148112788,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "b896d5c275a8fe8f165fa5e2278347261704d412e86bf17aa8c0daf11627a7be",
+            "phase1": "50239146951e3c3b13b039cf72ca5e1bc2671575b1f918e72a5eb3ccf7d5877d",
+            "phase2": "8169a48b132f6d6bd4ffb89e4cc572535b9e2152c050e25dc953980be53ab92f"
+          },
+          "firstMs": 11488,
+          "repeatMs": 10150
+        },
+        {
+          "seed": 1440166579,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "03419c13965f85dc4e9d7ac09620803c7f66d9f36497e10bd352a053651d6067",
+            "phase1": "af7074eadbcd888423a1165550670eb1727e5117350eda2086f44238ac561f1a",
+            "phase2": "636000fac52a45050a4d69d00d8d41a9db46f97b8d97fe7aff36f6206e21c5ab"
+          },
+          "firstMs": 10720,
+          "repeatMs": 9818
+        },
+        {
+          "seed": 1739745302,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "732aa6a3a7087c8abd630b9794473235f5813ee273a8e39ead4eb15cd2c6b419",
+            "phase1": "0de7128dd38b57106e637f3411a5909118d8a2bff7a7b7b463258d646d93b25c",
+            "phase2": "8f397f98028a73928fc63badabf70a51336c642124b6b2a81ab434cf4c43f99d"
+          },
+          "firstMs": 7903,
+          "repeatMs": 7509
+        },
+        {
+          "seed": 1952721542,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "22c661f457201e172b84987258671b63adb822ef09c405fd2caf12024498cf53",
+            "phase1": "148e3d6f4f2a6e5aaf3599d4ee8608dda236f78438242a022bb8baf5c9b8ec93",
+            "phase2": "056d8fd5a7f5ee985ea2793392924f995522ed3cc299fe252a475e8d9e2be04a"
+          },
+          "firstMs": 9057,
+          "repeatMs": 10061
+        },
+        {
+          "seed": 2220939230,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "b2b6eca9393126bf843f4aa991f3077a92f0ae002f1d4940ca33b597410f7b38",
+            "phase1": "9ceb745bd31f47e30f474043db26b38a87611e42ee209824adada68013cefc94",
+            "phase2": "4253448217ce7615e055faa97843961cc10036c79bd442a6d84e9ef81fad277a"
+          },
+          "firstMs": 9910,
+          "repeatMs": 11031
+        },
+        {
+          "seed": 2546155002,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "84be20dd0bcc9d63e438bb3024cade3f7fe20bf5458255f34abe1fc8914a2c16",
+            "phase1": "24b163aed37d2088935f6d70a7a57574a126d6300a7385a0cfb5c33716ffad5a",
+            "phase2": "ab2b689169acb76316a723da28110e77f970e7d57fa1c440aac6f8b293f6d9f7"
+          },
+          "firstMs": 9552,
+          "repeatMs": 13194
+        },
+        {
+          "seed": 2777760525,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "03604efa5192e9f6fa0b01d9ab1cb0f15f2b8d59bb260cd8d7c821a9df643405",
+            "phase1": "58fcce71233e1fe499707a4956048f84507770d224eaed8d7d75fd955d50f12a",
+            "phase2": "1616358326a52023288c9de9a354ebc3f384d1f83808162688f7556fb2faa90a"
+          },
+          "firstMs": 18443,
+          "repeatMs": 10508
+        },
+        {
+          "seed": 3019978005,
+          "pass": false,
+          "phase": "phase1",
+          "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+          "phase2Failures": [],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 11756
+        },
+        {
+          "seed": 3318570709,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "855e5ddfc4d124276fa07bb81c37fc2f82f04dc2d922861c41559ae40da1e51a",
+            "phase1": "36dab9aaa59a14367d65b8f5929b031e2339bdaf6bfe2aad6504f8e95cda957c",
+            "phase2": "deca0299488962d1d16f5900e05bdaa2cc3d587e16f863ca7c7ae48374ed948b"
+          },
+          "firstMs": 6421,
+          "repeatMs": 5368
+        },
+        {
+          "seed": 3568089441,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "58ac0c4ef315c6f142c02999a5b0967e1918d29f5ea999da0cf576107270016a",
+            "phase1": "d9aa30287e151ddf9042e5c417a1cad04bd91154672611cb86041d7740ab2b2f",
+            "phase2": "4ab97b7209363c76d2aba681b0c5247b7589fc7eadfd90e7637a5257799f7a62"
+          },
+          "firstMs": 3295,
+          "repeatMs": 3090
+        },
+        {
+          "seed": 3826957408,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "5c6c7926eb0e80de2a1af8a60b0ae7c7c469031f9a7c41abc22ee9f22f09d64e",
+            "phase1": "0572ac3e75c8f77754cd49f4bb158e5aebe4d03a99f870f9965a054d6faad556",
+            "phase2": "154dbd119d5ccd5ec75a27bb619422fba5afdbbab668222f67d8e9e03ea5bc9f"
+          },
+          "firstMs": 3487,
+          "repeatMs": 3279
+        },
+        {
+          "seed": 4150290747,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "09ba111517151bf35292903b497a0cb0db42fbe32bd7031b935ba8052f4b986f",
+            "phase1": "a6a3a904393f93ef21a9cb6822721bd61fe57fe5b3ecbe6cc4799a38a14e2002",
+            "phase2": "f28014464113e4a27334675bc3aaa0e76d24c0244603438d53ada4ac949606e7"
+          },
+          "firstMs": 3076,
+          "repeatMs": 3005
+        }
+      ]
+    },
+    "stress-2": {
+      "revision": "7f82ae1d527c3e16aae3f4234a7c77283db616b6",
+      "node": "v22.23.5",
+      "passed": 14,
+      "seedCount": 16,
+      "peakRssKiB": 791988,
+      "checks": [
+        {
+          "name": "Phase 0 official intake and seed tamper rejection",
+          "pass": true
+        },
+        {
+          "name": "Maritime demand requires supported sea routes",
+          "pass": true
+        },
+        {
+          "name": "Phase 2 fixture harness",
+          "pass": true
+        },
+        {
+          "name": "Physical passage closure and terminal negative controls",
+          "pass": true
+        },
+        {
+          "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+          "pass": true
+        },
+        {
+          "name": "Land-weighted pressure and local recovery timing",
+          "pass": true
+        },
+        {
+          "name": "Signed final terrain and carved-bed controls",
+          "pass": true
+        },
+        {
+          "name": "Final downhill routing and water receiver controls",
+          "pass": true
+        },
+        {
+          "name": "Immutable handoffs and fail-closed Phase 2",
+          "pass": true
+        },
+        {
+          "name": "Fixed-seed upstream interventions",
+          "pass": false,
+          "error": "Error: [worldgen/phase2] Invalid MacroGeographyPackage intake: failed_macro_validation_report:macroGeographyPackage.validationReport.isValid"
+        }
+      ],
+      "seeds": [
+        {
+          "seed": 180816365,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "344e4122e68022445cd944efe6bf9162d7f4f9eca7d0799f18caffd518541ffe",
+            "phase1": "7d41ebd4ae702a66691dc00160eced2f7f59f90e58640effe56d8202d41adad2",
+            "phase2": "abefb05dd1767853d24cb6403008540da0a6a3cf84bfb5b75e60844b6e15d77e"
+          },
+          "firstMs": 15013,
+          "repeatMs": 11780
+        },
+        {
+          "seed": 406479959,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "f6c6b609de2c48115bc3010b5e14d215f5a3c43ac0bd840097c49f3c347d16ed",
+            "phase1": "2ba9907c71de71fdd1bf0aa5bafa72da05a55ea35d3e98394eb50ac0e775118b",
+            "phase2": "2beac91cb3aead6cfe343eed1287521a55dc70f246141cc127f76e275a92a9d7"
+          },
+          "firstMs": 14717,
+          "repeatMs": 17375
+        },
+        {
+          "seed": 733570811,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "2f99fd973120f348958198cfa50626dd44b5f7c853564844a00c0020762d30bc",
+            "phase1": "5c61341626255ec18124bfa3e8b845722f0e32abf3e3698281040dfed33e336a",
+            "phase2": "d18a114991eaee1c45d090e30607c182255c3c812bd1289a8263e3085de2cbbe"
+          },
+          "firstMs": 18012,
+          "repeatMs": 9595
+        },
+        {
+          "seed": 974163850,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "58e3a12fb768c8a553ec03e945be0aeb85861b5ba9587a6b0e6b18fb1d3a79e5",
+            "phase1": "69325b93beb07bddf2450f978b6481fc48dbe485fdb3ef26715b4f608c7dccfa",
+            "phase2": "c503b0edf29aa37ba8226804c56e78306c42d74177e50a57bbff444924579f03"
+          },
+          "firstMs": 15080,
+          "repeatMs": 16623
+        },
+        {
+          "seed": 1240171611,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.design.tension_vs_relief",
+              "status": "rebalance_required",
+              "details": [
+                "pressureMean=0.201",
+                "recoveryMean=0.326",
+                "tensionReliefDelta=-0.125"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 19943
+        },
+        {
+          "seed": 1500333434,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "ff5ac6346996bdb0ba8661df73ef6c61ec62ee8ce44232392e9dec0a11b7fffe",
+            "phase1": "6c640dbb8bf0c12bf8f7666d790541de3379499e69649d7d6a15b8ee6c06d832",
+            "phase2": "9ca2c4fae0a726a34c8f93110673cdea5c6acad5d078aa45f2af465a6e062e7e"
+          },
+          "firstMs": 7264,
+          "repeatMs": 6026
+        },
+        {
+          "seed": 1801620481,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "6d8198845cebfc5d5bfb3f5d2b4200eff10a692c929f79513f5703b5ecbb0c49",
+            "phase1": "5219f381374906ef92699557bad9afec82a70f2daebd9100489bae100020d669",
+            "phase2": "1e5b32cebd8964e6aaeb7dc41b8ba4844e0a5cfdccfafe3fa4bcbfca362f6725"
+          },
+          "firstMs": 4415,
+          "repeatMs": 5097
+        },
+        {
+          "seed": 2064513479,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "a2b3fb0a3ad92e7058ba5a210910c88590021cf40a62527be553be2bd3a7ea3e",
+            "phase1": "31d2f10dd1b79c4474ed724495ef796912d10fd16ec8647c029e81ca77d3529d",
+            "phase2": "bd29b78b2d5d21b210b753f1c402e191d9bddc254387aea4b8e76c7a9cf8230f"
+          },
+          "firstMs": 5916,
+          "repeatMs": 10597
+        },
+        {
+          "seed": 2335575721,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "efb9182bed5a7d47ecf08f097ef2e97a9c3b42f0108e5e59cc20482df24e0d04",
+            "phase1": "c5ef936b63b4a4e0b64134ecccce02490672031f3a6da1f72306946bbf4a02de",
+            "phase2": "ba43be2422f41bd85df74829fdaaed8de274848616d03296671d577e75e83fc2"
+          },
+          "firstMs": 8831,
+          "repeatMs": 8669
+        },
+        {
+          "seed": 2601869029,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "19881a19cb56a9d73ffec5ee7aba35cd26ca28b9d86fc1e2224a6304f0da4db7",
+            "phase1": "75b98c319bd0bf8fbe4665b9205bd0a2b9cac4b8e7d348d6530ec669861b647e",
+            "phase2": "0605393ad19b0e96203d29c424fc4eb96080c0391df6588a900a64b81bbf8b2b"
+          },
+          "firstMs": 10403,
+          "repeatMs": 10446
+        },
+        {
+          "seed": 2878819102,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "edd3210473a2afe3249fdc8fe604d371adae602470149bcf2e9c1ad7000a43aa",
+            "phase1": "6427d824b03a4750137667e124bbefecad5b37c2e9b4e98f9926ea951e337121",
+            "phase2": "82c8796f31ce05bb8621c357708a6a9eacc9b41d2518137be398fa05bfec18a7"
+          },
+          "firstMs": 8484,
+          "repeatMs": 7094
+        },
+        {
+          "seed": 3088870215,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "174bad89ab788d3201e84709962422fd41581dd55ca13e1463b0ac5351df7da4",
+            "phase1": "914765ed74ae27db974b52717500757c412eef9c3d5645bde5a8af35ff92d2ef",
+            "phase2": "ac455ec51ae3fe6623174dd990b4eefedfb42c0cd16c0083df35a9d6ee227e0e"
+          },
+          "firstMs": 10331,
+          "repeatMs": 8669
+        },
+        {
+          "seed": 3381507530,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "b659d2ddbb64b88f50649c51a2447ec601d736c43ad06cf4b91c16d5eb1c2e41",
+            "phase1": "ffc48c26d3f1bfe594183ca21354c5dab944cfaa3e67505e856914c2cd4eca13",
+            "phase2": "516df3ea39ab3963716f8ce4337eb2e6c5f22290ad9f7c51fe94cfa9959069bc"
+          },
+          "firstMs": 10378,
+          "repeatMs": 6408
+        },
+        {
+          "seed": 3683713563,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "060e800f75e7cec5e75e57b76a8fa555610b6e72e3199e9e78490d803f692bd1",
+            "phase1": "ac1f1abbf4931c782b3320141c49c8c6cc1026f096d53b0c0d514d4f3ca13ae2",
+            "phase2": "4bff00127ab6f0691d5005467b8a76eac480de1958cd6921501a29b3d28a2519"
+          },
+          "firstMs": 4078,
+          "repeatMs": 4262
+        },
+        {
+          "seed": 3928839710,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.design.tension_vs_relief",
+              "status": "rebalance_required",
+              "details": [
+                "pressureMean=0.216",
+                "recoveryMean=0.312",
+                "tensionReliefDelta=-0.096"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 14152
+        },
+        {
+          "seed": 4208830274,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "0d07bae1629b1e51d5f5ab2ec9d37c90b8e7a4f390601023dfd3716e13314bf6",
+            "phase1": "e4717b96fe861bc2bf07a595c3cf746fbfe4b6f4bf87cd303b736c940ccafbca",
+            "phase2": "08457e24613c3e18043dd319ed0c36227ffb01693540b3b9872213d7ccdb9cb3"
+          },
+          "firstMs": 5511,
+          "repeatMs": 4196
+        }
+      ]
+    },
+    "stress-3": {
+      "revision": "7f82ae1d527c3e16aae3f4234a7c77283db616b6",
+      "node": "v22.23.5",
+      "passed": 10,
+      "seedCount": 16,
+      "peakRssKiB": 809040,
+      "checks": [
+        {
+          "name": "Phase 0 official intake and seed tamper rejection",
+          "pass": true
+        },
+        {
+          "name": "Maritime demand requires supported sea routes",
+          "pass": true
+        },
+        {
+          "name": "Phase 2 fixture harness",
+          "pass": true
+        },
+        {
+          "name": "Physical passage closure and terminal negative controls",
+          "pass": true
+        },
+        {
+          "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+          "pass": true
+        },
+        {
+          "name": "Land-weighted pressure and local recovery timing",
+          "pass": true
+        },
+        {
+          "name": "Signed final terrain and carved-bed controls",
+          "pass": true
+        },
+        {
+          "name": "Final downhill routing and water receiver controls",
+          "pass": true
+        },
+        {
+          "name": "Immutable handoffs and fail-closed Phase 2",
+          "pass": true
+        }
+      ],
+      "seeds": [
+        {
+          "seed": 206998703,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "a41caa66c3018fc652b45132858626aaaa51fcfe3413c9a0875d60b1d48436fd",
+            "phase1": "f3a9a44824ed0f32e61f38bfc13a0c47bd092e1d1663e894a0d0512e392cb13f",
+            "phase2": "fbb166b2d862452224d8a10b53f07fc5c943ef27351d83641725d7e0cd352570"
+          },
+          "firstMs": 25035,
+          "repeatMs": 24414
+        },
+        {
+          "seed": 532213186,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "817b4c318aff1e71bd3717f5f53694a8fb103dbf1b8fe2b123d27c36061cecac",
+            "phase1": "255d18e18415aee19ac9958e4c1f7703724f9b171f12e22d938506928e5c81ee",
+            "phase2": "2f516f801fe504a5c2dc8903ef3339284cf26a218cb6c7ef863e9ece769e246d"
+          },
+          "firstMs": 15178,
+          "repeatMs": 12321
+        },
+        {
+          "seed": 792866484,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "84ea256f981143f2c00ab2656f6709ad384f7ea4afd795eb4a1b99d25d7695ce",
+            "phase1": "38ad95aa8c381eebabde8d4fcc2b6e53ac0feab489af980d3dbd32fe8a3a3290",
+            "phase2": "b35208f9fdeffd7421c577c1e4a18466f27c38d7b5e684f6b090d94c2c9507bd"
+          },
+          "firstMs": 13948,
+          "repeatMs": 13084
+        },
+        {
+          "seed": 1054323503,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.design.tension_vs_relief",
+              "status": "rebalance_required",
+              "details": [
+                "pressureMean=0.233",
+                "recoveryMean=0.317",
+                "tensionReliefDelta=-0.084"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 22515
+        },
+        {
+          "seed": 1342059918,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "540ff7db0bdeb272f4c4b251cceac85eb9b8de2e8d713b21ab5551d6599cf9b4",
+            "phase1": "3f41f39831f7b65f29f0ddfdaf4a265a4f32203cb1e9cfdc7bb6889f3bd11a69",
+            "phase2": "03fd7a0c8935219a0f0866fa18a50c274882e485acb6ca7ef7c458885956c7c8"
+          },
+          "firstMs": 10702,
+          "repeatMs": 10819
+        },
+        {
+          "seed": 1545735428,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "4ae824851005a446128c959dc583cff1a56b0a3ecab064a4948cc725e000138d",
+            "phase1": "e8344de65b4e91d964035662eba044cc9ca0da1555bf111a79d1db8606a93b5c",
+            "phase2": "bdc705ecc0e3e39fcd7e47a01854eefb9062a2178c6bd2512f6158772b886e78"
+          },
+          "firstMs": 8907,
+          "repeatMs": 12197
+        },
+        {
+          "seed": 1863959942,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "ca9e1548c80f15bf538c9edaa7a7fcda72ec1566c184fded61c74a4df513af0a",
+            "phase1": "f96651b24c574f2c37106233ab412e2a11d27ca717ef37665311c6349a92ebbd",
+            "phase2": "142a8dabda797bc86b6c58d38d1631af451a747a3e4acd5587eb3a4d60eabed3"
+          },
+          "firstMs": 12233,
+          "repeatMs": 8697
+        },
+        {
+          "seed": 2094783996,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.design.tension_vs_relief",
+              "status": "rebalance_required",
+              "details": [
+                "pressureMean=0.219",
+                "recoveryMean=0.349",
+                "tensionReliefDelta=-0.130"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 22812
+        },
+        {
+          "seed": 2402593754,
+          "pass": false,
+          "phase": "phase1",
+          "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+          "phase2Failures": [],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 12294
+        },
+        {
+          "seed": 2675813935,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "47d5e24af9834489ce85f9d420a465c263f835161ceaa64baa04bebbde26c042",
+            "phase1": "d8f0392c482db5a5e1626fa54fdf2fe058d788863be9967d8d4681d119dda6f2",
+            "phase2": "5e87a5b194d0a2925e9d371a996ddc80cc4b9755a7232bde99a0b92e833a2731"
+          },
+          "firstMs": 9867,
+          "repeatMs": 10400
+        },
+        {
+          "seed": 2917478163,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.design.tension_vs_relief",
+              "status": "rebalance_required",
+              "details": [
+                "pressureMean=0.213",
+                "recoveryMean=0.303",
+                "tensionReliefDelta=-0.089"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 23086
+        },
+        {
+          "seed": 3206964149,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.design.tension_vs_relief",
+              "status": "rebalance_required",
+              "details": [
+                "pressureMean=0.216",
+                "recoveryMean=0.296",
+                "tensionReliefDelta=-0.080"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 17204
+        },
+        {
+          "seed": 3422738236,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "965bb1f73288157cfa9e51d1bcd194a8e5c183bba0c6a72c128a970ae0e71025",
+            "phase1": "a597c74c41fa93c89dcc01598a0fb9052c61b1814f10b3d8ff2f1d3cf2e6acf0",
+            "phase2": "760c8d5ff6bd4218afe361e3b8a0500b9d6fb296010d4ff65977006c070cea3e"
+          },
+          "firstMs": 6805,
+          "repeatMs": 6124
+        },
+        {
+          "seed": 3740851705,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "c2e42b8d23fbd316c954e68e18ed4d7fbb6ff92e632c31d501fe217275de1b88",
+            "phase1": "e5faa800c0423baab04d19c44395033aff7c81833f2a49c6bb0ba9d4a178763b",
+            "phase2": "ce65d24b6391d662c9e27cb1b59a083be565670b2dfb769eed94cc0d8394477c"
+          },
+          "firstMs": 5878,
+          "repeatMs": 5577
+        },
+        {
+          "seed": 3991564847,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "565aae142009a9769e20b50e5ac9357c02655c99fe1329b682dd6e89dbb09ad6",
+            "phase1": "174bbc6af03d07c6ea3a8bf793525d62a786203a56fafec514c1240fcb220b7f",
+            "phase2": "62b9db31e3165c0a61035856ef7ac428f24a482cf85140ed6a206d9ff575631a"
+          },
+          "firstMs": 5979,
+          "repeatMs": 6123
+        },
+        {
+          "seed": 4286438917,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.design.tension_vs_relief",
+              "status": "rebalance_required",
+              "details": [
+                "pressureMean=0.218",
+                "recoveryMean=0.374",
+                "tensionReliefDelta=-0.156"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 12718
+        }
+      ]
+    },
+    "edges": {
+      "revision": "7f82ae1d527c3e16aae3f4234a7c77283db616b6",
+      "node": "v22.23.5",
+      "passed": 7,
+      "seedCount": 7,
+      "peakRssKiB": 819468,
+      "checks": [
+        {
+          "name": "Phase 0 official intake and seed tamper rejection",
+          "pass": true
+        },
+        {
+          "name": "Maritime demand requires supported sea routes",
+          "pass": true
+        },
+        {
+          "name": "Phase 2 fixture harness",
+          "pass": true
+        },
+        {
+          "name": "Physical passage closure and terminal negative controls",
+          "pass": true
+        },
+        {
+          "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+          "pass": true
+        },
+        {
+          "name": "Land-weighted pressure and local recovery timing",
+          "pass": true
+        },
+        {
+          "name": "Signed final terrain and carved-bed controls",
+          "pass": true
+        },
+        {
+          "name": "Final downhill routing and water receiver controls",
+          "pass": true
+        },
+        {
+          "name": "Saddles require both rising and falling transects",
+          "pass": true
+        },
+        {
+          "name": "Immutable handoffs and fail-closed Phase 2",
+          "pass": true
+        },
+        {
+          "name": "Fixed-seed upstream interventions",
+          "pass": true
+        }
+      ],
+      "seeds": [
+        {
+          "seed": 0,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "3883bf20e27bf1d7402f9b01967adb86a0d8e925a1750d4e971c86e1e3265d9b",
+            "phase1": "9077fafb8d73009dc38b5015c6236fb435dcb2d9343f8da29807618606310e97",
+            "phase2": "1b493edfb0187d6aa9271af7f331e539f367537126a72f863aa03e1933af4698"
+          },
+          "firstMs": 6749,
+          "repeatMs": 4339
+        },
+        {
+          "seed": 1,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "5cc1e3c72f62f0826bc5686db377a4fe7631cacb3395809988b70b5f54a83be9",
+            "phase1": "e4a83d478fde065d50ae12a8bf6acdfee594f72501cf64843f36a3e72d159dcf",
+            "phase2": "d99ef79bb1a0c30301185973148cb75f2ef9d3af2198890b58587aad9340b15e"
+          },
+          "firstMs": 5093,
+          "repeatMs": 4759
+        },
+        {
+          "seed": 2,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "510cc512ba25998cc09d02aeac7fcc272b307e3db07bb9616912dbc1a8065b83",
+            "phase1": "9992efcd69fda1cf4e0e12545fe01b9e532192d5e1c9fa323b1133d184e8c8e5",
+            "phase2": "9b62bddd63b993ee8b72eb6d75cff9b81e0804648c8659cdcb2a441ccda81cb1"
+          },
+          "firstMs": 6703,
+          "repeatMs": 6454
+        },
+        {
+          "seed": 2147483647,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "9a4f5b60d2d8c587c7ea8dc3785ea603711f30d4955b10c4ffcb3d1d72afa3b1",
+            "phase1": "83872a0408a907332bbb1fc29c6fd9cf27dba8e5a68f93b78e4b0930a84b8709",
+            "phase2": "8f4c504adaa3aaca24b20629bf9cbe73710c93e26f90220145502393c39d44d1"
+          },
+          "firstMs": 5459,
+          "repeatMs": 4385
+        },
+        {
+          "seed": 2147483648,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "2ae5908659afef539d388ec80fdd2d3d532e8c24ad2f229c31ad6469857c8ca6",
+            "phase1": "8fd6cfe1828f5e2b3481f343d3414072a0c7606eb6c2128d89548ac362c52f67",
+            "phase2": "bba6a27ae9a3bfdf1ef939a0db94ed5407c72125cdaf3e1f013ead63f644bfdb"
+          },
+          "firstMs": 4060,
+          "repeatMs": 4314
+        },
+        {
+          "seed": 4294967294,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "8fe4d2452dcf3d62114ce1de3a3ffd3060d10389780cbe29d7a1030a83d1d97d",
+            "phase1": "5dbc70fa788902e9d5056ded56a219b24deb85e58fc80984b77ab2275a604bcb",
+            "phase2": "149284c8f78a89cd3d31fb68b538cd43351a3ceaea6e1907934b4141921d8a8e"
+          },
+          "firstMs": 5386,
+          "repeatMs": 5342
+        },
+        {
+          "seed": 4294967295,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "fbf939d119d06bce7ad7b2d88b7de0815bf232979c34a3fda639949b1e5963cd",
+            "phase1": "45bf4be1f8cddc290eadab6d72929b2828ddc635e42445ae34bc7efbe7807c80",
+            "phase2": "628a37fe63b22fe20995b3ce95b060be270eb4dee5eef3bf5e10413a0c2f5e5e"
+          },
+          "firstMs": 3158,
+          "repeatMs": 2751
+        }
+      ]
+    },
+    "known-physical": {
+      "revision": "7f82ae1d527c3e16aae3f4234a7c77283db616b6",
+      "node": "v22.23.5",
+      "passed": 4,
+      "seedCount": 7,
+      "peakRssKiB": 701804,
+      "checks": [
+        {
+          "name": "Phase 0 official intake and seed tamper rejection",
+          "pass": true
+        },
+        {
+          "name": "Maritime demand requires supported sea routes",
+          "pass": true
+        },
+        {
+          "name": "Phase 2 fixture harness",
+          "pass": true
+        },
+        {
+          "name": "Physical passage closure and terminal negative controls",
+          "pass": true
+        },
+        {
+          "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+          "pass": true
+        },
+        {
+          "name": "Land-weighted pressure and local recovery timing",
+          "pass": true
+        },
+        {
+          "name": "Signed final terrain and carved-bed controls",
+          "pass": true
+        },
+        {
+          "name": "Final downhill routing and water receiver controls",
+          "pass": true
+        },
+        {
+          "name": "Immutable handoffs and fail-closed Phase 2",
+          "pass": true
+        }
+      ],
+      "seeds": [
+        {
+          "seed": 1122193213,
+          "pass": false,
+          "phase": "phase1",
+          "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+          "phase2Failures": [],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 33316
+        },
+        {
+          "seed": 2337086253,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "cc036afbe46a49343abc4102e1f8a10f3da9de2e95e33b9f598fbb111886e797",
+            "phase1": "2c195e6db997232ae3c1c497b5595e20f096dc68896f1193903c1b69f47f2ea7",
+            "phase2": "1e6ec518f6b2446fe22b3ab83fcb8f0392c6215955b7c40a56377e9f6bd13b44"
+          },
+          "firstMs": 23561,
+          "repeatMs": 11581
+        },
+        {
+          "seed": 4144686569,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.design.tension_vs_relief",
+              "status": "rebalance_required",
+              "details": [
+                "pressureMean=0.209",
+                "recoveryMean=0.477",
+                "tensionReliefDelta=-0.268"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 35577
+        },
+        {
+          "seed": 1665754063,
+          "pass": false,
+          "phase": "phase2",
+          "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+          "phase2Failures": [
+            {
+              "checkId": "phase2.distribution.pressure_rhythm_differentiation",
+              "status": "fail",
+              "details": [
+                "meanAbsDifference=0.036",
+                "pressureSpread=0.561",
+                "rhythmSpread=0.582"
+              ]
+            }
+          ],
+          "repeatedFailureMatches": true,
+          "elapsedMs": 48610
+        },
+        {
+          "seed": 2727244283,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "dc65f6278521fc68655fa15b0cb85935f1b6045ed50bda9d7bf5549f8e92cc80",
+            "phase1": "9dc3a67b11d0ec74b9d1d7d7de4b332a442721504c4d6c9030b3051607553a02",
+            "phase2": "cdc180be6f38fe6861d07d894f3f82615b25c8ecc4610b5123299c4ad199faf7"
+          },
+          "firstMs": 20258,
+          "repeatMs": 20196
+        },
+        {
+          "seed": 2964753490,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "a2829f82f4d21d076e18acce64d0c09eb2a8264bdf52a6c64e38a529cde29f13",
+            "phase1": "f214003ad88cc62073c5adf61f0ae6a4431b2167006392fef6e5beabcd93e0aa",
+            "phase2": "41fa44a4672d5e6896dc4734306c620f84dce66ee62659a31d68c4ac721815c1"
+          },
+          "firstMs": 20121,
+          "repeatMs": 19096
+        },
+        {
+          "seed": 4085637119,
+          "pass": true,
+          "determinism": {
+            "phase0": true,
+            "phase1": true,
+            "phase2": true
+          },
+          "hashes": {
+            "phase0": "17cf92177562755ea7548aaea476a6c48621012787238ab5638dfae7ffc7cd0e",
+            "phase1": "76fcdc774210190724386c19d00f3e24610d2e5bc10e1ee28737c56915087e16",
+            "phase2": "d00569a2f24a022ed9e3997f517c5c7137d4b6e2ca0a2d803a7300c86d4b41b0"
+          },
+          "firstMs": 18139,
+          "repeatMs": 15977
+        }
+      ]
+    }
+  },
+  "controls": {
+    "storm180816365": [
+      {
+        "seed": 180816365,
+        "volatility": 0.1,
+        "passed": true,
+        "scores": {
+          "diversity": 0.6844,
+          "routeRichness": 0.7951,
+          "chokeValue": 0.344,
+          "archipelagoSignificance": 0.7101,
+          "centerPeripheryContrast": 0.5545,
+          "historyPotential": 0.611
+        },
+        "failReasons": [],
+        "warnings": [
+          "choke usefulness score 0.34 is weak and may produce a shallow macro world."
+        ]
+      },
+      {
+        "seed": 180816365,
+        "volatility": 0.3648998712748289,
+        "passed": true,
+        "scores": {
+          "diversity": 0.6842,
+          "routeRichness": 0.7888,
+          "chokeValue": 0.3173,
+          "archipelagoSignificance": 0.7087,
+          "centerPeripheryContrast": 0.5494,
+          "historyPotential": 0.6065
+        },
+        "failReasons": [],
+        "warnings": [
+          "choke usefulness score 0.32 is weak and may produce a shallow macro world.",
+          "center-periphery contrast score 0.55 is thinner than target and may benefit from selective rerolling."
+        ]
+      },
+      {
+        "seed": 180816365,
+        "volatility": 0.9,
+        "passed": false,
+        "scores": {
+          "diversity": 0.615,
+          "routeRichness": 0.7892,
+          "chokeValue": 0.2516,
+          "archipelagoSignificance": 0.71,
+          "centerPeripheryContrast": 0.55,
+          "historyPotential": 0.5762
+        },
+        "failReasons": [
+          "choke usefulness score 0.25 is below the minimum threshold."
+        ],
+        "warnings": []
+      }
+    ]
+  },
+  "baselineStress0": [
+    {
+      "seed": 2856344,
+      "pass": true
+    },
+    {
+      "seed": 318092342,
+      "pass": true
+    },
+    {
+      "seed": 560997137,
+      "pass": true
+    },
+    {
+      "seed": 822318635,
+      "pass": true
+    },
+    {
+      "seed": 1139020259,
+      "pass": true
+    },
+    {
+      "seed": 1353719581,
+      "pass": true
+    },
+    {
+      "seed": 1665754063,
+      "pass": false,
+      "phase": "phase2",
+      "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation."
+    },
+    {
+      "seed": 1880886041,
+      "pass": true
+    },
+    {
+      "seed": 2170157783,
+      "pass": true
+    },
+    {
+      "seed": 2461506081,
+      "pass": true
+    },
+    {
+      "seed": 2727244283,
+      "pass": false,
+      "phase": "phase1",
+      "message": "[worldgen/foundation] phase1: coastalOpportunityMap contains a missing or repeated coastalNodeId: coastal_access_12370"
+    },
+    {
+      "seed": 2964753490,
+      "pass": false,
+      "phase": "phase1",
+      "message": "[worldgen/foundation] phase1: coastalOpportunityMap contains a missing or repeated coastalNodeId: coastal_access_23525"
+    },
+    {
+      "seed": 3271942068,
+      "pass": true
+    },
+    {
+      "seed": 3497266055,
+      "pass": true
+    },
+    {
+      "seed": 3766715046,
+      "pass": true
+    },
+    {
+      "seed": 4085637119,
+      "pass": false,
+      "phase": "audit",
+      "message": "Need two route-backed constrictions with measured detours, found 1"
+    }
+  ],
+  "omittedVariants": {
+    "testedWithOldPhase2Scale": [
+      {
+        "seed": 42,
+        "original": 0.180365,
+        "effectiveArea": {
+          "recovery": 0.072905,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.071689,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 137,
+        "original": 0.234416,
+        "effectiveArea": {
+          "recovery": 0.084587,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.079398,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 2026,
+        "original": 0.23149,
+        "effectiveArea": {
+          "recovery": 0.079676,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.076524,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 16908799,
+        "original": 0.189504,
+        "effectiveArea": {
+          "recovery": 0.067724,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.06696,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 2764796977,
+        "original": 0.270976,
+        "effectiveArea": {
+          "recovery": 0.11534,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.109824,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 1908874353,
+        "original": 0.248782,
+        "effectiveArea": {
+          "recovery": 0.078224,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.077665,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 2576980379,
+        "original": 0.209731,
+        "effectiveArea": {
+          "recovery": 0.093151,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.091796,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 3508323923,
+        "original": 0.195852,
+        "effectiveArea": {
+          "recovery": 0.09815,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.093902,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 2337086253,
+        "original": 0.2069,
+        "effectiveArea": {
+          "recovery": 0.100853,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.096145,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 4144686569,
+        "original": 0.476997,
+        "effectiveArea": {
+          "recovery": 0.152305,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.128175,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 1665754063,
+        "original": 0.26316,
+        "effectiveArea": {
+          "recovery": 0.124437,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.106534,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 2727244283,
+        "original": 0.205222,
+        "effectiveArea": {
+          "recovery": 0.086574,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.084023,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 2964753490,
+        "original": 0.184231,
+        "effectiveArea": {
+          "recovery": 0.088998,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.08797,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      },
+      {
+        "seed": 4085637119,
+        "original": 0.193875,
+        "effectiveArea": {
+          "recovery": 0.099125,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        },
+        "equivalentYield": {
+          "recovery": 0.094615,
+          "status": "fail",
+          "checks": [
+            "phase2.distribution.relief_presence",
+            "phase2.gameplay.relief_relevance"
+          ]
+        }
+      }
+    ]
+  }
+}

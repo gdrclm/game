@@ -1,0 +1,186 @@
+{
+  "sample": {
+    "edges": [
+      0,
+      1,
+      2,
+      2147483647,
+      2147483648,
+      4294967294,
+      4294967295
+    ],
+    "consecutive": 512,
+    "distributed": 512,
+    "total": 1031
+  },
+  "reverseOrderStable": true,
+  "namespaceUniqueValueCounts": {
+    "macroGeographySeed": 1031,
+    "pressureSeed": 1031,
+    "rhythmSeed": 1031,
+    "religionSeed": 1031,
+    "mentalSeed": 1031,
+    "civilizationSeed": 1031,
+    "dynastySeed": 1031,
+    "eventSeed": 1031,
+    "collapseSeed": 1031,
+    "archipelagoSeed": 1031,
+    "islandHistorySeed": 1031,
+    "settlementSeed": 1031,
+    "spatialSeed": 1031,
+    "npcSeed": 1031
+  },
+  "distribution": {
+    "conflictPressure": {
+      "min": 0.020403066251669932,
+      "p05": 0.13270901349635,
+      "median": 0.29076627406760747,
+      "p95": 0.8423277120970754,
+      "max": 0.9598720076841467,
+      "mean": 0.371564
+    },
+    "dynastyPressure": {
+      "min": 0.01258184840293941,
+      "p05": 0.1229843995212675,
+      "median": 0.39974832305891644,
+      "p95": 0.8821231668603029,
+      "max": 0.9627986126129089,
+      "mean": 0.503216
+    },
+    "maritimeDependence": {
+      "min": 0.033087139415170164,
+      "p05": 0.11737800672960941,
+      "median": 0.39408110839211274,
+      "p95": 0.8559618963970986,
+      "max": 0.9421458934498036,
+      "mean": 0.484334
+    },
+    "environmentalVolatility": {
+      "min": 0.050917031565633764,
+      "p05": 0.1288874184578086,
+      "median": 0.3936206619400117,
+      "p95": 0.8520197101119071,
+      "max": 0.957599206841713,
+      "mean": 0.479639
+    },
+    "collapseIntensity": {
+      "min": 0.05276929820139514,
+      "p05": 0.13960633000172673,
+      "median": 0.3916022716441916,
+      "p95": 0.794898696085403,
+      "max": 0.9256438978583792,
+      "mean": 0.473474
+    },
+    "religiousInertia": {
+      "min": 0.04172439165241848,
+      "p05": 0.16277890326509975,
+      "median": 0.6054937725596957,
+      "p95": 0.8404418196084167,
+      "max": 0.9543308955272474,
+      "mean": 0.507552
+    },
+    "institutionalPlasticity": {
+      "min": 0.05981506967647565,
+      "p05": 0.16288413573789506,
+      "median": 0.39991105089171064,
+      "p95": 0.8383179429159457,
+      "max": 0.9390644375651566,
+      "mean": 0.499063
+    },
+    "migrationPressure": {
+      "min": 0.03983548551998839,
+      "p05": 0.1478949163215728,
+      "median": 0.6007524009607732,
+      "p95": 0.8571081106156342,
+      "max": 0.9472491584342964,
+      "mean": 0.500816
+    },
+    "centralizationBias": {
+      "min": 0.012347492097317003,
+      "p05": 0.13829808708969327,
+      "median": 0.39844046715440024,
+      "p95": 0.852344749053519,
+      "max": 0.9400003824228611,
+      "mean": 0.500168
+    },
+    "memoryPersistence": {
+      "min": 0.01149055696442236,
+      "p05": 0.14960018304724382,
+      "median": 0.3997884887746639,
+      "p95": 0.8429794336985907,
+      "max": 0.9736547590648335,
+      "mean": 0.496129
+    },
+    "heroicAgencyBias": {
+      "min": 0.03846439232066973,
+      "p05": 0.1424415981952057,
+      "median": 0.3952028638083074,
+      "p95": 0.8335002228219723,
+      "max": 0.9703215891561918,
+      "mean": 0.490242
+    },
+    "routeFragilityBias": {
+      "min": 0.028803736826613524,
+      "p05": 0.15222606756226442,
+      "median": 0.3959570048439006,
+      "p95": 0.8277971965756554,
+      "max": 0.9015858927607632,
+      "mean": 0.487103
+    },
+    "culturalPermeability": {
+      "min": 0.06375945418365309,
+      "p05": 0.1627697249787311,
+      "median": 0.39976810952441555,
+      "p95": 0.8279942127047177,
+      "max": 0.9597318981096348,
+      "mean": 0.495254
+    }
+  },
+  "categories": {
+    "worldTone": {
+      "storm_shattered_trade_world": 282,
+      "migratory_open_world": 192,
+      "continental_iron_order": 122,
+      "fractured_maritime_age": 40,
+      "dynastic_collapse_frontier": 43,
+      "ritual_basin_civilization": 289,
+      "heroic_shatterbelt_age": 63
+    },
+    "likelyWorldPattern": {
+      "trade_heavy_but_fragile": 322,
+      "continental_hierarchy": 286,
+      "fragmented_maritime_rivals": 72,
+      "ritual_stable_basins": 285,
+      "high_memory_collapse_world": 66
+    },
+    "likelyConflictMode": {
+      "route_conflict": 291,
+      "religious_fragmentation": 119,
+      "resource_and_isolation_conflict": 258,
+      "frontier_pressure_conflict": 47,
+      "dynastic_conflict": 316
+    },
+    "likelyCollapseMode": {
+      "sudden_route_cascade": 305,
+      "ecological_shock_breakdown": 220,
+      "slow_periphery_fade": 380,
+      "dynastic_disintegration": 87,
+      "compound_collapse": 39
+    },
+    "likelyReligiousPattern": {
+      "trade_syncretic": 190,
+      "fear_and_appeasement": 108,
+      "reform_prone": 318,
+      "high_orthodoxy": 381,
+      "memory_bound_ancestral": 34
+    },
+    "likelyArchipelagoRole": {
+      "exilic_edge": 177,
+      "remnant_core": 300,
+      "customs_belt": 68,
+      "wound_of_world": 251,
+      "bridge": 179,
+      "imperial_chain": 56
+    }
+  }
+}

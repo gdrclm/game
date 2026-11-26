@@ -2,6 +2,8 @@
 
 Status: active engineering objective, 2026-11-25. Branch worldgen/v1-foundation-closure. Initial source revision 63693c8; verify current HEAD before work. Latest baseline CI 45694140871 failed on 16908799 and 2764796977. This objective expands the technical work before author review, not the official WorldGen phase map. F8/F9 author approval remains pending.
 
+Current findings and tested revisions are tracked in [PROJECT_STATE.md](PROJECT_STATE.md), [FOUNDATION_PHYSICAL_PLAN.md](FOUNDATION_PHYSICAL_PLAN.md) and [FOUNDATION_PHYSICAL_COVERAGE.md](FOUNDATION_PHYSICAL_COVERAGE.md). The CI result above describes the original baseline of this objective.
+
 ## Objective and scope
 Deliver a causally coherent, physically expressive, deterministic macro-world foundation ready for author review and subsequent Phase 3–17 historical generators. Work autonomously through Phase 0, Phase 1 and Phase 2 only. Do not implement Phase 3, final terrain tiles, culture/history, NPCs, tragedy, or integrate into the player runtime. Phase 17.5 remains the gameplay projection boundary. Preserve V1 causal structure without attempting a full scientific earth simulator. Respect AGENTS.md, PLANS.md, CONTEXT_MAP.md, PATHS_AUTHORIAL_VISION.md, DESIGN_DECISIONS.md and phase contracts. Existing F1–F7 and F8-Q results are regressions to preserve, not tasks to restart.
 
