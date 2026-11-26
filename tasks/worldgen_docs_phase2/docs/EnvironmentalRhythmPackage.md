@@ -141,7 +141,9 @@ Required fields:
 Recovery domain is mandatory.  
 It must never be optional.
 
-Recovery uses local water, relief, weather and verified transport links. Runoff support for the recovery tempo and repeated stress accounts for the limiting seasonal water condition. Continuing support for a local refuge uses longer-term water reliability. Ruggedness slows access, and a transport bonus requires a linked macro route. An explicit empty list of relief IDs on an isolation record gives no specific relief association.
+Recovery uses local water, relief, weather and verified transport links. Where measured relief inflow is available, the low-season share caps the ordinary hydrological contribution to `environmentalForgiveness` alongside the existing basin limit. The share has the same units in the numerator and denominator. Ordinary basin support is weighted by measured land intersections. In recovery tempo, basin drought still affects scarcity, while the capacity term uses structural runoff reliability. Stabilization interval and refuge persistence retain their previous inputs. Without measured relief inflow the earlier basin interpretation applies to both tempo capacity and repeated stress.
+
+The recovery support snapshot keeps mean and low-season areal inflow, reachability, allocated low-season supply on serviced land, distance, ascent and potential retention separate. Measured source access and potential storage do not establish available water or its duration. Ruggedness slows access, and a transport bonus requires a linked macro route. An explicit empty list of relief IDs on an isolation record gives no specific relief association.
 
 ---
 

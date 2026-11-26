@@ -5,6 +5,27 @@
         return (input.phase2InputBundle || input.inputBundle)?.rootSupport?.environmentalCoverage;
     }
 
+    function getReliefWaterAccess(input) {
+        return (input.phase2InputBundle || input.inputBundle)?.rootSupport?.reliefWaterAccess;
+    }
+
+    function describeReliefRecoveryWater(water) {
+        if (!water?.landCellCount) return undefined;
+        const { landCellCount, inputPotential, lowInputPotential, reachableCellCount } = water;
+        return {
+            meanInflowPerLandArea: inputPotential / landCellCount,
+            lowSeasonInflowPerLandArea: lowInputPotential / landCellCount,
+            seasonalInflowFraction: inputPotential > 0 ? lowInputPotential / inputPotential : null,
+            sourceAccess: Object.freeze({
+                reachableLandFraction: reachableCellCount / landCellCount,
+                allocatedLowSupplyPerReachableArea: water.allocatedLowSupplyPerArea ?? null,
+                meanDistance: water.meanDistance,
+                meanAscent: water.meanAscent
+            }),
+            potentialRetention: water.storageSpace
+        };
+    }
+
     function meanCarrierScore(scores, cells, fallbackIds = [], totalCells) {
         const carriers = cells ? Object.entries(cells) : fallbackIds.map(id => [id, 1]);
         let amount = 0;
@@ -113,6 +134,8 @@
 
     Object.assign(phase2, {
         getEnvironmentalCoverage,
+        getReliefWaterAccess,
+        describeReliefRecoveryWater,
         meanCarrierScore,
         indexIsolationByRelief,
         getReliefCarriers,

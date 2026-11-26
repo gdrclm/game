@@ -2448,10 +2448,22 @@
         const reliableRunoffSupport = phase2.meanCarrierScore(
             context.reliableRunoff, basinCells, riverBasinIds, spatial?.landCellCount
         ) ?? 0;
+        const localWater = phase2.describeReliefRecoveryWater(context.reliefWater?.[reliefRegionId]);
+        const ordinaryRunoffSupport = phase2.meanCarrierScore(
+            context.ordinaryRunoff, basinCells, riverBasinIds, spatial?.landCellCount
+        ) ?? 0;
+        // Repeated stress can span the observed low season. Use it as a ceiling
+        // on ordinary runoff, alongside the existing limit from basin conditions.
+        const seasonalRunoffCeiling = ordinaryRunoffSupport * (localWater?.seasonalInflowFraction ?? 0);
+        const repeatedRunoffSupport = localWater ? Math.min(runoffSupport, seasonalRunoffCeiling) : runoffSupport;
+        // With measured seasonal inflow, keep drought in the scarcity response
+        // and the repeated-stress ceiling, without also penalizing tempo capacity.
+        const tempoRunoffSupport = localWater ? reliableRunoffSupport : runoffSupport;
         const accessibleTerrain = 1 - clamp01(reliefRegion.ruggednessBias);
-        // Shelter in a benign weather window and freshwater support are separate contributions.
-        const localSupport = 0.25 * supportWindow + 0.75 * runoffSupport;
+        // A general support window can remain even when local replenishment ceases.
+        const localSupport = 0.25 * supportWindow + 0.75 * tempoRunoffSupport;
         const persistentSupport = 0.25 * supportWindow + 0.75 * reliableRunoffSupport;
+        const repeatedSupport = 0.25 * supportWindow + 0.75 * repeatedRunoffSupport;
         const recoveryCapacity = accessibleTerrain * localSupport;
         const reliefPocket = applyThresholdContrast(
             clamp01(
@@ -2548,6 +2560,13 @@
             landCellCount: spatial?.landCellCount ?? null,
             runoffSupport: roundValue(runoffSupport),
             reliableRunoffSupport: roundValue(reliableRunoffSupport),
+            ...(localWater && { localWater: Object.freeze({
+                ...localWater,
+                ordinaryRunoffSupport: roundValue(ordinaryRunoffSupport),
+                tempoRunoffSupport: roundValue(tempoRunoffSupport),
+                seasonalRunoffCeiling: roundValue(seasonalRunoffCeiling),
+                repeatedRunoffSupport: roundValue(repeatedRunoffSupport)
+            }) }),
             accessibleTerrain: roundValue(accessibleTerrain),
             supportWindow: roundValue(supportWindow),
             recoveryCapacity: roundValue(recoveryCapacity),
@@ -2568,7 +2587,7 @@
             stabilizationInterval: roundValue(stabilizationInterval),
             // Habitat can retain a refuge while delivery over the surrounding terrain remains slow.
             reliefPersistence: roundValue(reliefPersistence * persistentSupport),
-            environmentalForgiveness: roundValue(environmentalForgiveness * localSupport)
+            environmentalForgiveness: roundValue(environmentalForgiveness * repeatedSupport)
         };
     }
 
@@ -2595,6 +2614,7 @@
                 landCellCount: signals.landCellCount ?? null,
                 runoffSupport: signals.runoffSupport || 0,
                 reliableRunoffSupport: signals.reliableRunoffSupport || 0,
+                ...(signals.localWater && { localWater: signals.localWater }),
                 accessibleTerrain: signals.accessibleTerrain || 0,
                 supportWindow: signals.supportWindow || 0,
                 recoveryCapacity: signals.recoveryCapacity || 0,
@@ -2873,9 +2893,11 @@
                 const droughtPressure = createScoreMap(domainLayers.hydrology?.droughtPressure?.perBasinScores);
                 const reliableRunoff = {};
                 const runoffAvailability = {};
+                const ordinaryRunoff = {};
                 for (const basin of riverBasins) {
                     const id = basin.riverBasinId;
                     const potential = clamp01(basin.basinContinuity) * phase2.catchmentWaterSupport(clamp01(basin.catchmentScale));
+                    ordinaryRunoff[id] = potential;
                     const unreliable = reliabilityInverse[id] ?? 0;
                     reliableRunoff[id] = potential * (1 - unreliable);
                     // Drought already includes supply reliability. Apply the limiting condition once.
@@ -2883,9 +2905,11 @@
                 }
                 const context = {
                     coverage: phase2.getEnvironmentalCoverage(input),
+                    reliefWater: phase2.getReliefWaterAccess(input),
                     climateBandIdsByReliefRegion: buildClimateBandIdsByReliefRegion(climateBands),
                     riverBasinIdsByReliefRegion: buildRiverBasinIdsByReliefRegion(riverBasins),
                     reliableRunoff,
+                    ordinaryRunoff,
                     runoffAvailability,
                     routeIdsByReliefRegion: buildRouteIdsByReliefRegion(macroRoutes),
                     chokepointIdsByRoute: Object.fromEntries(macroRoutes.map(route => [route.routeId, route.chokepointIds])),

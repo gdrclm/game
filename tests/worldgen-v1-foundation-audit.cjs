@@ -9,7 +9,7 @@ const { join } = require('node:path');
 const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
 const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
-const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
+const { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
     verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture,
     verifyContinentalShorelineFixture } = require('./worldgen-v1-terrain.cjs');
@@ -376,6 +376,8 @@ for (const seed of seeds) {
         if (!controlsRun) {
             check('Immutable handoffs and fail-closed Phase 2', () => testHandoffs(first));
             if (runCausal) {
+                check('Macro recovery responds to local season without importing access or island shelter',
+                    () => verifySeasonalRecovery(phase2, first));
                 const saveStormPair = snapshots ? pair => writeFileSync(
                     join(snapshots, `counterfactual-${seed}.json`), JSON.stringify({ ...pair, revision })
                 ) : null;
