@@ -1,0 +1,1418 @@
+{
+  "fixedWorldTerrainAndWind": true,
+  "prototypeStatus": "research_only",
+  "baselineMacroGeography": "7f82ae1",
+  "shortRay": {
+    "stepLimit": 4,
+    "perStepRetention": 0.68
+  },
+  "extendedRay": {
+    "sourceRevision": "7f13f93152d06aad1d1393aa71f12033486a53d0",
+    "verifiedRegressionWorlds": 40,
+    "inputRegressionWorlds": 40,
+    "decayDistanceMacroCellsAtWidth256": 10.666666666666666,
+    "cutoffDecayLengths": 3,
+    "knownCases": {
+      "baseRevision": "4f23a9fc58e3231d9c668fe8df2925fb2340950f",
+      "node": "v22.23.5",
+      "seeds": [
+        {
+          "seed": 1122193213,
+          "pass": false,
+          "phase": "phase1",
+          "beforePass": null,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 2337086253,
+          "pass": true,
+          "phase": null,
+          "beforePass": true,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 4144686569,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": null,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 1665754063,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.distribution.pressure_rhythm_differentiation"
+          ]
+        },
+        {
+          "seed": 2727244283,
+          "pass": true,
+          "phase": null,
+          "beforePass": true,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 2964753490,
+          "pass": true,
+          "phase": null,
+          "beforePass": true,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 4085637119,
+          "pass": true,
+          "phase": null,
+          "beforePass": true,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 3019978005,
+          "pass": false,
+          "phase": "phase1",
+          "beforePass": false,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 1240171611,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 3928839710,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 1054323503,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 2094783996,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 2402593754,
+          "pass": false,
+          "phase": "phase1",
+          "beforePass": false,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 2917478163,
+          "pass": true,
+          "phase": null,
+          "beforePass": false,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 3206964149,
+          "pass": true,
+          "phase": null,
+          "beforePass": false,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 4286438917,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        }
+      ]
+    }
+  },
+  "advectiveMixing": {
+    "sourceRevision": "4f23a9fc58e3231d9c668fe8df2925fb2340950f",
+    "decayDistanceMacroCellsAtWidth256": 10.666666666666666,
+    "cutoffDecayLengths": 3,
+    "lateralMixingFraction": 0.125,
+    "sampling": "local bilinear upstream advection plus neighboring latitude cells",
+    "knownCases": {
+      "baseRevision": "4f23a9fc58e3231d9c668fe8df2925fb2340950f",
+      "node": "v22.23.5",
+      "seeds": [
+        {
+          "seed": 1122193213,
+          "pass": false,
+          "phase": "phase1",
+          "beforePass": null,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 2337086253,
+          "pass": true,
+          "phase": null,
+          "beforePass": true,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 4144686569,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": null,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 1665754063,
+          "pass": true,
+          "phase": null,
+          "beforePass": false,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 2727244283,
+          "pass": true,
+          "phase": null,
+          "beforePass": true,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 2964753490,
+          "pass": true,
+          "phase": null,
+          "beforePass": true,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 4085637119,
+          "pass": true,
+          "phase": null,
+          "beforePass": true,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 3019978005,
+          "pass": false,
+          "phase": "phase1",
+          "beforePass": false,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 1240171611,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 3928839710,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 1054323503,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 2094783996,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 2402593754,
+          "pass": false,
+          "phase": "phase1",
+          "beforePass": false,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 2917478163,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        },
+        {
+          "seed": 3206964149,
+          "pass": true,
+          "phase": null,
+          "beforePass": false,
+          "afterFailedGates": []
+        },
+        {
+          "seed": 4286438917,
+          "pass": false,
+          "phase": "phase2",
+          "beforePass": false,
+          "afterFailedGates": [
+            "phase2.design.tension_vs_relief"
+          ]
+        }
+      ]
+    },
+    "regression": {
+      "knownFailureSeed": 137,
+      "observedGate": "Phase 1 choke usefulness"
+    }
+  },
+  "pairedRows": [
+    {
+      "seed": 42,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.000492,
+          0.221033
+        ],
+        "worldRecovery": 0.180365
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.050063,
+          0.341058
+        ],
+        "worldRecovery": 0.17887
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 137,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.000451,
+          0.243666
+        ],
+        "worldRecovery": 0.234416
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.057061,
+          0.379881
+        ],
+        "worldRecovery": 0.244299
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2026,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.002998,
+          0.190659
+        ],
+        "worldRecovery": 0.23149
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.024277,
+          0.332014
+        ],
+        "worldRecovery": 0.226645
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 73537,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.000953,
+          0.148347
+        ],
+        "worldRecovery": 0.209966
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.017487,
+          0.298852
+        ],
+        "worldRecovery": 0.21
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2856344,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.000809,
+          0.182498
+        ],
+        "worldRecovery": 0.218985
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.029974,
+          0.348136
+        ],
+        "worldRecovery": 0.21884
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 4194307,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.007289,
+          0.205553
+        ],
+        "worldRecovery": 0.209509
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.031357,
+          0.351066
+        ],
+        "worldRecovery": 0.212935
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 16908799,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.321916
+        ],
+        "worldRecovery": 0.189504
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.072424,
+          0.406029
+        ],
+        "worldRecovery": 0.192322
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 40681987,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.165162
+        ],
+        "worldRecovery": 0.271711
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.018615,
+          0.306809
+        ],
+        "worldRecovery": 0.282507
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 64847321,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.026378,
+          0.24427
+        ],
+        "worldRecovery": 0.208062
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.093845,
+          0.393877
+        ],
+        "worldRecovery": 0.205879
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 271828183,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.041915,
+          0.239252
+        ],
+        "worldRecovery": 0.209721
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.088795,
+          0.388835
+        ],
+        "worldRecovery": 0.210929
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 359393571,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.014494,
+          0.292643
+        ],
+        "worldRecovery": 0.257343
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.100917,
+          0.40942
+        ],
+        "worldRecovery": 0.257216
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 422095321,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.002415,
+          0.284377
+        ],
+        "worldRecovery": 0.242371
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.048668,
+          0.406267
+        ],
+        "worldRecovery": 0.240367
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 698377633,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.1599
+        ],
+        "worldRecovery": 0.249708
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.018108,
+          0.317103
+        ],
+        "worldRecovery": 0.249933
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 801384629,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.156877
+        ],
+        "worldRecovery": 0.224268
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.009821,
+          0.314347
+        ],
+        "worldRecovery": 0.224431
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 894213317,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.212674
+        ],
+        "worldRecovery": 0.274464
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.023025,
+          0.37062
+        ],
+        "worldRecovery": 0.274786
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 958614127,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.290075
+        ],
+        "worldRecovery": 0.26258
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.057316,
+          0.409762
+        ],
+        "worldRecovery": 0.259713
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 1258291229,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.15838
+        ],
+        "worldRecovery": 0.277191
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.026355,
+          0.306947
+        ],
+        "worldRecovery": 0.264864
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 1431655765,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.027911,
+          0.197047
+        ],
+        "worldRecovery": 0.179534
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.055026,
+          0.353635
+        ],
+        "worldRecovery": 0.181589
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 1536241709,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.005895,
+          0.166849
+        ],
+        "worldRecovery": 0.237113
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.01742,
+          0.329662
+        ],
+        "worldRecovery": 0.230531
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 1880886041,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.001882,
+          0.163304
+        ],
+        "worldRecovery": 0.23846
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.025219,
+          0.313269
+        ],
+        "worldRecovery": 0.239205
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 1908874353,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.250111
+        ],
+        "worldRecovery": 0.248782
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.044835,
+          0.381042
+        ],
+        "worldRecovery": 0.246136
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2018958301,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.002378,
+          0.2229
+        ],
+        "worldRecovery": 0.180991
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.051092,
+          0.35004
+        ],
+        "worldRecovery": 0.178984
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2269445513,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.008487,
+          0.151427
+        ],
+        "worldRecovery": 0.212379
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.033523,
+          0.343808
+        ],
+        "worldRecovery": 0.218724
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2337086253,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.129622
+        ],
+        "worldRecovery": 0.2069
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.011309,
+          0.321738
+        ],
+        "worldRecovery": 0.207378
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2345998979,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.203932
+        ],
+        "worldRecovery": 0.304541
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.004974,
+          0.363799
+        ],
+        "worldRecovery": 0.302632
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2576980379,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.025207,
+          0.193375
+        ],
+        "worldRecovery": 0.209731
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.054592,
+          0.357039
+        ],
+        "worldRecovery": 0.210819
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2727244283,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.012033,
+          0.210691
+        ],
+        "worldRecovery": 0.205222
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.047955,
+          0.361393
+        ],
+        "worldRecovery": 0.203485
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2764796977,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.029299,
+          0.205603
+        ],
+        "worldRecovery": 0.270976
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.056025,
+          0.370922
+        ],
+        "worldRecovery": 0.268669
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 2964753490,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.019135,
+          0.184211
+        ],
+        "worldRecovery": 0.184231
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.051038,
+          0.339831
+        ],
+        "worldRecovery": 0.185211
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 3071624507,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.017995,
+          0.191613
+        ],
+        "worldRecovery": 0.271251
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.057186,
+          0.360681
+        ],
+        "worldRecovery": 0.273523
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 3271942068,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.010963,
+          0.157812
+        ],
+        "worldRecovery": 0.26244
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.034597,
+          0.301908
+        ],
+        "worldRecovery": 0.262839
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 3405691582,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0,
+          0.201541
+        ],
+        "worldRecovery": 0.213819
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.028939,
+          0.35439
+        ],
+        "worldRecovery": 0.219173
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 3508323923,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.009012,
+          0.135037
+        ],
+        "worldRecovery": 0.195852
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.024445,
+          0.308548
+        ],
+        "worldRecovery": 0.189682
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 3669891307,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.002545,
+          0.245207
+        ],
+        "worldRecovery": 0.206315
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.027486,
+          0.391458
+        ],
+        "worldRecovery": 0.218078
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 3900041903,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.018442,
+          0.199957
+        ],
+        "worldRecovery": 0.234636
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.054047,
+          0.363712
+        ],
+        "worldRecovery": 0.231766
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 4011398309,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.011612,
+          0.147203
+        ],
+        "worldRecovery": 0.237444
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.034151,
+          0.306793
+        ],
+        "worldRecovery": 0.238486
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 4085637119,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.010484,
+          0.172406
+        ],
+        "worldRecovery": 0.193875
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.037817,
+          0.328792
+        ],
+        "worldRecovery": 0.19559
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 4264079171,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.015819,
+          0.189207
+        ],
+        "worldRecovery": 0.279823
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.035108,
+          0.337415
+        ],
+        "worldRecovery": 0.283032
+      },
+      "sameTerrainSummary": true
+    },
+    {
+      "seed": 4286578687,
+      "baseline": {
+        "landWetnessQuantiles": [
+          0,
+          0.00443,
+          0.144273
+        ],
+        "worldRecovery": 0.191823
+      },
+      "extendedRay": {
+        "landWetnessQuantiles": [
+          0,
+          0.023996,
+          0.285753
+        ],
+        "worldRecovery": 0.190345
+      },
+      "sameTerrainSummary": true
+    }
+  ],
+  "pressureAndHandoffGate137": [
+    {
+      "variant": "baseline",
+      "chokeValue": 0.5177,
+      "phase1Valid": true,
+      "failReasons": [],
+      "bySeaRegionStorm": [
+        {
+          "id": "sea_01",
+          "score": 0.4745565418372986
+        },
+        {
+          "id": "sea_02",
+          "score": 0.3707769754010696
+        },
+        {
+          "id": "sea_03",
+          "score": 0.3746973095022624
+        }
+      ],
+      "recordedChokes": [
+        {
+          "chokepointId": "chk_island_chain_001",
+          "controlValue": 0.5097,
+          "collapseSensitivity": 0.126,
+          "bypassDifficulty": 0.25
+        },
+        {
+          "chokepointId": "chk_island_chain_002",
+          "controlValue": 0.4805,
+          "collapseSensitivity": 0.1255,
+          "bypassDifficulty": 0.25
+        },
+        {
+          "chokepointId": "chk_island_chain_003",
+          "controlValue": 0.5033,
+          "collapseSensitivity": 0.502,
+          "bypassDifficulty": 1
+        }
+      ],
+      "macroRoutes": [
+        {
+          "routeId": "macro_route_001",
+          "fromRegion": "cont_02",
+          "toRegion": "cont_01",
+          "through": [
+            "cont_02",
+            "relief_001",
+            "sea_01",
+            "cont_01",
+            "relief_002"
+          ],
+          "redundancy": 0.5
+        },
+        {
+          "routeId": "macro_route_002",
+          "fromRegion": "cont_02",
+          "toRegion": "relief_004",
+          "through": [
+            "cont_02",
+            "relief_001",
+            "sea_01",
+            "chk_island_chain_001",
+            "relief_004"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_003",
+          "fromRegion": "cont_02",
+          "toRegion": "relief_005",
+          "through": [
+            "cont_02",
+            "relief_001",
+            "sea_01",
+            "relief_005"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_004",
+          "fromRegion": "cont_02",
+          "toRegion": "relief_006",
+          "through": [
+            "cont_02",
+            "relief_001",
+            "sea_01",
+            "relief_006"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_005",
+          "fromRegion": "cont_01",
+          "toRegion": "relief_004",
+          "through": [
+            "cont_01",
+            "relief_002",
+            "sea_01",
+            "chk_island_chain_003",
+            "relief_004"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_006",
+          "fromRegion": "cont_01",
+          "toRegion": "relief_005",
+          "through": [
+            "cont_01",
+            "relief_002",
+            "sea_01",
+            "chk_island_chain_002",
+            "relief_005"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_007",
+          "fromRegion": "cont_01",
+          "toRegion": "relief_006",
+          "through": [
+            "cont_01",
+            "relief_002",
+            "sea_01",
+            "chk_island_chain_002",
+            "relief_006"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_008",
+          "fromRegion": "relief_004",
+          "toRegion": "relief_005",
+          "through": [
+            "relief_004",
+            "sea_01",
+            "chk_island_chain_001",
+            "relief_005"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_009",
+          "fromRegion": "relief_004",
+          "toRegion": "relief_006",
+          "through": [
+            "relief_004",
+            "sea_01",
+            "relief_006"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_010",
+          "fromRegion": "relief_005",
+          "toRegion": "relief_006",
+          "through": [
+            "relief_005",
+            "sea_01",
+            "relief_006"
+          ],
+          "redundancy": 0
+        }
+      ]
+    },
+    {
+      "variant": "lateral-mixing",
+      "chokeValue": 0.2496,
+      "phase1Valid": false,
+      "failReasons": [
+        "choke usefulness score 0.25 is below the minimum threshold."
+      ],
+      "bySeaRegionStorm": [
+        {
+          "id": "sea_01",
+          "score": 0.4693807216657451
+        },
+        {
+          "id": "sea_02",
+          "score": 0.345433007486631
+        },
+        {
+          "id": "sea_03",
+          "score": 0.35461207013574664
+        }
+      ],
+      "recordedChokes": [
+        {
+          "chokepointId": "chk_island_chain_001",
+          "controlValue": 0.4417,
+          "collapseSensitivity": 0.0478,
+          "bypassDifficulty": 0.09467455621301775
+        }
+      ],
+      "macroRoutes": [
+        {
+          "routeId": "macro_route_001",
+          "fromRegion": "cont_02",
+          "toRegion": "cont_01",
+          "through": [
+            "cont_02",
+            "relief_001",
+            "sea_01",
+            "cont_01",
+            "relief_002"
+          ],
+          "redundancy": 0.957
+        },
+        {
+          "routeId": "macro_route_002",
+          "fromRegion": "cont_02",
+          "toRegion": "relief_004",
+          "through": [
+            "cont_02",
+            "relief_001",
+            "sea_01",
+            "relief_004"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_003",
+          "fromRegion": "cont_02",
+          "toRegion": "relief_005",
+          "through": [
+            "cont_02",
+            "relief_001",
+            "sea_01",
+            "relief_005"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_004",
+          "fromRegion": "cont_02",
+          "toRegion": "relief_006",
+          "through": [
+            "cont_02",
+            "relief_001",
+            "sea_01",
+            "relief_006"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_005",
+          "fromRegion": "cont_01",
+          "toRegion": "relief_004",
+          "through": [
+            "cont_01",
+            "relief_002",
+            "sea_01",
+            "relief_004"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_006",
+          "fromRegion": "cont_01",
+          "toRegion": "relief_005",
+          "through": [
+            "cont_01",
+            "relief_002",
+            "sea_01",
+            "chk_island_chain_001",
+            "relief_005"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_007",
+          "fromRegion": "cont_01",
+          "toRegion": "relief_006",
+          "through": [
+            "cont_01",
+            "relief_002",
+            "sea_01",
+            "chk_island_chain_001",
+            "relief_006"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_008",
+          "fromRegion": "relief_004",
+          "toRegion": "relief_005",
+          "through": [
+            "relief_004",
+            "sea_01",
+            "relief_005"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_009",
+          "fromRegion": "relief_004",
+          "toRegion": "relief_006",
+          "through": [
+            "relief_004",
+            "sea_01",
+            "relief_006"
+          ],
+          "redundancy": 0
+        },
+        {
+          "routeId": "macro_route_010",
+          "fromRegion": "relief_005",
+          "toRegion": "relief_006",
+          "through": [
+            "relief_005",
+            "sea_01",
+            "relief_006"
+          ],
+          "redundancy": 0
+        }
+      ]
+    }
+  ],
+  "fixedMapComparison": [
+    {
+      "seed": 42,
+      "meanBeltBoundaryWetnessStep": {
+        "baseline": 0.040169,
+        "extendedRay": 0.095611,
+        "advectiveMixing": 0.049129
+      }
+    },
+    {
+      "seed": 16908799,
+      "meanBeltBoundaryWetnessStep": {
+        "baseline": 0.064513,
+        "extendedRay": 0.125387,
+        "advectiveMixing": 0.068231
+      }
+    },
+    {
+      "seed": 4144686569,
+      "meanBeltBoundaryWetnessStep": {
+        "baseline": 0.037385,
+        "extendedRay": 0.094535,
+        "advectiveMixing": 0.053095
+      }
+    }
+  ]
+}
