@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only; past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-26 against 73fb7a8.
+Current engineering work only; past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-26 through the final-drainage checkpoint.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -14,11 +14,13 @@ Current engineering work only; past iterations and measurements are preserved in
 - [x] Final-drainage spatial bridge: exact terminal and carrier intersections, normalized sill storage and dry-land source reachability, at both macro and island resolution. Phase 2 carries the validated physical factors. Four focused accepted worlds and the intentional Phase 2 rejection `4144686569` exercised.
 - [x] Island physical setting: normalized thermal-ranges from local elevation, windward barrier and landfall paths, plus upstream flow at reached sources. Focused counterfactuals keep climate, shelter, water supply and transport independent.
 
+- [x] F8-S pinned checkpoint on `dad7485`: original stress 54/64, edges 7/7 and first independent cohort 16/16. [Maps and exact rejections](review/f8t/local-water/README.md)
+
 ## Active technical work (do not restart completed milestones)
 - [ ] F8-T water closure: validate how measured branches, local access, seasonal input and retention should alter environmental pressure/recovery. Retain 42, 16908799 and all confirmed regression controls; no global coefficient patch to force acceptance.
 - [ ] F8-T local environment: per-island water persistence/access, climate refinement and physical recovery interpretation; report unresolved data, not guessed potable-water availability.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: resolve or present explicit author-policy blockers for 10 stress failures (2 Phase 1, 8 Phase 2) and other retained controls. Repeat full 43-world CI, same 64 stress + 7 edges on a single candidate revision and new predeclared holdouts. [Current 54/64 evidence](review/f8t/foundation-scale-latest.json)
+- [ ] F8-S: resolve or present explicit author-policy blockers for 10 stress failures (2 Phase 1, 8 Phase 2) and other retained controls. Repeat full 43-world CI, same 64 stress + 7 edges on a single candidate revision and new predeclared holdouts. [Current 54/64 evidence](review/f8t/local-water/README.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 
