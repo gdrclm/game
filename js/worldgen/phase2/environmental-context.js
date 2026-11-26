@@ -72,6 +72,45 @@
         return null;
     }
 
+    function interpretRegionalIslandEnvironment({ landCellCount, waterAccess, physicalSetting }) {
+        const shelter = physicalSetting?.terrainShelter;
+        const round = value => Number(value.toFixed(6));
+        const pressure = {};
+        const recovery = {};
+
+        if (waterAccess) {
+            const { inputPotential, lowInputPotential, reachableCellCount, allocatedLowSupplyPerArea } = waterAccess;
+            pressure.seasonalInflowReduction = round(inputPotential - lowInputPotential);
+            if (allocatedLowSupplyPerArea !== undefined) {
+                // Convert the density on serviced land to a density over all island land.
+                recovery.lowSeasonAllocatedSupplyPerLandArea = round(
+                    (allocatedLowSupplyPerArea ?? 0) * reachableCellCount / landCellCount
+                );
+            }
+            if (shelter) {
+                const sheltered = shelter.shelteredLandCells;
+                // The summaries give both areas. Their cell-level intersection is unknown.
+                recovery.windShelteredLandWithSourceAccess = {
+                    minLandCells: Math.max(0, sheltered + reachableCellCount - landCellCount),
+                    maxLandCells: Math.min(sheltered, reachableCellCount)
+                };
+            }
+        }
+        if (shelter?.meanStormOnExposedLand !== undefined) {
+            // Isolate the contribution of exposed land to the inherited storm index.
+            // Storm intensity on sheltered land after local attenuation is unknown.
+            const exposed = landCellCount - shelter.shelteredLandCells;
+            pressure.exposedLandStormContribution = round(
+                (shelter.meanStormOnExposedLand ?? 0) * exposed / landCellCount
+            );
+        }
+
+        return {
+            ...(Object.keys(pressure).length && { localPressure: pressure }),
+            ...(Object.keys(recovery).length && { localRecovery: recovery })
+        };
+    }
+
     Object.assign(phase2, {
         getEnvironmentalCoverage,
         meanCarrierScore,
@@ -79,6 +118,7 @@
         getReliefCarriers,
         catchmentWaterSupport,
         meanScoreByLand,
-        landWeightedPressure
+        landWeightedPressure,
+        interpretRegionalIslandEnvironment
     });
 })();

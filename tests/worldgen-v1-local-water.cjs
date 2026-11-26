@@ -104,12 +104,26 @@ function inspectLocalWater(result, macro) {
     const islandEnvironment = geography.regionalArchipelago.islandEnvironment;
     for (const row of islandEnvironment.records) {
         assert.equal(row.waterAccess.landCellCount, row.landCellCount);
-        assert.deepEqual(projection.get(row.islandId).waterAccess, row.waterAccess);
+        const projected = projection.get(row.islandId);
+        assert.deepEqual(projected.waterAccess, row.waterAccess);
         const access = row.waterAccess;
         const coveredArea = access.reachableCellCount / geography.regionalArchipelago.grid.subdivision ** 2;
         assert(access.allocatedSupplyPerArea * coveredArea <= access.inputPotential + (coveredArea + 1) * 1e-6);
         assert(access.allocatedLowSupplyPerArea * coveredArea <= access.lowInputPotential + (coveredArea + 1) * 1e-6);
-        if (row.physicalSetting) assert.deepEqual(projection.get(row.islandId).physicalSetting, row.physicalSetting);
+        assert(Math.abs(projected.localPressure.seasonalInflowReduction - (access.inputPotential - access.lowInputPotential)) <= 1e-6);
+        assert(Math.abs(projected.localRecovery.lowSeasonAllocatedSupplyPerLandArea * row.landCellCount
+            - access.allocatedLowSupplyPerArea * access.reachableCellCount) <= row.landCellCount * 1e-6);
+        if (row.physicalSetting) {
+            assert.deepEqual(projected.physicalSetting, row.physicalSetting);
+            const shelter = row.physicalSetting.terrainShelter;
+            const exposedCells = row.landCellCount - shelter.shelteredLandCells;
+            assert(Math.abs(projected.localPressure.exposedLandStormContribution * row.landCellCount
+                - shelter.meanStormOnExposedLand * exposedCells) <= row.landCellCount * 1e-6);
+            const overlap = projected.localRecovery.windShelteredLandWithSourceAccess;
+            assert(overlap.minLandCells <= overlap.maxLandCells);
+            assert.equal(overlap.maxLandCells, Math.min(shelter.shelteredLandCells, access.reachableCellCount));
+            assert.equal(overlap.minLandCells, Math.max(0, access.reachableCellCount - exposedCells));
+        }
     }
     return {
         branchCount: water.branches.length,
@@ -122,7 +136,7 @@ function inspectLocalWater(result, macro) {
     };
 }
 
-function verifyIslandExposureFixture(macro) {
+function verifyIslandExposureFixture(macro, phase2) {
     const width = 5;
     const inherited = new Array(25).fill(-0.1);
     inherited[11] = 0.8;
@@ -156,7 +170,46 @@ function verifyIslandExposureFixture(macro) {
     assert(cooled.climateRange.coldLoad.mean > sheltered.climateRange.coldLoad.mean);
     assert.deepEqual(cooled.climateRange.wetness, sheltered.climateRange.wetness);
     assert.equal(cooled.transport.seaLinkCount, sheltered.transport.seaLinkCount);
-    return { windDirectionChangesShelter: true, upliftCoolsLand: true, shelterLeavesWaterAndSeaLinksIndependent: true };
+
+    const { interpretRegionalIslandEnvironment: interpret } = phase2;
+    const waterAccess = { inputPotential: 0.6, lowInputPotential: 0.3, allocatedLowSupplyPerArea: 0.09,
+        reachableCellCount: 2, storageSpace: 0.3, meanDistance: 3, meanAscent: 0.4 };
+    const project = (physicalSetting, water = waterAccess) => interpret({ landCellCount: 3, physicalSetting, waterAccess: water });
+    const protectedLand = project(mixed);
+    const unprotectedLand = project(reversed);
+    assert.deepEqual(protectedLand, {
+        localPressure: { seasonalInflowReduction: 0.3, exposedLandStormContribution: 0.133333 },
+        localRecovery: { lowSeasonAllocatedSupplyPerLandArea: 0.06,
+            windShelteredLandWithSourceAccess: { minLandCells: 0, maxLandCells: 1 } }
+    });
+    assert.equal(unprotectedLand.localPressure.exposedLandStormContribution, 0.366667);
+    assert.equal(unprotectedLand.localRecovery.lowSeasonAllocatedSupplyPerLandArea, 0.06);
+    assert.deepEqual(unprotectedLand.localRecovery.windShelteredLandWithSourceAccess, { minLandCells: 0, maxLandCells: 0 });
+
+    const inaccessibleWater = { ...waterAccess, reachableCellCount: 0, allocatedLowSupplyPerArea: null };
+    const inaccessible = project(mixed, inaccessibleWater);
+    assert.deepEqual(inaccessible.localPressure, protectedLand.localPressure);
+    assert.equal(inaccessible.localRecovery.lowSeasonAllocatedSupplyPerLandArea, 0);
+    assert.deepEqual(inaccessible.localRecovery.windShelteredLandWithSourceAccess, { minLandCells: 0, maxLandCells: 0 });
+    const dry = project(mixed, { ...inaccessibleWater, inputPotential: 0, lowInputPotential: 0 });
+    assert.equal(dry.localRecovery.lowSeasonAllocatedSupplyPerLandArea, 0);
+    assert.deepEqual(dry.localRecovery.windShelteredLandWithSourceAccess, { minLandCells: 0, maxLandCells: 0 });
+    assert.equal(dry.localPressure.exposedLandStormContribution, protectedLand.localPressure.exposedLandStormContribution);
+    const seasonal = project(mixed, { ...waterAccess, lowInputPotential: 0.1, allocatedLowSupplyPerArea: 0.03 });
+    assert.equal(seasonal.localPressure.seasonalInflowReduction, 0.5);
+    assert.equal(seasonal.localRecovery.lowSeasonAllocatedSupplyPerLandArea, 0.02);
+    assert.deepEqual(seasonal.localRecovery.windShelteredLandWithSourceAccess, protectedLand.localRecovery.windShelteredLandWithSourceAccess);
+    assert.deepEqual(project({ ...mixed, transport: { ...mixed.transport, seaLinkCount: 0, meanDistanceToLandfall: 12 } },
+        { ...waterAccess, storageSpace: 12,
+        meanDistance: 8, meanAscent: 0.8 }), protectedLand);
+    assert.deepEqual(interpret({ landCellCount: 3 }), {});
+    assert.deepEqual(project({ terrainShelter: { shelteredLandCells: 0 } },
+        { ...waterAccess, allocatedLowSupplyPerArea: undefined }), {
+        localPressure: { seasonalInflowReduction: 0.3 },
+        localRecovery: { windShelteredLandWithSourceAccess: { minLandCells: 0, maxLandCells: 0 } }
+    });
+    return { windDirectionChangesShelter: true, upliftCoolsLand: true, shelterLeavesWaterAndSeaLinksIndependent: true,
+        localPressureAndRecoveryExerciseIndependentDrivers: true };
 }
 
 module.exports = { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture };

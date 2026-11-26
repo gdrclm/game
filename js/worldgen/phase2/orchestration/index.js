@@ -195,8 +195,7 @@
         return `${kind}:${normalizeString(bundle && bundle.sourceMacroGeographyPackageId, 'unknown')}`;
     }
 
-    // Project existing Phase 2 band interpretations over measured overlap only.
-    // Uncovered regional land never receives an invented nearest land-band score.
+    // Band signals cover measured overlap. Local interpretations cover the island's own land.
     function buildRegionalIslandEnvironmentalProjection(environment, pressure, rhythm) {
         if (!environment) return undefined;
         const sources = [
@@ -220,6 +219,7 @@
                     localClimate:row.climate,runoffPotential:row.runoffPotential,
                     ...(row.waterAccess && { waterAccess: row.waterAccess }),
                     ...(row.physicalSetting && { physicalSetting: row.physicalSetting }),
+                    ...phase2.interpretRegionalIslandEnvironment(row),
                     catchments:row.catchments,unmatchedClimateCells:row.unmatchedClimateCells,inheritedSignals};
             })};
     }

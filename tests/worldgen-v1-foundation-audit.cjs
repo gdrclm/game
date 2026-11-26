@@ -141,7 +141,7 @@ check('Regional surface requires local physical support', () => verifyRegionalPr
 check('Regional carrier capacity and complete raster-backed island geometry', () => verifyRegionalCarrierFixture(macro));
 check('Regional drainage conserves land and responds to wetness', () => verifyRegionalEnvironmentFixture(macro));
 check('Local water retains geometry, seasonal input, and travel evidence independently', () => verifyLocalWaterFixture(macro));
-check('Regional climate, wind shelter and movement follow different physical sources', () => verifyIslandExposureFixture(macro));
+check('Regional pressure and recovery follow independent water, shelter and movement measurements', () => verifyIslandExposureFixture(macro, phase2));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;
