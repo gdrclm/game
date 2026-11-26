@@ -30,10 +30,14 @@
         return distance;
     }
 
-    function locateHotspotPeaks(hotspots, bounds, openWater, distance, elevation, cutoff) {
+    function locateHotspotPeaks(hotspots, bounds, openWater, distance, elevation, cutoff, refine) {
         const { width, height } = bounds;
         const scale = Math.min(width, height);
         const tracks = [];
+        const lateralLimit = Math.floor(0.24 * scale);
+        const offsets = refine
+            ? Array.from({ length: 2 * lateralLimit + 1 }, (_, index) => (index - lateralLimit) / scale)
+            : [0, -0.08, 0.08, -0.16, 0.16, -0.24, 0.24];
         for (const hotspot of hotspots) {
             if (hotspot.sourcePlateClass === 'continental') continue;
             const { seedPoint, trailVector, hotspotStrength } = hotspot;
@@ -41,35 +45,53 @@
             const spacing = scale * (0.079 + hotspot.sourceSignals.motionMagnitude * 0.04);
             // A plume can emerge on either flank of its drift line. Keep the search
             // within the plate-scale trail envelope, favoring less offset and shallower crust.
-            for (const offset of [0, -0.08, 0.08, -0.16, 0.16, -0.24, 0.24]) {
-                let run = [];
-                for (let step = -4; step <= 4; step += 1) {
-                    const x = Math.round(seedPoint.x + trailVector.x * step * spacing - trailVector.y * offset * scale);
-                    const y = Math.round(seedPoint.y + trailVector.y * step * spacing + trailVector.x * offset * scale);
-                    const radius = baseRadius * (1 - Math.abs(step) * 0.07);
-                    const cellIndex = y * width + x;
-                    const margin = Math.ceil(radius + 2);
-                    const eligible = x >= margin && y >= margin && x < width - margin && y < height - margin
-                        && openWater[cellIndex] && distance[cellIndex] >= margin
-                        && distance[cellIndex] <= scale * 0.58;
-                    if (eligible) {
-                        const waterDepth = cutoff - elevation[cellIndex];
-                        run.push({ x, y, cellIndex, radius, driftStep: step, waterDepth });
-                        continue;
+            const alongLimit = Math.floor(spacing / 2);
+            const alongOffsets = refine
+                ? Array.from({ length: 2 * alongLimit + 1 }, (_, index) => index - alongLimit)
+                : [0];
+            for (const offset of offsets) {
+                for (const alongOffset of alongOffsets) {
+                    let run = [];
+                    const saveRun = () => {
+                        if (run.length >= 3) tracks.push({ hotspot, offset, alongOffset, peaks: run });
+                        run = [];
+                    };
+                    for (let step = -4; step <= 4; step += 1) {
+                        const driftDistance = step * spacing + alongOffset;
+                        const x = Math.round(seedPoint.x + trailVector.x * driftDistance - trailVector.y * offset * scale);
+                        const y = Math.round(seedPoint.y + trailVector.y * driftDistance + trailVector.x * offset * scale);
+                        const radius = baseRadius * (1 - Math.abs(step) * 0.07);
+                        const cellIndex = y * width + x;
+                        const margin = Math.ceil(radius + 2);
+                        const eligible = x >= margin && y >= margin && x < width - margin && y < height - margin
+                            && openWater[cellIndex] && distance[cellIndex] >= margin && distance[cellIndex] <= scale * 0.58;
+                        if (eligible) {
+                            const waterDepth = cutoff - elevation[cellIndex];
+                            run.push({ x, y, cellIndex, radius, driftStep: step, waterDepth });
+                        } else {
+                            saveRun();
+                        }
                     }
-                    if (run.length >= 3) tracks.push({ hotspot, offset, peaks: run });
-                    run = [];
+                    saveRun();
                 }
-                if (run.length >= 3) tracks.push({ hotspot, offset, peaks: run });
             }
         }
 
         for (const track of tracks) {
             const depth = track.peaks.reduce((sum, peak) => sum + peak.waterDepth, 0) / track.peaks.length;
             const driftOffset = Math.min(...track.peaks.map(peak => Math.abs(peak.driftStep)));
-            track.support = track.hotspot.hotspotStrength - depth * 0.6 - driftOffset * 0.025 - Math.abs(track.offset) * 0.32;
+            const displacement = refine ? Math.hypot(track.offset, track.alongOffset / scale) : Math.abs(track.offset);
+            track.support = track.hotspot.hotspotStrength - depth * 0.6 - driftOffset * 0.025 - displacement * 0.32;
         }
-        return tracks.sort((a, b) => b.support - a.support);
+        const ordered = tracks.sort((a, b) => b.support - a.support);
+        if (!refine) return ordered;
+        const seen = new Set();
+        return ordered.filter(track => {
+            const id = track.peaks.map(peak => peak.cellIndex).join(':');
+            if (seen.has(id)) return false;
+            seen.add(id);
+            return true;
+        });
     }
 
     function raiseTrack(track, elevation, bounds, openWater, distance, cutoff) {
@@ -98,12 +120,13 @@
                 sourcePlateId: selected.hotspot.sourcePlateId,
                 trailVector: selected.hotspot.trailVector,
                 lateralOffset: selected.offset,
+                ...(selected.alongOffset && { alongOffset: selected.alongOffset }),
                 peaks: selected.peaks
             }
         };
     }
 
-    function raiseOffshoreHotspotChain(elevation, shoreline, bounds, hotspotSeeds, collectComponents) {
+    function raiseOffshoreHotspotChain(elevation, shoreline, bounds, hotspotSeeds, collectComponents, refine = false) {
         if (!hotspotSeeds?.length || Math.min(bounds.width, bounds.height) < 32) {
             return { elevation, hotspotChain: null };
         }
@@ -113,7 +136,7 @@
         const openWater = new Uint8Array(land.length);
         collectComponents(land, width, height, 0).filter(body => body.touchesBorder)
             .forEach(body => body.cells.forEach(cell => { openWater[cell] = 1; }));
-        const tracks = locateHotspotPeaks(hotspotSeeds, bounds, openWater, distance, elevation, cutoff);
+        const tracks = locateHotspotPeaks(hotspotSeeds, bounds, openWater, distance, elevation, cutoff, refine);
         const attempts = [];
         let first;
         for (const track of tracks.slice(0, 12)) {
@@ -124,7 +147,9 @@
                 body.cellCount >= 7 && body.cells.some(cell => peakIndices.has(cell)) && body.cells.every(cell => !land[cell])
             ).length;
             outcome.hotspotChain.distinctEmergenceCount = distinctEmergenceCount;
-            attempts.push({ hotspotSeedId: track.hotspot.hotspotSeedId, lateralOffset: track.offset, distinctEmergenceCount });
+            if (refine) outcome.hotspotChain.trackSampling = 'regional_drift_envelope_cell_resolution';
+            attempts.push({ hotspotSeedId: track.hotspot.hotspotSeedId, lateralOffset: track.offset,
+                ...(track.alongOffset && { alongOffset: track.alongOffset }), distinctEmergenceCount });
             outcome.hotspotChain.trackAttempts = attempts;
             first ??= outcome;
             if (distinctEmergenceCount >= 3) return outcome;

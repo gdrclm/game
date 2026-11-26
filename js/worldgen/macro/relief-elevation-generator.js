@@ -3374,15 +3374,23 @@
         ));
         const percentileBias = 0.5 + ((hashUnit(seed ^ 0x27d4eb2d, width, height) - 0.5) * 0.12);
         const hotspotSeeds = sourceInputs.hotspotVolcanicSeedHelper?.hotspotSeeds;
-        const raiseChain = slice => macro.raiseOffshoreHotspotChain(
-            blendedValues, slice, worldBounds, hotspotSeeds, collectMaskComponents
+        const raiseChain = (slice, refine = false) => macro.raiseOffshoreHotspotChain(
+            blendedValues, slice, worldBounds, hotspotSeeds, collectMaskComponents, refine
         );
         const shoreline = macro.selectContinentalShoreline(
             blendedValues, worldBounds, percentileBias, collectMaskComponents,
             hotspotSeeds?.length && Math.min(width, height) >= 32 ? raiseChain : null
         );
         const seaLevelThreshold = shoreline.cutoff;
-        const { elevation, hotspotChain } = shoreline.offshore || raiseChain(shoreline);
+        let offshore = shoreline.offshore || raiseChain(shoreline);
+        const selectedAttempt = shoreline.attempts.find(attempt => attempt.cutoff === seaLevelThreshold);
+        if (!shoreline.offshore && selectedAttempt?.majorSizes.length >= 2
+            && (offshore.hotspotChain?.distinctEmergenceCount || 0) < 3) {
+            const refined = raiseChain(shoreline, true);
+            selectedAttempt.refinedSupportedHotspotPeaks = refined.hotspotChain?.distinctEmergenceCount ?? 0;
+            if (selectedAttempt.refinedSupportedHotspotPeaks >= 3) offshore = refined;
+        }
+        const { elevation, hotspotChain } = offshore;
         let landCellCount = 0;
         let waterCellCount = 0;
 

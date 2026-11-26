@@ -31,7 +31,7 @@ const foundationRegression = recoveryRegression.concat(2337086253, 2727244283, 2
 const originalRegionalRegression = foundationRegression.concat(2856344, 640306144, 1880886041, 3271942068,
     792866484, 2220939230, 2546155002);
 const regionalRegression = originalRegionalRegression.concat(3840024598,
-    3019978005, 2402593754, 82211472, 3338251652);
+    3019978005, 2402593754, 82211472, 3338251652, 1715244351);
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 function stratifiedSeeds(namespace) {
     return Array.from({ length: 64 }, (_, index) => {
