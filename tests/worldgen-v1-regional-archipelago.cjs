@@ -18,6 +18,7 @@ function inspectRegionalArchipelago(result, macro) {
     assert.deepEqual(payload.islandRecords, regional.islandRecords);
     assert.deepEqual(payload.waterNetwork, regional.waterNetwork);
     assert(Object.isFrozen(regional.islandRecords[0]), 'Regional geography must freeze with Phase 1');
+    assert.deepEqual(regional.processAttempts.at(-1).unresolvedMacroIslandIds, []);
     const { signedRelativeElevation: bed, grid } = payload;
     const { width, height, originX, originY, subdivision } = grid;
     assert.equal(bed.length, width * height);

@@ -135,7 +135,7 @@
     }
 
     function buildRegionalArchipelagoSurface({ bed, hotspotUplift, fracture, storm, seafloor, topology, chain,
-        regionalSeed, waterPaths = [] }) {
+        regionalSeed, waterPaths = [], processScale = 1, scaleByPeak = new Map() }) {
         if (!bed?.values?.length || !topology?.islands?.length || !chain?.peaks?.length) return null;
         const { width, height, values } = bed;
         const bounds = regionalBounds(topology.islands, chain.peaks, width, height);
@@ -152,7 +152,10 @@
             height: (bounds.south - bounds.y) * SUBDIVISION + 1
         };
         const size = grid.width * grid.height;
-        const vents = findVents(bed, hotspotUplift, chain.peaks, regionalSeed, bounds);
+        const vents = processScale > 0 ? findVents(bed, hotspotUplift, chain.peaks, regionalSeed, bounds)
+            .map(vent => ({ ...vent, rise: vent.rise * processScale * (scaleByPeak.get(vent.parentPeakCell) ?? 1) }))
+            .filter(vent => vent.rise > 0) : [];
+        const constrainedPeaks = chain.peaks.filter(peak => scaleByPeak.has(peak.cellIndex));
         const { raster: ventRaster, ventByCell } = buildVentRaster(vents, grid);
         const signed = new Float32Array(size);
         const inherited = new Float32Array(size);
@@ -189,13 +192,21 @@
                     noise(Math.floor(x), Math.floor(y) + 1), noise(Math.floor(x) + 1, Math.floor(y) + 1)
                 );
                 const coast = Math.max(0, 1 - Math.abs(base) / 0.057);
+                // Keep unaffected portions of the chain outside the local
+                // restraint used to preserve an inherited water separation.
+                const localScale = constrainedPeaks.reduce((scale, peak) => {
+                    const distance = Math.hypot(x - peak.x, y - peak.y) / peak.radius;
+                    const influence = Math.max(0, Math.min(1, (1.72 - distance) / 0.72));
+                    return Math.min(scale, 1 - (1 - scaleByPeak.get(peak.cellIndex)) * influence);
+                }, 1) * processScale;
                 // Conserve parent elevations by tapering uplift close to shared
                 // samples. A volcanic vent contributes no local excavation.
                 const distanceToAnchor = Math.hypot(Math.min(dx, 1 - dx), Math.min(dy, 1 - dy));
                 const taper = Math.min(1, distanceToAnchor / 0.3);
                 const volcanic = ventRaster[fine] * taper * taper * (3 - 2 * taper);
-                const fault = coast * sample(fracture, width, height, x, y) * 0.036 * residual(faultNoise);
-                const wave = coast * (0.15 + sample(storm, width, height, x, y)) * 0.022 * Math.max(0, residual(waveNoise));
+                const fault = localScale * coast * sample(fracture, width, height, x, y) * 0.036 * residual(faultNoise);
+                const wave = localScale * coast * (0.15 + sample(storm, width, height, x, y))
+                    * 0.022 * Math.max(0, residual(waveNoise));
                 const proposed = base + volcanic + fault - wave;
                 const macroX = Math.floor(x);
                 const macroY = Math.floor(y);

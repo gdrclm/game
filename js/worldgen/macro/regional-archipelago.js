@@ -21,13 +21,31 @@
         const regionalSeed = macro.deriveMacroSubSeed(input.macroSeed, SEED_NAMESPACE);
         const waterPaths = (connectivity?.seaConnectivityGraph?.edges || []).map(edge => edge.waterPathCellIndices)
             .filter(path => path?.length > 1);
-        const surface = macro.buildRegionalArchipelagoSurface({
-            bed, hotspotUplift, fracture, storm, seafloor, topology, chain, regionalSeed, waterPaths
-        });
-        if (!surface) return null;
-        const plateSeeds = tectonic.intermediateOutputs.plateSeedDistribution.plateSeeds;
-        const { islandRecords, originCounts, minimumApproximatedAreaCells } =
-            macro.extractRegionalArchipelagoIslands(surface, topology, chain, bed.width, plateSeeds);
+        const plateSeeds = tectonic.intermediateOutputs?.plateSeedDistribution?.plateSeeds || [];
+        const inheritedIds = topology?.islands?.map(row => row.islandId) || [];
+        let surface;
+        let extracted;
+        const processAttempts = [];
+        const inheritedPeakById = new Map((topology?.islands || []).map(row => [row.islandId, row.peakCellIndex]));
+        const scaleByPeak = new Map();
+        let unresolvedMacroIslandIds = [];
+        for (const attenuation of [1, 0.75, 0.5, 0.25, 0, null]) {
+            for (const id of unresolvedMacroIslandIds) {
+                if (attenuation !== null) scaleByPeak.set(inheritedPeakById.get(id), attenuation);
+            }
+            const processScale = attenuation === null ? 0 : 1;
+            surface = macro.buildRegionalArchipelagoSurface({
+                bed, hotspotUplift, fracture, storm, seafloor, topology, chain, regionalSeed, waterPaths, processScale, scaleByPeak
+            });
+            if (!surface) return null;
+            extracted = macro.extractRegionalArchipelagoIslands(surface, topology, chain, bed.width, plateSeeds);
+            const separateIds = new Set(extracted.islandRecords.flatMap(row =>
+                row.physicalOrigin.macroIslandIds.length === 1 ? row.physicalOrigin.macroIslandIds : []));
+            unresolvedMacroIslandIds = inheritedIds.filter(id => !separateIds.has(id));
+            processAttempts.push({ processScale, localScales: Object.fromEntries(scaleByPeak), unresolvedMacroIslandIds });
+            if (!unresolvedMacroIslandIds.length) break;
+        }
+        const { islandRecords, originCounts, minimumApproximatedAreaCells } = extracted;
         const network = macro.buildRegionalArchipelagoWaterNetwork(islandRecords, surface);
         const landfalls = new Set(network.landfalls.map(row => row.islandId));
         const regionalGeography = {
@@ -36,12 +54,13 @@
             regionalSeed,
             seedNamespace: SEED_NAMESPACE,
             sourceHotspotSeedId: chain.hotspotSeedId,
-            sourceMacroIslandIds: topology.islands.map(row => row.islandId),
+            sourceMacroIslandIds: inheritedIds,
             sourceFieldIds: [bed.fieldId, 'offshoreHotspotUpliftField', 'fractureMaskField', 'stormCorridorField', seafloor.fieldId],
             sourceGraphIds: waterPaths.length ? ['seaConnectivityGraph'] : [],
             elevationUnits: 'normalized_macro_elevation_offset_from_sea_level',
             grid: surface.grid,
             minimumApproximatedAreaCells,
+            processAttempts,
             islandRecords,
             waterNetwork: network,
             summary: {
@@ -117,6 +136,13 @@
                 errors.push(`Regional island area or shoreline contradicts its footprint in ${row.islandId}.`);
             }
             islandLand.set(row.islandId, land);
+        }
+        if (Array.isArray(value.sourceMacroIslandIds)) {
+            const separateIds = new Set(value.islandRecords.flatMap(row => row?.physicalOrigin?.macroIslandIds?.length === 1
+                ? row.physicalOrigin.macroIslandIds : []));
+            for (const sourceId of value.sourceMacroIslandIds) {
+                if (!separateIds.has(sourceId)) errors.push(`Regional geography lost or joined source island ${sourceId}.`);
+            }
         }
         for (const row of value.islandRecords) {
             if (Array.isArray(row?.shoreEdges) && row.shoreEdges.some(edge => Array.isArray(edge) && allLand.has(edge[1]))) {

@@ -22,7 +22,7 @@ jobs:
       - name: Verify Phase 0 seed distribution and namespace stability
         run: node tests/worldgen-v1-seed-audit.cjs > worldgen-seed-report.json
       - name: Run foundation diagnostics
-        run: node tests/worldgen-v1-foundation-audit.cjs --cohort foundation-regression --causal --snapshots worldgen-observatory-data > worldgen-foundation-report.json
+        run: node tests/worldgen-v1-foundation-audit.cjs --cohort regional-regression --causal --snapshots worldgen-observatory-data > worldgen-foundation-report.json
       - name: Upload diagnostic report
         if: always()
         uses: actions/upload-artifact@v4
