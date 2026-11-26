@@ -1,25 +1,18 @@
-# Next engineering milestone — macro recovery causal audit
+# Next engineering milestone — prompt 02 / island environmental spatial closure
 
-Branch: worldgen/v1-foundation-closure. Baseline evidence: b6c3f4a; latest verified code fd84d39. Always verify actual HEAD before work. Phase 0–2 only. Main and gameplay runtime unchanged.
+Repository: gdrclm/game. Branch: worldgen/v1-foundation-closure. Evidence checkpoint c0406d1; latest verified program c642b9b (CI 45853942907 success, 49/49). Verify actual HEAD. Phase 0–2 only. Medium / Standard recommended. Prompt 01 seasonal recovery improvement is implemented; macro refuge persistence remains open, not accepted. Do not repeat the finished seasonal split.
 
-Recommended execution: one bounded High-reasoning session for causal audit and a narrowly justified candidate; subsequent Medium session for implementation/testing if required. Do not restart the global goal or reimplement island hydrology.
+## Context
+Read AGENTS.md, PLANS.md, docs/context/PROJECT_STATE.md, ACTIVE_CHECKLIST.md, HIGH_REASONING_REVIEW_QUEUE.md and review/f8r/macro-recovery-seasonality.md. Use review/f8t/local-water/README.md for earlier evidence. Read only necessary source functions in js/worldgen/macro/regional-island-environment.js, regional-island-terrain.js, local-water.js, final-drainage.js, js/worldgen/phase2/environmental-context.js and orchestration/index.js. Existing tests/worldgen-v1-local-water.cjs and foundation-audit.cjs. No full snapshot ingestion; extract metrics.
 
-## Read first
-
-AGENTS.md, PLANS.md, PROJECT_STATE.md, ACTIVE_CHECKLIST.md, HIGH_REASONING_REVIEW_QUEUE.md, review/f8t/local-water/README.md. Read targeted code in js/worldgen/phase2/rhythm/index.js, pressure/index.js, environmental-context.js and recovery/index.js as relevant; source measurements in js/worldgen/macro/local-water.js and final-drainage.js. Do not load whole diagnostic snapshots or historical atlases into model context unless essential. Extract named metrics via scripts.
-
-## Problem
-
-Latest island interpretation is already implemented and verified. Macro recovery still uses aggregated catchment scale and continuity, which can incorrectly confer identical support on distinct physical branches. Earlier moisture weighting, reachability multiplication and direct allocated-budget substitution caused regressions. Do not try these again with different arbitrary constants.
-
-1. Trace actual dependency graph from hydrology pressure to recovery and rhythm, including shared multipliers and downstream consumers. Identify and quantify repeated or conflated contributions; do not assume duplication without tracing.
-2. Separate local ecological replenishment, access to an upstream source, shelter and delivery cost, and temporal persistence. Preserve unknown water retention/availability; no invented geology, consumption or potability.
-3. Compare 42, 16908799, 4144686569 first. Use fixed Phase 1 inputs and targeted interventions on inflow, wind, route/access and retention, maintaining existing invariants. Establish which recovery components may change and which must not.
-4. Design a bounded candidate with explicit source fields, dimensionless normalization rationale, independent causal tests, compatibility/validation and rejection criteria. Do not alter thresholds to pass. Implement only if causality is defensible and accepted controls are preserved; otherwise document why and isolate the remaining decision.
-5. Check remaining original seven tension/relief failures and new control 2666689910; distinguish physics defect from author policy. Leave 1665754063 differentiation to a separate focused milestone unless direct shared dependencies are established.
+## Bounded work
+1. Measure actual overlap of wind-sheltered land and reachable water sources on the SAME island raster, before aggregation. Existing measureLocalWater exposes sourceCell and access measurements; measureIslandPhysicalSetting already evaluates shelter per cell. Reuse these computations, distinguish water access from landfall access. Preserve legacy bounds for old packages; add exact joint counts and validation (bounded by both marginal counts; equality when entire island reachable or sheltered).
+2. Keep physical habitat replenishment (ordinary and low-season input per land area), conserved source allocation, path distance/ascent, potential retention under spill thresholds and wind shelter independent. Where feasible, compute joint sheltered-area input summaries and source-access budget without double counting. Do not equate shelter with water or allocated supply with habitat replenishment. No invented potability, actual storage duration, or absolute units.
+3. Trace measured island overlap through canonical Phase 1 and gated Phase 2 projection; add local interpretation only where supported. Inherited storm on sheltered/exposed land is not measured attenuation; distinguish exposure from a modeled attenuation, justify any new model and counterfactual. Unknown retention/persistence remains explicit. Avoid reworking global recovery formula or geographic pipeline within prompt 02.
+4. Test disjoint and overlapping shelter/source masks with identical marginals, zero/all reachability, fixed wind/water interventions, seasonal low-inflow reduction, and conserved allocation. Use real seeds 42, 16908799, 640306144, plus 4144686569 as a rejected macro control (do not expect export if existing gate fails). Preserve all 49 mandatory worlds, existing macro seasonal split and previous canonical physical measurements. Check additive compatibility and repeated export determinism.
+5. Produce compact actual maps of contrast islands, overlap and separate inputs. Record how joint evidence can be transferred to the macro raster without copying regional scores onto macro regions. Defer full macro refuge redesign and 1665754063 differentiation to separate focused tasks; preserve their blockers and controls including 2030830666.
 
 ## Completion
+Implement measured, validated improvements and commit them. Run targeted tests then full mandatory CI on stable candidate. Update PROJECT_STATE.md, ACTIVE_CHECKLIST.md, HIGH_REASONING_REVIEW_QUEUE.md. Record exact remaining physical unknowns rather than adding arbitrary coefficients. Only close local environment items with evidence; leave macro water closure open until actually solved. Full original/independent stress tests reserved for stabilized candidate. No threshold weakening, seed-specific fixes, Phase 3, gameplay runtime modification, merge or author acceptance. Report in Russian.
 
-Verified causal trace, before/after compact table, reproducible tests, safe code commit if supported, or precise unresolved alternative if not. Preserve 49 mandatory regressions; run full CI after candidate stabilizes. No repeated full stress run during hypothesis exploration. Full 64 original + 64 independent + 7 edge runs reserved for stable final candidate. Update PROJECT_STATE, ACTIVE_CHECKLIST and HIGH_REASONING_REVIEW_QUEUE with evidence; record head/test versions. Stop at this bounded checkpoint, not the global completion target. No Phase 3, no merge, no author acceptance.
-
-Report in Russian. No self-assigned new design thresholds or tasks unrelated to macro recovery.
+This is the next bounded stage of the seven-prompt plan, not a new global goal. If a prerequisite fails, record the blocker and preserve the safe revision. Stop at a verified checkpoint.

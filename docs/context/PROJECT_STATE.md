@@ -1,6 +1,6 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: macro recovery on branch `worldgen/v1-foundation-closure` (26 November 2026). Verified baseline HEAD `d0b44e7`. The code for the macro recovery candidate is `c642b9b`. [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45853942907)
+Current checkpoint: `c0406d1`, macro recovery on branch `worldgen/v1-foundation-closure` (26 November 2026). Verified baseline HEAD `d0b44e7`. The verified code is `c642b9b`; mandatory CI completed successfully. [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45853942907)
 
 ## Current status
 
@@ -13,7 +13,7 @@ Current checkpoint: macro recovery on branch `worldgen/v1-foundation-closure` (2
 
 ## Latest verified tests
 
-- `c642b9b`: GitHub Actions completed successfully with 49/49 mandatory worlds and the Phase 0 audit. The 12 fresh targeted worlds have 4 passing exports versus 2 at `d0b44e7`. On Node 22.23.5 the paired Phase 0 bundles, Phase 1 packages, physical diagnostics and pressure field values match. An additional four predeclared worlds yield 3/4 on both revisions. [CI](https://github.com/gdrclm/game/actions/runs/45853942907) · [Metrics](review/f8r/macro-recovery-seasonality.md)
+- `c642b9b`: GitHub Actions completed successfully with 49/49 mandatory worlds and the Phase 0 audit. The 12 fresh targeted worlds have 4 passing exports versus 2 at `d0b44e7`. On Node 22.23.5 the paired Phase 0 bundles, Phase 1 packages, physical diagnostics and pressure field values match. An additional four predeclared worlds yield 3/4 on both revisions; `2030830666` is a retained independent tension/relief rejection. [CI](https://github.com/gdrclm/game/actions/runs/45853942907) · [Metrics](review/f8r/macro-recovery-seasonality.md)
 - `fd84d39`: 49/49 mandatory worlds and 22/22 substantive checks in local audit, Phase 0 1,031 seeds. GitHub Actions 45844786657 completed successfully.
 - Three accepted controls `42`, `16908799`, `640306144`: 220 island records, deterministic repeated exports; Phase 0–1 and previous Phase 2 fields unchanged relative to `28e0f47`.
 - Four predeclared new seeds: 3/4 on both revisions. `2666689910` reproducibly rejects on tension_vs_relief; not introduced by the latest change.
@@ -38,7 +38,7 @@ On fixed Phase 1 inputs `42` and `16908799` pass with recovery 0.182541 and 0.18
 ## Remaining engineering blockers
 
 - Macro refuge persistence still uses catchment scale and continuity. The 9,407 land cells of `4144686569/basin_001` drain to 443 terminals. Two distinct relief regions inherit the same structural support despite different source budgets and paths.
-- Five original tension/relief cases remain in targeted replay, together with additional controls `4144686569` and `2666689910`. `1665754063` still fails differentiation. [Exact evidence and competing hypotheses](HIGH_REASONING_REVIEW_QUEUE.md).
+- Five original tension/relief cases remain in targeted replay, together with additional controls `4144686569`, `2666689910` and `2030830666`. `1665754063` still fails differentiation. [Exact evidence and competing hypotheses](HIGH_REASONING_REVIEW_QUEUE.md).
 - Exact spatial overlap between shelter and water access, actual persistence and recovery timing; geometry/atmospheric diversity remain open. Previous atmosphere candidates were not merged because of maritime regressions.
 - Full original and independent stress cohorts must be rerun on a stabilized final candidate before F8 closure. Do not repeatedly run full cohorts during exploratory changes.
 
@@ -50,6 +50,6 @@ Author decisions remain open on playable scale, physical acceptance, single-cont
 
 ## Next action
 
-The bounded [macro recovery milestone](NEXT_ENGINEERING_MILESTONE.md) produced a tested seasonal split. Remaining work needs a spatially measured account of refuge persistence and wind shelter. [Review queue](HIGH_REASONING_REVIEW_QUEUE.md).
+Prompt 01 produced a verified seasonal split, but the macro refuge persistence item remains open. Continue with prompt 02 (Medium / Standard), [island environment spatial closure](NEXT_ENGINEERING_MILESTONE.md). The exact spatial evidence should also support the later macro refuge audit. Do not rerun the completed seasonal experiment. Return to macro integration only after its missing physical support is measured; separate differentiation audit remains pending. Full stress results have NOT been rerun at c642b9b: six original failures remain in targeted replays, not a newly certified 58/64. [Review queue](HIGH_REASONING_REVIEW_QUEUE.md).
 
 [Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).

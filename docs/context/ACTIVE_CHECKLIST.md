@@ -30,10 +30,12 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
+Prompt 01 has a verified implementation checkpoint, but not full macro closure. Next execute [prompt 02 — island spatial environment](NEXT_ENGINEERING_MILESTONE.md); use its measured joint shelter/replenishment evidence for a later focused macro refuge follow-up. Keep all six open items until their respective evidence and author gates are satisfied.
+
 - [ ] F8-T macro water closure: derive refuge persistence from spatial replenishment and macro wind shelter. Keep source access and delivery separate. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: spatial overlap where the exported bounds differ, storm attenuation, actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: investigate the six remaining original Phase 2 stress failures, additional controls 4144686569 and 2666689910, and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
+- [ ] F8-S: investigate the six remaining original Phase 2 stress failures, additional controls 4144686569, 2666689910 and 2030830666, and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 
