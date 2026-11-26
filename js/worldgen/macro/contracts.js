@@ -57,6 +57,7 @@
         'worldBounds',
         ...STRATEGIC_OPTIONAL_ARRAY_KEYS,
         'environmentalCoverage',
+        'regionalArchipelago',
         'debugArtifacts'
     ]);
     const ROOT_ARRAY_KEYS = Object.freeze([
@@ -335,6 +336,9 @@
             ...(normalizedInput.environmentalCoverage !== undefined && {
                 environmentalCoverage: cloneValue(normalizedInput.environmentalCoverage)
             }),
+            ...(normalizedInput.regionalArchipelago !== undefined && {
+                regionalArchipelago: cloneValue(normalizedInput.regionalArchipelago)
+            }),
             debugArtifacts: isPlainObject(normalizedInput.debugArtifacts)
                 ? cloneValue(normalizedInput.debugArtifacts)
                 : {},
@@ -423,6 +427,12 @@
                     type: 'object',
                     optional: true,
                     description: 'Physical land cell counts and intersections of exported relief, climate and basin records.'
+                },
+                regionalArchipelago: {
+                    type: 'object',
+                    optional: true,
+                    version: 1,
+                    description: 'Regional physical island footprints and measured water links for an existing archipelago.'
                 },
                 debugArtifacts: {
                     type: 'object',
@@ -723,6 +733,7 @@
             validateArrayField(candidate, key, errors);
         });
         for (const error of macro.validateEnvironmentalCoverage?.(candidate) || []) pushError(errors, error);
+        for (const error of macro.validateRegionalArchipelago?.(candidate.regionalArchipelago, candidate) || []) pushError(errors, error);
 
         if (hasOwn(candidate, 'debugArtifacts') && !isPlainObject(candidate.debugArtifacts)) {
             pushError(errors, '"debugArtifacts" must be a plain object when present.');

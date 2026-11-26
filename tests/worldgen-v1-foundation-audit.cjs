@@ -12,6 +12,7 @@ const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture } = 
 const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
     verifySaddleFixture } = require('./worldgen-v1-terrain.cjs');
+const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -114,6 +115,8 @@ check('Land-weighted pressure and local recovery timing', () => verifySpatialAgg
 check('Signed final terrain and carved-bed controls', () => verifyFinalTerrainFixture(macro));
 check('Final downhill routing and water receiver controls', () => verifyFinalDrainageFixture(macro));
 check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));
+check('Regional landfalls require open water', () => verifyRegionalNetworkFixture(macro));
+check('Regional surface requires local physical support', () => verifyRegionalProcessFixture(macro));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;
@@ -291,6 +294,7 @@ for (const seed of seeds) {
             seed, pass: true, macroSeed: geography.macroSeed, firstMs, repeatMs, hashes, determinism, map,
             terrain: inspectFinalTerrain(first),
             environment: inspectClimateAndPressure(first),
+            regionalArchipelago: inspectRegionalArchipelago(first, macro),
             phase1Scores: geography.validationReport.scores, phase1Warnings: geography.validationReport.diagnostics.warnings,
             counts: Object.fromEntries(Object.entries(geography).filter(([, value]) => Array.isArray(value)).map(([key, value]) => [key, value.length])),
             phase2: {

@@ -90,6 +90,23 @@
                 )
             }, 'intermediateOutputs'));
         }
+        const regional = input.regionalArchipelago;
+        if (regional?.surface) {
+            categories.intermediateOutputs.push(makeEntry({
+                artifactId: 'foundation_geometry_regionalArchipelagoSurface',
+                artifactKind: 'intermediateOutput',
+                stageId: 'archipelagoSignificance',
+                sourceLayerId: 'regionalArchipelagoSurface',
+                payload: {
+                    ...regional.regionalGeography,
+                    signedRelativeElevation: Array.from(regional.surface.signed),
+                    inheritedElevation: Array.from(regional.surface.inherited),
+                    verticalChangeMechanism: Array.from(regional.surface.mechanisms),
+                    verticalChangeEncoding: ['unchanged', 'volcanic', 'fault', 'erosion', 'inherited_water_separation'],
+                    vents: regional.surface.vents
+                }
+            }, 'intermediateOutputs'));
+        }
         const payload = input.reliefElevation?.outputs?.fields?.seaLevelAppliedElevationField?.seaLevelModel;
         if (payload) {
             categories.intermediateOutputs.push(makeEntry({

@@ -51,6 +51,7 @@
 - `coastalOpportunityMap`
 - `isolatedZones`
 - `environmentalCoverage`
+- `regionalArchipelago`
 - `debugArtifacts`
 
 ## Physical outputs
@@ -103,6 +104,14 @@ The root package now carries both physical outputs and strategic outputs in the 
 `reliefRegions[]` is a physical summary layer. `ReliefRegionRecord` should classify large landform families such as `mountain`, `plateau`, `plain`, `basin`, or `coast` and link into upstream `plates`, optional `continents`, and optional `seaRegions`, without encoding extracted terrain cells or local biome props inside the root contract.
 
 `environmentalCoverage` version `1` records intersections of the final land mask with the exported relief, climate and watershed footprints. Each of `reliefRegions`, `climateBands` and `riverBasins` maps the corresponding exported IDs to a nonnegative integer `landCellCount`. Climate bands may have zero land coverage. A relief entry can carry `climateBandCells` and `riverBasinCells`. A climate entry can carry `riverBasinCells`. The maps count only positive intersections. Their counts fit within the source and target land areas, and an absent intersection map describes an empty measured intersection. Earlier roots may omit the whole block. Generation uses the same physical sources in normal and diagnostic runs.
+
+### Regional archipelago
+
+`regionalArchipelago` version `1` is a prehistorical refinement of an existing `ArchipelagoRegionRecord`. It includes the parent ID, source hotspot, macro-island identities, namespace-derived regional seed, crop origin in macro cells and grid subdivision. Height and depth use the same normalized sea-level datum as `finalRelativeElevationField`. Footprint area and shoreline length use macro-cell units.
+
+Each `islandRecords` entry is a connected land component. Its ID uses its highest grid anchor in world coordinates. The record includes the anchor and centroid, footprint runs `[rowMajorStart, length]`, shoreline land/water pairs, area, elevation range, mean slope, nearshore depth and physical provenance. The water network publishes a representative landfall where open water is present and paths using cardinal water neighbors on the same refined grid. Links have measured length and depths. The largest connected component and several minimum-area counts are diagnostics of physical capacity.
+
+The regional surface keeps shared macro samples and protects macro land and water continuity. Sub-resolution volcanic uplift uses local permeability maxima on the source plume and a volume budget derived from resolved uplift. Fracture and shore erosion affect the low-relief margin. The detailed raster and vent positions remain available in the spatial debug bundle. Historical phases may use the physical records as carriers. Thirty roles, expedition order and playability remain separate decisions. Earlier Phase 1 packages may omit this versioned block.
 
 `archipelagoRegions[]` may blend physical morphology summary with strategic-significance references. They may point to shaping `seaRegions[]` / `climateBands[]` and to already-derived route/chokepoint/strategic-region context, but they must not encode downstream island histories directly inside the root package.
 

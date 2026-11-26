@@ -795,6 +795,7 @@
             isolatedZones,
             strategicRegions,
             environmentalCoverage,
+            regionalArchipelago: input.regionalArchipelago?.regionalGeography,
             debugArtifacts,
             validationReport: validationArtifacts.validationReport
         });

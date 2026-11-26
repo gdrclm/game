@@ -723,6 +723,7 @@
         const stageMaterialization = materializeStageBundles(input, normalizedSeed, worldBounds);
         const stageContext = stageMaterialization.stageContext;
         const stageBundles = stageMaterialization.stageBundles;
+        stageContext.regionalArchipelago = macro.buildRegionalArchipelago(stageContext);
         const validationBundle = resolveValidationBundle({
             ...stageContext,
             validationRebalance: input.validationRebalance,
