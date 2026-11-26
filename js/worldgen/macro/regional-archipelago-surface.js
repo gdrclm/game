@@ -134,10 +134,18 @@
         return { raster, ventByCell };
     }
 
-    function buildRegionalArchipelagoSurface({ bed, hotspotUplift, fracture, storm, seafloor, topology, chain, regionalSeed }) {
+    function buildRegionalArchipelagoSurface({ bed, hotspotUplift, fracture, storm, seafloor, topology, chain,
+        regionalSeed, waterPaths = [] }) {
         if (!bed?.values?.length || !topology?.islands?.length || !chain?.peaks?.length) return null;
         const { width, height, values } = bed;
         const bounds = regionalBounds(topology.islands, chain.peaks, width, height);
+        const edgeKey = (left, right) => Math.min(left, right) * values.length + Math.max(left, right);
+        const waterEdges = new Set();
+        for (const path of waterPaths) {
+            for (let index = 1; index < path.length; index += 1) {
+                waterEdges.add(edgeKey(path[index - 1], path[index]));
+            }
+        }
         const grid = {
             originX: bounds.x, originY: bounds.y, subdivision: SUBDIVISION,
             width: (bounds.east - bounds.x) * SUBDIVISION + 1,
@@ -195,7 +203,14 @@
                 const northeast = values[macroY * width + Math.min(width - 1, macroX + 1)];
                 const southwest = values[Math.min(height - 1, macroY + 1) * width + macroX];
                 const southeast = values[Math.min(height - 1, macroY + 1) * width + Math.min(width - 1, macroX + 1)];
-                if ((!dx && (northwest > 0) === (southwest > 0)) || (!dy && (northwest > 0) === (northeast > 0))) {
+                const parentIndex = macroY * width + macroX;
+                const protectedVertical = !dx && ((northwest > 0 && southwest > 0)
+                    || waterEdges.has(edgeKey(parentIndex, parentIndex + width)));
+                const protectedHorizontal = !dy && ((northwest > 0 && northeast > 0)
+                    || waterEdges.has(edgeKey(parentIndex, parentIndex + 1)));
+                // Preserve measured macro passages and land connectivity. Other
+                // water edges can evolve with their regional coastal geometry.
+                if (protectedVertical || protectedHorizontal) {
                     signed[fine] = (base > 0) === (proposed > 0) ? proposed : base;
                 } else if (dx === dy && northwest <= 0 && southeast <= 0 && northeast > 0 && southwest > 0) {
                     signed[fine] = Math.min(proposed, northwest * (1 - dx) + southeast * dx);

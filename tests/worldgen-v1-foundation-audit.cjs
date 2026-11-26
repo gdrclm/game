@@ -229,6 +229,12 @@ function testHandoffs(result) {
     assert.throws(() => macro.assertFoundationRecordReferences({
         ...geography, macroRoutes: [route, ...geography.macroRoutes.slice(1)]
     }), /does not resolve/);
+    const regional = structuredClone(geography.regionalArchipelago);
+    const port = regional.waterNetwork.landfalls[0];
+    const nearby = regional.waterNetwork.links.find(link => link.fromIslandId === port.islandId || link.toIslandId === port.islandId);
+    nearby.waterPathCellIndices[0] = port.landCell;
+    assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: regional }).isValid,
+        'A regional water path that reaches land must fail Phase 1 validation');
     const noExport = phase2.createPhase2ExportEnvelopeShell().run({
         ...result.phase2, validationReport: { ...result.phase2.validationReport, finalStatus: 'fail' }
     });

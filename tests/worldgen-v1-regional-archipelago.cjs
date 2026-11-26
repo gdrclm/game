@@ -26,6 +26,25 @@ function inspectRegionalArchipelago(result, macro) {
     const availableUplift = uplift.values.reduce((sum, value) => sum + value, 0);
     const regionalUplift = payload.vents.reduce((sum, row) => sum + Math.PI * row.rise * row.radius ** 2 / 2, 0);
     assert(regionalUplift <= availableUplift + 1e-9);
+    const macroGraph = debug.graphSnapshots.find(row => row.sourceLayerId === 'seaConnectivityGraph').payload;
+    const onRegionalGrid = cell => [
+        (cell % macroElevation.width - originX) * subdivision,
+        (Math.floor(cell / macroElevation.width) - originY) * subdivision
+    ];
+    for (const edge of macroGraph.edges) {
+        const path = edge.waterPathCellIndices || [];
+        for (let i = 1; i < path.length; i += 1) {
+            const [x, y] = onRegionalGrid(path[i - 1]);
+            const [east, south] = onRegionalGrid(path[i]);
+            for (let contact = 0; contact <= subdivision; contact += 1) {
+                const column = x + Math.sign(east - x) * contact;
+                const row = y + Math.sign(south - y) * contact;
+                if (column >= 0 && column < width && row >= 0 && row < height) {
+                    assert(bed[row * width + column] <= 0, `Regional shore blocks macro lane ${edge.edgeId}`);
+                }
+            }
+        }
+    }
     for (let y = 0; y < height; y += subdivision) {
         for (let x = 0; x < width; x += subdivision) {
             const sourceCell = (originY + y / subdivision) * macroElevation.width + originX + x / subdivision;

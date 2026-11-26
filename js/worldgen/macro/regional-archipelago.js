@@ -7,7 +7,8 @@
         const relief = input.reliefElevation?.outputs?.fields;
         const tectonic = input.tectonicSkeleton?.outputs;
         const climate = input.climateEnvelope?.outputs?.fields;
-        const topology = input.connectivityGraph?.outputs?.intermediateOutputs?.coastalAccessTopology;
+        const connectivity = input.connectivityGraph?.outputs?.intermediateOutputs;
+        const topology = connectivity?.coastalAccessTopology;
         const zone = input.archipelagoSignificance?.outputs?.intermediateOutputs?.archipelagoMacroZones?.macroZones?.[0];
         const archipelagoId = zone?.recordDraftHints?.archipelagoId || zone?.archipelagoId;
         const chain = relief?.seaLevelAppliedElevationField?.seaLevelModel?.hotspotChain;
@@ -18,8 +19,10 @@
         const seafloor = marine?.macroSeafloorFormField;
         if (!archipelagoId || !bed || !hotspotUplift || !fracture || !storm || !seafloor) return null;
         const regionalSeed = macro.deriveMacroSubSeed(input.macroSeed, SEED_NAMESPACE);
+        const waterPaths = (connectivity?.seaConnectivityGraph?.edges || []).map(edge => edge.waterPathCellIndices)
+            .filter(path => path?.length > 1);
         const surface = macro.buildRegionalArchipelagoSurface({
-            bed, hotspotUplift, fracture, storm, seafloor, topology, chain, regionalSeed
+            bed, hotspotUplift, fracture, storm, seafloor, topology, chain, regionalSeed, waterPaths
         });
         if (!surface) return null;
         const plateSeeds = tectonic.intermediateOutputs.plateSeedDistribution.plateSeeds;
@@ -35,6 +38,7 @@
             sourceHotspotSeedId: chain.hotspotSeedId,
             sourceMacroIslandIds: topology.islands.map(row => row.islandId),
             sourceFieldIds: [bed.fieldId, 'offshoreHotspotUpliftField', 'fractureMaskField', 'stormCorridorField', seafloor.fieldId],
+            sourceGraphIds: waterPaths.length ? ['seaConnectivityGraph'] : [],
             elevationUnits: 'normalized_macro_elevation_offset_from_sea_level',
             grid: surface.grid,
             minimumApproximatedAreaCells,
