@@ -206,6 +206,7 @@
             ['seasonalityStrength', rhythm?.domains?.seasonality?.seasonalityStrength]
         ].map(([key,field])=>[key,new Map((field?.perBandScores||[]).map(row=>[row.recordId,row.value]))]);
         return {version:1,interpretation:'coverage_weighted_existing_climate_band_signals',
+            ...(environment.cellAreaInMacroCells !== undefined && { cellAreaInMacroCells: environment.cellAreaInMacroCells }),
             records:environment.records.map(row=>{
                 const inheritedSignals={};
                 for(const [key,scores] of sources){
@@ -218,8 +219,9 @@
                 return {islandId:row.islandId,landCellCount:row.landCellCount,
                     localClimate:row.climate,runoffPotential:row.runoffPotential,
                     ...(row.waterAccess && { waterAccess: row.waterAccess }),
+                    ...(row.shelteredWaterAccess && { shelteredWaterAccess: row.shelteredWaterAccess }),
                     ...(row.physicalSetting && { physicalSetting: row.physicalSetting }),
-                    ...phase2.interpretRegionalIslandEnvironment(row),
+                    ...phase2.interpretRegionalIslandEnvironment(row, environment.cellAreaInMacroCells),
                     catchments:row.catchments,unmatchedClimateCells:row.unmatchedClimateCells,inheritedSignals};
             })};
     }

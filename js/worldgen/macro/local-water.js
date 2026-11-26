@@ -228,6 +228,33 @@
                     : row.allocatedSupplyPerArea === null && row.allocatedLowSupplyPerArea === null));
     }
 
+    function validateWaterAccessSubset(part, total, partCells, subdivision) {
+        if (!validateWaterAccessSummary(part, partCells, subdivision)
+            || !validateWaterAccessSummary(total, total?.landCellCount, subdivision)) return false;
+        const outsideCells = total.landCellCount - partCells;
+        const outsideReachable = total.reachableCellCount - part.reachableCellCount;
+        const outsideSources = total.sourceCellCount - part.sourceCellCount;
+        if (outsideSources < 0 || outsideReachable < outsideSources || outsideReachable > outsideCells) return false;
+        if (outsideCells === 0) return Object.keys(total).every(key => part[key] === total[key]);
+
+        const outsideInput = total.inputPotential - part.inputPotential;
+        const outsideLowInput = total.lowInputPotential - part.lowInputPotential;
+        if (outsideInput < -1e-6 || outsideInput > outsideCells / subdivision ** 2 + 1e-6
+            || outsideLowInput < -1e-6 || outsideLowInput > outsideInput + 2e-6
+            || part.storageSpace > total.storageSpace + 1e-6
+            || (part.storageSpaceToSurfaceWater ?? 0) > (total.storageSpaceToSurfaceWater ?? 0) + 1e-6) return false;
+        if (partCells === 0 && (part.inputPotential !== 0 || part.storageSpace !== 0 || part.storageSpaceToSurfaceWater > 0)) return false;
+
+        for (const key of ['allocatedSupplyPerArea', 'allocatedLowSupplyPerArea']) {
+            if (part[key] === undefined || total[key] === undefined) return false;
+            if (!outsideReachable && part[key] !== total[key]) return false;
+            // Compare the two allocated amounts over their serviced areas. The common cell area cancels.
+            const tolerance = (part.reachableCellCount + total.reachableCellCount) * 1e-6;
+            if (part[key] * part.reachableCellCount > total[key] * total.reachableCellCount + tolerance) return false;
+        }
+        return true;
+    }
+
     function validRetentionToSurfaceWater(row) {
         const retention = row.retentionToSurfaceWater;
         return retention == null || (row.receiver === 'local_depression' && nonnegative(row.spillElevation)
@@ -316,6 +343,6 @@
     }
 
     Object.assign(macro, { measureLocalWater, createWaterAccessSummary, addWaterAccessCell, summarizeWaterAccess,
-        serializeDrainageBranch, validateDrainageCoverage, validateWaterAccessSummary, validRetentionToSurfaceWater,
+        serializeDrainageBranch, validateDrainageCoverage, validateWaterAccessSummary, validateWaterAccessSubset, validRetentionToSurfaceWater,
         traceDryLandAccess });
 })();

@@ -106,12 +106,16 @@
             const landTravel = macro.traceDryLandAccess(signed, grid.width, cell => Boolean(islandByCell[cell]),
                 network.landfalls.map(port => port.landCell));
             for (const record of records) {
+                const shelteredWater = macro.createWaterAccessSummary();
                 record.physicalSetting = macro.measureIslandPhysicalSetting({ cells: cellsByIsland.get(record.islandId),
                     surface, readClimate: read, readWind, landTravel, landfall: ports.get(record.islandId),
-                    seaLinkCount: linkCounts.get(record.islandId) || 0 });
+                    seaLinkCount: linkCounts.get(record.islandId) || 0,
+                    visitShelteredCell: cell => macro.addWaterAccessCell(shelteredWater, water, cell) });
+                record.shelteredWaterAccess = macro.summarizeWaterAccess(shelteredWater);
             }
         }
         return {version:1,climateResolution:'interpolated_macro_baseline',runoffUnits:'wetness_times_macro_cell_area',
+            cellAreaInMacroCells: water.cellArea,
             sourceFieldIds:[...new Set(Object.values(channels).map(([id])=>id)), ...(wind && network ? ['prevailingWindField'] : [])],
             records};
     }
@@ -135,6 +139,9 @@
         const seen=new Set();
         const signed=macro.decodeRegionalElevation(regional);
         const grid=regional.grid;
+        if (env.cellAreaInMacroCells !== undefined && env.cellAreaInMacroCells !== 1 / grid.subdivision ** 2) {
+            errors.push('Regional environmental cell area disagrees with the grid.');
+        }
         const landfalls = new Map((regional.waterNetwork?.landfalls || []).map(port => [port.islandId, port]));
         const linkCounts = countIslandSeaLinks(regional.waterNetwork?.links || []);
         for(const row of env.records) {
@@ -202,6 +209,11 @@
             }
             if (!macro.validateIslandPhysicalSetting(row.physicalSetting, island, landfalls.get(row.islandId), linkCounts.get(row.islandId) || 0)) {
                 errors.push(`Regional terrain, local climate or landfall access is invalid in ${row.islandId}.`);
+            }
+            if (row.shelteredWaterAccess !== undefined && (env.cellAreaInMacroCells === undefined
+                || !macro.validateWaterAccessSubset(row.shelteredWaterAccess, row.waterAccess,
+                    row.physicalSetting?.terrainShelter?.shelteredLandCells, grid.subdivision))) {
+                errors.push(`Regional sheltered water access is inconsistent in ${row.islandId}.`);
             }
         }
         if(seen.size!==ids.size)errors.push('Regional island environment does not cover every island.');

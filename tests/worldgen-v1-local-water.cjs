@@ -67,6 +67,14 @@ function verifyLocalWaterFixture(macro) {
     assert(summary.allocatedSupply <= summary.inputPotential);
     assert(summary.allocatedLowSupply <= summary.lowInputPotential);
     assert(Math.abs(summary.allocatedSupply / 4 - summary.allocatedLowSupply) < 1e-9);
+
+    const parts = [macro.createWaterAccessSummary(), macro.createWaterAccessSummary()];
+    for (const cell of budget.terminal.keys()) {
+        if (budget.terminal[cell] >= 0) macro.addWaterAccessCell(parts[cell % 2], budget, cell);
+    }
+    for (const field of ['allocatedSupply', 'allocatedLowSupply']) {
+        assert(Math.abs(parts[0][field] + parts[1][field] - summary[field]) < 1e-9);
+    }
     return { retainedSpaceRequiresRelief: true, dryBowlHasNoSupply: true, seasonChangesLowInputOnly: true,
         accessCannotCrossWater: true, nestedBowlsRequireSecondSaddle: true, sealedBowlHasNoMeasuredExit: true,
         nestedSourcesDoNotDoubleCountUpstreamWater: true };
@@ -102,6 +110,10 @@ function inspectLocalWater(result, macro) {
     }
     const projection = new Map(result.phase2.regionalIslandEnvironmentalProjection.records.map(row => [row.islandId, row]));
     const islandEnvironment = geography.regionalArchipelago.islandEnvironment;
+    const { cellAreaInMacroCells } = islandEnvironment;
+    assert.equal(cellAreaInMacroCells, 1 / geography.regionalArchipelago.grid.subdivision ** 2);
+    assert.equal(result.phase2.regionalIslandEnvironmentalProjection.cellAreaInMacroCells, cellAreaInMacroCells);
+    let jointCells = 0;
     for (const row of islandEnvironment.records) {
         assert.equal(row.waterAccess.landCellCount, row.landCellCount);
         const projected = projection.get(row.islandId);
@@ -120,9 +132,22 @@ function inspectLocalWater(result, macro) {
             assert(Math.abs(projected.localPressure.exposedLandStormContribution * row.landCellCount
                 - shelter.meanStormOnExposedLand * exposedCells) <= row.landCellCount * 1e-6);
             const overlap = projected.localRecovery.windShelteredLandWithSourceAccess;
-            assert(overlap.minLandCells <= overlap.maxLandCells);
-            assert.equal(overlap.maxLandCells, Math.min(shelter.shelteredLandCells, access.reachableCellCount));
-            assert.equal(overlap.minLandCells, Math.max(0, access.reachableCellCount - exposedCells));
+            const sheltered = row.shelteredWaterAccess;
+            assert.deepEqual(projected.shelteredWaterAccess, sheltered);
+            assert.deepEqual(overlap, { minLandCells: sheltered.reachableCellCount,
+                maxLandCells: sheltered.reachableCellCount, exactLandCells: sheltered.reachableCellCount });
+            assert(sheltered.reachableCellCount <= Math.min(shelter.shelteredLandCells, access.reachableCellCount));
+            assert(sheltered.reachableCellCount >= Math.max(0, access.reachableCellCount - exposedCells));
+            assert.equal(sheltered.landCellCount, shelter.shelteredLandCells);
+            jointCells += overlap.exactLandCells;
+            const density = projected.localRecovery.habitatInflowPerLandArea;
+            const shelteredArea = sheltered.landCellCount * cellAreaInMacroCells;
+            if (shelteredArea) {
+                assert(Math.abs(density.windSheltered.lowSeason * shelteredArea - sheltered.lowInputPotential) <= shelteredArea * 1e-6);
+            } else {
+                assert.equal(density.windSheltered, null);
+                assert.equal(projected.localRecovery.lowSeasonAllocatedSupplyPerShelteredLandArea, null);
+            }
         }
     }
     return {
@@ -131,6 +156,7 @@ function inspectLocalWater(result, macro) {
         reliefWithSources: Object.values(water.reliefRegions).filter(row => row.sourceCellCount > 0).length,
         islandsWithSources: islandEnvironment.records.filter(row => row.waterAccess.sourceCellCount > 0).length,
         islandsWithRetention: islandEnvironment.records.filter(row => row.waterAccess.storageSpace > 0).length,
+        windShelteredCellsWithSourceAccess: jointCells,
         depressionsWithHigherWaterSpill: water.branches.filter(branch =>
             branch.retentionToSurfaceWater?.spillElevation > branch.spillElevation).length
     };
@@ -212,4 +238,73 @@ function verifyIslandExposureFixture(macro, phase2) {
         localPressureAndRecoveryExerciseIndependentDrivers: true };
 }
 
-module.exports = { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture };
+function verifyIslandOverlapFixture(macro, phase2) {
+    const grid = { width: 9, height: 5, subdivision: 1 };
+    const signed = new Array(grid.width * grid.height).fill(-0.1);
+    const wetness = signed.map(() => 0);
+    const cells = [];
+    // Two disconnected test patches let reachability differ within the measured footprint.
+    for (const offset of [1, 5]) {
+        for (let y = 1; y <= 3; y += 1) {
+            for (let x = offset; x < offset + 3; x += 1) {
+                const cell = y * grid.width + x;
+                cells.push(cell);
+                signed[cell] = y === 2 && x === offset + 1 ? 0.1 : 0.4;
+                wetness[cell] = offset === 1 ? 0.25 : 0;
+            }
+        }
+    }
+    const landTravel = macro.traceDryLandAccess(signed, grid.width, cell => signed[cell] > 0, [24]);
+    const build = (wind, supply = wetness, season = 0) => {
+        const drainage = macro.routeSurfaceDrainage({ signed, width: grid.width, wetness: supply, receiverAt: () => 'ocean' });
+        const water = macro.measureLocalWater({ signed, width: grid.width, drainage, wetness: supply,
+            seasonality: signed.map(() => season) });
+        const whole = macro.createWaterAccessSummary();
+        const subset = macro.createWaterAccessSummary();
+        for (const cell of cells) macro.addWaterAccessCell(whole, water, cell);
+        const physicalSetting = macro.measureIslandPhysicalSetting({ cells, surface: { signed, inherited: signed, grid },
+            readClimate: () => 0.5, readWind: cell => [wind(cell), 0], landTravel, landfall: { landCell: 24 },
+            seaLinkCount: 1, visitShelteredCell: cell => macro.addWaterAccessCell(subset, water, cell) });
+        const row = { landCellCount: cells.length, physicalSetting, waterAccess: macro.summarizeWaterAccess(whole),
+            shelteredWaterAccess: macro.summarizeWaterAccess(subset) };
+        assert(macro.validateWaterAccessSubset(row.shelteredWaterAccess, row.waterAccess,
+            physicalSetting.terrainShelter.shelteredLandCells, 1));
+        return row;
+    };
+    const left = cell => +(cell % grid.width < 4);
+    const overlap = build(left);
+    const disjoint = build(cell => 1 - left(cell));
+    assert.deepEqual(overlap.waterAccess, disjoint.waterAccess);
+    assert.deepEqual(overlap.physicalSetting.transport, disjoint.physicalSetting.transport);
+    assert.equal(overlap.shelteredWaterAccess.landCellCount, 1);
+    assert.equal(disjoint.shelteredWaterAccess.landCellCount, 1);
+    assert.equal(overlap.shelteredWaterAccess.reachableCellCount, 1);
+    assert.equal(disjoint.shelteredWaterAccess.reachableCellCount, 0, 'Landfall access is distinct from source access');
+    assert.equal(disjoint.shelteredWaterAccess.inputPotential, 0);
+    const project = row => phase2.interpretRegionalIslandEnvironment(row, 1).localRecovery;
+    assert.deepEqual(project(disjoint).windShelteredLandWithSourceAccess, { minLandCells: 0, maxLandCells: 0, exactLandCells: 0 });
+    assert.equal(project(overlap).windShelteredLandWithSourceAccess.exactLandCells, 1);
+    assert.deepEqual(project(overlap).habitatInflowPerLandArea.windSheltered, { ordinary: 0.25, lowSeason: 0.25 });
+    assert.equal(project(overlap).lowSeasonAllocatedSupplyPerShelteredLandArea, overlap.shelteredWaterAccess.allocatedSupplyPerArea);
+    const drySeason = build(left, wetness, 0.75);
+    assert.equal(drySeason.shelteredWaterAccess.reachableCellCount, 1);
+    assert.equal(drySeason.shelteredWaterAccess.inputPotential, overlap.shelteredWaterAccess.inputPotential);
+    assert.equal(drySeason.shelteredWaterAccess.lowInputPotential, overlap.shelteredWaterAccess.inputPotential / 4);
+
+    const allReachable = build(left, signed.map(value => value > 0 ? 0.25 : 0));
+    const noneReachable = build(left, wetness.map(() => 0));
+    assert.equal(allReachable.waterAccess.reachableCellCount, cells.length);
+    assert.equal(allReachable.shelteredWaterAccess.reachableCellCount, 1);
+    assert.equal(noneReachable.waterAccess.reachableCellCount, 0);
+    assert.equal(noneReachable.shelteredWaterAccess.reachableCellCount, 0);
+    assert.equal(project(noneReachable).lowSeasonAllocatedSupplyPerShelteredLandArea, 0);
+    assert(macro.validateWaterAccessSubset(allReachable.waterAccess, allReachable.waterAccess, cells.length, 1));
+    assert(!macro.validateWaterAccessSubset(disjoint.shelteredWaterAccess, allReachable.waterAccess, 1, 1));
+    assert(!macro.validateWaterAccessSubset(overlap.shelteredWaterAccess, noneReachable.waterAccess, 1, 1));
+    assert(!macro.validateWaterAccessSubset({ ...overlap.shelteredWaterAccess, allocatedSupplyPerArea: 100 },
+        overlap.waterAccess, 1, 1));
+    return { sameMarginalsDisjointAndOverlapping: true, seasonalInputIndependentOfReachability: true,
+        validBoundsAndConservedAllocation: true };
+}
+
+module.exports = { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture, verifyIslandOverlapFixture };

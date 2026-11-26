@@ -93,7 +93,7 @@
         return null;
     }
 
-    function interpretRegionalIslandEnvironment({ landCellCount, waterAccess, physicalSetting }) {
+    function interpretRegionalIslandEnvironment({ landCellCount, waterAccess, physicalSetting, shelteredWaterAccess }, cellAreaInMacroCells) {
         const shelter = physicalSetting?.terrainShelter;
         const round = value => Number(value.toFixed(6));
         const pressure = {};
@@ -110,10 +110,29 @@
             }
             if (shelter) {
                 const sheltered = shelter.shelteredLandCells;
-                // The summaries give both areas. Their cell-level intersection is unknown.
-                recovery.windShelteredLandWithSourceAccess = {
+                const exact = shelteredWaterAccess?.reachableCellCount;
+                recovery.windShelteredLandWithSourceAccess = exact !== undefined ? {
+                    minLandCells: exact, maxLandCells: exact, exactLandCells: exact
+                } : {
                     minLandCells: Math.max(0, sheltered + reachableCellCount - landCellCount),
                     maxLandCells: Math.min(sheltered, reachableCellCount)
+                };
+                if (shelteredWaterAccess) {
+                    recovery.lowSeasonAllocatedSupplyPerShelteredLandArea = sheltered
+                        ? round((shelteredWaterAccess.allocatedLowSupplyPerArea ?? 0) * exact / sheltered) : null;
+                }
+            }
+            if (cellAreaInMacroCells !== undefined) {
+                const inflowPerArea = access => {
+                    const area = access.landCellCount * cellAreaInMacroCells;
+                    return area ? {
+                        ordinary: round(access.inputPotential / area),
+                        lowSeason: round(access.lowInputPotential / area)
+                    } : null;
+                };
+                recovery.habitatInflowPerLandArea = {
+                    island: inflowPerArea(waterAccess),
+                    ...(shelteredWaterAccess && { windSheltered: inflowPerArea(shelteredWaterAccess) })
                 };
             }
         }

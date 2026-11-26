@@ -14,7 +14,8 @@ const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixtur
     verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture,
     verifyContinentalShorelineFixture } = require('./worldgen-v1-terrain.cjs');
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
-const { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture } = require('./worldgen-v1-local-water.cjs');
+const { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture,
+    verifyIslandOverlapFixture } = require('./worldgen-v1-local-water.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -142,6 +143,8 @@ check('Regional carrier capacity and complete raster-backed island geometry', ()
 check('Regional drainage conserves land and responds to wetness', () => verifyRegionalEnvironmentFixture(macro));
 check('Local water retains geometry, seasonal input, and travel evidence independently', () => verifyLocalWaterFixture(macro));
 check('Regional pressure and recovery follow independent water, shelter and movement measurements', () => verifyIslandExposureFixture(macro, phase2));
+check('Island water measurements conserve supply and count exact wind shelter and source overlap',
+    () => verifyIslandOverlapFixture(macro, phase2));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;
@@ -259,6 +262,23 @@ function testHandoffs(result) {
         ...geography, macroRoutes: [route, ...geography.macroRoutes.slice(1)]
     }), /does not resolve/);
     const regional = structuredClone(geography.regionalArchipelago);
+    const { cellAreaInMacroCells, records, ...environment } = geography.regionalArchipelago.islandEnvironment;
+    const legacyRecords = records.map(({ shelteredWaterAccess, ...row }) => row);
+    const legacyExport = engine.run({ ...args, macroGeographyPackage: {
+        ...geography, regionalArchipelago: { ...geography.regionalArchipelago,
+            islandEnvironment: { ...environment, records: legacyRecords } }
+    } }).output.exportResult;
+    assert(legacyExport.exported);
+    assert(legacyExport.bundle.regionalIslandEnvironmentalProjection.records.every(row => {
+        const bounds = row.localRecovery.windShelteredLandWithSourceAccess;
+        return bounds && !Object.hasOwn(bounds, 'exactLandCells');
+    }));
+    const tampered = { ...records[0], shelteredWaterAccess: { ...records[0].shelteredWaterAccess,
+        reachableCellCount: records[0].shelteredWaterAccess.landCellCount + 1 } };
+    assert.throws(() => engine.run({ ...args, macroGeographyPackage: {
+        ...geography, regionalArchipelago: { ...geography.regionalArchipelago,
+            islandEnvironment: { ...environment, cellAreaInMacroCells, records: [tampered, ...records.slice(1)] } }
+    } }), /invalid_regional_island_environment|sheltered water access/);
     const port = regional.waterNetwork.landfalls[0];
     const nearby = regional.waterNetwork.links.find(link => link.fromIslandId === port.islandId || link.toIslandId === port.islandId);
     nearby.waterPathCellIndices[0] = port.landCell;
@@ -339,7 +359,9 @@ function testHandoffs(result) {
     } finally {
         phase2.createPhase2Engine = phase2Engine;
     }
-    return { invalidRootRejected: true, invalidCoverageRejected: true, unresolvedReferenceRejected: true, invalidExportBlocked: true, noPhase2AfterFailedPhase1: true, rejectedCandidateDiagnosticOnly: true };
+    return { invalidRootRejected: true, invalidCoverageRejected: true, unresolvedReferenceRejected: true,
+        legacyIslandBoundsAccepted: true, tamperedIslandOverlapBlocked: true, invalidExportBlocked: true,
+        noPhase2AfterFailedPhase1: true, rejectedCandidateDiagnosticOnly: true };
 }
 
 let controlsRun = false;

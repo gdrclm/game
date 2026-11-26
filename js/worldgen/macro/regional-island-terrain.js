@@ -24,7 +24,8 @@
         return barrier;
     }
 
-    function measureIslandPhysicalSetting({ cells, surface, readClimate, readWind, landTravel, landfall, seaLinkCount }) {
+    function measureIslandPhysicalSetting({ cells, surface, readClimate, readWind, landTravel, landfall, seaLinkCount,
+        visitShelteredCell }) {
         const ranges = Object.fromEntries(climateChannels.map(key => [key, {
             min: Infinity, max: -Infinity, sum: 0
         }]));
@@ -53,6 +54,7 @@
             if (barrier > 0) {
                 shelteredLandCells += 1;
                 shelteredStormTotal += local.storm;
+                visitShelteredCell?.(cell);
             } else {
                 exposedStormTotal += local.storm;
             }
