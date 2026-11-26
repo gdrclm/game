@@ -20,6 +20,27 @@ function verifySeaBoundaryFixture(macro) {
         enclosedWaterUnaffected: true };
 }
 
+function verifyInlandChokepointFixture(macro) {
+    const a = { regionalSegmentId: 'segment_a', continentId: 'continent_a', cellIndices: [1, 2, 3] };
+    const b = { regionalSegmentId: 'segment_b', continentId: 'continent_a', cellIndices: [4, 5, 6] };
+    const from = { nodeId: 'node_a', nodeType: 'inland_region', sourceRegionalSegmentId: a.regionalSegmentId };
+    const to = { nodeId: 'node_b', nodeType: 'inland_region', sourceRegionalSegmentId: b.regionalSegmentId };
+    const edge = { edgeId: 'edge_a', edgeType: 'interregional_link', fromNodeId: from.nodeId, toNodeId: to.nodeId,
+        continentId: 'continent_a' };
+    const build = reliefRegionBodies => macro.analyzeChokepoints({ intermediateOutputs: {
+        regionalSegmentationAnalysis: { regionalSegments: [a, b] },
+        reliefRegionExtraction: { reliefRegionBodies },
+        landConnectivityGraph: { nodes: [from, to], edges: [edge] }
+    } }).outputs.intermediateOutputs.chokepointRecords;
+    const reliefA = { reliefRegionId: 'relief_a', cellIndices: [1, 2] };
+    const reliefB = { reliefRegionId: 'relief_b', cellIndices: [3, 5, 6] };
+    const output = build([reliefA, reliefB]);
+    assert.deepEqual(output.chokepoints[0].adjacentRegions, ['relief_a', 'relief_b']);
+    assert.deepEqual(output.recordLinks[0].sourceRegionalSegmentIds, ['segment_a', 'segment_b']);
+    assert.deepEqual(build([reliefA]).chokepoints[0].adjacentRegions, ['relief_a', 'continent_a']);
+    return { adjacentRecordsFollowActualReliefOverlap: true, internalSegmentProvenanceRetained: true };
+}
+
 function verifyFinalTerrainFixture(macro) {
     const width = 5;
     const height = 1;
@@ -185,4 +206,4 @@ function inspectClimateAndPressure(result) {
 }
 
 module.exports = { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
-    verifySaddleFixture, verifySeaBoundaryFixture };
+    verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture };

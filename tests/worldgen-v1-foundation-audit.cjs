@@ -11,7 +11,7 @@ const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
-    verifySaddleFixture, verifySeaBoundaryFixture } = require('./worldgen-v1-terrain.cjs');
+    verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture } = require('./worldgen-v1-terrain.cjs');
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 const { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture } = require('./worldgen-v1-local-water.cjs');
 
@@ -130,6 +130,7 @@ check('Hotspot curvature follows shallow crust at fixed plate drift', () => veri
 check('Land-weighted pressure and local recovery timing', () => verifySpatialAggregation(phase2));
 check('Signed final terrain and carved-bed controls', () => verifyFinalTerrainFixture(macro));
 check('Boundary-only water stays physical without becoming a macro sea', () => verifySeaBoundaryFixture(macro));
+check('Inland bottlenecks bind measured relief while retaining segment provenance', () => verifyInlandChokepointFixture(macro));
 check('Final downhill routing and water receiver controls', () => verifyFinalDrainageFixture(macro));
 check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));
 check('Regional landfalls require open water', () => verifyRegionalNetworkFixture(macro));

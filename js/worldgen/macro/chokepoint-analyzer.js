@@ -25,6 +25,7 @@
         'macroSeedProfile',
         'phase1Constraints',
         'worldBounds',
+        'reliefElevation',
         'marineCarving',
         'connectivityGraph',
         'continentalCohesion',
@@ -75,6 +76,12 @@
             }
         ]),
         inlandBottleneckSignals: Object.freeze([
+            {
+                dependencyId: 'reliefRegionExtraction',
+                sourceGroup: 'reliefElevation.outputs.intermediateOutputs',
+                required: false,
+                role: 'measured overlap between inland segment footprints and canonical relief regions'
+            },
             {
                 dependencyId: 'regionalSegmentationAnalysis',
                 sourceGroup: 'continentalCohesion.outputs.intermediateOutputs',
@@ -293,6 +300,7 @@
         const candidateGroups = [
             input.intermediateOutputs,
             getNestedValue(input, 'outputs.intermediateOutputs'),
+            getNestedValue(input, 'reliefElevation.outputs.intermediateOutputs'),
             getNestedValue(input, 'marineCarving.intermediateOutputs'),
             getNestedValue(input, 'marineCarving.outputs.intermediateOutputs'),
             getNestedValue(input, 'connectivityGraph.intermediateOutputs'),
@@ -1173,6 +1181,7 @@
 
     function buildInlandBottleneckCandidates(input = {}, dependencyAvailability = {}) {
         const regionalSegmentationAnalysis = findInputIntermediateOutput(input, 'regionalSegmentationAnalysis');
+        const reliefRegionExtraction = findInputIntermediateOutput(input, 'reliefRegionExtraction');
         const landConnectivityGraph = findInputIntermediateOutput(input, 'landConnectivityGraph');
         const macroRoutes = findInputIntermediateOutput(input, 'macroRoutes');
         const macroCorridors = findInputIntermediateOutput(input, 'macroCorridors');
@@ -1188,6 +1197,20 @@
         const segmentLookup = buildLookupById(regionalSegments, 'regionalSegmentId');
         const inlandNodeLookup = buildLookupById(landNodes, 'nodeId');
         const adjacencyByNodeId = buildInlandAdjacencyByNodeId(landEdges);
+        const reliefByCell = new Map();
+        if (landEdges.length) {
+            for (const body of reliefRegionExtraction?.reliefRegionBodies || []) {
+                for (const cell of body.cellIndices) reliefByCell.set(cell, body.reliefRegionId);
+            }
+        }
+        function leadingReliefRegion(segment) {
+            const area = new Map();
+            for (const cell of segment.cellIndices || []) {
+                const id = reliefByCell.get(cell);
+                if (id) area.set(id, (area.get(id) || 0) + 1);
+            }
+            return Array.from(area.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0];
+        }
 
         const candidates = landEdges.map((landEdge, candidateIndex) => {
             const fromNodeId = normalizeString(landEdge.fromNodeId, '');
@@ -1204,6 +1227,8 @@
             );
             const fromSegment = segmentLookup.get(fromRegionalSegmentId) || {};
             const toSegment = segmentLookup.get(toRegionalSegmentId) || {};
+            const continentId = normalizeString(landEdge.continentId,
+                normalizeString(fromNode.continentId, normalizeString(toNode.continentId, '')));
             const fromDegree = (adjacencyByNodeId.get(fromNodeId) || new Set()).size;
             const toDegree = (adjacencyByNodeId.get(toNodeId) || new Set()).size;
             const meanBarrierContactCellRatio = roundValue(computeMean([
@@ -1291,7 +1316,7 @@
                     bypassDifficulty,
                     collapseSensitivity
                 ),
-                continentId: normalizeString(landEdge.continentId, normalizeString(fromNode.continentId, normalizeString(toNode.continentId, ''))),
+                continentId,
                 fromNodeId,
                 toNodeId,
                 fromRegionalSegmentId,
@@ -1327,8 +1352,8 @@
                 collapseSensitivity,
                 bottleneckRelevanceScore,
                 adjacentRegions: uniqueStrings([
-                    fromRegionalSegmentId,
-                    toRegionalSegmentId
+                    leadingReliefRegion(fromSegment) || fromSegment.continentId || continentId,
+                    leadingReliefRegion(toSegment) || toSegment.continentId || continentId
                 ]),
                 futureChokepointRecordInput: true
             };
@@ -1342,6 +1367,7 @@
             seedNamespace: 'macro.chokepoints.inlandBottleneckDetection',
             sourceOutputIds: [
                 normalizeString(regionalSegmentationAnalysis && regionalSegmentationAnalysis.outputId, ''),
+                normalizeString(reliefRegionExtraction && reliefRegionExtraction.outputId, ''),
                 normalizeString(landConnectivityGraph && landConnectivityGraph.outputId, ''),
                 normalizeString(macroRoutes && macroRoutes.outputId, ''),
                 normalizeString(macroCorridors && macroCorridors.outputId, '')
@@ -1471,6 +1497,10 @@
             familyClassFieldId: normalizeString(classFieldId, ''),
             familyClass: normalizeString(candidate[classFieldId], ''),
             adjacentRegions: uniqueStrings(record.adjacentRegions),
+            ...(familyId === 'inland_bottleneck' && {
+                sourceContinentId: candidate.continentId,
+                sourceRegionalSegmentIds: uniqueStrings([candidate.fromRegionalSegmentId, candidate.toRegionalSegmentId])
+            }),
             sourceCandidateMetrics: {
                 controlValue: roundValue(clampUnitInterval(candidate.controlValue, 0)),
                 tradeDependency: roundValue(clampUnitInterval(candidate.tradeDependency, 0)),

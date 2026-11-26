@@ -488,7 +488,8 @@
             : [];
         return {
             chokepointRows,
-            chokepointById: buildLookupById(chokepointRows, 'chokepointId')
+            chokepointById: buildLookupById(chokepointRows, 'chokepointId'),
+            recordLinkById: buildLookupById(chokepointRecords.recordLinks, 'chokepointId')
         };
     }
 
@@ -998,6 +999,8 @@
 
     function buildDisputedStrategicRegionCandidates(context = {}) {
         const chokepointCandidates = (context.chokepointLookups.chokepointRows || []).map((chokepointRow, index) => {
+            const inland = chokepointRow.type === 'inland_bottleneck';
+            const link = context.chokepointLookups.recordLinkById.get(chokepointRow.chokepointId);
             const linkedArchipelagos = uniqueRecordsById(
                 (context.archipelagoLookups.macroZones || []).filter((macroZone) => (
                     intersectsStringLists(macroZone.linkedChokepointIds || [], [normalizeString(chokepointRow.chokepointId, '')])
@@ -1050,7 +1053,9 @@
                 strategicCandidateId: `candidate_disputed_region_${String(index + 1).padStart(3, '0')}`,
                 type: 'disputed_strategic_region_candidate',
                 candidateScore,
-                sourceSeaRegionIds: uniqueStrings(chokepointRow.adjacentRegions || []),
+                sourceContinentIds: inland ? [link?.sourceContinentId] : [],
+                sourceRegionalSegmentIds: inland ? link?.sourceRegionalSegmentIds : [],
+                sourceSeaRegionIds: inland ? [] : uniqueStrings(chokepointRow.adjacentRegions || []),
                 sourceRouteIds: routeIds,
                 sourceCorridorIds: corridorIds,
                 sourceChokepointIds: [normalizeString(chokepointRow.chokepointId, '')],
