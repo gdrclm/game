@@ -30,7 +30,7 @@ F1–F7 passed on `04f5b5c`. F8-Q established physical passage, route and center
 
 Active global objective: [WORLDGEN_PHASE0_2_GLOBAL_GOAL.md](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). Engineering steps may be interleaved, but resolve known F8-R failures first and preserve F8-Q. These review tasks are not additional WorldGen phases.
 
-- [ ] F8-T regional carrier closure: verify canonical physical source records, complete island footprints/shorelines/measurements and connected eligible counts on current CI; then establish per-island environmental carriers (climate, freshwater, local access) before historical consumers. Keep area sensitivity advisory until author approves playable scale. No Phase 16 implementation.
+- [x] F8-T regional carrier verification: complete connected footprints, shorelines, bathymetry, physical sources and connected eligible counts passed the 43-world CI with the inherited cases. Area sensitivity remains diagnostic pending the author decision on play scale. [CI](https://github.com/gdrclm/game/actions/runs/45779872183)
 
 - [x] F8-T island environment: inherited climate, local downhill catchments and coverage-weighted Phase 2 projection passed CI on 40 worlds and repeat export on eight local worlds. [Evidence](review/f8t/archipelago/saddle-audit.json)
 - [x] F8-T regional fragmentation: measured traces reconnect two erosion fragments and one fault fragment when only the drowned cells of their originating process are restored. [Evidence](review/f8t/archipelago/fragment-audit.json)
