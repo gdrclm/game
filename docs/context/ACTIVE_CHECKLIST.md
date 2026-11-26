@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-26 through the local island pressure and recovery checkpoint.
+Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-26 against b6c3f4a; latest code fd84d39, CI confirmed successful.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -23,13 +23,15 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 - [x] Refined drift-track search and conserved water allocation. Fixed-seed reruns on `27eebca` pass for 1715244351 and 640306144. CI on `27eebca` passes 49/49 mandatory worlds. Chromium Phase 0 5/5 and runtime harness 270/270 pass. [CI](https://github.com/gdrclm/game/actions/runs/45838652344) · [Current maps](review/f8t/closure/README.md)
 - [x] F8-T island interpretation: local seasonal inflow reduction, exposed-land contribution to storm pressure, low-season budget across all island land, and bounds on sheltered land with source access. Fixed-wind, fixed-water and older input cases exercised. Three accepted control worlds retain their exports. [Measurements](review/f8t/local-water/README.md)
-- [x] Local mandatory audit for `fd84d39` on Node 22.23.5: 49/49 worlds and 22/22 checks with causal interventions. Phase 0 audit covers 1,031 seeds. Additional four-world cohort yields 3/4 on both revisions, with the pre-existing rejection tracked. [Measurements](review/f8t/local-water/README.md) · [CI run](https://github.com/gdrclm/game/actions/runs/45844786657)
+- [x] Local mandatory audit for `fd84d39` on Node 22.23.5: 49/49 worlds and 22/22 checks with causal interventions. Phase 0 audit covers 1,031 seeds. Additional four-world cohort yields 3/4 on both revisions, with the pre-existing rejection tracked. [Measurements](review/f8t/local-water/README.md) · [CI success](https://github.com/gdrclm/game/actions/runs/45844786657)
 
 ## Active technical work (do not restart completed milestones)
+
+First execute [NEXT_ENGINEERING_MILESTONE.md](NEXT_ENGINEERING_MILESTONE.md), a bounded macro recovery causal audit. Island interpretation above is already implemented; do not repeat it.
 - [ ] F8-T macro water closure: distinguish habitat replenishment, source access and wind shelter in macro pressure and recovery. Retain 42, 16908799 and the mandatory cohort. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: spatial overlap where the exported bounds differ, storm attenuation, actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: investigate the eight reproducible Phase 2 stress failures and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
+- [ ] F8-S: investigate the eight reproducible Phase 2 stress failures, additional controls 4144686569 and 2666689910, and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 

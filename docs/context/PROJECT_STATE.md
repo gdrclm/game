@@ -1,63 +1,49 @@
 # Project state · Paths WorldGen V1
 
-Актуальный срез 26 ноября 2026, ветка `worldgen/v1-foundation-closure`. На исходной ревизии `28e0f47` прошли 49 обязательных миров. Полный повтор исходного стресса на `1bb7f39` дал 56/64. Авторская приёмка F8/F9 открыта. [CI исходной ревизии](https://github.com/gdrclm/game/actions/runs/45840908509)
+Current checkpoint: `b6c3f4a` (26 November 2026), branch `worldgen/v1-foundation-closure`. Latest code `fd84d39`: [CI success](https://github.com/gdrclm/game/actions/runs/45844786657). No author acceptance, Phase 3 expansion, merge or deployment. This document is a reconciliation of saved evidence, not a new generation run.
 
-## Текущий фундамент
+## Current status
 
-| Блок | Проверенный результат | Открытая граница |
+| System | Confirmed | Open |
 |---|---|---|
-| Phase 0 | 1 031 seed, 14 namespace, обратный порядок и детерминированность | Исторические оси предназначены для последующих фаз |
-| Phase 1 | Единая относительная высота/глубина, формы суши и дна, тектоника, вулканизм, гидрология, климат, макро- и региональная морская связность | Прямолинейные границы плит, локальный сток, морские климатические носители, одноконтинентальные случаи |
-| Phase 2 | Давление, ритм, восстановление, площадь пересечений и пространственные привязки; оба исходных отказа F8-R устранены | Баланс в экстремальных мирах, локальная доступность пресной воды, интерпретация восстановления островов |
-| Региональный архипелаг | Сетка ×8 по каждой оси, каноническая высота, отдельные тела, стабильные ID, источники поднятия, измеренные пути и глубины, местные водосборы и климат | Масштаб игровых островов, более разнообразная морфология и локальные физические условия |
+| Phase 0 | 1,031 seeds, 14 namespaces, deterministic export | Later historical consumers |
+| Phase 1 | Signed relief and bathymetry, physical terrain and climate, regional islands, actual drainage branches, potential retention and conserved source allocation | Tectonic/coastal morphology, atmospheric transitions, physical water persistence |
+| Phase 2 | Record-bound pressure and rhythm, local island water/shelter interpretation; original F8-R regressions fixed | Macro water/recovery semantics, eight original Phase 2 stress rejections |
+| V1 islands | Physical carriers, complete footprints and stable IDs, maritime connectivity and individual physical environment | Playable area/density and final island selection (Phase 16 onward) |
 
-[Матрица физического покрытия](FOUNDATION_PHYSICAL_COVERAGE.md) · [Региональная география](review/f8t/archipelago/README.md) · [Текущий чеклист](ACTIVE_CHECKLIST.md)
+## Latest verified tests
 
-## Проверенные выборки
+- `fd84d39`: 49/49 mandatory worlds and 22/22 substantive checks in local audit, Phase 0 1,031 seeds. GitHub Actions 45844786657 completed successfully.
+- Three accepted controls `42`, `16908799`, `640306144`: 220 island records, deterministic repeated exports; Phase 0–1 and previous Phase 2 fields unchanged relative to `28e0f47`.
+- Four predeclared new seeds: 3/4 on both revisions. `2666689910` reproducibly rejects on tension_vs_relief; not introduced by the latest change.
+- Original stress set: 56/64 on `1bb7f39`, all eight remaining rejections in Phase 2. Four continental cases fixed by observed highstand fallback; `1715244351` fixed by denser supported drift-track search; `3840024598` fixed by excluding edge-only macro sea; mandatory cohort grew to 49. [Scale report](review/f8t/closure/highstand-scale-audit.json).
+- Earlier pinned checkpoint `4ff1f8f`: original stress 54/64, independent stress 54/64, edge 7/7. These are historical measurements, not a fresh full stress result for latest HEAD. [Independent report](review/f8t/closure/independent-holdout-audit.json).
+- Chromium Phase 0 5/5 and existing runtime harness 270/270 reported at `27eebca`. [CI](https://github.com/gdrclm/game/actions/runs/45838652344).
 
-- CI: 43/43 обязательных миров, исходные 31 включены. Коммиты `7f8e07a` (полнота островов) и `4f8bdee` (индивидуальная среда) также прошли CI. Chromium проверен после `27eebca`: пять тестов Phase 0, 270 тестов игрового harness и загрузка игры с тремя canvas. Региональный рельеф ранее проверен на точное декодирование.
-- На единой ревизии `4ff1f8f` подтверждены 54/64 исходных стресс-миров и 7/7 крайних seed. Все десять причин отклонения воспроизведены. Независимая предобъявленная выборка также целиком повторена на `4ff1f8f` и дала 54/64, со своими десятью причинами отклонения. [Исходный стресс](review/f8t/local-water/slope-scale-audit.json) · [Независимая выборка](review/f8t/closure/independent-holdout-audit.json) · [Карты](review/f8t/local-water/README.md).
-- Десять отклонений стресс-набора на `4ff1f8f`: Phase 1 — `3019978005`, `2402593754`; Phase 2 differentiation — `1665754063`; Phase 2 tension/relief — `1240171611`, `3928839710`, `1054323503`, `2094783996`, `2917478163`, `3206964149`, `4286438917`. Дополнительные контрольные случаи `1122193213`, `4144686569` сохранять отдельно от подсчёта 64.
+## Local water and island interpretation
 
-## Региональные острова
+Phase 1 measures final downhill branches, terminal intersections, potential storage under first and linked spill saddles, normal/low-season inflow, allocated supply without double counting nested sources, dry-land reachability, distance and elevation gain. Island climate includes local elevation adjustment, windward terrain barriers and inherited storm exposure.
 
-Из 54 успешных стресс-миров все 54 имеют 30 взаимно достижимых тел площадью от 0.25 макроклетки (минимум 32), 48/54 — от 0.5, 19/54 — от 1.0. Семь крайних seed проходят 0.5; 1/7 проходит 1.0. Это физические кандидаты, не подтверждённые игровые локации. Phase 16 всё ещё требует 30 ролей; выбор и порядок островов остаются будущими задачами, нельзя создавать географию задним числом.
+Phase 2 `regionalIslandEnvironmentalProjection` now additionally exports seasonal inflow reduction, exposed-land storm contribution, allocated low-season supply per entire island area, and lower/upper bounds of wind-sheltered land with source access. The intersection is not known exactly when the bounds differ. This is not an estimate of freshwater potability, actual water storage duration, or full recovery dynamics. The existing macro recovery formulas remain unchanged.
 
-Полнота контуров, отдельность тел, высота/глубина, источники вулканического поднятия и сохранение макропроливов проверены. На `640306144` восстановление исходной глубины шести клеток сохраняет 60 островов вместо 19; 47 достигают 0.5 и взаимно достижимы. Реальные фрагменты `2220939230`, `2546155002`, `792866484` проверены отключением исходного размыва/смещения; все три меньше 0.25. На `2856344` измерена чувствительность шельфового остатка к уровню моря. Вулканические спутники остаются доминирующим механизмом. [Атласы и контрфактуалы](review/f8t/archipelago/README.md).
+The current three controls retain their macro recovery scores (42: 0.180365; 16908799: 0.189504; 640306144: 0.204803). Positive inflow can coexist with no reachable source. [Measurements and maps](review/f8t/local-water/README.md).
 
-`islandEnvironment` хранит локальный сток, геометрическую вместимость впадин, сезонный приток, уточнённую по высоте температуру, защиту по ветру и измеренную доступность берегового выхода. `regionalIslandEnvironmentalProjection` передаёт эти предпосылки в Phase 2. Свойства пород, потребление и многолетний климат потребуются для оценки длительности удержания и надёжности питьевого водоснабжения.
+## Remaining engineering blockers
 
-## Приоритет следующей инженерной итерации
+- Macro recovery conflates catchment size/continuity and water support with multiple recovery channels. On 4144686569, legacy basin_001 spans 9,407 land cells and 443 terminals; equal long-term support is assigned to regions with very different source budgets and access. Three earlier replacement strategies failed accepted controls 42 and/or 16908799. Do not repeat the same global multiplier experiments.
+- `1665754063`: differentiation of sorted pressure/rhythm distributions remains rejected. Requires a distinct causal audit, not a water-only fix.
+- Original seven tension_vs_relief failures: `1240171611`, `3928839710`, `1054323503`, `2094783996`, `2917478163`, `3206964149`, `4286438917`. Additional controls `4144686569`, `2666689910` reproduce the same gate failure. All eight original Phase 2 rejections and 4144686569 unchanged before/after island interpretation. [Exact evidence and competing hypotheses](HIGH_REASONING_REVIEW_QUEUE.md).
+- Exact spatial overlap between shelter and water access, actual persistence and recovery timing; geometry/atmospheric diversity remain open. Previous atmosphere candidates were not merged because of maritime regressions.
+- Full original and independent stress cohorts must be rerun on a stabilized final candidate before F8 closure. Do not repeatedly run full cohorts during exploratory changes.
 
-В локальной островной проекции Phase 2 появились интерпретации сезонного падения притока, штормовой экспозиции открытой суши, маловодного бюджета на всю площадь и пересечения укрытой суши с доступом к потенциальному источнику. Контрфактуалы меняют ветер, сезонный приток и доступ к источнику при фиксированных остальных измерениях. Сравнение с `28e0f47` на `42`, `16908799` и `640306144` подтвердило детерминированный экспорт, равенство Phase 0–1 и всех прежних полей Phase 2. На этих трёх мирах проверено 220 островов. Все восемь исходных отказов Phase 2, а также контроль `4144686569`, воспроизведены до и после изменения с одинаковыми причинами и пакетами отклонённых кандидатов. Макровосстановление остаётся открытой задачей. [Замеры](review/f8t/local-water/README.md) · [Очередь углублённой проверки](HIGH_REASONING_REVIEW_QUEUE.md)
+## Island scale and author gates
 
-Для изменения `fd84d39` локальный обязательный прогон на Node 22.23.5 дал 49/49 миров и 22/22 содержательных проверок, включая причинные вмешательства. Аудит Phase 0 прошёл на 1 031 seed с 14 пространствами имён. Дополнительная фиксированная выборка дала 3/4 на обеих ревизиях. Новый отказ `2666689910` внесён в очередь. [Прогон GitHub Actions](https://github.com/gdrclm/game/actions/runs/45844786657)
+Historical 54 accepted original stress worlds: 54/54 with 30 connected candidates at 0.25 macro-cell area, 48/54 at 0.5, 19/54 at 1.0. Independent cohort: 54/54, 52/54, 23/54 respectively. These are not playable island counts. 30 V1 roles remain the contract; minimum physical area is advisory, not selected. Verified erosion/fault fragments, shelf connectivity and volcanic provenance preserved. [Regional atlas](review/f8t/archipelago/README.md).
 
-В первой итерации после `e1258cf` канонический пакет связывает ветви фактического стока с площадями рельефа и старых водосборов. Для каждого острова расчёт использует его собственный рельеф. Приток, сезонная чувствительность, объём под седлом, расстояние и подъём до потенциального источника измеряются отдельно. Phase 2 передаёт эти данные потребителям. `42`, `137`, `16908799` и `640306144` прошли двойной сквозной экспорт с контролями. `4144686569` сохранил прежний отказ Phase 2. Исправлен обнаруженный конфликт округления одного и того же притока в сводке острова. Эксперимент с ограничением поддержки реальным доступом к источнику исправил шесть отклонений Phase 2 из восьми, но вызвал регрессию на `16908799`. Формула в рабочей ветке не изменена. [Метрики эксперимента](review/f8t/local-water/README.md).
+Author decisions remain open on playable scale, physical acceptance, single-continent policy if a physically supported second continent is unavailable, interpretation of differentiation gate, and shelter/water access in harsh worlds. No threshold relaxation or design changes without approval. [Author queue](AUTHOR_REVIEW_QUEUE.md).
 
-Индивидуальная среда островов дополнена температурным диапазоном с поправкой уточнённой высоты, защитой рельефа по направлению ветра, измеренными путями от берегового выхода и накопленным стоком в ближайшем доступном источнике. `42` и `640306144` прошли двукратную генерацию после добавления этих полей. Контроль фиксирует мокрость и морские связи при подъёме высоты и отдельной смене направления ветра.
+## Next action
 
-На `43a1d38` CI прошёл все 43 мира. После проверки карты `4144686569` маршрутизация стока выбирает наибольший уклон и допускает диагонали на непрерывно нисходящей поверхности. На том же рельефе 5 306 из 14 020 шагов стока стали диагональными, площадь пересечений `basin_001` сохранилась. На четырёх контрольных мирах экспорт прошёл с причинными проверками. Причина отклонения `4144686569` осталась прежней. [CI 45790803292](https://github.com/gdrclm/game/actions/runs/45790803292)
+[NEXT_ENGINEERING_MILESTONE.md](NEXT_ENGINEERING_MILESTONE.md): bounded High-reasoning macro recovery audit and candidate design. Medium for subsequent narrow implementation/verification. Reasoning level is a workflow recommendation, not a measured cost guarantee.
 
-1. Измеренные ветви, местный доступ и вместимость сохраняются в Phase 1–2. На `bd3eb9b` добавлено различие между первым седлом и путём по связанным впадинам к существующему водоёму. Контрфактуал меняет внешний выход при прежнем первом седле. У `640306144` вместимость самого выраженного островного случая выросла с 0,020154 до 0,025873. Сводные пакеты давления и ритма на `42`, `16908799` и `640306144` в точности совпали с предыдущим расчётом. [CI 43/43 для `bd3eb9b`](https://github.com/gdrclm/game/actions/runs/45833205667)
-2. Воспроизвести ошибки на фиксированных контрольных пакетах. Эксперимент с влажностным весом устранил восемь отказов, но сломал 42 и 16908799; он НЕ внедрён. Более длинный перенос влаги прошёл 40/40 старых регрессий, вариант смешивания 42/43 (сломал проливы 137); оба оставлены исследовательскими. [Физический план](FOUNDATION_PHYSICAL_PLAN.md), [вода и восстановление](review/f8t/recovery-physical-audit.json), [атмосферный перенос](review/f8t/atmospheric-transport-audit.json).
-3. Уточнить островные климатические связи и защищённость берега, местное восстановление, затем проверить структурное разнообразие и прямолинейные границы. Не форсировать редкие типы и не ослаблять валидацию.
-4. Повторить 43 регрессии и все открытые отказы, полный стресс-набор на единой проверенной ревизии и новую заранее объявленную выборку. Публиковать неизменные физические контроли и причины каждого отклонения.
-
-## Новые случаи из независимой выборки
-
-У `3840024598` две водные клетки целиком на краю ошибочно считались макроморем и оставались без климатической привязки. После исправления `094e9cb` экспорт проходит, физические растры совпадают. Seed добавлен к исходным 43 обязательным мирам. Среди успешных независимых миров от 30 взаимно достижимых островов при пороге 0,25 есть у всех 54. При 0,5 условие выполнено у 52 из 54, при 1,0 у 23 из 54. [Карты и сравнение](review/f8t/closure/README.md).
-
-`c72f884` исправляет ссылки сухопутного узкого прохода по фактической площади пересечения. `1bb7f39` использует высоту существующих перемычек при отсутствии двух материков в обычном диапазоне. В целевых прогонах прошли два исходных одноконтинентальных случая и два из независимой выборки. Все четыре добавлены к обязательному набору, 48/48 прошли CI на `1bb7f39`. На `1bb7f39` исходный стресс-набор повторён полностью и дал 56/64. Остались восемь отказов Phase 2. Повтор независимой выборки и крайних случаев на этой ревизии выполняется. [Аудит 56/64](review/f8t/closure/highstand-scale-audit.json). [Точки разделения, карты и производные метрики](review/f8t/continental-shoreline/README.md).
-
-Проба непрерывной интерполяции влажности сохраняет 42, 137, 16908799 и 640306144, но понижает ценность проливов на `180816365` до 0,2533 и блокирует ранее успешный экспорт. Это изменение оставлено вне ветки. В `6bec287` более плотная выборка в заданной полосе дрейфа восстанавливает три независимые вершины у `1715244351`. Мир добавлен к обязательному набору из 49. На `27eebca` отдельный водный бюджет считает вклад первого достижимого источника без повторного учёта той же воды ниже по течению. [Замеры воды](review/f8t/local-water/README.md).
-
-## Авторская граница
-
-Открыты решения о минимальном игровом размере, допустимости одного материка, смысле глобальной проверки дифференциации давления/ритма и роли укрытий/удалённого водоснабжения в суровых областях. [AUTHOR_REVIEW_QUEUE.md](AUTHOR_REVIEW_QUEUE.md). Без решения не менять пороги, число игровых островов и архитектуру архипелагов. Не начинать Phase 3 и не изменять main до явной приёмки.
-
-## Архив доказательств
-
-[F1–F7](review/README.md) · [F8-Q: проливы, маршруты и центр/периферия](review/f8q/README.md) · [F8-R: исправленные исходные отказы](review/f8r/README.md) · [F8-T: физическая география и атласы](review/f8t/README.md) · [Региональный атлас](review/f8t/archipelago/README.md).
-
-[Глобальная цель](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Карта контекста](CONTEXT_MAP.md). Этот срез связывает сохранённые прогоны, карты и статусы CI с исходными ревизиями. Авторская визуальная приёмка остаётся открытой.
+[Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).

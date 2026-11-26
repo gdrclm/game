@@ -2,6 +2,9 @@
 
 Purpose: shared context between ChatGPT Project and Codex; navigation rather than duplicate specifications. Source provenance: repository at afc59830bb4e40ea953572e80f6dbf625faddcab plus available project-chat summaries and current discussion. Full historical chat archive has NOT been reviewed or exported. Missing/ambiguous details remain open; do not invent them.
 
+## Session startup (bounded tasks)
+Read AGENTS.md, PLANS.md, [PROJECT_STATE.md](PROJECT_STATE.md), [ACTIVE_CHECKLIST.md](ACTIVE_CHECKLIST.md) and [NEXT_ENGINEERING_MILESTONE.md](NEXT_ENGINEERING_MILESTONE.md). Consult [HIGH_REASONING_REVIEW_QUEUE.md](HIGH_REASONING_REVIEW_QUEUE.md) for unresolved causal problems. The full reading order below is a reference map, not a requirement to reread every document per session. Use targeted file ranges and extracted metrics.
+
 ## Reading order
 1. [Authorial vision](PATHS_AUTHORIAL_VISION.md) and [design decisions](DESIGN_DECISIONS.md): distilled author direction and uncertainty.
 2. [Project state](PROJECT_STATE.md), [active checklist](ACTIVE_CHECKLIST.md), [author review queue](AUTHOR_REVIEW_QUEUE.md): current handoff.
