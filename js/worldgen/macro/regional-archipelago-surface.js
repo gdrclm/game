@@ -1,6 +1,7 @@
 (() => {
     const macro = window.Game.systems.worldgenMacro;
     const SUBDIVISION = 8;
+    const COASTAL_ACTION_RANGE = 0.057;
     const ELEVATION_ENCODING = 'float32-le-base64';
 
     function encodeRegionalElevation(signed) {
@@ -44,6 +45,66 @@
         const dy = Math.max(0, Math.min(1, y - top));
         return (values[top * width + left] * (1 - dx) + values[top * width + right] * dx) * (1 - dy)
             + (values[bottom * width + left] * (1 - dx) + values[bottom * width + right] * dx) * dy;
+    }
+
+    function monotoneTangent(left, right) {
+        // Flat or turning samples have a horizontal tangent. On monotone
+        // runs the harmonic mean limits the steeper neighboring slope.
+        return left * right > 0 ? 2 * left * right / (left + right) : 0;
+    }
+
+    function sampleMonotone(previous, left, right, next, fraction) {
+        if (fraction === 0) return left;
+        const slope = right - left;
+        const from = monotoneTangent(left - previous, slope);
+        const to = monotoneTangent(slope, next - right);
+        const quadratic = 3 * slope - 2 * from - to;
+        const cubic = from + to - 2 * slope;
+        return left + fraction * (from + fraction * (quadratic + fraction * cubic));
+    }
+
+    function createDirectionalBedSampler(bed, grid) {
+        const { width, height, values } = bed;
+        const rows = new Float64Array(grid.width * height);
+        for (let column = 0; column < grid.width; column += 1) {
+            const x = grid.originX + column / grid.subdivision;
+            const left = Math.floor(x);
+            const right = Math.min(width - 1, left + 1);
+            const previous = Math.max(0, left - 1);
+            const next = Math.min(width - 1, right + 1);
+            for (let row = 0; row < height; row += 1) {
+                const offset = row * width;
+                rows[row * grid.width + column] = sampleMonotone(values[offset + previous], values[offset + left],
+                    values[offset + right], values[offset + next], x - left);
+            }
+        }
+        return (column, y) => {
+            const top = Math.floor(y);
+            const bottom = Math.min(height - 1, top + 1);
+            return sampleMonotone(rows[Math.max(0, top - 1) * grid.width + column], rows[top * grid.width + column],
+                rows[bottom * grid.width + column], rows[Math.min(height - 1, bottom + 1) * grid.width + column], y - top);
+        };
+    }
+
+    function createRegionalBedSampler(bed, grid) {
+        const { width, height, values } = bed;
+        const transposed = new Float64Array(values.length);
+        for (let row = 0; row < height; row += 1) {
+            for (let column = 0; column < width; column += 1) {
+                transposed[column * height + row] = values[row * width + column];
+            }
+        }
+        const horizontalFirst = createDirectionalBedSampler(bed, grid);
+        const verticalFirst = createDirectionalBedSampler({ width: height, height: width, values: transposed },
+            { width: grid.height, originX: grid.originY, subdivision: grid.subdivision });
+        // Both reconstructions stay within the four parent heights. Averaging
+        // removes the axis preference of applying the limiter in one order.
+        return (row, column, x, y) => (horizontalFirst(column, y) + verticalFirst(row, x)) / 2;
+    }
+
+    function inlandInfluence(height) {
+        const fraction = Math.max(0, Math.min(1, (height - COASTAL_ACTION_RANGE) / COASTAL_ACTION_RANGE));
+        return fraction * fraction * (3 - 2 * fraction);
     }
 
     function unitAt(seed, x, y) {
@@ -193,6 +254,7 @@
         const signed = new Float32Array(size);
         const inherited = new Float32Array(size);
         const mechanisms = new Uint8Array(size);
+        const sampleBed = createRegionalBedSampler(bed, grid);
         const coastalBoundary = seafloor ? new Uint8Array(size) : null;
         const trace = chain.trailVector;
         const faultNoise = (x, y) => texture(regionalSeed ^ 0x5e42ff, (x * trace.x + y * trace.y) * 2.4,
@@ -204,7 +266,14 @@
                 const fine = row * grid.width + column;
                 const x = bounds.x + column / SUBDIVISION;
                 const y = bounds.y + row / SUBDIVISION;
-                const base = sample(values, width, height, x, y);
+                const inheritedBed = sample(values, width, height, x, y);
+                let base = inheritedBed;
+                // Keep the existing inherited bed wherever fault and wave
+                // processes can shape the shoreline, including submerged vents.
+                if (inheritedBed > COASTAL_ACTION_RANGE) {
+                    const inlandBed = sampleBed(row, column, x, y);
+                    base += (inlandBed - inheritedBed) * inlandInfluence(inheritedBed) * inlandInfluence(inlandBed);
+                }
                 inherited[fine] = base;
                 if (coastalBoundary && (row === 0 || row === grid.height - 1 || column === 0 || column === grid.width - 1)) {
                     const parentCell = Math.round(y) * width + Math.round(x);
@@ -224,7 +293,7 @@
                     noise(Math.floor(x), Math.floor(y)), noise(Math.floor(x) + 1, Math.floor(y)),
                     noise(Math.floor(x), Math.floor(y) + 1), noise(Math.floor(x) + 1, Math.floor(y) + 1)
                 );
-                const coast = Math.max(0, 1 - Math.abs(base) / 0.057);
+                const coast = Math.max(0, 1 - Math.abs(base) / COASTAL_ACTION_RANGE);
                 // Keep unaffected portions of the chain outside the local
                 // restraint used to preserve an inherited water separation.
                 const localScale = constrainedPeaks.reduce((scale, peak) => {

@@ -149,6 +149,37 @@ function verifyRegionalProcessFixture(macro) {
     const control = macro.buildRegionalArchipelagoSurface(source);
     assert.equal(control.vents.length, 0);
     assert(control.signed.every(value => value <= 0), 'Submerged crust without uplift must stay submerged');
+    const profile = [-0.07, -0.06, -0.042, -0.02, 0.02, 0.125, 0.21, 0.25, 0.26, 0.275, 0.25, 0.18, 0.13];
+    const terrain = profile.flatMap((_, row) => profile.map((value, column) => value + row * column / 10000));
+    const reconstruct = values => macro.buildRegionalArchipelagoSurface({
+        ...source, bed: { ...source.bed, values }, processScale: 0
+    });
+    const refined = reconstruct(terrain);
+    const transposed = reconstruct(terrain.map((_, cell) => terrain[cell % width * width + Math.floor(cell / width)]));
+    const { width: fineWidth, subdivision } = refined.grid;
+    for (const [cell, elevation] of refined.inherited.entries()) {
+        const column = cell % fineWidth;
+        const row = Math.floor(cell / fineWidth);
+        const left = Math.floor(column / subdivision);
+        const top = Math.floor(row / subdivision);
+        const right = Math.min(width - 1, left + 1);
+        const bottom = Math.min(width - 1, top + 1);
+        const corners = [terrain[top * width + left], terrain[top * width + right],
+            terrain[bottom * width + left], terrain[bottom * width + right]];
+        assert(elevation >= Math.fround(Math.min(...corners)) && elevation <= Math.fround(Math.max(...corners)));
+        assert.equal(elevation, transposed.inherited[column * fineWidth + row]);
+        if (column % subdivision === 0 && row % subdivision === 0) assert.equal(elevation, Math.fround(corners[0]));
+        if (Math.max(...corners) <= 0.05) {
+            const dx = column / subdivision - left;
+            const dy = row / subdivision - top;
+            const [nw, ne, sw, se] = corners;
+            assert.equal(elevation, Math.fround((nw * (1 - dx) + ne * dx) * (1 - dy) + (sw * (1 - dx) + se * dx) * dy));
+        }
+    }
+    const seam = 6 * subdivision * (fineWidth + 1);
+    const oldJump = Math.abs(terrain[84 - 1] - 2 * terrain[84] + terrain[84 + 1]) / subdivision;
+    const newJump = Math.abs(refined.inherited[seam - 1] - 2 * refined.inherited[seam] + refined.inherited[seam + 1]);
+    assert(newJump < oldJump, 'The reconstructed slope must turn across the cell, rather than at the parent sample');
     const volcanicSupport = [...source.hotspotUplift];
     volcanicSupport[84] = 0.24;
     const volcanic = macro.buildRegionalArchipelagoSurface({ ...source, hotspotUplift: volcanicSupport });
@@ -187,7 +218,8 @@ function verifyRegionalProcessFixture(macro) {
     signed[24] = -0.04;
     assert.equal(macro.traceRestoredLandConnection(cut, [15, 16], [[16, 17]], 3), null,
         'Erosion near a shoreline cannot count as fragmentation without a separate destination');
-    return { noUnsupportedEmergence: true, faultUpliftExercised: true, erosionExercised: true,
+    return { noUnsupportedEmergence: true, sharedParentSamplesAndLocalRange: true, symmetricReconstruction: true,
+        inheritedSlopeJump: { linear: oldJump, reconstructed: newJump }, faultUpliftExercised: true, erosionExercised: true,
         inheritedSaddlePreservesIndependentUplift: true, independentlyRestoredSeparation: true };
 }
 
