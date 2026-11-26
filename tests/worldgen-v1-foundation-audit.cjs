@@ -11,7 +11,8 @@ const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
-    verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture } = require('./worldgen-v1-terrain.cjs');
+    verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture,
+    verifyContinentalShorelineFixture } = require('./worldgen-v1-terrain.cjs');
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 const { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture } = require('./worldgen-v1-local-water.cjs');
 
@@ -29,7 +30,8 @@ const knownPhysical = [1122193213, 2337086253, 4144686569, 1665754063, 272724428
 const foundationRegression = recoveryRegression.concat(2337086253, 2727244283, 2964753490, 4085637119);
 const originalRegionalRegression = foundationRegression.concat(2856344, 640306144, 1880886041, 3271942068,
     792866484, 2220939230, 2546155002);
-const regionalRegression = originalRegionalRegression.concat(3840024598);
+const regionalRegression = originalRegionalRegression.concat(3840024598,
+    3019978005, 2402593754, 82211472, 3338251652);
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 function stratifiedSeeds(namespace) {
     return Array.from({ length: 64 }, (_, index) => {
@@ -131,6 +133,7 @@ check('Land-weighted pressure and local recovery timing', () => verifySpatialAgg
 check('Signed final terrain and carved-bed controls', () => verifyFinalTerrainFixture(macro));
 check('Boundary-only water stays physical without becoming a macro sea', () => verifySeaBoundaryFixture(macro));
 check('Inland bottlenecks bind measured relief while retaining segment provenance', () => verifyInlandChokepointFixture(macro));
+check('High sea reaches measured continental saddles with supported offshore islands', () => verifyContinentalShorelineFixture(macro));
 check('Final downhill routing and water receiver controls', () => verifyFinalDrainageFixture(macro));
 check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));
 check('Regional landfalls require open water', () => verifyRegionalNetworkFixture(macro));

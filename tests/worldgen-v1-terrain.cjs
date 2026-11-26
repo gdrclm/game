@@ -2,6 +2,53 @@
 
 const assert = require('node:assert/strict');
 
+function verifyContinentalShorelineFixture(macro) {
+    const bounds = { width: 20, height: 20 };
+    const values = new Array(bounds.width * bounds.height).fill(0);
+    const fill = (x, endX, y, endY, elevation) => {
+        for (let row = y; row <= endY; row += 1) {
+            for (let column = x; column <= endX; column += 1) {
+                values[row * bounds.width + column] = elevation;
+            }
+        }
+    };
+    fill(2, 5, 7, 12, 0.9);
+    fill(14, 17, 7, 12, 0.9);
+    fill(6, 13, 9, 9, 0.6);
+    fill(6, 11, 10, 10, 0.6);
+    fill(1, 18, 13, 13, 0.2);
+    const collect = (land, width) => {
+        const visited = new Set();
+        const bodies = [];
+        for (let cell = 0; cell < land.length; cell += 1) {
+            if (!land[cell] || visited.has(cell)) continue;
+            const queue = [cell];
+            visited.add(cell);
+            for (let index = 0; index < queue.length; index += 1) {
+                macro.forEachCardinalNeighbor(queue[index], width, land.length, neighbor => {
+                    if (!land[neighbor] || visited.has(neighbor)) return;
+                    visited.add(neighbor);
+                    queue.push(neighbor);
+                });
+            }
+            bodies.push({ cellCount: queue.length });
+        }
+        return bodies;
+    };
+    const chosen = macro.selectContinentalShoreline(values, bounds, 0.5, collect,
+        () => ({ hotspotChain: { distinctEmergenceCount: 3 } }));
+    assert.equal(chosen.cutoff, 0.6, 'The lowest supported higher sea covers the shared saddle');
+    assert.equal(chosen.attempts.at(-1).highstand, true);
+    assert.deepEqual(chosen.attempts.at(-1).majorSizes, [24, 24]);
+    const unsupported = macro.selectContinentalShoreline(values, bounds, 0.5, collect,
+        () => ({ hotspotChain: { distinctEmergenceCount: 2 } }));
+    assert.equal(unsupported.percentile, 0.5, 'High water requires independently supported islands');
+    const separated = values.map(value => value === 0.9 ? value : 0);
+    assert.equal(macro.selectContinentalShoreline(separated, bounds, 0.5, collect).percentile, 0.5);
+    return { saddleSeparatesInheritedContinentalBodies: true, higherSeaRequiresSupportedArchipelago: true,
+        ordinaryShorelinePreferred: true };
+}
+
 function verifySeaBoundaryFixture(macro) {
     const width = 7;
     const height = 5;
@@ -206,4 +253,4 @@ function inspectClimateAndPressure(result) {
 }
 
 module.exports = { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
-    verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture };
+    verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture, verifyContinentalShorelineFixture };
