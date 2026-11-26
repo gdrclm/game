@@ -38,6 +38,28 @@ function verifyFinalDrainageFixture(macro) {
     return { terminalTypes: ['ocean', 'inland_water', 'local_depression'] };
 }
 
+function verifySaddleFixture(macro) {
+    const width = 13;
+    const cell = 6 * width + 6;
+    const field = values => ({ fieldId: 'coast', width, height: width, values, threshold: 0.5 });
+    function terrain(shape) {
+        const source = Array.from({ length: width * width }, (_, index) =>
+            0.2 + shape(index % width - 6, Math.floor(index / width) - 6));
+        const mask = field(source.map(value => Number(value > 0)));
+        return macro.buildFinalTerrain({ reliefElevation: { outputs: { fields: {
+            seaLevelAppliedElevationField: { fieldId: 'elevation', relativeElevationValues: source },
+            landmassCleanupMaskField: mask
+        } } } }, mask).macroLandformField;
+    }
+    const classifyCenter = shape => {
+        const raster = terrain(shape);
+        return raster.valueEncoding[raster.values[cell]];
+    };
+    assert.equal(classifyCenter((x, y) => 0.005 * (y * y - x * x)), 'saddle');
+    assert.notEqual(classifyCenter((x, y) => 0.005 * (y * y + x * x)), 'saddle');
+    return { saddleRequiresOppositeSlopes: true };
+}
+
 function inspectDrainage(bundle, elevation, width) {
     const { payload: drainage } = bundle.intermediateOutputs.find(row => row.artifactId === 'foundation_geometry_finalDrainage');
     const outlets = new Map(drainage.outlets.map(row => [row.outletCellIndex, row]));
@@ -134,4 +156,5 @@ function inspectClimateAndPressure(result) {
     };
 }
 
-module.exports = { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture };
+module.exports = { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
+    verifySaddleFixture };

@@ -10,7 +10,8 @@ const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
 const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
-const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture } = require('./worldgen-v1-terrain.cjs');
+const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
+    verifySaddleFixture } = require('./worldgen-v1-terrain.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -21,7 +22,9 @@ const f8qFormerBlind = [64847321, 958614127, 2345998979, 3900041903];
 const all = canonical.concat(holdout, expanded);
 const regression = all.concat(f8q, f8qFormerBlind);
 const recoveryRegression = regression.concat(3508323923);
-const knownPhysical = [1122193213, 2337086253, 4144686569, 1665754063, 2727244283, 2964753490, 4085637119];
+const knownPhysical = [1122193213, 2337086253, 4144686569, 1665754063, 2727244283, 2964753490, 4085637119,
+    3019978005, 1240171611, 3928839710, 1054323503, 2094783996, 2402593754, 2917478163, 3206964149, 4286438917];
+const foundationRegression = recoveryRegression.concat(2337086253, 2727244283, 2964753490, 4085637119);
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 const stress = Array.from({ length: 64 }, (_, index) => {
     const digest = createHash('sha256').update(`Paths/F8-S/2026-11-26/${index}`).digest();
@@ -29,8 +32,9 @@ const stress = Array.from({ length: 64 }, (_, index) => {
 });
 assert.equal(new Set(regression).size, 31, 'Regression cohort must preserve all reviewed seeds');
 assert.equal(new Set(recoveryRegression).size, 32, 'Recovery regression must include the F8-R area case');
+assert.equal(new Set(foundationRegression).size, 36, 'Foundation regression must include the physical repairs');
 const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression,
-    'known-physical': knownPhysical, edges,
+    'foundation-regression': foundationRegression, 'known-physical': knownPhysical, edges,
     ...Object.fromEntries([0, 1, 2, 3].map(id => [`stress-${id}`, stress.filter((_, index) => index % 4 === id)]))
 };
 const args = process.argv.slice(2);
@@ -109,6 +113,7 @@ check('Hotspot curvature follows shallow crust at fixed plate drift', () => veri
 check('Land-weighted pressure and local recovery timing', () => verifySpatialAggregation(phase2));
 check('Signed final terrain and carved-bed controls', () => verifyFinalTerrainFixture(macro));
 check('Final downhill routing and water receiver controls', () => verifyFinalDrainageFixture(macro));
+check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;

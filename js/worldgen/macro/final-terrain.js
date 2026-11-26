@@ -7,6 +7,10 @@
     const SEA_FORMS = ['land', 'inland_water', 'shelf', 'continental_slope', 'open_basin', 'deep_basin', 'submarine_ridge', 'volcanic_flank'];
     const SURFACE_ORIGINS = ['original', 'cleanup_submergence', 'cleanup_fill', 'marine_carving', 'marine_accretion'];
     const DISTANT_RIM_OFFSETS = [[-7, 0], [7, 0], [0, -7], [0, 7]];
+    const SADDLE_TRANSECTS = [
+        [[4, 0], [-4, 0], [0, 4], [0, -4]],
+        [[4, 4], [-4, -4], [-4, 4], [4, -4]]
+    ];
     const round = value => Math.round(value * 1e6) / 1e6;
 
     function distances(width, land, seedCell, allowEdge) {
@@ -77,13 +81,15 @@
         }
         let saddle = false;
         let prominence = 0;
-        if (land[cell] && x >= 2 && x + 2 < width && y >= 2 && y + 2 < height) {
-            const cross = [cell - 2, cell + 2, cell - 2 * width, cell + 2 * width];
-            if (cross.every(index => land[index])) {
-                const [left, right, top, bottom] = cross.map(index => signed[index] - center);
-                const alongX = Math.max(left, right) <= -0.007 && Math.min(top, bottom) >= 0.007;
-                const alongY = Math.max(top, bottom) <= -0.007 && Math.min(left, right) >= 0.007;
-                saddle = alongX || alongY;
+        if (land[cell]) {
+            if (x >= 4 && x + 4 < width && y >= 4 && y + 4 < height) {
+                saddle = SADDLE_TRANSECTS.some(transect => {
+                    const cross = transect.map(([dx, dy]) => cell + dx + dy * width);
+                    if (!cross.every(index => land[index])) return false;
+                    const [a, b, c, d] = cross.map(index => signed[index] - center);
+                    return (Math.max(a, b) <= -0.0035 && Math.min(c, d) >= 0.0035)
+                        || (Math.max(c, d) <= -0.0035 && Math.min(a, b) >= 0.0035);
+                });
             }
             for (const [dx, dy] of DISTANT_RIM_OFFSETS) {
                 if (x + dx < 0 || x + dx >= width || y + dy < 0 || y + dy >= height) continue;
