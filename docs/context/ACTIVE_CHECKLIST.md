@@ -21,6 +21,8 @@ Current engineering work only; past iterations and measurements are preserved in
 
 - [x] Canonical inland bottleneck endpoints and observed highstand fallback. Four full targeted exports exercise previously rejected continental cases and expand the mandatory cohort to 48. [Evidence](review/f8t/continental-shoreline/README.md)
 
+- [x] Refined drift-track search and conserved water allocation. Fixed-seed reruns on `27eebca` pass for 1715244351 and 640306144. Chromium Phase 0 5/5 and runtime harness 270/270 pass. [Current maps](review/f8t/closure/README.md)
+
 ## Active technical work (do not restart completed milestones)
 - [ ] F8-T water closure: validate how measured branches, local access, seasonal input and retention should alter environmental pressure/recovery. Retain 42, 16908799 and all confirmed regression controls; no global coefficient patch to force acceptance.
 - [ ] F8-T local environment: per-island water persistence/access, climate refinement and physical recovery interpretation; report unresolved data, not guessed potable-water availability.

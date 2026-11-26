@@ -204,6 +204,49 @@ def render_linked_basins(snapshot):
     return fig
 
 
+def render_allocated_supply(snapshot):
+    debug = snapshot['diagnostics']['physicalWorldDebugBundle']
+    regional = next(row['payload'] for row in debug['intermediateOutputs']
+                    if row['sourceLayerId'] == 'regionalArchipelagoSurface')
+    grid = regional['grid']
+    shape = grid['height'], grid['width']
+    access = {row['islandId']: row['waterAccess'] for row in regional['islandEnvironment']['records']}
+    keys = ['allocatedSupplyPerArea', 'allocatedLowSupplyPerArea', 'meanDistance', 'storageSpaceToSurfaceWater']
+    rasters = {key: np.full(shape, np.nan) for key in keys}
+    missing = np.zeros(shape, dtype=bool)
+    for island in regional['islandRecords']:
+        water = access[island['islandId']]
+        for start, length in island['landRuns']:
+            cells = slice(start, start + length)
+            for key in keys:
+                if water[key] is not None:
+                    rasters[key].flat[cells] = water[key]
+            missing.flat[cells] = water['reachableCellCount'] == 0
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10), facecolor=PAPER)
+    fig.subplots_adjust(left=.09, right=.92, top=.846, bottom=.102, wspace=.18, hspace=.3)
+    fig.text(.08, .953, f"Paths  /  Распределение воды  /  {snapshot['seed']}", fontsize=21, color=INK,
+             fontweight='semibold')
+    fig.text(.08, .914, f"{snapshot['revision'][:12]}  ·  {len(access)} островов  ·  средние по островам",
+             fontsize=10, color=INK)
+    titles = ['Распределённый средний приток', 'Распределённый маловодный приток',
+              'Расстояние до источника по суше', 'Вместимость связанных впадин']
+    labels = ['Индекс притока на единицу площади', 'Индекс притока на единицу площади',
+              'Расстояние в макроклетках', 'Нормированная высота × площадь']
+    for index, (ax, key, title, label) in enumerate(zip(axs.flat, keys, titles, labels)):
+        values = rasters[key]
+        reference = rasters[keys[0]] if index < 2 else values
+        maximum = max(1e-6, np.nanmax(reference)) if np.any(np.isfinite(reference)) else 1
+        map_panel(fig, ax, title, values, 'YlGnBu' if index < 2 else 'PuBu', label, vmin=0, vmax=maximum)
+        if index < 3:
+            ax.imshow(np.ma.masked_where(~missing, missing), interpolation='nearest',
+                      cmap=ListedColormap([NO_SOURCE]), vmin=0, vmax=1)
+    fig.text(.08, .054, 'Каждая порция стока учитывается у первого источника на пути и распределяется по доступной ему суше.',
+             fontsize=9, color=INK)
+    fig.text(.08, .024, 'Красным отмечена суша без достижимого источника. Вместимость измерена независимо от поступления воды.',
+             fontsize=9, color=INK)
+    return fig
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('snapshots', type=Path)
@@ -212,6 +255,7 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--island-environment', action='store_true')
     mode.add_argument('--linked-basins', action='store_true')
+    mode.add_argument('--allocated-supply', action='store_true')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     filename, image_name, title, renderer = 'local-water-atlas', 'water-access', 'Сток и доступ к воде', render
@@ -221,6 +265,9 @@ def main():
     if args.linked_basins:
         filename = image_name = 'linked-basins'
         title, renderer = 'Связанные впадины', render_linked_basins
+    if args.allocated_supply:
+        filename = image_name = 'allocated-supply'
+        title, renderer = 'Распределение воды', render_allocated_supply
     with PdfPages(args.output / f'{filename}.pdf', metadata={'Title': f'Paths · {title}'}) as pdf:
         for seed in args.seeds:
             snapshot = json.loads((args.snapshots / f'seed-{seed}.json').read_text())
