@@ -803,6 +803,10 @@
             addIssue(issues, 'error', 'invalid_environmental_coverage', 'macroGeographyPackage.environmentalCoverage', error);
         }
 
+        for (const error of window.Game.systems.worldgenMacro?.validateRegionalIslandEnvironment?.(macroGeographyPackage.regionalArchipelago, macroGeographyPackage) || []) {
+            addIssue(issues, 'error', 'invalid_regional_island_environment', 'macroGeographyPackage.regionalArchipelago.islandEnvironment', error);
+        }
+
         if (hasOwn(macroGeographyPackage, 'debugArtifacts') && !isPlainObject(macroGeographyPackage.debugArtifacts)) {
             addIssue(
                 issues,
@@ -858,6 +862,9 @@
             worldBounds: cloneValue(macroGeographyPackage.worldBounds),
             ...(macroGeographyPackage.environmentalCoverage && {
                 environmentalCoverage: cloneValue(macroGeographyPackage.environmentalCoverage)
+            }),
+            ...(macroGeographyPackage.regionalArchipelago?.islandEnvironment && {
+                regionalIslandEnvironment: cloneValue(macroGeographyPackage.regionalArchipelago.islandEnvironment)
             }),
             validationReport: cloneValue(macroGeographyPackage.validationReport)
         };

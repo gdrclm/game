@@ -45,7 +45,7 @@
             phase1.assertFoundationRecordReferences(macroGeographyPackage);
             const regional = macroGeographyPackage.regionalArchipelago;
             if (!regional?.elevationRaster || !Array.isArray(regional.sourcePeaks) || !regional.sourcePeaks.length
-                || !Array.isArray(regional.sourceVents)
+                || !Array.isArray(regional.sourceVents) || !regional.islandEnvironment
                 || !regional.summary?.areaSensitivity?.length
                 || regional.summary.areaSensitivity.some(row => !Number.isSafeInteger(row.largestConnectedEligibleCount))) {
                 throw new Error('New Phase 1 export lacks canonical regional physical sources or carrier capacity.');

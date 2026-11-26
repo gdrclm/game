@@ -1,0 +1,135 @@
+(() => {
+    const macro = window.Game.systems.worldgenMacro;
+    const channels = {
+        temperature: ['temperatureColdLoadField', 'values'],
+        coldLoad: ['temperatureColdLoadField', 'coldLoadValues'],
+        wetness: ['wetnessField', 'values'],
+        storm: ['stormCorridorField', 'values'],
+        seasonality: ['seasonalityField', 'values']
+    };
+    const round = n => Math.round(n * 1e6) / 1e6;
+    function sample(values, width, height, x, y) {
+        const left = Math.floor(x), top = Math.floor(y);
+        const right = Math.min(width - 1, left + 1), bottom = Math.min(height - 1, top + 1);
+        const dx = x-left, dy = y-top;
+        return values[top*width+left]*(1-dx)*(1-dy) + values[top*width+right]*dx*(1-dy)
+            + values[bottom*width+left]*(1-dx)*dy + values[bottom*width+right]*dx*dy;
+    }
+
+    // A strictly descending local drainage network. Flat minima are unresolved
+    // sinks, not automatically lakes or reliable drinking water.
+    function measureIslandDrainage(cells, grid, signed, wetness, open) {
+        const land = new Set(cells), downstream = new Map(), counts = new Map(), runoff = new Map();
+        const outlet = new Map();
+        for (const cell of cells) {
+            let lowest = signed[cell], next = -1;
+            macro.forEachCardinalNeighbor(cell, grid.width, signed.length, neighbor => {
+                const height = Math.max(0, signed[neighbor]);
+                if (height < lowest) { lowest = height; next = neighbor; }
+            });
+            if (next >= 0 && signed[next] > 0 && !land.has(next)) throw Error('Island drainage crosses a distinct land component');
+            downstream.set(cell,next); counts.set(cell,1); runoff.set(cell,wetness(cell));
+        }
+        const ordered = [...cells].sort((a,b)=>signed[b]-signed[a] || a-b);
+        for (const cell of ordered) {
+            const next = downstream.get(cell);
+            if (next >= 0 && land.has(next)) {
+                counts.set(next,counts.get(next)+counts.get(cell));
+                runoff.set(next,runoff.get(next)+runoff.get(cell));
+            } else {
+                outlet.set(cell,{outletCellIndex:cell,receivingCellIndex:next,
+                    receiver:next<0?'local_depression':open[next]?'ocean':'inland_water',
+                    contributingCells:counts.get(cell),runoffPotential:round(runoff.get(cell)/grid.subdivision**2)});
+            }
+        }
+        return [...outlet.values()].sort((a,b)=>a.outletCellIndex-b.outletCellIndex);
+    }
+
+    function buildRegionalIslandEnvironment(islands, surface, climateOutput, bounds) {
+        const fields=climateOutput?.fields;
+        if (!fields || !Object.values(channels).every(([id,key])=>fields[id]?.[key]?.length===bounds.width*bounds.height)) {
+            throw Error('Regional island environment requires canonical macro climate fields');
+        }
+        const {grid,signed}=surface;
+        const validBands=new Set((climateOutput.records?.climateBands||[]).map(row=>row.climateBandId));
+        const byCell=new Map();
+        for(const zone of climateOutput.intermediateOutputs?.climateZoneClassification?.zoneSummaries||[]) {
+            if(validBands.has(zone.climateBandId)) for(const cell of zone.cellIndices) byCell.set(cell,zone.climateBandId);
+        }
+        const open=macro.indexRegionalOpenWater(surface);
+        const coordinates=cell=>[grid.originX+(cell%grid.width)/grid.subdivision,grid.originY+Math.floor(cell/grid.width)/grid.subdivision];
+        const read=(cell,channel)=>{
+            const [id,key]=channels[channel], [x,y]=coordinates(cell);
+            return sample(fields[id][key],bounds.width,bounds.height,x,y);
+        };
+        const records=islands.map(island=>{
+            const cells=island.landRuns.flatMap(([start,length])=>Array.from({length},(_,i)=>start+i));
+            const sums=Object.fromEntries(Object.keys(channels).map(key=>[key,0]));
+            const climateBandCells={};
+            let unmatchedClimateCells=0;
+            for(const cell of cells) {
+                for(const key of Object.keys(channels)) sums[key]+=read(cell,key);
+                const [x,y]=coordinates(cell);
+                const band=byCell.get(Math.round(y)*bounds.width+Math.round(x));
+                if(band) climateBandCells[band]=(climateBandCells[band]||0)+1;
+                else unmatchedClimateCells++;
+            }
+            const climate=Object.fromEntries(Object.entries(sums).map(([key,value])=>[key,round(value/cells.length)]));
+            const catchments=measureIslandDrainage(cells,grid,signed,cell=>read(cell,'wetness'),open);
+            return {islandId:island.islandId,landCellCount:cells.length,climate,climateBandCells,unmatchedClimateCells,
+                catchments,runoffPotential:round(sums.wetness/grid.subdivision**2)};
+        });
+        return {version:1,climateResolution:'interpolated_macro_baseline',runoffUnits:'wetness_times_macro_cell_area',
+            sourceFieldIds:[...new Set(Object.values(channels).map(([id])=>id))],
+            records};
+    }
+
+    function validateRegionalIslandEnvironment(regional, geography) {
+        const env=regional?.islandEnvironment;
+        if(env===undefined)return [];
+        if(env?.version!==1 || env.climateResolution!=='interpolated_macro_baseline'
+            || env.runoffUnits!=='wetness_times_macro_cell_area' || !Array.isArray(env.records)
+            || !Array.isArray(regional.islandRecords))return ['Invalid regional island environment contract.'];
+        const errors=[], ids=new Map(regional.islandRecords.map(row=>[row.islandId,row]));
+        const bands=new Set((geography.climateBands||[]).map(row=>row.climateBandId));
+        const seen=new Set();
+        const signed=macro.decodeRegionalElevation(regional);
+        const grid=regional.grid;
+        for(const row of env.records) {
+            const island=ids.get(row?.islandId);
+            if(!island||seen.has(row.islandId)||row.landCellCount!==island.areaCells
+                || !Object.keys(channels).every(key=>Number.isFinite(row.climate?.[key])&&row.climate[key]>=0&&row.climate[key]<=1)
+                || !Number.isSafeInteger(row.unmatchedClimateCells)||row.unmatchedClimateCells<0
+                || !row.climateBandCells||!Array.isArray(row.catchments)||!Number.isFinite(row.runoffPotential)
+                ||row.runoffPotential<0){errors.push('Invalid regional environmental record: '+row?.islandId);continue;}
+            seen.add(row.islandId);
+            let covered=row.unmatchedClimateCells;
+            for(const [id,n] of Object.entries(row.climateBandCells)){
+                if(!bands.has(id)||!Number.isSafeInteger(n)||n<=0)errors.push('Invalid regional climate band reference: '+id);
+                covered+=n;
+            }
+            if(covered!==row.landCellCount)errors.push('Regional climate coverage does not conserve land area.');
+            const land=new Set(island.landRuns.flatMap(([start,length])=>Array.from({length},(_,i)=>start+i)));
+            let counted=0, runoff=0;
+            const outlets=new Set();
+            for(const c of row.catchments){
+                const next=c?.receivingCellIndex, cell=c?.outletCellIndex;
+                let adjacent=false;
+                if(signed&&land.has(cell))macro.forEachCardinalNeighbor(cell,grid.width,signed.length,n=>{if(n===next)adjacent=true;});
+                if(!land.has(cell)||outlets.has(cell)||!Number.isSafeInteger(c.contributingCells)||c.contributingCells<=0
+                    ||!Number.isFinite(c.runoffPotential)||c.runoffPotential<0||c.runoffPotential>c.contributingCells/grid.subdivision**2+1e-6
+                    ||(next===-1?c.receiver!=='local_depression':!['ocean','inland_water'].includes(c.receiver)
+                    ||!Number.isSafeInteger(next)||next<0||next>=grid.width*grid.height||land.has(next)||(signed&&(!adjacent||signed[next]>0)))){
+                    errors.push('Invalid regional catchment in '+row.islandId);continue;
+                }
+                outlets.add(cell);counted+=c.contributingCells;runoff+=c.runoffPotential;
+            }
+            if(counted!==row.landCellCount||Math.abs(runoff-row.runoffPotential)>(row.catchments.length+1)*1e-6
+                ||Math.abs(row.runoffPotential-row.climate.wetness*island.areaMacroCellUnits)>(island.areaMacroCellUnits+1)*1e-6)
+                errors.push('Regional catchment area or runoff is inconsistent: '+row.islandId);
+        }
+        if(seen.size!==ids.size)errors.push('Regional island environment does not cover every island.');
+        return errors;
+    }
+    Object.assign(macro,{buildRegionalIslandEnvironment,validateRegionalIslandEnvironment,measureIslandDrainage});
+})();

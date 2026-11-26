@@ -161,6 +161,7 @@
         }));
     }
 
+    macro.indexRegionalOpenWater = indexOpenWater;
     macro.measureRegionalCarrierCapacity = measureRegionalCarrierCapacity;
     macro.buildRegionalArchipelagoWaterNetwork = buildRegionalArchipelagoWaterNetwork;
 })();

@@ -132,6 +132,9 @@
                             rhythm: cloneValue(rhythmSummaryOutput)
                         },
                         validationReport: cloneValue(validationReport),
+                        ...(input.regionalIslandEnvironmentalProjection && {
+                            regionalIslandEnvironmentalProjection: cloneValue(input.regionalIslandEnvironmentalProjection)
+                        }),
                         rebalanceMetadata: rebalancePlan && Array.isArray(rebalancePlan.rebalanceMetadata)
                             ? cloneValue(rebalancePlan.rebalanceMetadata)
                             : []

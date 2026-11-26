@@ -195,6 +195,33 @@
         return `${kind}:${normalizeString(bundle && bundle.sourceMacroGeographyPackageId, 'unknown')}`;
     }
 
+    // Project existing Phase 2 band interpretations over measured overlap only.
+    // Uncovered regional land never receives an invented nearest land-band score.
+    function buildRegionalIslandEnvironmentalProjection(environment, pressure, rhythm) {
+        if (!environment) return undefined;
+        const sources = [
+            ['coldPressure', pressure?.domains?.climate?.coldPressure],
+            ['heatPressure', pressure?.domains?.climate?.heatPressure],
+            ['humidityPressure', pressure?.domains?.climate?.humidityPressure],
+            ['climateExposurePressure', pressure?.domains?.climate?.climateExposurePressure],
+            ['seasonalityStrength', rhythm?.domains?.seasonality?.seasonalityStrength]
+        ].map(([key,field])=>[key,new Map((field?.perBandScores||[]).map(row=>[row.recordId,row.value]))]);
+        return {version:1,interpretation:'coverage_weighted_existing_climate_band_signals',
+            records:environment.records.map(row=>{
+                const inheritedSignals={};
+                for(const [key,scores] of sources){
+                    let count=0,sum=0;
+                    for(const [id,n] of Object.entries(row.climateBandCells)){
+                        if(Number.isFinite(scores.get(id))){count+=n;sum+=n*scores.get(id);}
+                    }
+                    inheritedSignals[key]={value:count?Math.round(sum/count*1e6)/1e6:null,coveredLandCells:count};
+                }
+                return {islandId:row.islandId,landCellCount:row.landCellCount,
+                    localClimate:row.climate,runoffPotential:row.runoffPotential,
+                    catchments:row.catchments,unmatchedClimateCells:row.unmatchedClimateCells,inheritedSignals};
+            })};
+    }
+
     function assemblePressureFieldPackage(workingState, validationMeta) {
         const factory = getPressurePackageContractFactory();
         if (!factory) {
@@ -417,6 +444,9 @@
                     pressureSummaryOutput: finalValidationInput.pressureSummaryOutput,
                     rhythmSummaryOutput: finalValidationInput.rhythmSummaryOutput,
                     validationReport: finalValidation.report,
+                    regionalIslandEnvironmentalProjection: buildRegionalIslandEnvironmentalProjection(
+                        finalValidationInput.phase2InputBundle.rootSupport.regionalIslandEnvironment,
+                        finalValidationInput.pressureFieldPackage, finalValidationInput.environmentalRhythmPackage),
                     rebalancePlan
                 });
 

@@ -240,3 +240,6 @@ freshwater support of its attached catchments. Catchment area limits the
 amount of water available even where runoff stays connected. The synthesized
 readiness field accounts for the interval before stabilization. Local timing
 fields remain directly visible.
+
+## Regional island environmental interpretation (additive)
+Phase 2 intake carries the validated Phase 1 `regionalArchipelago.islandEnvironment` in root support. The gated export bundle may include `regionalIslandEnvironmentalProjection`: one row per physical island, with inherited climate-band pressure/seasonality signals weighted by measured covered land cells only, coverage counts, interpolated climate baseline and local catchment/runoff evidence. Uncovered signals are null, not zero or guessed. This is not a local recovery model, vessel technology, population or playable island choice; global pressure/rhythm formulas and thresholds are unchanged. Legacy bundles without the source omit the projection.

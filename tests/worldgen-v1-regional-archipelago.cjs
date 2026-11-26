@@ -88,7 +88,24 @@ function inspectRegionalArchipelago(result, macro) {
         assert(link.waterPathCellIndices.every(cell => bed[cell] <= 0));
         assert.equal(link.distanceMacroCellUnits, (link.waterPathCellIndices.length - 1) / subdivision);
     }
-    return regional.summary;
+    const env=regional.islandEnvironment;
+    assert(env?.records.length===regional.islandRecords.length);
+    assert.deepEqual(macro.validateRegionalIslandEnvironment(regional,geography),[]);
+    const projected=result.phase2.regionalIslandEnvironmentalProjection;
+    assert.equal(projected.records.length,env.records.length);
+    for(const [i,row] of env.records.entries()){
+        const output=projected.records[i];
+        assert.equal(output.islandId,row.islandId);
+        assert.deepEqual(output.localClimate,row.climate);
+        assert.equal(output.runoffPotential,row.runoffPotential);
+        for(const signal of Object.values(output.inheritedSignals)){
+            assert(signal.coveredLandCells<=row.landCellCount-row.unmatchedClimateCells);
+            assert.equal(signal.value===null,signal.coveredLandCells===0);
+        }
+    }
+    return {...regional.summary,environment:{recordCount:env.records.length,
+        unmatchedClimateCells:env.records.reduce((sum,row)=>sum+row.unmatchedClimateCells,0),
+        runoffRange:[Math.min(...env.records.map(row=>row.runoffPotential)),Math.max(...env.records.map(row=>row.runoffPotential))]}};
 }
 
 function verifyRegionalNetworkFixture(macro) {
@@ -179,4 +196,23 @@ function verifyRegionalCarrierFixture(macro) {
     return {distinctWaterNetworks:true,smallTransitIslandAllowed:true,completeLandComponent:true,completeShoreline:true,measuredElevation:true};
 }
 
-module.exports = { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture };
+
+function verifyRegionalEnvironmentFixture(macro) {
+    const grid={originX:0,originY:0,width:5,height:5,subdivision:1};
+    const signed=new Float32Array(25).fill(-0.2);
+    signed[11]=0.1; signed[12]=0.4; signed[13]=0.2;
+    const open=new Uint8Array(25).fill(1);
+    const cells=[11,12,13];
+    const low=macro.measureIslandDrainage(cells,grid,signed,()=>0.2,open);
+    const high=macro.measureIslandDrainage(cells,grid,signed,()=>0.8,open);
+    assert.deepEqual(low.map(({outletCellIndex,contributingCells})=>({outletCellIndex,contributingCells})),
+        high.map(({outletCellIndex,contributingCells})=>({outletCellIndex,contributingCells})));
+    assert.equal(low.reduce((a,b)=>a+b.contributingCells,0),3);
+    assert(Math.abs(high.reduce((a,b)=>a+b.runoffPotential,0)-2.4)<1e-6);
+    const bowl=new Float32Array(25).fill(0.6);bowl[12]=0.1;
+    const [sink]=macro.measureIslandDrainage([12],grid,bowl,()=>0.5,open);
+    assert.equal(sink.receiver,'local_depression');
+    return {drainageConservesArea:true,wetnessChangesRunoffNotGeometry:true,depressionNotAssumedWater:true};
+}
+
+module.exports = { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture };

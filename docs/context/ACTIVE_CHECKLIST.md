@@ -31,3 +31,5 @@ F1–F7 passed on `04f5b5c`. F8-Q established physical passage, route and center
 Active global objective: [WORLDGEN_PHASE0_2_GLOBAL_GOAL.md](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). Engineering steps may be interleaved, but resolve known F8-R failures first and preserve F8-Q. These review tasks are not additional WorldGen phases.
 
 - [ ] F8-T regional carrier closure: verify canonical physical source records, complete island footprints/shorelines/measurements and connected eligible counts on current CI; then establish per-island environmental carriers (climate, freshwater, local access) before historical consumers. Keep area sensitivity advisory until author approves playable scale. No Phase 16 implementation.
+
+- [ ] F8-T island environment: per-island inherited climate, local downhill catchments and Phase 2 coverage-weighted projection implemented; verify full integration CI and actual spatial distributions. Local climate refinement, freshwater persistence/availability and recovery/access interpretation remain open.

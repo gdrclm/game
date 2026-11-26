@@ -75,6 +75,7 @@
             minimumApproximatedAreaCells,
             processAttempts,
             islandRecords,
+            islandEnvironment: macro.buildRegionalIslandEnvironment(islandRecords, surface, input.climateEnvelope.outputs, bed),
             waterNetwork: network,
             summary: {
                 islandCount: islandRecords.length,
@@ -262,6 +263,7 @@
                             && actual.largestConnectedEligibleCount !== row.largestConnectedEligibleCount);
                 })) errors.push('Regional carrier counts contradict the physical water network.');
         }
+        if (!errors.length) errors.push(...macro.validateRegionalIslandEnvironment(value, geography));
         return errors;
     }
 
