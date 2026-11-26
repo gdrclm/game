@@ -22,6 +22,9 @@ function inspectRegionalArchipelago(result, macro) {
     const { signedRelativeElevation: bed, grid } = payload;
     const { width, height, originX, originY, subdivision } = grid;
     assert.equal(bed.length, width * height);
+    const inheritedRaster = macro.decodeRegionalElevation(regional);
+    assert.equal(inheritedRaster.length, bed.length);
+    assert(inheritedRaster.every((elevation, cell) => elevation === bed[cell]), 'Canonical elevation differs from the measured surface');
     const expectedParents = new Map(topology.islands.map(row => [row.islandId, 0]));
     const vents = new Set(payload.vents.map(row => row.ventId));
     const availableUplift = uplift.values.reduce((sum, value) => sum + value, 0);

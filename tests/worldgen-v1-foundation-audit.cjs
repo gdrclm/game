@@ -242,6 +242,15 @@ function testHandoffs(result) {
     const changedRegionalSeed = { ...geography.regionalArchipelago,
         regionalSeed: (geography.regionalArchipelago.regionalSeed + 1) >>> 0 };
     assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: changedRegionalSeed }).isValid);
+    const { elevationRaster, ...legacyRegion } = geography.regionalArchipelago;
+    assert(macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: legacyRegion }).isValid);
+    const truncatedRegion = { ...legacyRegion, elevationRaster: { ...elevationRaster, samplesBase64: 'AAAA' } };
+    assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: truncatedRegion }).isValid);
+    const signed = macro.decodeRegionalElevation(geography.regionalArchipelago);
+    signed[port.waterCell] = 0.01;
+    const floodedLink = { ...legacyRegion, elevationRaster: macro.encodeRegionalElevation(signed) };
+    assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: floodedLink }).isValid,
+        'A lifted water cell cannot keep its former landfall and path');
     const noExport = phase2.createPhase2ExportEnvelopeShell().run({
         ...result.phase2, validationReport: { ...result.phase2.validationReport, finalStatus: 'fail' }
     });

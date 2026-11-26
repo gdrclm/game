@@ -1,6 +1,39 @@
 (() => {
     const macro = window.Game.systems.worldgenMacro;
     const SUBDIVISION = 8;
+    const ELEVATION_ENCODING = 'float32-le-base64';
+
+    function encodeRegionalElevation(signed) {
+        const bytes = new Uint8Array(signed.length * Float32Array.BYTES_PER_ELEMENT);
+        const view = new DataView(bytes.buffer);
+        for (let cell = 0; cell < signed.length; cell += 1) view.setFloat32(cell * 4, signed[cell], true);
+        const pieces = [];
+        const chunk = 16384;
+        for (let offset = 0; offset < bytes.length; offset += chunk) {
+            pieces.push(String.fromCharCode(...bytes.subarray(offset, offset + chunk)));
+        }
+        return { encoding: ELEVATION_ENCODING, samplesBase64: btoa(pieces.join('')) };
+    }
+
+    function decodeRegionalElevation(regional) {
+        const raster = regional?.elevationRaster;
+        const size = regional?.grid?.width * regional?.grid?.height;
+        const byteCount = size * Float32Array.BYTES_PER_ELEMENT;
+        if (raster?.encoding !== ELEVATION_ENCODING || !Number.isSafeInteger(byteCount) || byteCount <= 0
+            || typeof raster.samplesBase64 !== 'string' || raster.samplesBase64.length !== Math.ceil(byteCount / 3) * 4) return null;
+        let bytes;
+        try {
+            bytes = atob(raster.samplesBase64);
+        } catch {
+            return null;
+        }
+        if (bytes.length !== byteCount) return null;
+        const buffer = Uint8Array.from(bytes, byte => byte.charCodeAt(0));
+        const view = new DataView(buffer.buffer);
+        const signed = new Float32Array(size);
+        for (let cell = 0; cell < size; cell += 1) signed[cell] = view.getFloat32(cell * 4, true);
+        return signed.every(Number.isFinite) ? signed : null;
+    }
 
     function sample(values, width, height, x, y) {
         const left = Math.max(0, Math.min(width - 1, Math.floor(x)));
@@ -242,4 +275,6 @@
     }
 
     macro.buildRegionalArchipelagoSurface = buildRegionalArchipelagoSurface;
+    macro.encodeRegionalElevation = encodeRegionalElevation;
+    macro.decodeRegionalElevation = decodeRegionalElevation;
 })();

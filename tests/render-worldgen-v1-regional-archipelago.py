@@ -83,6 +83,13 @@ def render(snapshot):
         panel.contour(xcoords, np.linspace(y0, south, height), values,
                       levels=[-0.08, -0.02, 0, 0.05, 0.15], colors=INK, linewidths=0.34, alpha=0.46)
         panel.axhline(position, color="white", linewidth=0.8, linestyle="--")
+    mechanisms = np.asarray(regional["verticalChangeMechanism"]).reshape(height, width)
+    restored = (mechanisms == 4) & (inherited <= 0)
+    if np.any(restored):
+        rows, columns = np.where(restored)
+        ax[1].scatter(x0 + columns / scale, y0 + rows / scale, marker="+", s=30,
+                      color="#953e74", linewidths=0.95, label="Сохранённая глубина пролива")
+        ax[1].legend(loc="lower left", fontsize=7, facecolor=PAPER)
 
     origin = np.zeros(height * width, dtype=np.uint8)
     for island in islands:

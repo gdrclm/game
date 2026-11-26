@@ -92,13 +92,14 @@
         }
         const regional = input.regionalArchipelago;
         if (regional?.surface) {
+            const { elevationRaster, ...regionalGeography } = regional.regionalGeography;
             categories.intermediateOutputs.push(makeEntry({
                 artifactId: 'foundation_geometry_regionalArchipelagoSurface',
                 artifactKind: 'intermediateOutput',
                 stageId: 'archipelagoSignificance',
                 sourceLayerId: 'regionalArchipelagoSurface',
                 payload: {
-                    ...regional.regionalGeography,
+                    ...regionalGeography,
                     signedRelativeElevation: Array.from(regional.surface.signed),
                     inheritedElevation: Array.from(regional.surface.inherited),
                     verticalChangeMechanism: Array.from(regional.surface.mechanisms),

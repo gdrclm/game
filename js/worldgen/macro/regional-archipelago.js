@@ -70,6 +70,7 @@
             sourceGraphIds: waterPaths.length ? ['seaConnectivityGraph'] : [],
             elevationUnits: 'normalized_macro_elevation_offset_from_sea_level',
             grid: surface.grid,
+            elevationRaster: macro.encodeRegionalElevation(surface.signed),
             minimumApproximatedAreaCells,
             processAttempts,
             islandRecords,
@@ -111,6 +112,9 @@
             return ['Regional archipelago grid exceeds its parent world.'];
         }
         const errors = [];
+        const signed = macro.decodeRegionalElevation(value);
+        if (value.elevationRaster !== undefined && !signed) return ['Invalid regional elevation raster.'];
+        const isLand = cell => signed && signed[cell] > 0;
         const plates = new Set(geography.plates.map(row => row?.plateId).filter(Boolean));
         const ids = new Set();
         const inside = cell => Number.isSafeInteger(cell) && cell >= 0 && cell < size;
@@ -137,6 +141,7 @@
             const localX = anchorX - grid.originX * grid.subdivision;
             const localY = anchorY - grid.originY * grid.subdivision;
             const land = new Set();
+            let footprintContainsWater = false;
             for (const run of row.landRuns) {
                 if (!Array.isArray(run) || !inside(run[0]) || !Number.isSafeInteger(run[1])
                     || run[1] <= 0 || run[0] % grid.width + run[1] > grid.width) {
@@ -146,13 +151,17 @@
                 const [cell, length] = run;
                 for (let offset = 0; offset < length; offset += 1) {
                     if (allLand.has(cell + offset)) errors.push(`Overlapping footprint in ${row.islandId}.`);
+                    if (signed && !isLand(cell + offset)) footprintContainsWater = true;
                     land.add(cell + offset);
                     allLand.add(cell + offset);
                 }
             }
             if (land.size !== row.areaCells || row.shoreEdges.some(edge =>
-                !Array.isArray(edge) || !land.has(edge[0]) || !inside(edge[1]) || !adjacent(edge[0], edge[1]))) {
+                !Array.isArray(edge) || !land.has(edge[0]) || !inside(edge[1]) || !adjacent(edge[0], edge[1]) || isLand(edge[1]))) {
                 errors.push(`Regional island area or shoreline contradicts its footprint in ${row.islandId}.`);
+            }
+            if (footprintContainsWater) {
+                errors.push(`Regional island footprint reaches water in ${row.islandId}.`);
             }
             if (!Number.isSafeInteger(localX) || !Number.isSafeInteger(localY)
                 || localX < 0 || localX >= grid.width || localY < 0 || localY >= grid.height
@@ -176,7 +185,7 @@
         const landfalls = new Map();
         for (const row of value.waterNetwork.landfalls || []) {
             if (!row || !islandLand.get(row.islandId)?.has(row.landCell) || !inside(row.waterCell) || allLand.has(row.waterCell)
-                || !adjacent(row.landCell, row.waterCell) || landfalls.has(row.islandId)) {
+                || isLand(row.waterCell) || !adjacent(row.landCell, row.waterCell) || landfalls.has(row.islandId)) {
                 errors.push(`Invalid regional water landfall at ${row?.islandId}.`);
                 continue;
             }
@@ -189,8 +198,24 @@
                 || landfalls.get(link.toIslandId) !== path.at(-1)
                 || !Number.isFinite(link.distanceMacroCellUnits)
                 || Math.abs(link.distanceMacroCellUnits * grid.subdivision - (path.length - 1)) > 0.00001
-                || path.some((cell, index) => !inside(cell) || allLand.has(cell) || (index > 0 && !adjacent(cell, path[index - 1])))) {
+                || path.some((cell, index) => !inside(cell) || allLand.has(cell) || isLand(cell)
+                    || (index > 0 && !adjacent(cell, path[index - 1])))) {
                 errors.push('Regional water link has an unresolved endpoint or crosses land.');
+                continue;
+            }
+            if (signed) {
+                let shallowest = Infinity;
+                let totalDepth = 0;
+                for (const cell of path) {
+                    const depth = -signed[cell];
+                    shallowest = Math.min(shallowest, depth);
+                    totalDepth += depth;
+                }
+                if (![link.shallowestDepth, link.meanDepth].every(Number.isFinite)
+                    || Math.abs(shallowest - link.shallowestDepth) > 1e-6
+                    || Math.abs(totalDepth / path.length - link.meanDepth) > 1e-6) {
+                    errors.push('Regional water link depths contradict the elevation raster.');
+                }
             }
         }
         return errors;
