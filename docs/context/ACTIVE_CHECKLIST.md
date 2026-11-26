@@ -29,3 +29,5 @@ Only current work and acceptance. Historical implementation details belong in gi
 F1–F7 passed on `04f5b5c`. F8-Q established physical passage, route and center/periphery evidence. F8-R closed the scoped Phase 2 regressions on `9f5da47`. F8 and F9 require the author's decision before Phase 3 or merge. [Project state](PROJECT_STATE.md) · [F8-Q review packet](review/f8q/README.md) · [F8-R review packet](review/f8r/README.md)
 
 Active global objective: [WORLDGEN_PHASE0_2_GLOBAL_GOAL.md](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). Engineering steps may be interleaved, but resolve known F8-R failures first and preserve F8-Q. These review tasks are not additional WorldGen phases.
+
+- [ ] F8-T regional carrier closure: verify canonical physical source records, complete island footprints/shorelines/measurements and connected eligible counts on current CI; then establish per-island environmental carriers (climate, freshwater, local access) before historical consumers. Keep area sensitivity advisory until author approves playable scale. No Phase 16 implementation.

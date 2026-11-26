@@ -17,6 +17,8 @@ function inspectRegionalArchipelago(result, macro) {
     assert.equal(payload.sourceHotspotSeedId, seaLevel.hotspotChain.hotspotSeedId);
     assert.deepEqual(payload.islandRecords, regional.islandRecords);
     assert.deepEqual(payload.waterNetwork, regional.waterNetwork);
+    assert.deepEqual(payload.vents, regional.sourceVents);
+    assert.deepEqual(macro.measureRegionalCarrierCapacity(regional.islandRecords, regional.waterNetwork), regional.summary.areaSensitivity);
     assert(Object.isFrozen(regional.islandRecords[0]), 'Regional geography must freeze with Phase 1');
     assert.deepEqual(regional.processAttempts.at(-1).unresolvedMacroIslandIds, []);
     const { signedRelativeElevation: bed, grid } = payload;
@@ -151,4 +153,30 @@ function verifyRegionalProcessFixture(macro) {
         inheritedSaddlePreservesIndependentUplift: true };
 }
 
-module.exports = { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture };
+function verifyRegionalCarrierFixture(macro) {
+    const islands = ['a','b','c','d','e'].map((islandId, i) => ({ islandId, areaMacroCellUnits: i === 1 ? 0.125 : 1 }));
+    const network = { landfalls: islands.map(({islandId}) => ({ islandId })),
+        links: [{fromIslandId:'a',toIslandId:'b'}, {fromIslandId:'b',toIslandId:'c'}, {fromIslandId:'d',toIslandId:'e'}] };
+    const row = macro.measureRegionalCarrierCapacity(islands, network).find(row => row.minAreaMacroCellUnits === 0.25);
+    assert.equal(row.openWaterLandfallCount, 4);
+    assert.equal(row.largestConnectedEligibleCount, 2, 'Separate water networks must not be counted together');
+    const width = 9, height = 7, grid = {originX:0,originY:0,width,height,subdivision:1};
+    const signed = new Float32Array(width * height).fill(-0.2);
+    const cells = [];
+    for (let y=2; y<=4; y++) for (let x=1; x<=3; x++) { cells.push(y*width+x); signed[y*width+x]=0.1; }
+    signed[3*width+2]=0.3;
+    const surface = {grid,signed,inherited:signed.slice(),mechanisms:new Uint8Array(signed.length),ventByCell:new Int32Array(signed.length).fill(-1),vents:[]};
+    const topology = {islands:[{islandId:'source',cellIndices:cells}]};
+    const chain = {sourcePlateId:'plate',peaks:[{cellIndex:29,x:2,y:3,radius:2}]};
+    const [island] = macro.extractRegionalArchipelagoIslands(surface,topology,chain,width).islandRecords;
+    const land = new Set(cells);
+    assert.deepEqual(macro.validateRegionalIslandSurface(island,land,grid,signed), []);
+    assert(macro.validateRegionalIslandSurface(island,new Set(cells.slice(1)),grid,signed).length);
+    assert(macro.validateRegionalIslandSurface({...island,shoreEdges:island.shoreEdges.slice(1)},land,grid,signed).length);
+    assert(macro.validateRegionalIslandSurface({...island,elevation:{...island.elevation,mean:0.8}},land,grid,signed).length);
+    const joined=signed.slice(); joined[3*width+4]=0.1;
+    assert(macro.validateRegionalIslandSurface(island,land,grid,joined).length);
+    return {distinctWaterNetworks:true,smallTransitIslandAllowed:true,completeLandComponent:true,completeShoreline:true,measuredElevation:true};
+}
+
+module.exports = { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture };

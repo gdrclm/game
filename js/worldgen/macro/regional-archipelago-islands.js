@@ -208,6 +208,71 @@
         return { islandRecords: islands, originCounts, minimumApproximatedAreaCells: MINIMUM_LAND_CELLS };
     }
 
+    // Validate against the canonical raster, not just a self-consistent footprint.
+    function validateRegionalIslandSurface(row, land, grid, signed) {
+        if (!signed || !land.size) return [];
+        const errors = [];
+        const { width, height, subdivision, originX, originY } = grid;
+        const first = land.values().next().value;
+        const seen = new Set([first]);
+        const queue = [first];
+        const expectedShore = new Set();
+        let sumHeight = 0, minHeight = Infinity, maxHeight = -Infinity;
+        let sumX = 0, sumY = 0, sumSlope = 0;
+        let sumDepth = 0, minDepth = Infinity, maxDepth = -Infinity;
+        let anchor = first, boundary = false, joinsOtherLand = false;
+        for (let cursor = 0; cursor < queue.length; cursor += 1) {
+            const cell = queue[cursor];
+            const x = cell % width, y = Math.floor(cell / width);
+            boundary ||= x === 0 || y === 0 || x === width - 1 || y === height - 1;
+            sumX += originX + x / subdivision;
+            sumY += originY + y / subdivision;
+            sumHeight += signed[cell];
+            minHeight = Math.min(minHeight, signed[cell]);
+            maxHeight = Math.max(maxHeight, signed[cell]);
+            if (signed[cell] > signed[anchor] || (signed[cell] === signed[anchor] && cell < anchor)) anchor = cell;
+            let slope = 0;
+            macro.forEachCardinalNeighbor(cell, width, signed.length, neighbor => {
+                slope = Math.max(slope, Math.abs(signed[cell] - signed[neighbor]) * subdivision);
+                if (signed[neighbor] > 0) {
+                    if (!land.has(neighbor)) joinsOtherLand = true;
+                    else if (!seen.has(neighbor)) { seen.add(neighbor); queue.push(neighbor); }
+                } else {
+                    expectedShore.add(cell + ':' + neighbor);
+                    const depth = -signed[neighbor];
+                    sumDepth += depth;
+                    minDepth = Math.min(minDepth, depth);
+                    maxDepth = Math.max(maxDepth, depth);
+                }
+            });
+            sumSlope += slope;
+        }
+        if (queue.length !== land.size || joinsOtherLand || boundary) {
+            errors.push('Regional island must be one complete enclosed land component: ' + row.islandId);
+            return errors;
+        }
+        const actualShore = new Set(row.shoreEdges.map(edge => edge[0] + ':' + edge[1]));
+        if (actualShore.size !== row.shoreEdges.length || expectedShore.size !== actualShore.size
+            || [...expectedShore].some(edge => !actualShore.has(edge))) {
+            errors.push('Regional island shoreline is incomplete or duplicated: ' + row.islandId);
+        }
+        const matches = (value, expected) => Number.isFinite(value) && Math.abs(value - expected) <= 1e-6;
+        const n = land.size, coast = expectedShore.size;
+        if (!matches(row.anchor?.x, originX + (anchor % width) / subdivision)
+            || !matches(row.anchor?.y, originY + Math.floor(anchor / width) / subdivision)
+            || !matches(row.centroid?.x, sumX / n) || !matches(row.centroid?.y, sumY / n)
+            || !matches(row.elevation?.min, minHeight) || !matches(row.elevation?.max, maxHeight)
+            || !matches(row.elevation?.mean, sumHeight / n)
+            || !matches(row.meanSlopePerMacroCell, sumSlope / n)
+            || !matches(row.shoreLengthMacroCellUnits, coast / subdivision)
+            || !matches(row.nearshoreDepth?.min, minDepth) || !matches(row.nearshoreDepth?.max, maxDepth)
+            || !matches(row.nearshoreDepth?.mean, sumDepth / coast)) {
+            errors.push('Regional island measurements contradict its elevation raster: ' + row.islandId);
+        }
+        return errors;
+    }
+
+    macro.validateRegionalIslandSurface = validateRegionalIslandSurface;
     macro.extractRegionalArchipelagoIslands = extractRegionalArchipelagoIslands;
     macro.preserveRegionalWaterSeparations = preserveRegionalWaterSeparations;
 })();

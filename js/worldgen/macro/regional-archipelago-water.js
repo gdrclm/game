@@ -131,5 +131,36 @@
         return { landfalls, links, componentSizes: summarizeConnectivity(islands, links) };
     }
 
+    // Physical candidates may be connected through smaller stepping stones.
+    // This is not a sailing vessel capability or an expedition selection.
+    function measureRegionalCarrierCapacity(islands, waterNetwork, thresholds = [0.125, 0.25, 0.5, 1]) {
+        const landfalls = new Set(waterNetwork.landfalls.map(row => row.islandId));
+        const byId = new Map(islands.map(row => [row.islandId, row]));
+        const neighbors = new Map([...landfalls].filter(id => byId.has(id)).map(id => [id, []]));
+        for (const link of waterNetwork.links) {
+            const a = neighbors.get(link.fromIslandId), b = neighbors.get(link.toIslandId);
+            if (a && b) { a.push(link.toIslandId); b.push(link.fromIslandId); }
+        }
+        const components = [], seen = new Set();
+        for (const id of neighbors.keys()) {
+            if (seen.has(id)) continue;
+            const queue = [id]; seen.add(id);
+            for (let i = 0; i < queue.length; i += 1) {
+                for (const next of neighbors.get(queue[i])) {
+                    if (!seen.has(next)) { seen.add(next); queue.push(next); }
+                }
+            }
+            components.push(queue.map(key => byId.get(key)));
+        }
+        return thresholds.map(minAreaMacroCellUnits => ({
+            minAreaMacroCellUnits,
+            islandCount: islands.filter(row => row.areaMacroCellUnits >= minAreaMacroCellUnits).length,
+            openWaterLandfallCount: islands.filter(row => row.areaMacroCellUnits >= minAreaMacroCellUnits && landfalls.has(row.islandId)).length,
+            largestConnectedEligibleCount: Math.max(0, ...components.map(rows =>
+                rows.filter(row => row.areaMacroCellUnits >= minAreaMacroCellUnits).length))
+        }));
+    }
+
+    macro.measureRegionalCarrierCapacity = measureRegionalCarrierCapacity;
     macro.buildRegionalArchipelagoWaterNetwork = buildRegionalArchipelagoWaterNetwork;
 })();

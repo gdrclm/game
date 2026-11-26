@@ -12,7 +12,7 @@ const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, ver
 const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
     verifySaddleFixture } = require('./worldgen-v1-terrain.cjs');
-const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture } = require('./worldgen-v1-regional-archipelago.cjs');
+const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -121,6 +121,7 @@ check('Final downhill routing and water receiver controls', () => verifyFinalDra
 check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));
 check('Regional landfalls require open water', () => verifyRegionalNetworkFixture(macro));
 check('Regional surface requires local physical support', () => verifyRegionalProcessFixture(macro));
+check('Regional carrier capacity and complete raster-backed island geometry', () => verifyRegionalCarrierFixture(macro));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;
@@ -242,6 +243,15 @@ function testHandoffs(result) {
     const changedRegionalSeed = { ...geography.regionalArchipelago,
         regionalSeed: (geography.regionalArchipelago.regionalSeed + 1) >>> 0 };
     assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: changedRegionalSeed }).isValid);
+    const incorrectCount = structuredClone(geography.regionalArchipelago);
+    incorrectCount.summary.areaSensitivity[0].largestConnectedEligibleCount += 1;
+    assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: incorrectCount }).isValid);
+    const missingShore = structuredClone(geography.regionalArchipelago);
+    missingShore.islandRecords[0].shoreEdges.pop();
+    assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: missingShore }).isValid);
+    const unresolvedVent = structuredClone(geography.regionalArchipelago);
+    unresolvedVent.islandRecords[0].physicalOrigin.regionalVentIds.push('missing_vent');
+    assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: unresolvedVent }).isValid);
     const { elevationRaster, ...legacyRegion } = geography.regionalArchipelago;
     assert(macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: legacyRegion }).isValid);
     const truncatedRegion = { ...legacyRegion, elevationRaster: { ...elevationRaster, samplesBase64: 'AAAA' } };

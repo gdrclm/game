@@ -58,7 +58,6 @@
         }
         const { islandRecords, originCounts, minimumApproximatedAreaCells } = extracted;
         const network = macro.buildRegionalArchipelagoWaterNetwork(islandRecords, surface);
-        const landfalls = new Set(network.landfalls.map(row => row.islandId));
         const regionalGeography = {
             version: 1,
             archipelagoId,
@@ -66,6 +65,8 @@
             seedNamespace: SEED_NAMESPACE,
             sourceHotspotSeedId: chain.hotspotSeedId,
             sourceMacroIslandIds: inheritedIds,
+            sourcePeaks: chain.peaks.map(({ cellIndex, x, y, radius }) => ({ cellIndex, x, y, radius })),
+            sourceVents: surface.vents.map(vent => ({ ...vent })),
             sourceFieldIds: [bed.fieldId, 'offshoreHotspotUpliftField', 'fractureMaskField', 'stormCorridorField', seafloor.fieldId],
             sourceGraphIds: waterPaths.length ? ['seaConnectivityGraph'] : [],
             elevationUnits: 'normalized_macro_elevation_offset_from_sea_level',
@@ -79,12 +80,7 @@
                 islandCount: islandRecords.length,
                 originCounts,
                 largestWaterConnectedComponent: network.componentSizes[0] || 0,
-                areaSensitivity: [0.125, 0.25, 0.5, 1].map(minAreaMacroCellUnits => ({
-                    minAreaMacroCellUnits,
-                    islandCount: islandRecords.filter(row => row.areaMacroCellUnits >= minAreaMacroCellUnits).length,
-                    openWaterLandfallCount: islandRecords.filter(row => row.areaMacroCellUnits >= minAreaMacroCellUnits
-                        && landfalls.has(row.islandId)).length
-                }))
+                areaSensitivity: macro.measureRegionalCarrierCapacity(islandRecords, network)
             }
         };
         return { regionalGeography, surface };
@@ -112,6 +108,33 @@
             return ['Regional archipelago grid exceeds its parent world.'];
         }
         const errors = [];
+        // Legacy version-1 packages may omit these additive physical source records.
+        const hasSources = value.sourcePeaks !== undefined || value.sourceVents !== undefined;
+        const peaks = new Set(), vents = new Set();
+        if (hasSources) {
+            if (!Array.isArray(value.sourcePeaks) || !value.sourcePeaks.length || !Array.isArray(value.sourceVents)) {
+                return ['Invalid regional physical source records.'];
+            }
+            for (const peak of value.sourcePeaks) {
+                if (!Number.isSafeInteger(peak?.cellIndex) || peak.cellIndex < 0
+                    || peak.cellIndex >= geography.worldBounds.width * geography.worldBounds.height
+                    || peaks.has(peak.cellIndex) || peak.x !== peak.cellIndex % geography.worldBounds.width
+                    || peak.y !== Math.floor(peak.cellIndex / geography.worldBounds.width)
+                    || !Number.isFinite(peak.radius) || peak.radius <= 0) {
+                    errors.push('Invalid regional source peak.');
+                }
+                peaks.add(peak?.cellIndex);
+            }
+            for (const vent of value.sourceVents) {
+                if (!vent?.ventId || vents.has(vent.ventId) || !peaks.has(vent.parentPeakCell)
+                    || ![vent.x, vent.y, vent.rise, vent.radius].every(Number.isFinite)
+                    || vent.x < grid.originX || vent.y < grid.originY
+                    || vent.x > grid.originX + (grid.width - 1) / grid.subdivision
+                    || vent.y > grid.originY + (grid.height - 1) / grid.subdivision
+                    || vent.rise <= 0 || vent.radius <= 0) errors.push('Invalid regional source vent.');
+                vents.add(vent?.ventId);
+            }
+        }
         const signed = macro.decodeRegionalElevation(value);
         if (value.elevationRaster !== undefined && !signed) return ['Invalid regional elevation raster.'];
         const isLand = cell => signed && signed[cell] > 0;
@@ -168,6 +191,15 @@
                 || !land.has(localY * grid.width + localX) || row.islandId !== `regional_island_${anchorX}_${anchorY}`) {
                 errors.push(`Regional island anchor does not resolve to its footprint in ${row.islandId}.`);
             }
+            if (hasSources && (!Array.isArray(row.physicalOrigin.regionalVentIds)
+                || row.physicalOrigin.regionalVentIds.some(id => !vents.has(id))
+                || (row.physicalOrigin.parentPeakCell !== undefined && !peaks.has(row.physicalOrigin.parentPeakCell))
+                || (row.physicalOrigin.mechanism === 'volcanic_satellite' && !row.physicalOrigin.regionalVentIds.length))) {
+                errors.push('Regional island has unresolved physical sources: ' + row.islandId);
+            }
+            if (signed && !footprintContainsWater && row.shoreEdges.every(edge => Array.isArray(edge) && edge.length === 2)) {
+                errors.push(...macro.validateRegionalIslandSurface(row, land, grid, signed));
+            }
             islandLand.set(row.islandId, land);
         }
         if (Array.isArray(value.sourceMacroIslandIds)) {
@@ -217,6 +249,18 @@
                     errors.push('Regional water link depths contradict the elevation raster.');
                 }
             }
+        }
+        if (!errors.length && Array.isArray(value.summary?.areaSensitivity)) {
+            const expected = macro.measureRegionalCarrierCapacity(value.islandRecords, value.waterNetwork);
+            if (value.summary.areaSensitivity.length !== expected.length
+                || expected.some((row, index) => {
+                    const actual = value.summary.areaSensitivity[index];
+                    return !actual || actual.minAreaMacroCellUnits !== row.minAreaMacroCellUnits
+                        || actual.islandCount !== row.islandCount
+                        || actual.openWaterLandfallCount !== row.openWaterLandfallCount
+                        || (actual.largestConnectedEligibleCount !== undefined
+                            && actual.largestConnectedEligibleCount !== row.largestConnectedEligibleCount);
+                })) errors.push('Regional carrier counts contradict the physical water network.');
         }
         return errors;
     }
