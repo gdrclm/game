@@ -16,6 +16,7 @@ from matplotlib.colors import ListedColormap
 PAPER = '#f5f1e7'
 INK = '#1a3036'
 SEA = '#dce9e7'
+NO_SOURCE = '#b76351'
 
 
 def map_panel(fig, ax, title, values, cmap, label=None, **limits):
@@ -81,13 +82,74 @@ def render(snapshot):
               'PuBu', 'Нормированная высота до седла', vmin=0, vmax=max(.001, np.percentile(storage[storage > 0], 99) if np.any(storage) else 0))
     map_panel(fig, axs[1, 0], 'Путь по суше к потенциальному источнику', np.where(distance >= 0, distance, np.nan).reshape(shape),
               'YlGnBu', 'Кардинальные шаги в макроклетках', vmin=0, vmax=max(1, np.percentile(distance[distance >= 0], 95) if np.any(distance >= 0) else 0))
+    downstream = np.asarray(drainage['downstreamCellIndices'])
+    contributing = np.asarray(drainage['contributingCells'])
+    candidate = np.flatnonzero((downstream >= 0) & (contributing >= drainage['reachMinimumContributingCells']))
+    y, x = np.divmod(candidate, shape[1])
+    keep = (x % 3 == 0) & (y % 3 == 0)
+    y, x = y[keep], x[keep]
+    target_y, target_x = np.divmod(downstream[candidate[keep]], shape[1])
+    axs[1, 0].quiver(x, y, target_x - x, target_y - y, angles='xy', scale_units='xy', scale=.6,
+                     color=INK, alpha=.63, width=.0023)
     map_panel(fig, axs[1, 1], 'Средний путь к источнику на каждом острове', regional_distances.reshape(regional_shape),
               'YlGnBu', 'Длина на региональной сетке в макроклетках', vmin=0,
               vmax=max(.125, np.nanpercentile(regional_distances, 98) if np.any(np.isfinite(regional_distances)) else 0))
     axs[1, 1].imshow(np.ma.masked_where(no_source == 0, no_source).reshape(regional_shape), interpolation='nearest',
-                     cmap=ListedColormap(['#b76351']), vmin=0, vmax=1)
+                     cmap=ListedColormap([NO_SOURCE]), vmin=0, vmax=1)
     fig.text(.07, .059, f'Контур отмечает крупнейшую каноническую группу {major}. Красные острова не имеют достижимого источника по текущему расчёту.', fontsize=9, color=INK)
-    fig.text(.07, .029, 'Расчёт использует поверхностный сток и рельеф. Объём под седлом измерен геометрически.', fontsize=9, color=INK)
+    fig.text(.07, .029, 'Стрелки отмечают направления на выборочных участках развитого стока. Объём под седлом измерен геометрически.', fontsize=9, color=INK)
+    return fig
+
+
+def render_island_environment(snapshot):
+    debug = snapshot['diagnostics']['physicalWorldDebugBundle']
+    regional = next(row['payload'] for row in debug['intermediateOutputs']
+                    if row['sourceLayerId'] == 'regionalArchipelagoSurface')
+    grid = regional['grid']
+    shape = (grid['height'], grid['width'])
+    rows = {record['islandId']: record for record in regional['islandEnvironment']['records']}
+    islands = regional['islandRecords']
+    climate = np.full(shape, np.nan)
+    shelter = np.full(shape, np.nan)
+    flow = np.full(shape, np.nan)
+    landfall = np.full(shape, np.nan)
+    unwatered = np.zeros(shape, dtype=bool)
+    no_landfall = np.zeros(shape, dtype=bool)
+    for island in islands:
+        record = rows[island['islandId']]
+        setting = record['physicalSetting']
+        temperature = setting['climateRange']['temperature']
+        coastal_distance = setting['transport']['meanDistanceToLandfall']
+        seasonal_flow = record['waterAccess']['meanSourceLowFlow']
+        for start, length in island['landRuns']:
+            cells = slice(start, start + length)
+            climate.flat[cells] = temperature['max'] - temperature['min']
+            shelter.flat[cells] = setting['terrainShelter']['shelteredLandCells'] / island['areaCells']
+            flow.flat[cells] = seasonal_flow if seasonal_flow is not None else np.nan
+            landfall.flat[cells] = coastal_distance if coastal_distance is not None else np.nan
+            unwatered.flat[cells] = seasonal_flow is None
+            no_landfall.flat[cells] = coastal_distance is None
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10), facecolor=PAPER)
+    fig.subplots_adjust(left=.09, right=.92, top=.846, bottom=.102, wspace=.17, hspace=.32)
+    fig.text(.08, .953, f"Paths  /  Природная среда островов  /  {snapshot['seed']}", fontsize=21, color=INK, fontweight='semibold')
+    fig.text(.08, .914, f"{snapshot['revision'][:12]}  ·  {len(islands)} островов  ·  региональная сетка ×{grid['subdivision']}",
+             fontsize=10, color=INK)
+    map_panel(fig, axs[0, 0], 'Различия температуры внутри острова', climate,
+              'magma_r', 'Диапазон нормированного индекса', vmin=0, vmax=1)
+    map_panel(fig, axs[0, 1], 'Защита рельефом по ветру', shelter,
+              'YlGn', 'Доля экранированной суши', vmin=0, vmax=1)
+    for ax, title, values, missing, label, cmap in [
+        (axs[1, 0], 'Доступный сток в маловодный сезон', flow, unwatered, 'Средний индекс притока', 'YlGnBu'),
+        (axs[1, 1], 'Путь от проверенного берегового выхода', landfall, no_landfall, 'Средняя длина в макроклетках', 'Oranges')
+    ]:
+        maximum = max(.001, float(np.nanmax(values))) if np.any(np.isfinite(values)) else 1
+        map_panel(fig, ax, title, values, cmap, label, vmin=0, vmax=maximum)
+        ax.imshow(np.ma.masked_where(~missing, missing), interpolation='nearest',
+                  cmap=ListedColormap([NO_SOURCE]), vmin=0, vmax=1)
+    fig.text(.08, .053, 'Красный цвет означает отсутствие измеренного доступа к источнику или береговому выходу в соответствующей панели.',
+             fontsize=9, color=INK)
+    fig.text(.08, .024, 'Температура уточнена по высоте. Экранирование учитывает преграды со стороны преобладающего ветра.',
+             fontsize=9, color=INK)
     return fig
 
 
@@ -96,14 +158,20 @@ def main():
     parser.add_argument('snapshots', type=Path)
     parser.add_argument('output', type=Path)
     parser.add_argument('seeds', nargs='+', type=int)
+    parser.add_argument('--island-environment', action='store_true')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    with PdfPages(args.output / 'local-water-atlas.pdf', metadata={'Title':'Paths · Сток и доступ к воде'}) as pdf:
+    filename, title, renderer = (
+        ('island-environment', 'Природная среда островов', render_island_environment)
+        if args.island_environment else ('local-water-atlas', 'Сток и доступ к воде', render)
+    )
+    with PdfPages(args.output / f'{filename}.pdf', metadata={'Title': f'Paths · {title}'}) as pdf:
         for seed in args.seeds:
             snapshot = json.loads((args.snapshots / f'seed-{seed}.json').read_text())
-            fig = render(snapshot)
+            fig = renderer(snapshot)
             pdf.savefig(fig, dpi=140)
-            fig.savefig(args.output / f'water-access-{seed}.png', dpi=135)
+            image_name = 'island-environment' if args.island_environment else 'water-access'
+            fig.savefig(args.output / f'{image_name}-{seed}.png', dpi=135)
             plt.close(fig)
 
 
