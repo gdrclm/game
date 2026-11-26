@@ -19,11 +19,13 @@ Current engineering work only; past iterations and measurements are preserved in
 
 - [x] Sea boundary regression: retain polar boundary-only water as measured geometry and require an interior cell for a macro sea; `3840024598` now belongs to the mandatory cohort. [Evidence](review/f8t/closure/README.md)
 
+- [x] Canonical inland bottleneck endpoints and observed highstand fallback. Four full targeted exports exercise previously rejected continental cases and expand the mandatory cohort to 48. [Evidence](review/f8t/continental-shoreline/README.md)
+
 ## Active technical work (do not restart completed milestones)
 - [ ] F8-T water closure: validate how measured branches, local access, seasonal input and retention should alter environmental pressure/recovery. Retain 42, 16908799 and all confirmed regression controls; no global coefficient patch to force acceptance.
 - [ ] F8-T local environment: per-island water persistence/access, climate refinement and physical recovery interpretation; report unresolved data, not guessed potable-water availability.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: resolve or present explicit author-policy blockers for 10 stress failures (2 Phase 1, 8 Phase 2) and other retained controls. Investigate independent holdout failures and repeat fixed cohorts after changes to terrain, climate, pressure or recovery. [Current 54/64 evidence](review/f8t/local-water/README.md)
+- [ ] F8-S: resolve or present explicit author-policy blockers for remaining Phase 1 and Phase 2 failures and retained controls. Investigate independent holdout failures and repeat fixed cohorts after changes to terrain, climate, pressure or recovery. [Current 54/64 evidence](review/f8t/local-water/README.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 
