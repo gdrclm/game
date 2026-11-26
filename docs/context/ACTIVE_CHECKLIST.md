@@ -1,37 +1,24 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Only current work and acceptance. Historical implementation details belong in git and PROJECT_STATE.md.
+Current engineering work only; past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-26 against 73fb7a8.
 
-- [x] Separate working branch, CI and baseline diagnostic.
-- [x] Implement official Phase 0 creation, export validation and adapter; deterministic cohort checks.
-- [x] Fix Phase 1 intake/coast profile and hydrosphere RNG namespace.
-- [x] Historical baseline captured on three deterministic canonical seeds, including validation failures.
-- [x] First maritime causal unit and read-only counterfactual instrumentation.
-- [x] F1: Diagnose missing connectivity/archipelago/chokepoint records. Inspect land/water masks, regional segmentation, coastal opportunity nodes, sea graph, hybrid graph, route endpoints/edges, fragmentation runs, archipelago detection, package record assembly and validation. Capture actual stage counts and rejected candidates, identify first loss; verify required minima against Phase 1/2 contracts. See [baseline stage trace](FOUNDATION_EXECUTION_PLAN.md#исходная-трассировка-f1).
-- [x] F2: Correct generation/assembly with narrow regression tests; all canonical seeds pass Phase 1 validation and satisfy required root records/references, with no silent master seed changes. Preserve genuinely varied morphology. If documented rebalance needed, make bounded, reproducible and logged; review quality rather than threshold lowering.
-- [x] F3: Real Phase 2 intake/pressure/recovery/rhythm/export on valid Phase 1 worlds; run twice, compare hashes, inspect record binding, physical causality, pressure and recovery; test invalid input rejected. Fixture harness remains green.
-- [x] F4: Exercise maritime intervention on real eligible worlds (status pass, not not_exercised); verify no geometry/control drift. Trace other documented input channels: environmentalVolatility, routeFragilityBias, conflictPressure, collapseIntensity; map semantic inputs to relevant phases, avoid forcing physical effects from social tendencies. Add missing contracts only with rationale; no arbitrary coefficient inflation.
-- [x] F5: One narrow Phase 0→1→2 orchestrator, fail closed; canonical outputs and immutable handoffs; opt-in debug exports. Not player runtime. No integration with expedition progression before Phase 17.5.
-- [x] F6: Run predeclared holdout cohort (suggest 8 distributed seed values distinct from canonical and document before running); report success/failure per seed, determinism, diversity, causal effect coverage, generation time. Scale cohort after performance check. Do not hide failed seeds.
-- [x] F7: Five read-only atlases and the fixed-seed storm comparison checked against actual PhysicalWorldDebugBundle and Phase 2 exports. See [author review packet](review/README.md).
-- [x] F8-Q: Investigate and refine physical passage closures, transport independence, morphology and center/periphery contrast. Compare the baseline and candidate on the same 27 seeds and four untouched seeds. Publish [maps, causes, and evidence](review/f8q/README.md).
-- [x] F8-R: Fix both original Phase 2 failures and the area-weighting regression `3508323923`. Verify all 31 known worlds plus two predeclared cohorts. CI passed 32/32. The holdouts passed 13/16 with three reproducible Phase 1 failures present on the baseline. [Recovery evidence and maps](review/f8r/README.md)
-- [ ] F8-T: Signed relief, morphology, bathymetry and final drainage are implemented and mapped. Canonical basin coverage and the straight tectonic footprints remain open. [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md)
-- [x] F8-T regional archipelago: Prehistorical coordinates, island footprints, elevations, physical sources, shore depths and measured water links. Twelve real worlds preserve macro-island identities through regional refinement. Thirty candidates depend on the target physical area. [Regional atlas](review/f8t/archipelago/README.md)
-- [x] F8-C: Inventory all Phase 0 channels, evaluate 1,031 inputs and reverse order, verify fixed-seed causality and immutable fail-closed handoffs. The extreme storm case that crosses a Phase 1 validation limit is reported separately. [Evidence](review/f8t/README.md)
-- [ ] F8-D: Map and measure diversity, including the unresolved rectilinear stretches of coast, extreme water support and distinctions among physical opportunities.
-- [ ] F8-S: The expanded 43-world CI passed, including the original 31. The repeated holdout audit records 54/64 stress and 7/7 edge exports. Ten failures remain reproducible. [Audit](review/f8t/foundation-scale-latest.json)
-- [x] F8-V: Physical atlas for 13 actual worlds, including rejected candidates, source matrix, and evidence for author examination. [Packet](review/f8t/README.md)
-- [ ] F8: Author review of physical coherence, causal meaning, variation and downstream narrative potential. Record decision or requested rule changes and retest unseen seeds. Do not claim author acceptance.
-- [ ] F9: Final reconciliation of docs/code/tests/phase readiness; explicit approval before Phase 3 expansion or merge.
+## Confirmed
+- [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
+- [x] F8-Q: physical passage closure with accessible terminals, transport alternatives and center/periphery measurements. [Evidence](review/f8q/README.md)
+- [x] F8-R: original recovery regressions 16908799, 2764796977 and area weighting case 3508323923. [Evidence](review/f8r/README.md)
+- [x] F8-T regional carriers: canonical regional terrain, complete island geometry, sources, water connectivity, inheritance and capacity sensitivity; actual fragment counterfactuals. [Atlas](review/f8t/archipelago/README.md)
+- [x] F8-T island environment: inherited climate, local downhill catchments, coverage-weighted Phase 2 projection. [Evidence](review/f8t/archipelago/saddle-audit.json)
+- [x] F8-C: Phase 0 1,031 seed and namespace audit; fixed-seed physical causal checks and immutable handoffs.
+- [x] F8-V: actual physical and regional diagnostic atlases, including rejection and intervention cases. Author inspection remains pending.
+- [x] Mandatory 43-world CI and browser checks on 4f23a9f. [CI](https://github.com/gdrclm/game/actions/runs/45780913571)
 
-## Milestone boundary
-F1–F7 passed on `04f5b5c`. F8-Q established physical passage, route and center/periphery evidence. F8-R closed the scoped Phase 2 regressions on `9f5da47`. F8 and F9 require the author's decision before Phase 3 or merge. [Project state](PROJECT_STATE.md) · [F8-Q review packet](review/f8q/README.md) · [F8-R review packet](review/f8r/README.md)
+## Active technical work (do not restart completed milestones)
+- [ ] F8-T water closure: trace actual terminal branches, local access and climate coverage; separate water support from shelter and recovery. Retain 42, 16908799 and all confirmed regression controls; no global coefficient patch to force acceptance.
+- [ ] F8-T local environment: per-island water persistence/access, climate refinement and physical recovery interpretation; report unresolved data, not guessed potable-water availability.
+- [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
+- [ ] F8-S: resolve or present explicit author-policy blockers for 10 stress failures (2 Phase 1, 8 Phase 2) and other retained controls. Repeat full 43-world CI, same 64 stress + 7 edges on a single candidate revision and new predeclared holdouts. [Current 54/64 evidence](review/f8t/foundation-scale-latest.json)
+- [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
+- [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 
-Active global objective: [WORLDGEN_PHASE0_2_GLOBAL_GOAL.md](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). Engineering steps may be interleaved, but resolve known F8-R failures first and preserve F8-Q. These review tasks are not additional WorldGen phases.
-
-- [x] F8-T regional carrier verification: complete connected footprints, shorelines, bathymetry, physical sources and connected eligible counts passed the 43-world CI with the inherited cases. Area sensitivity remains diagnostic pending the author decision on play scale. [CI](https://github.com/gdrclm/game/actions/runs/45779872183)
-
-- [x] F8-T island environment: inherited climate, local downhill catchments and coverage-weighted Phase 2 projection passed CI on 40 worlds and repeat export on eight local worlds. [Evidence](review/f8t/archipelago/saddle-audit.json)
-- [x] F8-T regional fragmentation: measured traces reconnect two erosion fragments and one fault fragment when only the drowned cells of their originating process are restored. [Evidence](review/f8t/archipelago/fragment-audit.json)
-- [ ] F8-T local environmental limits: detailed local climate, freshwater persistence and island recovery/access still require physical interpretation. Keep unmatched macro climate cells visible in subsequent work.
+## Boundaries
+No Phase 3, new history or player runtime integration before their respective gates. Do not change main. One archipelago and 30 V1 playable roles are existing scope; the physical candidate threshold is advisory. [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Current state](PROJECT_STATE.md).

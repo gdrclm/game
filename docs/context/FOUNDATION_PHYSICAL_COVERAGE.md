@@ -34,3 +34,7 @@
 | `worldTone`, `likelyWorldPattern`, `likelyConflictMode`, `likelyCollapseMode`, `likelyReligiousPattern`, `likelyArchipelagoRole` | Детерминированные сводки профиля. Проверка распределения видит все категории по каждой сводке. | Сводки для будущих фаз без готовых историй или физического переключателя. |
 
 Привязка namespace проверяется в Phase 0 export и при intake Phase 1. Канонические хеши сверяются с включённой и выключенной диагностикой. Машинная арифметика V8 отличается на последних разрядах отдельных осей между Node 22 и Node 24. Сравнение полных хешей ведётся в одной версии Node.
+
+## Regional environment and latest scale evidence
+
+Regional island records now contain exact signed elevation, full connected footprints and measured source peaks/vents, water paths and area sensitivity by connected component. Fault/erosion fragments on three seeds were verified with fixed-seed process ablation. Their areas are below 0.25 macro cells; no claim of widespread nonvolcanic playable islands. `islandEnvironment` inherits actual climate signals and computes separate downhill catchments from regional elevation. Phase 2 projects existing band signals over covered cells; unmatched cells remain explicit, no inferred freshwater storage or local recovery yet. The 43-world CI passed; the full stress audit retains 10 failures. [Latest evidence](review/f8t/foundation-scale-latest.json).

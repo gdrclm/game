@@ -1,29 +1,16 @@
 # Author review queue
 
-F8 ждёт авторской оценки. F8-Q содержит географию, водные обходы и пересчёт доступности. F8-R воспроизводит и исправляет известные отказы Phase 2, показывает местные условия восстановления и учитывает три исходных отказа Phase 1 на новых seed. [Пакет F8-Q](review/f8q/README.md) · [Пакет F8-R](review/f8r/README.md) · [Технический статус](ACTIVE_CHECKLIST.md)
+Current F8 review, 26 November 2026. No approval inferred. Technical state in [PROJECT_STATE.md](PROJECT_STATE.md). Decisions should be recorded in DESIGN_DECISIONS.md after explicit author response; engineering may continue independently within existing contracts.
 
-## F8
+## Decisions affecting the physical foundation
 
-- Сравнить `137` и `2026`, где одинаковое число пар рейсов приводит к разной концентрации движения. Оценить различия между распределёнными линиями, локальными узкими местами и зависимостью от конкретной пристани. [Карты и измерения](review/f8q/README.md#карты-и-контекст-для-будущей-истории)
-- Сравнить цепь из шести островов `1908874353`, три материка `2576980379` и новую географию `64847321`. Оценить, достаточно ли отличий, которые даёт модель с одной цепью и ограниченными отклонениями по высоте дна. Дополнительные архипелаги потребуют отдельного авторского решения. [Результаты по форме](review/f8q/README.md#форма)
-- Сопоставить устойчивость местных укрытий и медленный подвоз в `16908799`, две разные равнины в `2764796977` и мелкие островные водосборы в `3508323923`. Насколько различимы условия восстановления и их последствия для будущих историй? [Карты и измеренные причины](review/f8r/README.md#карты-и-вопросы-авторской-оценки)
+1. **Playable island scale.** V1 still has 30 playable island roles. Of 54 successful stress worlds, all supply 30 connected physical islands at 0.25 macro-cell area, 48 at 0.5, 19 at 1.0. Compare small volcanic satellites in 137 with wider bodies in 3508323923 and 2026. Decide size only with a meaningful local terrain and content-density model. Do not equate candidate count with playability. [Regional atlas](review/f8t/archipelago/README.md)
+2. **Single-continent worlds.** 1122193213, 3019978005, 2402593754 expose the two-continent minimum; the first has no supported second body at any tested sea level. Preserve existing gate until a physical solution or author decision. One playable archipelago remains V1 scope, additional archipelagos an explicit extension.
+3. **Pressure and rhythm distinction.** 1665754063 fails a sorted global distribution comparison despite physically different sources. Assess spatial/temporal distinctions before considering the meaning of the gate. Do not simply weaken it.
+4. **Water, shelter and recovery.** Dry areas may still offer shelter or access to distant water. The actual branch/access model must distinguish these. Moisture-weighted basin experiment resolves eight original failures but breaks 42 and 16908799; not adopted. [Evidence](review/f8t/recovery-physical-audit.json). Author judgement should follow actual maps and local contrasts, not an arbitrary threshold change.
+5. **Physical appearance and diversity.** Compare terrain and transport in 137/2026, six-island macrochain 1908874353, and three-continent 2576980379. Evaluate inherited vs regional relief, straight coast/plate features, volcanic satellites, measured fault/erosion fragments and environmental differences. [Physical atlas](review/f8t/README.md) · [Fragment atlas](review/f8t/archipelago/fragment-atlas.pdf)
 
-## Более поздняя оценка
+## Later gates (not current engineering)
+Culture, irony, everyday life, contradictions, rare historical narratives, detective evidence and material traces: Phase 3 onward. Exact production blocks 3–5 and final disease objective remain to reconcile; final local art needs approved reference materials. No generated history or gameplay claim before corresponding phases.
 
-- Культура, индивидуальные различия, повседневность, юмор, противоречия, редкие истории и их материальные следы. До Phase 17.5 возможные последствия остаются гипотезами.
-- Точные границы производственных блоков 3–5, архитектура NPC и согласование формулировки финальной цели с историей болезни.
-- Оригинальные художественные референсы и утверждённые материалы нужны к художественному этапу.
-
-Авторские решения фиксируются в [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md). F9 и Phase 3 ждут явной авторской приёмки.
-
-## Техническая граница F8-R
-
-Три исходных отказа Phase 1 ограничивают готовность на произвольных seed. Их фактические маски и причины опубликованы вместе с успешными результатами. [Открытые случаи](review/f8r/README.md#новые-seed-и-граница-готовности)
-
-## Физические миры и пороги F8
-
-- Какой минимальный размер и диапазон рельефа нужен отдельному игровому острову V1? Сравнить тесные вулканические спутники `137` с более широкой группой `3508323923`. У `2546155002` одна водная сеть соединяет 47 тел от четверти макроклетки и 29 от половины. Выбранный масштаб прямо влияет на доступность 30 физических носителей. [Крупномасштабные карты и чувствительность](review/f8t/archipelago/README.md)
-
-- Допустим ли один материк при наличии поддержанного архипелага и рабочих водных обходов? У `1122193213` единственное крупное тело выдержало полный просмотр уровней моря. Самое крупное второе тело во вспомогательном поиске доходит до 348 клеток при минимуме 819. Прежний генератор даёт один материк также у `3019978005` и `2402593754`. Текущая граница Phase 1 сохраняется. Чтобы сохранить два материка в таких мирах, нужен иной физический источник второй континентальной опоры до среза уровня моря.
-- Должны ли совпадающие отсортированные распределения глобальных показателей блокировать мир, если состояния давления и временные режимы имеют разные источники и пространственное выражение? `1665754063` воспроизводит именно этот блок. Проверка сохранена. Решение касается смысла порога дифференциации давления и ритма.
-- `4144686569` даёт два материка и поддержанную островную цепь. Оценка воды объединяет 443 отдельных терминала `basin_001`. Пересчёт с влажностью снимает отклонение на этом мире, но убирает подтверждённые возможности восстановления в `42` и `16908799`. Какую роль для игрового V1 должны иметь укрытия в сухих областях и доступ к удалённым водным источникам? Ответ поможет проверить будущую локальную модель после расчёта физических ветвей стока. [Физические контроли](review/f8t/recovery-physical-trial.png) · [Водосборы и измерения](review/f8t/recovery-physical-audit.json)
+F8/F9 and Phase 3 require explicit author approval. 
