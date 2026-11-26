@@ -218,6 +218,7 @@
                 }
                 return {islandId:row.islandId,landCellCount:row.landCellCount,
                     localClimate:row.climate,runoffPotential:row.runoffPotential,
+                    ...(row.waterAccess && { waterAccess: row.waterAccess }),
                     catchments:row.catchments,unmatchedClimateCells:row.unmatchedClimateCells,inheritedSignals};
             })};
     }
@@ -447,6 +448,7 @@
                     regionalIslandEnvironmentalProjection: buildRegionalIslandEnvironmentalProjection(
                         finalValidationInput.phase2InputBundle.rootSupport.regionalIslandEnvironment,
                         finalValidationInput.pressureFieldPackage, finalValidationInput.environmentalRhythmPackage),
+                    reliefWaterAccess: finalValidationInput.phase2InputBundle.rootSupport.reliefWaterAccess,
                     rebalancePlan
                 });
 

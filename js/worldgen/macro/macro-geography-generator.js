@@ -724,6 +724,14 @@
         const stageContext = stageMaterialization.stageContext;
         const stageBundles = stageMaterialization.stageBundles;
         stageContext.regionalArchipelago = macro.buildRegionalArchipelago(stageContext);
+        const marine = stageContext.marineCarving?.outputs?.fields;
+        const climate = stageContext.climateEnvelope?.outputs?.fields;
+        const surface = marine?.finalRelativeElevationField;
+        if (surface && marine.macroSeafloorFormField && climate?.wetnessField && climate?.seasonalityField) {
+            stageContext.finalDrainage = macro.buildFinalDrainage(surface, marine.macroSeafloorFormField, climate.wetnessField.values);
+            stageContext.localWater = macro.measureLocalWater({ signed: surface.values, width: surface.width,
+                drainage: stageContext.finalDrainage, wetness: climate.wetnessField.values, seasonality: climate.seasonalityField.values });
+        }
         const validationBundle = resolveValidationBundle({
             ...stageContext,
             validationRebalance: input.validationRebalance,

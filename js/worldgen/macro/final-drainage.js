@@ -2,17 +2,19 @@
     const macro = window.Game.systems.worldgenMacro;
     const REACH_MIN_CELLS = 16;
 
-    function buildFinalDrainage(surface, seafloor, wetness) {
-        const { width, height, values: bed } = surface;
+    function routeSurfaceDrainage({ signed: bed, width, wetness, receiverAt, landCells }) {
         const size = bed.length;
         const downstream = new Array(size).fill(-1);
         const terminal = new Array(size).fill(-1);
         const contributingCells = new Array(size).fill(0);
         const runoffPotential = new Array(size).fill(0);
-        const land = [];
-        for (let cell = 0; cell < size; cell += 1) {
-            if (bed[cell] <= 0) continue;
-            land.push(cell);
+        const land = landCells ? landCells.slice() : [];
+        if (!landCells) {
+            for (let cell = 0; cell < size; cell += 1) {
+                if (bed[cell] > 0) land.push(cell);
+            }
+        }
+        for (const cell of land) {
             contributingCells[cell] = 1;
             if (wetness) runoffPotential[cell] = wetness[cell];
             let lowest = bed[cell];
@@ -28,6 +30,9 @@
         land.sort((a, b) => bed[a] - bed[b] || a - b);
         for (const cell of land) {
             const next = downstream[cell];
+            if (next >= 0 && bed[next] > 0 && !contributingCells[next]) {
+                throw new Error('Surface drainage crosses an unmeasured land cell.');
+            }
             terminal[cell] = next < 0 || bed[next] <= 0 ? cell : terminal[next];
         }
         for (let index = land.length - 1; index >= 0; index -= 1) {
@@ -40,8 +45,7 @@
 
         const outlets = land.filter(cell => terminal[cell] === cell).map(cell => {
             const receivingCell = downstream[cell];
-            const receiver = receivingCell < 0 ? 'local_depression'
-                : seafloor.valueEncoding[seafloor.values[receivingCell]] === 'inland_water' ? 'inland_water' : 'ocean';
+            const receiver = receivingCell < 0 ? 'local_depression' : receiverAt(receivingCell);
             return {
                 catchmentId: `drainage_outlet_${cell}`,
                 outletCellIndex: cell,
@@ -52,12 +56,10 @@
             };
         });
         return {
-            modelId: 'finalTerrainDrainageV1',
-            worldBounds: { width, height },
-            sourceFieldIds: [surface.fieldId, seafloor.fieldId, ...(wetness ? ['wetnessField'] : [])],
             downstreamCellIndices: downstream,
             terminalLandCellIndices: terminal,
             contributingCells,
+            ...(wetness && { runoffPotentialByCell: runoffPotential }),
             reachMinimumContributingCells: REACH_MIN_CELLS,
             outlets,
             summary: {
@@ -71,5 +73,16 @@
         };
     }
 
-    macro.buildFinalDrainage = buildFinalDrainage;
+    function buildFinalDrainage(surface, seafloor, wetness) {
+        const { width, height, values: signed } = surface;
+        return {
+            modelId: 'finalTerrainDrainageV1',
+            worldBounds: { width, height },
+            sourceFieldIds: [surface.fieldId, seafloor.fieldId, ...(wetness ? ['wetnessField'] : [])],
+            ...routeSurfaceDrainage({ signed, width, wetness, receiverAt: cell =>
+                seafloor.valueEncoding[seafloor.values[cell]] === 'inland_water' ? 'inland_water' : 'ocean' })
+        };
+    }
+
+    Object.assign(macro, { buildFinalDrainage, routeSurfaceDrainage });
 })();

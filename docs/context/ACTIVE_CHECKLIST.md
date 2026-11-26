@@ -11,9 +11,10 @@ Current engineering work only; past iterations and measurements are preserved in
 - [x] F8-C: Phase 0 1,031 seed and namespace audit; fixed-seed physical causal checks and immutable handoffs.
 - [x] F8-V: actual physical and regional diagnostic atlases, including rejection and intervention cases. Author inspection remains pending.
 - [x] Mandatory 43-world CI and browser checks on 4f23a9f. [CI](https://github.com/gdrclm/game/actions/runs/45780913571)
+- [x] Final-drainage spatial bridge: exact terminal and carrier intersections, normalized sill storage and dry-land source reachability, at both macro and island resolution. Phase 2 carries the validated physical factors. Four focused accepted worlds and the intentional Phase 2 rejection `4144686569` exercised.
 
 ## Active technical work (do not restart completed milestones)
-- [ ] F8-T water closure: trace actual terminal branches, local access and climate coverage; separate water support from shelter and recovery. Retain 42, 16908799 and all confirmed regression controls; no global coefficient patch to force acceptance.
+- [ ] F8-T water closure: validate how measured branches, local access, seasonal input and retention should alter environmental pressure/recovery. Retain 42, 16908799 and all confirmed regression controls; no global coefficient patch to force acceptance.
 - [ ] F8-T local environment: per-island water persistence/access, climate refinement and physical recovery interpretation; report unresolved data, not guessed potable-water availability.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
 - [ ] F8-S: resolve or present explicit author-policy blockers for 10 stress failures (2 Phase 1, 8 Phase 2) and other retained controls. Repeat full 43-world CI, same 64 stress + 7 edges on a single candidate revision and new predeclared holdouts. [Current 54/64 evidence](review/f8t/foundation-scale-latest.json)

@@ -30,7 +30,27 @@
         }
     }
 
-    function buildEnvironmentalCoverage({ mask, reliefRegions, reliefBodies, riverBasins, watersheds, climateBands, climateZones }) {
+    function buildDrainageCoverage(water, relief, basins) {
+        const branches = new Map([...water.branches].map(([cell, branch]) => [cell, {
+            ...macro.serializeDrainageBranch(branch), reliefRegionCells: {}, riverBasinCells: {}
+        }]));
+        const access = new Map([...relief.byId.keys()].map(id => [id, macro.createWaterAccessSummary()]));
+        for (let cell = 0; cell < water.terminal.length; cell += 1) {
+            if (water.terminal[cell] < 0) continue;
+            const branch = branches.get(water.terminal[cell]);
+            const reliefId = relief.byCell[cell];
+            if (reliefId) {
+                branch.reliefRegionCells[reliefId] = (branch.reliefRegionCells[reliefId] || 0) + 1;
+                macro.addWaterAccessCell(access.get(reliefId), water, cell);
+            }
+            const basinId = basins.byCell[cell];
+            if (basinId) branch.riverBasinCells[basinId] = (branch.riverBasinCells[basinId] || 0) + 1;
+        }
+        return { version: 1, branches: [...branches.values()],
+            reliefRegions: Object.fromEntries([...access].map(([id, row]) => [id, macro.summarizeWaterAccess(row)])) };
+    }
+
+    function buildEnvironmentalCoverage({ mask, reliefRegions, reliefBodies, riverBasins, watersheds, climateBands, climateZones, localWater }) {
         if (!mask?.values?.length || !reliefBodies?.length || !watersheds?.length || !climateZones?.length) return undefined;
         const relief = indexLandCoverage(reliefRegions, 'reliefRegionId', reliefBodies, mask, body => body.reliefRegionId);
         const climate = indexLandCoverage(climateBands, 'climateBandId', climateZones, mask, zone => zone.climateBandId);
@@ -43,7 +63,8 @@
             version: 1,
             reliefRegions: Object.fromEntries(relief.byId),
             climateBands: Object.fromEntries(climate.byId),
-            riverBasins: Object.fromEntries(basins.byId)
+            riverBasins: Object.fromEntries(basins.byId),
+            ...(localWater && { localWater: buildDrainageCoverage(localWater, relief, basins) })
         };
     }
 
@@ -96,6 +117,7 @@
             }
             if (total > worldSize) errors.push(`Land coverage exceeds world area in ${collection}.`);
         }
+        if (coverage.localWater !== undefined) errors.push(...macro.validateDrainageCoverage(coverage, geography.worldBounds));
         return errors;
     }
 

@@ -13,6 +13,7 @@ const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
     verifySaddleFixture } = require('./worldgen-v1-terrain.cjs');
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
+const { verifyLocalWaterFixture, inspectLocalWater } = require('./worldgen-v1-local-water.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -29,10 +30,16 @@ const foundationRegression = recoveryRegression.concat(2337086253, 2727244283, 2
 const regionalRegression = foundationRegression.concat(2856344, 640306144, 1880886041, 3271942068,
     792866484, 2220939230, 2546155002);
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
-const stress = Array.from({ length: 64 }, (_, index) => {
-    const digest = createHash('sha256').update(`Paths/F8-S/2026-11-26/${index}`).digest();
-    return index * 2 ** 26 + (digest.readUInt32BE() & (2 ** 26 - 1));
-});
+function stratifiedSeeds(namespace) {
+    return Array.from({ length: 64 }, (_, index) => {
+        const digest = createHash('sha256').update(`${namespace}/${index}`).digest();
+        return index * 2 ** 26 + (digest.readUInt32BE() & (2 ** 26 - 1));
+    });
+}
+const stress = stratifiedSeeds('Paths/F8-S/2026-11-26');
+const finalHoldout = stratifiedSeeds('Paths/F8-Final/Independent-v1');
+const previouslyKnown = new Set([...stress, ...regionalRegression, ...knownPhysical, ...edges]);
+assert(finalHoldout.every(seed => !previouslyKnown.has(seed)), 'The new holdout must exclude previously tested seeds');
 assert.equal(new Set(regression).size, 31, 'Regression cohort must preserve all reviewed seeds');
 assert.equal(new Set(recoveryRegression).size, 32, 'Recovery regression must include the F8-R area case');
 assert.equal(new Set(foundationRegression).size, 36, 'Foundation regression must include the physical repairs');
@@ -40,7 +47,10 @@ assert.equal(new Set(regionalRegression).size, 43, 'Regional regression must inc
 const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression,
     'foundation-regression': foundationRegression, 'regional-regression': regionalRegression,
     'known-physical': knownPhysical, edges,
-    ...Object.fromEntries([0, 1, 2, 3].map(id => [`stress-${id}`, stress.filter((_, index) => index % 4 === id)]))
+    ...Object.fromEntries([0, 1, 2, 3].flatMap(id => [
+        [`stress-${id}`, stress.filter((_, index) => index % 4 === id)],
+        [`final-holdout-${id}`, finalHoldout.filter((_, index) => index % 4 === id)]
+    ]))
 };
 const args = process.argv.slice(2);
 const seeds = [];
@@ -124,6 +134,7 @@ check('Regional landfalls require open water', () => verifyRegionalNetworkFixtur
 check('Regional surface requires local physical support', () => verifyRegionalProcessFixture(macro));
 check('Regional carrier capacity and complete raster-backed island geometry', () => verifyRegionalCarrierFixture(macro));
 check('Regional drainage conserves land and responds to wetness', () => verifyRegionalEnvironmentFixture(macro));
+check('Local water retains geometry, seasonal input, and travel evidence independently', () => verifyLocalWaterFixture(macro));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;
@@ -228,6 +239,10 @@ function testHandoffs(result) {
     delete coverage.climateBands[climateId];
     assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, environmentalCoverage: coverage } }),
         /invalid_environmental_coverage/);
+    const branchCoverage = structuredClone(geography.environmentalCoverage);
+    branchCoverage.localWater.branches[0].lowInputPotential = branchCoverage.localWater.branches[0].inputPotential + 1;
+    assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, environmentalCoverage: branchCoverage } }),
+        /invalid_environmental_coverage/);
     assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, continents: [] } }), /insufficient_required_root_records/);
     assert.throws(() => engine.run({
         ...args, macroGeographyPackage: { ...geography, validationReport: { ...geography.validationReport, isValid: false } }
@@ -250,6 +265,10 @@ function testHandoffs(result) {
     assert(!macro.validateMacroGeographyPackage({...geography,regionalArchipelago:incorrectEnvironment}).isValid);
     assert.throws(()=>engine.run({...args,macroGeographyPackage:{...geography,regionalArchipelago:incorrectEnvironment}}),
         /invalid_regional_island_environment/);
+    const incorrectAccess = structuredClone(geography.regionalArchipelago);
+    const invalidWater = incorrectAccess.islandEnvironment.records[0].waterAccess;
+    invalidWater.reachableCellCount = invalidWater.landCellCount + 1;
+    assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: incorrectAccess }).isValid);
     const incorrectCount = structuredClone(geography.regionalArchipelago);
     incorrectCount.summary.areaSensitivity[0].largestConnectedEligibleCount += 1;
     assert(!macro.validateMacroGeographyPackage({ ...geography, regionalArchipelago: incorrectCount }).isValid);
@@ -337,6 +356,7 @@ for (const seed of seeds) {
             terrain: inspectFinalTerrain(first),
             environment: inspectClimateAndPressure(first),
             regionalArchipelago: inspectRegionalArchipelago(first, macro),
+            localWater: inspectLocalWater(first, macro),
             phase1Scores: geography.validationReport.scores, phase1Warnings: geography.validationReport.diagnostics.warnings,
             counts: Object.fromEntries(Object.entries(geography).filter(([, value]) => Array.isArray(value)).map(([key, value]) => [key, value.length])),
             phase2: {

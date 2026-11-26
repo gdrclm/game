@@ -135,6 +135,7 @@
                         ...(input.regionalIslandEnvironmentalProjection && {
                             regionalIslandEnvironmentalProjection: cloneValue(input.regionalIslandEnvironmentalProjection)
                         }),
+                        ...(input.reliefWaterAccess && { reliefWaterAccess: cloneValue(input.reliefWaterAccess) }),
                         rebalanceMetadata: rebalancePlan && Array.isArray(rebalancePlan.rebalanceMetadata)
                             ? cloneValue(rebalancePlan.rebalanceMetadata)
                             : []

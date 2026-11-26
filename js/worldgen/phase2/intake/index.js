@@ -856,12 +856,16 @@
                 .join(', ');
             throw new Error(`[worldgen/phase2] Invalid MacroGeographyHandoffPackage intake: ${detail}`);
         }
+        const { localWater, ...environmentalCoverage } = macroGeographyPackage.environmentalCoverage || {};
         const rootSupport = {
             macroSeed: normalizeSeed(macroGeographyPackage.macroSeed),
             version: normalizeString(macroGeographyPackage.version),
             worldBounds: cloneValue(macroGeographyPackage.worldBounds),
             ...(macroGeographyPackage.environmentalCoverage && {
-                environmentalCoverage: cloneValue(macroGeographyPackage.environmentalCoverage)
+                environmentalCoverage: cloneValue(environmentalCoverage)
+            }),
+            ...(localWater && {
+                reliefWaterAccess: cloneValue(localWater.reliefRegions)
             }),
             ...(macroGeographyPackage.regionalArchipelago?.islandEnvironment && {
                 regionalIslandEnvironment: cloneValue(macroGeographyPackage.regionalArchipelago.islandEnvironment)

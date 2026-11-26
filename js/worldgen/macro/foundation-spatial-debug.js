@@ -83,11 +83,21 @@
                 artifactKind: 'intermediateOutput',
                 stageId: 'marineCarving',
                 sourceLayerId: 'finalDrainage',
-                payload: macro.buildFinalDrainage(
+                payload: input.finalDrainage || macro.buildFinalDrainage(
                     finalFields.finalRelativeElevationField,
                     finalFields.macroSeafloorFormField,
                     input.climateEnvelope?.outputs?.fields?.wetnessField?.values
                 )
+            }, 'intermediateOutputs'));
+        }
+        if (input.localWater) {
+            const { distance, sourceCell, ascent } = input.localWater;
+            categories.intermediateOutputs.push(makeEntry({
+                artifactId: 'foundation_geometry_localWaterAccess',
+                artifactKind: 'intermediateOutput',
+                stageId: 'marineCarving',
+                sourceLayerId: 'localWaterAccess',
+                payload: { distance: Array.from(distance), sourceCell: Array.from(sourceCell), ascent: Array.from(ascent) }
             }, 'intermediateOutputs'));
         }
         const regional = input.regionalArchipelago;
