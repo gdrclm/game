@@ -256,5 +256,113 @@
         }
       ]
     }
-  ]
+  ],
+  "fixedSeedAblations": {
+    "revision": "87168146c01b8897a6043a13a4a780341cd7cd20",
+    "node": "v24.22.3",
+    "sameGridAndInheritedElevation": true,
+    "allWitnessCellsPositiveAfterRemovingTerm": true,
+    "worlds": [
+      {
+        "seed": 2220939230,
+        "removedTerm": "wave",
+        "attempts": [
+          {
+            "processScale": 1,
+            "localScales": {},
+            "unresolvedMacroIslandIds": [
+              "offshore_island_30183"
+            ]
+          },
+          {
+            "processScale": 1,
+            "localScales": {},
+            "restoredSeparationCells": 2,
+            "unresolvedMacroIslandIds": []
+          }
+        ],
+        "rows": [
+          {
+            "islandId": "regional_island_1691_613",
+            "after": [
+              0.0010664999717846513,
+              0.0013409062521532178,
+              0.0016153125325217843
+            ],
+            "before": [
+              6.155007577035576e-05,
+              -0.00044635654194280505,
+              0.000525621697306633
+            ]
+          }
+        ]
+      },
+      {
+        "seed": 2546155002,
+        "removedTerm": "fault",
+        "attempts": [
+          {
+            "processScale": 1,
+            "localScales": {},
+            "unresolvedMacroIslandIds": [
+              "offshore_island_20383"
+            ]
+          },
+          {
+            "processScale": 1,
+            "localScales": {},
+            "restoredSeparationCells": 2,
+            "unresolvedMacroIslandIds": []
+          }
+        ],
+        "rows": [
+          {
+            "islandId": "regional_island_1251_668",
+            "after": [
+              0.0022688123863190413,
+              0.0004241526476107538,
+              0.00031252711778506637,
+              0.0001715781254461035,
+              2.487500023562461e-05,
+              0.0003302257973700762
+            ],
+            "before": [
+              0.0011974553344771266,
+              -0.0010140883969143033,
+              -0.0017704478232190013,
+              -0.0008623773464933038,
+              -0.0006034905673004687,
+              0.0001496173208579421
+            ]
+          }
+        ]
+      },
+      {
+        "seed": 792866484,
+        "removedTerm": "wave",
+        "attempts": [
+          {
+            "processScale": 1,
+            "localScales": {},
+            "unresolvedMacroIslandIds": []
+          }
+        ],
+        "rows": [
+          {
+            "islandId": "regional_island_1605_182",
+            "after": [
+              0.0005811874871142209,
+              0.0007124687545001507,
+              0.0008437500218860805
+            ],
+            "before": [
+              4.4554519263328984e-05,
+              -0.0004932984011247754,
+              0.0008437500218860805
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }
