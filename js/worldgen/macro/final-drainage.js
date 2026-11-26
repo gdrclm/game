@@ -2,6 +2,45 @@
     const macro = window.Game.systems.worldgenMacro;
     const REACH_MIN_CELLS = 16;
 
+    function chooseDownstream(bed, width, cell) {
+        const altitude = bed[cell];
+        let selected = -1;
+        let fall = 0;
+        macro.forEachCardinalNeighbor(cell, width, bed.length, neighbor => {
+            // The receiving surface is sea level, regardless of bed depth.
+            const drop = altitude - Math.max(0, bed[neighbor]);
+            if (drop > fall) {
+                fall = drop;
+                selected = neighbor;
+            }
+        });
+        const x = cell % width;
+        const y = Math.floor(cell / width);
+        const height = bed.length / width;
+        for (const row of [-1, 1]) {
+            if (y + row < 0 || y + row >= height) continue;
+            for (const column of [-1, 1]) {
+                if (x + column < 0 || x + column >= width) continue;
+                const neighbor = cell + row * width + column;
+                const next = bed[neighbor];
+                if (next <= 0) continue;
+                const sideX = Math.max(0, bed[cell + column]);
+                const sideY = Math.max(0, bed[cell + row * width]);
+                if (sideX === 0 && sideY === 0) continue;
+                const sideSum = sideX + sideY;
+                // Along a bilinear diagonal the endpoint derivatives bound
+                // the slope. A lower destination can still sit behind a ridge.
+                if (sideSum > 2 * altitude || sideSum < 2 * next) continue;
+                const drop = (altitude - next) * Math.SQRT1_2;
+                if (drop > fall) {
+                    fall = drop;
+                    selected = neighbor;
+                }
+            }
+        }
+        return selected;
+    }
+
     function routeSurfaceDrainage({ signed: bed, width, wetness, receiverAt, landCells }) {
         const size = bed.length;
         const downstream = new Array(size).fill(-1);
@@ -17,15 +56,7 @@
         for (const cell of land) {
             contributingCells[cell] = 1;
             if (wetness) runoffPotential[cell] = wetness[cell];
-            let lowest = bed[cell];
-            macro.forEachCardinalNeighbor(cell, width, size, neighbor => {
-                // Water receives flow at its surface. Its bed depth cannot
-                // make a deep mouth attract runoff away from a shallow one.
-                const receivingElevation = Math.max(0, bed[neighbor]);
-                if (receivingElevation >= lowest) return;
-                downstream[cell] = neighbor;
-                lowest = receivingElevation;
-            });
+            downstream[cell] = chooseDownstream(bed, width, cell);
         }
         land.sort((a, b) => bed[a] - bed[b] || a - b);
         for (const cell of land) {
@@ -76,7 +107,7 @@
     function buildFinalDrainage(surface, seafloor, wetness) {
         const { width, height, values: signed } = surface;
         return {
-            modelId: 'finalTerrainDrainageV1',
+            modelId: 'finalTerrainDrainageV2',
             worldBounds: { width, height },
             sourceFieldIds: [surface.fieldId, seafloor.fieldId, ...(wetness ? ['wetnessField'] : [])],
             ...routeSurfaceDrainage({ signed, width, wetness, receiverAt: cell =>

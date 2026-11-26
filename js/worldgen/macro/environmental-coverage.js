@@ -46,7 +46,7 @@
             const basinId = basins.byCell[cell];
             if (basinId) branch.riverBasinCells[basinId] = (branch.riverBasinCells[basinId] || 0) + 1;
         }
-        return { version: 1, branches: [...branches.values()],
+        return { version: 1, routingModel: 'steepest_connected_descent', branches: [...branches.values()],
             reliefRegions: Object.fromEntries([...access].map(([id, row]) => [id, macro.summarizeWaterAccess(row)])) };
     }
 

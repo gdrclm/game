@@ -35,7 +35,11 @@ function verifyFinalDrainageFixture(macro) {
     const closed = macro.buildFinalDrainage({ ...surface, values: [0.4, 0.2, 0.12, 0.3] }, seafloor);
     assert.deepEqual(closed.downstreamCellIndices, [1, 2, -1, 2]);
     assert.deepEqual(closed.outlets.map(row => [row.receiver, row.contributingCells]), [['local_depression', 4]]);
-    return { terminalTypes: ['ocean', 'inland_water', 'local_depression'] };
+    const diagonal = values => macro.routeSurfaceDrainage({ signed: values, width: 2, receiverAt: () => 'ocean' });
+    assert.equal(diagonal([0.3, 0.28, 0.27, 0.05]).downstreamCellIndices[0], 3);
+    assert.equal(diagonal([0.3, 0.35, 0.4, 0.05]).downstreamCellIndices[0], -1);
+    assert.notEqual(diagonal([0.3, -0.1, -0.1, 0.05]).downstreamCellIndices[0], 3);
+    return { terminalTypes: ['ocean', 'inland_water', 'local_depression'], diagonalRequiresContinuousDescent: true };
 }
 
 function verifySaddleFixture(macro) {
@@ -78,7 +82,13 @@ function inspectDrainage(bundle, elevation, width) {
         if (next < 0) continue;
         const horizontal = Math.abs(next % width - cell % width);
         const vertical = Math.abs(Math.floor(next / width) - Math.floor(cell / width));
-        assert.equal(horizontal + vertical, 1, `Disconnected flow from ${cell}`);
+        assert(horizontal <= 1 && vertical <= 1 && horizontal + vertical, `Disconnected flow from ${cell}`);
+        if (horizontal && vertical) {
+            const sideX = Math.max(0, elevation[Math.floor(cell / width) * width + next % width]);
+            const sideY = Math.max(0, elevation[Math.floor(next / width) * width + cell % width]);
+            assert(elevation[next] > 0 && (sideX > 0 || sideY > 0));
+            assert(sideX + sideY <= 2 * value && sideX + sideY >= 2 * elevation[next]);
+        }
         assert(elevation[next] < value, `Uphill flow from ${cell}`);
         if (elevation[next] > 0) assert.equal(drainage.terminalLandCellIndices[next], root);
     }
