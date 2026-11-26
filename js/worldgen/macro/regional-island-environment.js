@@ -31,7 +31,7 @@
             .sort((a, b) => a.outletCellIndex - b.outletCellIndex);
     }
 
-    function buildRegionalIslandEnvironment(islands, surface, climateOutput, bounds) {
+    function buildRegionalIslandEnvironment(islands, surface, climateOutput, bounds, network) {
         const fields=climateOutput?.fields;
         if (!fields || !Object.values(channels).every(([id,key])=>fields[id]?.[key]?.length===bounds.width*bounds.height)) {
             throw Error('Regional island environment requires canonical macro climate fields');
@@ -49,11 +49,13 @@
             return sample(fields[id][key],bounds.width,bounds.height,x,y);
         };
         const islandByCell = [];
+        const cellsByIsland = new Map();
         const landCells = [];
         const wetness = [];
         const seasonality = [];
         const records=islands.map(island=>{
             const cells=island.landRuns.flatMap(([start,length])=>Array.from({length},(_,i)=>start+i));
+            cellsByIsland.set(island.islandId, cells);
             const sums=Object.fromEntries(Object.keys(channels).map(key=>[key,0]));
             const climateBandCells={};
             let unmatchedClimateCells=0;
@@ -91,9 +93,34 @@
             record.waterAccess = macro.summarizeWaterAccess(summary);
             record.runoffPotential = record.waterAccess.inputPotential;
         }
+        const wind = fields.prevailingWindField;
+        if (wind?.xValues && wind?.yValues && network) {
+            const readWind = cell => {
+                const [x, y] = coordinates(cell);
+                return [sample(wind.xValues, bounds.width, bounds.height, x, y),
+                    sample(wind.yValues, bounds.width, bounds.height, x, y)];
+            };
+            const ports = new Map(network.landfalls.map(port => [port.islandId, port]));
+            const linkCounts = countIslandSeaLinks(network.links);
+            const landTravel = macro.traceDryLandAccess(signed, grid.width, cell => Boolean(islandByCell[cell]),
+                network.landfalls.map(port => port.landCell));
+            for (const record of records) {
+                record.physicalSetting = macro.measureIslandPhysicalSetting({ cells: cellsByIsland.get(record.islandId),
+                    surface, readClimate: read, readWind, landTravel, landfall: ports.get(record.islandId),
+                    seaLinkCount: linkCounts.get(record.islandId) || 0 });
+            }
+        }
         return {version:1,climateResolution:'interpolated_macro_baseline',runoffUnits:'wetness_times_macro_cell_area',
-            sourceFieldIds:[...new Set(Object.values(channels).map(([id])=>id))],
+            sourceFieldIds:[...new Set(Object.values(channels).map(([id])=>id)), ...(wind && network ? ['prevailingWindField'] : [])],
             records};
+    }
+
+    function countIslandSeaLinks(links) {
+        const counts = new Map();
+        for (const link of links) {
+            for (const id of [link.fromIslandId, link.toIslandId]) counts.set(id, (counts.get(id) || 0) + 1);
+        }
+        return counts;
     }
 
     function validateRegionalIslandEnvironment(regional, geography) {
@@ -107,6 +134,8 @@
         const seen=new Set();
         const signed=macro.decodeRegionalElevation(regional);
         const grid=regional.grid;
+        const landfalls = new Map((regional.waterNetwork?.landfalls || []).map(port => [port.islandId, port]));
+        const linkCounts = countIslandSeaLinks(regional.waterNetwork?.links || []);
         for(const row of env.records) {
             const island=ids.get(row?.islandId);
             if(!island||seen.has(row.islandId)||row.landCellCount!==island.areaCells
@@ -155,6 +184,9 @@
                 || Math.abs(row.waterAccess.lowInputPotential - lowInput) > (row.catchments.length + 1) * 1e-6
                 || Math.abs(row.waterAccess.storageSpace - storageSpace) > (row.catchments.length + 1) * 1e-6)) {
                 errors.push(`Regional access or retention disagrees with catchments in ${row.islandId}.`);
+            }
+            if (!macro.validateIslandPhysicalSetting(row.physicalSetting, island, landfalls.get(row.islandId), linkCounts.get(row.islandId) || 0)) {
+                errors.push(`Regional terrain, local climate or landfall access is invalid in ${row.islandId}.`);
             }
         }
         if(seen.size!==ids.size)errors.push('Regional island environment does not cover every island.');

@@ -219,6 +219,7 @@
                 return {islandId:row.islandId,landCellCount:row.landCellCount,
                     localClimate:row.climate,runoffPotential:row.runoffPotential,
                     ...(row.waterAccess && { waterAccess: row.waterAccess }),
+                    ...(row.physicalSetting && { physicalSetting: row.physicalSetting }),
                     catchments:row.catchments,unmatchedClimateCells:row.unmatchedClimateCells,inheritedSignals};
             })};
     }

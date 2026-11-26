@@ -12,6 +12,7 @@ Current engineering work only; past iterations and measurements are preserved in
 - [x] F8-V: actual physical and regional diagnostic atlases, including rejection and intervention cases. Author inspection remains pending.
 - [x] Mandatory 43-world CI and browser checks on 4f23a9f. [CI](https://github.com/gdrclm/game/actions/runs/45780913571)
 - [x] Final-drainage spatial bridge: exact terminal and carrier intersections, normalized sill storage and dry-land source reachability, at both macro and island resolution. Phase 2 carries the validated physical factors. Four focused accepted worlds and the intentional Phase 2 rejection `4144686569` exercised.
+- [x] Island physical setting: normalized thermal-ranges from local elevation, windward barrier and landfall paths, plus upstream flow at reached sources. Focused counterfactuals keep climate, shelter, water supply and transport independent.
 
 ## Active technical work (do not restart completed milestones)
 - [ ] F8-T water closure: validate how measured branches, local access, seasonal input and retention should alter environmental pressure/recovery. Retain 42, 16908799 and all confirmed regression controls; no global coefficient patch to force acceptance.

@@ -27,6 +27,8 @@ function verifyLocalWaterFixture(macro) {
     assert.equal(wet.distance[19], -1, 'Water support cannot cross the sea between islands');
     assert.equal(seasonal.branches.get(16).inputPotential, wet.branches.get(16).inputPotential);
     assert.equal(seasonal.branches.get(16).lowInputPotential, wet.branches.get(16).inputPotential / 4);
+    assert.equal(seasonal.lowFlow[16], wet.lowFlow[16] / 4);
+    assert.equal(seasonal.sourceCell[8], wet.sourceCell[8]);
     const raisedRim = signed.map((value, cell) => cell !== 16 && value === 0.4 ? 0.6 : value);
     const taller = measure(raisedRim, 0.25, 0);
     assert(taller.branches.get(16).storageSpace > wet.branches.get(16).storageSpace);
@@ -68,6 +70,7 @@ function inspectLocalWater(result, macro) {
     for (const row of islandEnvironment.records) {
         assert.equal(row.waterAccess.landCellCount, row.landCellCount);
         assert.deepEqual(projection.get(row.islandId).waterAccess, row.waterAccess);
+        if (row.physicalSetting) assert.deepEqual(projection.get(row.islandId).physicalSetting, row.physicalSetting);
     }
     return {
         branchCount: water.branches.length,
@@ -78,4 +81,31 @@ function inspectLocalWater(result, macro) {
     };
 }
 
-module.exports = { verifyLocalWaterFixture, inspectLocalWater };
+function verifyIslandExposureFixture(macro) {
+    const width = 5;
+    const inherited = new Array(25).fill(-0.1);
+    inherited[11] = 0.8;
+    inherited[12] = 0.2;
+    inherited[13] = 0.2;
+    const settings = (signed, wind) => macro.measureIslandPhysicalSetting({ cells: [12],
+        surface: { signed, inherited, grid: { width, height: 5, subdivision: 1 } },
+        readClimate: (_, channel) => channel === 'temperature' ? 0.7 : 0.5,
+        readWind: () => [wind, 0],
+        landTravel: macro.traceDryLandAccess(signed, width, cell => signed[cell] > 0, [13]),
+        landfall: { landCell: 13 }, seaLinkCount: 2 });
+    const sheltered = settings(inherited, 1);
+    const exposed = settings(inherited, -1);
+    assert.equal(sheltered.terrainShelter.shelteredLandCells, 1);
+    assert.equal(exposed.terrainShelter.shelteredLandCells, 0);
+    assert.equal(sheltered.transport.meanDistanceToLandfall, 1);
+    const raised = inherited.slice();
+    raised[12] += 0.3;
+    const cooled = settings(raised, 1);
+    assert(cooled.climateRange.temperature.mean < sheltered.climateRange.temperature.mean);
+    assert(cooled.climateRange.coldLoad.mean > sheltered.climateRange.coldLoad.mean);
+    assert.deepEqual(cooled.climateRange.wetness, sheltered.climateRange.wetness);
+    assert.equal(cooled.transport.seaLinkCount, sheltered.transport.seaLinkCount);
+    return { windDirectionChangesShelter: true, upliftCoolsLand: true, shelterLeavesWaterAndSeaLinksIndependent: true };
+}
+
+module.exports = { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture };

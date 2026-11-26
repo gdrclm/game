@@ -75,7 +75,7 @@
             minimumApproximatedAreaCells,
             processAttempts,
             islandRecords,
-            islandEnvironment: macro.buildRegionalIslandEnvironment(islandRecords, surface, input.climateEnvelope.outputs, bed),
+            islandEnvironment: macro.buildRegionalIslandEnvironment(islandRecords, surface, input.climateEnvelope.outputs, bed, network),
             waterNetwork: network,
             summary: {
                 islandCount: islandRecords.length,

@@ -13,7 +13,7 @@ const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
     verifySaddleFixture } = require('./worldgen-v1-terrain.cjs');
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
-const { verifyLocalWaterFixture, inspectLocalWater } = require('./worldgen-v1-local-water.cjs');
+const { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture } = require('./worldgen-v1-local-water.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -135,6 +135,7 @@ check('Regional surface requires local physical support', () => verifyRegionalPr
 check('Regional carrier capacity and complete raster-backed island geometry', () => verifyRegionalCarrierFixture(macro));
 check('Regional drainage conserves land and responds to wetness', () => verifyRegionalEnvironmentFixture(macro));
 check('Local water retains geometry, seasonal input, and travel evidence independently', () => verifyLocalWaterFixture(macro));
+check('Regional climate, wind shelter and movement follow different physical sources', () => verifyIslandExposureFixture(macro));
 
 function inspectGeometry(result) {
     const debug = result.diagnostics.physicalWorldDebugBundle;

@@ -11,14 +11,13 @@
         }]));
         const tributaries = new Uint8Array(size);
         const hasSource = new Uint8Array(size);
-        const distance = new Int32Array(size).fill(-1);
-        const sourceCell = new Int32Array(size).fill(-1);
-        const ascent = new Float64Array(size);
         const input = new Float64Array(size);
         const lowInput = new Float64Array(size);
+        const land = [];
 
         for (let cell = 0; cell < size; cell += 1) {
             if (terminal[cell] < 0) continue;
+            land.push(cell);
             const branch = branches.get(terminal[cell]);
             input[cell] = wetness[cell] * cellArea;
             lowInput[cell] = input[cell] * (1 - seasonality[cell]);
@@ -34,7 +33,7 @@
             });
         }
 
-        const queue = [];
+        const sourceCells = [];
         for (let cell = 0; cell < size; cell += 1) {
             if (terminal[cell] < 0) continue;
             const branch = branches.get(terminal[cell]);
@@ -45,16 +44,35 @@
                 && branch.spillElevation > signed[cell] && branch.inputPotential > 0;
             if (receivesWater || tributaries[cell] >= 2) {
                 hasSource[cell] = 1;
-                distance[cell] = 0;
-                sourceCell[cell] = cell;
-                queue.push(cell);
+                sourceCells.push(cell);
             }
+        }
+        const lowFlow = lowInput.slice();
+        land.sort((a, b) => signed[b] - signed[a] || a - b);
+        for (const cell of land) {
+            const next = downstream[cell];
+            if (next >= 0 && terminal[next] >= 0) lowFlow[next] += lowFlow[cell];
+        }
+        const access = traceDryLandAccess(signed, width, cell => terminal[cell] >= 0, sourceCells);
+        return { branches, terminal, hasSource, ...access, input, lowInput, lowFlow, flow: drainage.runoffPotentialByCell,
+            subdivision, signed, cellArea };
+    }
+
+    function traceDryLandAccess(signed, width, isLand, sourceCells) {
+        const size = signed.length;
+        const distance = new Int32Array(size).fill(-1);
+        const sourceCell = new Int32Array(size).fill(-1);
+        const ascent = new Float64Array(size);
+        const queue = sourceCells.slice();
+        for (const cell of queue) {
+            distance[cell] = 0;
+            sourceCell[cell] = cell;
         }
         for (let cursor = 0; cursor < queue.length; cursor += 1) {
             const cell = queue[cursor];
             const nextDistance = distance[cell] + 1;
             macro.forEachCardinalNeighbor(cell, width, size, neighbor => {
-                if (terminal[neighbor] < 0 || (distance[neighbor] >= 0 && distance[neighbor] !== nextDistance)) return;
+                if (!isLand(neighbor) || (distance[neighbor] >= 0 && distance[neighbor] !== nextDistance)) return;
                 // Measure the climb travelling from this neighbor toward the water.
                 const nextAscent = ascent[cell] + Math.max(0, signed[cell] - signed[neighbor]);
                 if (distance[neighbor] < 0) {
@@ -66,12 +84,12 @@
                 sourceCell[neighbor] = sourceCell[cell];
             });
         }
-        return { branches, terminal, hasSource, distance, sourceCell, ascent, input, lowInput, subdivision, signed, cellArea };
+        return { distance, sourceCell, ascent };
     }
 
     function createWaterAccessSummary() {
         return { landCellCount: 0, sourceCellCount: 0, reachableCellCount: 0, inputPotential: 0,
-            lowInputPotential: 0, storageSpace: 0, distance: 0, ascent: 0 };
+            lowInputPotential: 0, storageSpace: 0, distance: 0, ascent: 0, sourceFlow: 0, sourceLowFlow: 0 };
     }
 
     function addWaterAccessCell(summary, water, cell) {
@@ -85,13 +103,18 @@
         summary.reachableCellCount += 1;
         summary.distance += water.distance[cell] / water.subdivision;
         summary.ascent += water.ascent[cell];
+        const source = water.sourceCell[cell];
+        summary.sourceFlow += water.flow[source] * water.cellArea;
+        summary.sourceLowFlow += water.lowFlow[source];
     }
 
-    function summarizeWaterAccess({ distance, ascent, ...row }) {
+    function summarizeWaterAccess({ distance, ascent, sourceFlow, sourceLowFlow, ...row }) {
         return { ...row, inputPotential: round(row.inputPotential), lowInputPotential: round(row.lowInputPotential),
             storageSpace: round(row.storageSpace),
             meanDistance: row.reachableCellCount ? round(distance / row.reachableCellCount) : null,
-            meanAscent: row.reachableCellCount ? round(ascent / row.reachableCellCount) : null };
+            meanAscent: row.reachableCellCount ? round(ascent / row.reachableCellCount) : null,
+            meanSourceFlow: row.reachableCellCount ? round(sourceFlow / row.reachableCellCount) : null,
+            meanSourceLowFlow: row.reachableCellCount ? round(sourceLowFlow / row.reachableCellCount) : null };
     }
 
     function serializeDrainageBranch(branch) {
@@ -111,7 +134,11 @@
             && nonnegative(row.lowInputPotential) && row.lowInputPotential <= row.inputPotential
             && nonnegative(row.storageSpace)
             && (row.reachableCellCount ? nonnegative(row.meanDistance) && nonnegative(row.meanAscent)
-                : row.meanDistance === null && row.meanAscent === null);
+                : row.meanDistance === null && row.meanAscent === null)
+            && (row.meanSourceFlow === undefined && row.meanSourceLowFlow === undefined
+                || (row.reachableCellCount ? nonnegative(row.meanSourceFlow) && nonnegative(row.meanSourceLowFlow)
+                    && row.meanSourceLowFlow <= row.meanSourceFlow + 1e-6
+                    : row.meanSourceFlow === null && row.meanSourceLowFlow === null));
     }
 
     function validateDrainageCoverage(coverage, bounds) {
@@ -180,5 +207,5 @@
     }
 
     Object.assign(macro, { measureLocalWater, createWaterAccessSummary, addWaterAccessCell, summarizeWaterAccess,
-        serializeDrainageBranch, validateDrainageCoverage, validateWaterAccessSummary });
+        serializeDrainageBranch, validateDrainageCoverage, validateWaterAccessSummary, traceDryLandAccess });
 })();
