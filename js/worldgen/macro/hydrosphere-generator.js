@@ -1013,7 +1013,21 @@
         const waterBasins = Array.isArray(oceanBasinFloodFill.waterBasins)
             ? oceanBasinFloodFill.waterBasins
             : [];
-        const seaRegionClusters = waterBasins.map((basin, basinIndex) => {
+        const boundaryOnlyWater = [];
+        const { width, height } = worldBounds;
+        const seaRegionClusters = waterBasins.flatMap((basin, basinIndex) => {
+            const cellIndices = Array.isArray(basin.cellIndices) ? basin.cellIndices : [];
+            const hasInterior = cellIndices.some(cell => {
+                const x = cell % width;
+                const y = Math.floor(cell / width);
+                return x > 0 && x < width - 1 && y > 0 && y < height - 1;
+            });
+            // Water sampled solely on the map boundary has no observed basin
+            // interior. Keep its flood-fill footprint without a macro sea record.
+            if (basin.basinKind === 'open_ocean' && cellIndices.length && !hasInterior) {
+                boundaryOnlyWater.push({ sourceBasinId: basin.basinId, cellIndices: cellIndices.slice() });
+                return [];
+            }
             const sequence = basinIndex + 1;
             const geometry = buildSeaRegionGeometryMetrics(basin, worldBounds);
             const enclosure = analyzeSeaRegionEnclosure(basin, worldBounds, geometry.metrics);
@@ -1028,7 +1042,7 @@
                 primaryClimateBandId: ''
             });
 
-            return {
+            return [{
                 seaRegionClusterId: createSeaRegionClusterId(sequence),
                 sourceBasinId: normalizeString(basin.basinId, ''),
                 sourceBasinKind: normalizeString(basin.basinKind, ''),
@@ -1042,7 +1056,7 @@
                 basinKind: normalizeString(basin.basinKind, ''),
                 basinType,
                 cellCount: normalizeInteger(basin.cellCount, 0),
-                cellIndices: Array.isArray(basin.cellIndices) ? basin.cellIndices.slice() : [],
+                cellIndices: cellIndices.slice(),
                 normalizedArea: clampUnitInterval(basin.normalizedArea, 0),
                 boundingBox: normalizeBoundingBox(basin.boundingBox || {}),
                 centroidPoint: {
@@ -1060,7 +1074,7 @@
                 classificationSignals: enclosure.classificationSignals,
                 namespace,
                 seed: deriveSubSeed(normalizedInput.macroSeed, namespace)
-            };
+            }];
         });
         const openOceanClusterCount = seaRegionClusters.filter((cluster) => cluster.basinType === 'open_ocean').length;
         const enclosedWaterClusterCount = seaRegionClusters.filter((cluster) => cluster.basinType === 'enclosed_water').length;
@@ -1080,6 +1094,7 @@
                 clusteringModel: 'connectedWaterGeometryClustersV1',
                 sourceBasinCount: waterBasins.length,
                 seaRegionClusters,
+                boundaryOnlyWater,
                 summary: {
                     openOceanClusterCount,
                     enclosedWaterClusterCount,

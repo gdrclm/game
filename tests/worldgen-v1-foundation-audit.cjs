@@ -11,7 +11,7 @@ const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
-    verifySaddleFixture } = require('./worldgen-v1-terrain.cjs');
+    verifySaddleFixture, verifySeaBoundaryFixture } = require('./worldgen-v1-terrain.cjs');
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 const { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture } = require('./worldgen-v1-local-water.cjs');
 
@@ -27,8 +27,9 @@ const recoveryRegression = regression.concat(3508323923);
 const knownPhysical = [1122193213, 2337086253, 4144686569, 1665754063, 2727244283, 2964753490, 4085637119,
     3019978005, 1240171611, 3928839710, 1054323503, 2094783996, 2402593754, 2917478163, 3206964149, 4286438917];
 const foundationRegression = recoveryRegression.concat(2337086253, 2727244283, 2964753490, 4085637119);
-const regionalRegression = foundationRegression.concat(2856344, 640306144, 1880886041, 3271942068,
+const originalRegionalRegression = foundationRegression.concat(2856344, 640306144, 1880886041, 3271942068,
     792866484, 2220939230, 2546155002);
+const regionalRegression = originalRegionalRegression.concat(3840024598);
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 function stratifiedSeeds(namespace) {
     return Array.from({ length: 64 }, (_, index) => {
@@ -38,12 +39,12 @@ function stratifiedSeeds(namespace) {
 }
 const stress = stratifiedSeeds('Paths/F8-S/2026-11-26');
 const finalHoldout = stratifiedSeeds('Paths/F8-Final/Independent-v1');
-const previouslyKnown = new Set([...stress, ...regionalRegression, ...knownPhysical, ...edges]);
+const previouslyKnown = new Set([...stress, ...originalRegionalRegression, ...knownPhysical, ...edges]);
 assert(finalHoldout.every(seed => !previouslyKnown.has(seed)), 'The new holdout must exclude previously tested seeds');
 assert.equal(new Set(regression).size, 31, 'Regression cohort must preserve all reviewed seeds');
 assert.equal(new Set(recoveryRegression).size, 32, 'Recovery regression must include the F8-R area case');
 assert.equal(new Set(foundationRegression).size, 36, 'Foundation regression must include the physical repairs');
-assert.equal(new Set(regionalRegression).size, 43, 'Regional regression must include the inherited island conflicts and cut fragments');
+assert.equal(new Set(originalRegionalRegression).size, 43, 'Preserve every mandatory regional regression');
 const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression,
     'foundation-regression': foundationRegression, 'regional-regression': regionalRegression,
     'known-physical': knownPhysical, edges,
@@ -128,6 +129,7 @@ check('A coast node must enter a connected water segment', () => verifyCoastalAc
 check('Hotspot curvature follows shallow crust at fixed plate drift', () => verifyHotspotFixture(macro));
 check('Land-weighted pressure and local recovery timing', () => verifySpatialAggregation(phase2));
 check('Signed final terrain and carved-bed controls', () => verifyFinalTerrainFixture(macro));
+check('Boundary-only water stays physical without becoming a macro sea', () => verifySeaBoundaryFixture(macro));
 check('Final downhill routing and water receiver controls', () => verifyFinalDrainageFixture(macro));
 check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));
 check('Regional landfalls require open water', () => verifyRegionalNetworkFixture(macro));

@@ -2,6 +2,24 @@
 
 const assert = require('node:assert/strict');
 
+function verifySeaBoundaryFixture(macro) {
+    const width = 7;
+    const height = 5;
+    const values = new Array(width * height).fill(1);
+    for (const cell of [0, 1, 6, 13, 20, 19, 16]) values[cell] = 0;
+    const input = { worldBounds: { width, height },
+        fields: { landmassCleanupMaskField: { fieldId: 'landmassCleanupMaskField', width, height, values } } };
+    const flood = macro.generateOceanBasinFloodFill(input);
+    const clusters = macro.generateSeaRegionClusters(input);
+    assert.deepEqual(clusters.boundaryOnlyWater.map(row => row.cellIndices), [[0, 1]]);
+    assert.equal(flood.waterBasins.length, 3);
+    assert.deepEqual(clusters.seaRegionClusters.map(row => row.recordDraft.seaRegionId), ['sea_02', 'sea_03']);
+    assert(clusters.seaRegionClusters.some(row => row.basinKind === 'enclosed_water' && row.cellIndices.includes(16)));
+    assert(clusters.seaRegionClusters.some(row => row.basinKind === 'open_ocean' && row.cellIndices.includes(19)));
+    return { boundaryWaterRetainedInFloodFill: true, observedInteriorRequiredForOpenSea: true,
+        enclosedWaterUnaffected: true };
+}
+
 function verifyFinalTerrainFixture(macro) {
     const width = 5;
     const height = 1;
@@ -167,4 +185,4 @@ function inspectClimateAndPressure(result) {
 }
 
 module.exports = { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
-    verifySaddleFixture };
+    verifySaddleFixture, verifySeaBoundaryFixture };
