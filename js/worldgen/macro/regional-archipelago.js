@@ -111,7 +111,7 @@
         const errors = [];
         // Legacy version-1 packages may omit these additive physical source records.
         const hasSources = value.sourcePeaks !== undefined || value.sourceVents !== undefined;
-        const peaks = new Set(), vents = new Set();
+        const peaks = new Set(), vents = new Map();
         if (hasSources) {
             if (!Array.isArray(value.sourcePeaks) || !value.sourcePeaks.length || !Array.isArray(value.sourceVents)) {
                 return ['Invalid regional physical source records.'];
@@ -133,7 +133,7 @@
                     || vent.x > grid.originX + (grid.width - 1) / grid.subdivision
                     || vent.y > grid.originY + (grid.height - 1) / grid.subdivision
                     || vent.rise <= 0 || vent.radius <= 0) errors.push('Invalid regional source vent.');
-                vents.add(vent?.ventId);
+                vents.set(vent?.ventId, vent?.parentPeakCell);
             }
         }
         const signed = macro.decodeRegionalElevation(value);
@@ -197,6 +197,12 @@
                 || (row.physicalOrigin.parentPeakCell !== undefined && !peaks.has(row.physicalOrigin.parentPeakCell))
                 || (row.physicalOrigin.mechanism === 'volcanic_satellite' && !row.physicalOrigin.regionalVentIds.length))) {
                 errors.push('Regional island has unresolved physical sources: ' + row.islandId);
+            }
+            const primaryVent = row.physicalOrigin.primaryRegionalVentId;
+            if (primaryVent !== undefined && (!vents.has(primaryVent) || row.physicalOrigin.mechanism !== 'volcanic_satellite'
+                || !Array.isArray(row.physicalOrigin.regionalVentIds) || !row.physicalOrigin.regionalVentIds.includes(primaryVent)
+                || vents.get(primaryVent) !== row.physicalOrigin.parentPeakCell)) {
+                errors.push('Regional island primary vent disagrees with its source peak: ' + row.islandId);
             }
             const restoredPath = row.physicalOrigin.restoredSeparationPath;
             if ((restoredPath !== undefined || row.physicalOrigin.mechanism === 'fault_fragment')

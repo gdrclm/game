@@ -28,7 +28,7 @@ function inspectRegionalArchipelago(result, macro) {
     assert.equal(inheritedRaster.length, bed.length);
     assert(inheritedRaster.every((elevation, cell) => elevation === bed[cell]), 'Canonical elevation differs from the measured surface');
     const expectedParents = new Map(topology.islands.map(row => [row.islandId, 0]));
-    const vents = new Set(payload.vents.map(row => row.ventId));
+    const vents = new Map(payload.vents.map(row => [row.ventId, row]));
     const availableUplift = uplift.values.reduce((sum, value) => sum + value, 0);
     const regionalUplift = payload.vents.reduce((sum, row) => sum + Math.PI * row.rise * row.radius ** 2 / 2, 0);
     assert(regionalUplift <= availableUplift + 1e-9);
@@ -80,6 +80,9 @@ function inspectRegionalArchipelago(result, macro) {
         if (island.physicalOrigin.mechanism === 'volcanic_satellite') {
             assert(island.physicalOrigin.volcanicRaisedCells > 0);
             assert(island.physicalOrigin.regionalVentIds.length > 0);
+            const dominantVent = vents.get(island.physicalOrigin.primaryRegionalVentId);
+            assert.equal(dominantVent?.parentPeakCell, island.physicalOrigin.parentPeakCell);
+            assert(island.physicalOrigin.regionalVentIds.includes(dominantVent.ventId));
         }
         if (['fault_fragment', 'erosional_fragment'].includes(island.physicalOrigin.mechanism)) {
             const mechanism = island.physicalOrigin.mechanism === 'fault_fragment' ? 2 : 3;

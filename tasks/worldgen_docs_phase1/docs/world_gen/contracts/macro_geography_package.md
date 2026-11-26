@@ -119,6 +119,8 @@ The regional surface keeps shared macro samples and protects macro land and wate
 
 An island generated through fault uplift has newly raised land. If fault displacement or erosion separates preexisting land, the generated `fault_fragment` or `erosional_fragment` record includes `physicalOrigin.restoredSeparationPath`. The path begins in the island, crosses drowned cells of the named mechanism and reaches a distinct component of the current land mask. Every intermediate sample was above the inherited sea level. A shoreline change without a severed connection does not qualify as fragmentation. When either mechanism independently supplies such a path, the shorter path determines the primary recorded mechanism, with fault displacement first on ties.
 
+A volcanic satellite records the `primaryRegionalVentId` attributed to the most newly raised cells. `parentPeakCell` resolves to that vent's parent. An inherited island keeps the peak of its macro island. Older geographic records can lack a primary vent reference.
+
 `archipelagoRegions[]` may blend physical morphology summary with strategic-significance references. They may point to shaping `seaRegions[]` / `climateBands[]` and to already-derived route/chokepoint/strategic-region context, but they must not encode downstream island histories directly inside the root package.
 
 `chokepoints[]` is a strategic structural layer. `ChokepointRecord` should describe narrow straits, island-chain locks, or other macro bottlenecks through control/dependency/sensitivity descriptors and adjacency refs, without encoding derived route metrics or local traversal gameplay rules inside the root contract.

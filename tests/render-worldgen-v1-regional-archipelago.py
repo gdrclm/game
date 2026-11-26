@@ -109,11 +109,13 @@ def render(snapshot):
         path_x = x0 + (path % width) / scale
         path_y = y0 + (path // width) / scale
         inset = ax[2].inset_axes([0.58, 0.08, 0.41, 0.37])
-        inset.imshow(surface, extent=bounds, cmap=SIGNED, norm=NORM, interpolation="nearest")
+        inset.imshow(surface > 0, extent=bounds, cmap=ListedColormap(["#6cabc4", "#e6d09a"]),
+                     vmin=0, vmax=1, interpolation="nearest")
         inset.plot(path_x, path_y, color="#953e74", linewidth=1.0, marker=".", markersize=3)
         inset.set(xlim=(min(path_x)-0.65, max(path_x)+0.65), ylim=(max(path_y)+0.65, min(path_y)-0.65),
                   xticks=[], yticks=[], title="Бывшая перемычка")
         inset.title.set_fontsize(7)
+        inset.title.set_color(PAPER)
         ax[2].scatter(path_x[0], path_y[0], marker="+", s=22, color="#dca8ce", linewidths=1.0)
 
     map_axes(ax[3], "Мелководье и подходы к берегу", bounds)
@@ -136,7 +138,9 @@ def render(snapshot):
     ax[5].plot(xcoords, surface[selected_row], color=INK, linewidth=1.0, label="После уточнения")
     ax[5].fill_between(xcoords, np.minimum(surface[selected_row], 0), 0, color="#abd2d3")
     ax[5].axhline(0, color=SEA, linewidth=0.6)
-    ax[5].set(xlim=(x0, east), ylim=(-0.16, 0.24), facecolor=PAPER)
+    section = np.concatenate([inherited[selected_row], surface[selected_row]])
+    ax[5].set(xlim=(x0, east), ylim=(min(-0.16, np.min(section) - 0.005), max(0.24, np.max(section) + 0.005)),
+              facecolor=PAPER)
     ax[5].tick_params(labelsize=7)
     ax[5].legend(loc="lower right", fontsize=7, frameon=False)
 

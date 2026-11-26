@@ -145,8 +145,8 @@
         const bands = { minimum: Infinity, maximum: -Infinity, deep: 0, shallow: Infinity };
         const support = { inheritedLandCells: 0, volcanicRaisedCells: 0, faultRaisedCells: 0,
             neighboringFaultCutEdges: 0, neighboringErosionCutEdges: 0 };
-        const parentIds = new Set();
-        const geologicalVents = new Set();
+        const parents = new Map();
+        const geologicalVents = new Map();
         const coast = [];
         let anchor = cells[0];
         for (const cell of cells) {
@@ -161,13 +161,14 @@
             if (inherited[cell] > 0) support.inheritedLandCells += 1;
             else if (mechanisms[cell] === 1) {
                 support.volcanicRaisedCells += 1;
-                if (surface.ventByCell[cell] >= 0) geologicalVents.add(surface.ventByCell[cell]);
+                const vent = surface.ventByCell[cell];
+                if (vent >= 0) geologicalVents.set(vent, (geologicalVents.get(vent) || 0) + 1);
             }
             else if (mechanisms[cell] === 2) support.faultRaisedCells += 1;
 
             if (Number.isInteger(x) && Number.isInteger(y)) {
                 const parent = parentByCell.get(y * macroWidth + x);
-                if (parent) parentIds.add(parent);
+                if (parent) parents.set(parent.islandId, parent.peakCellIndex);
             }
             let maxNeighborSlope = 0;
             macro.forEachCardinalNeighbor(cell, grid.width, signed.length, neighbor => {
@@ -188,10 +189,10 @@
         const ranked = peaks.map(peak => ({ peak, distance: Math.hypot(peak.x - x, peak.y - y) }))
             .sort((a, b) => a.distance - b.distance || a.peak.cellIndex - b.peak.cellIndex);
         const nearest = ranked[0];
-        if (!parentIds.size && nearest.distance > nearest.peak.radius + 4) return null;
+        if (!parents.size && nearest.distance > nearest.peak.radius + 4) return null;
         const globalAnchorX = grid.originX * grid.subdivision + anchor % grid.width;
         const globalAnchorY = grid.originY * grid.subdivision + Math.floor(anchor / grid.width);
-        const macroIslandIds = [...parentIds].sort();
+        const macroIslandIds = [...parents.keys()].sort();
         let origin = 'shelf_remnant';
         let restoredSeparationPath;
         if (macroIslandIds.length) origin = 'inherited';
@@ -207,6 +208,11 @@
             }
         }
         const volcanoSupported = origin === 'volcanic_satellite' || origin === 'inherited';
+        const ventsBySupport = [...geologicalVents].sort(([a, countA], [b, countB]) => countB - countA || a - b);
+        const primaryVent = origin === 'volcanic_satellite'
+            ? surface.vents[ventsBySupport[0]?.[0]]
+            : undefined;
+        const parentPeakCell = primaryVent?.parentPeakCell ?? parents.get(macroIslandIds[0]) ?? nearest.peak.cellIndex;
         const sourcePlateId = volcanoSupported ? hotspotPlateId
             : plateSeeds.reduce((nearest, plate) => {
                 const distance = Math.hypot(plate.seedPoint.x - x, plate.seedPoint.y - y);
@@ -224,9 +230,10 @@
             shoreLengthMacroCellUnits: round(coast.length / grid.subdivision),
             nearshoreDepth: { min: round(bands.shallow), max: round(bands.deep), mean: round(sum.depth / coast.length) },
             physicalOrigin: { mechanism: origin, sourcePlateId, macroIslandIds,
-                ...(volcanoSupported ? { parentPeakCell: nearest.peak.cellIndex } : {}),
+                ...(volcanoSupported ? { parentPeakCell } : {}),
+                ...(primaryVent ? { primaryRegionalVentId: primaryVent.ventId } : {}),
                 ...(restoredSeparationPath ? { restoredSeparationPath } : {}),
-                regionalVentIds: [...geologicalVents].map(index => surface.vents[index].ventId).sort(),
+                regionalVentIds: [...geologicalVents.keys()].map(index => surface.vents[index].ventId).sort(),
                 ...support },
             landRuns: encodeLandRuns(cells, grid.width),
             shoreEdges: coast
@@ -236,7 +243,7 @@
     function extractRegionalArchipelagoIslands(surface, topology, chain, macroWidth, plateSeeds = []) {
         const parentByCell = new Map();
         for (const island of topology.islands) {
-            for (const cell of island.cellIndices) parentByCell.set(cell, island.islandId);
+            for (const cell of island.cellIndices) parentByCell.set(cell, island);
         }
         const islands = collectLandComponents(surface)
             .map(cells => measureIsland(cells, surface, macroWidth, parentByCell, chain.peaks, chain.sourcePlateId, plateSeeds))
