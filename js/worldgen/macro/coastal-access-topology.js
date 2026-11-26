@@ -18,14 +18,14 @@
     }
 
     function selectPorts(component, context, limit, favoredCell = -1) {
-        const { width, height, values, seaByCell, opportunity, landContinentByCell, reliefByCell, profileByCluster,
+        const { width, height, accessibleWater, seaByCell, opportunity, landContinentByCell, reliefByCell, profileByCluster,
             selectedWaterCells } = context;
         const scale = Math.min(width, height);
         const candidatesByWaterCell = new Map();
         for (const landCellIndex of component.cells) {
-            forEachCardinalNeighbor(landCellIndex, width, values.length, waterCellIndex => {
+            forEachCardinalNeighbor(landCellIndex, width, accessibleWater.length, waterCellIndex => {
                 const sea = seaByCell[waterCellIndex];
-                if (values[waterCellIndex] || !sea?.touchesWorldEdge || candidatesByWaterCell.has(waterCellIndex)) return;
+                if (!accessibleWater[waterCellIndex] || !sea?.touchesWorldEdge || candidatesByWaterCell.has(waterCellIndex)) return;
                 const score = opportunity?.[waterCellIndex] || 0;
                 // Physical landfall and open-water access also support a modest landing.
                 // The local opportunity field ranks candidates on the same coast.
@@ -108,6 +108,13 @@
         if (!mask?.values?.length || mask.width < 2 || mask.height < 2 || !continentBodies?.length || !seaClusters?.length) return null;
         const { width, height } = mask;
         const values = mask.values.map(value => Number(value >= mask.threshold));
+        const accessibleWater = new Uint8Array(values.length);
+        for (let cell = 0; cell < values.length; cell += 1) {
+            if (values[cell]) continue;
+            forEachCardinalNeighbor(cell, width, values.length, neighbor => {
+                if (!values[neighbor]) accessibleWater[cell] = 1;
+            });
+        }
         const bodies = macro.collectLandWaterComponents(values, width, height, 1);
         const landByCell = [];
         const landContinentByCell = [];
@@ -127,7 +134,7 @@
             for (const cell of region.cellIndices) reliefByCell[cell] = region.reliefRegionId;
         }
         const context = {
-            width, height, values, seaByCell, landContinentByCell, reliefByCell,
+            width, height, values, accessibleWater, seaByCell, landContinentByCell, reliefByCell,
             opportunity: coastalOpportunity?.values,
             selectedWaterCells: new Set(),
             profileByCluster: new Map(clusterProfiles.map(profile => [profile.seaRegionClusterId, profile]))

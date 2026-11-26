@@ -144,7 +144,28 @@ function verifyHotspotFixture(worldgenMacro) {
     return { flatPreservesDrift: true, tiltedShelfShiftsPeaks: bent.map(peak => peak.crossTrackShift) };
 }
 
-module.exports={summarizeQuality,inspectPassageEndpoints,inspectLive,verifyPassageFixture,verifyHotspotFixture};
+function verifyCoastalAccessFixture(macro) {
+    const assert = require('node:assert/strict');
+    const values = new Array(20).fill(1);
+    for (const cell of [0, 3, 4]) values[cell] = 0;
+    const coast = macro.buildCoastalAccessTopology({
+        mask: { fieldId: 'coast', width: 5, height: 4, threshold: 0.5, values },
+        continentBodies: [{ recordDraft: { continentId: 'cont_01' },
+            cellIndices: values.map((value, index) => value ? index : -1).filter(index => index >= 0) }],
+        seaClusters: [[0], [3, 4]].map((cellIndices, index) => ({
+            touchesWorldEdge: true, seaRegionClusterId: `water_${index}`, cellIndices,
+            recordDraft: { seaRegionId: `sea_${index}` }
+        })),
+        coastalOpportunity: { values: values.map((_, cell) => cell === 0 ? 1 : 0) },
+        clusterProfiles: [],
+        reliefRegionBodies: []
+    });
+    assert(coast.ports.length > 0);
+    assert(coast.ports.every(port => port.waterCellIndex === 3 || port.waterCellIndex === 4));
+    return { isolatedBorderWaterRejected: true };
+}
+
+module.exports={summarizeQuality,inspectPassageEndpoints,inspectLive,verifyPassageFixture,verifyHotspotFixture,verifyCoastalAccessFixture};
 if(require.main===module){
     const fs=require('node:fs');
     const args=process.argv.slice(2);
