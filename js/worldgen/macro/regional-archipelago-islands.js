@@ -1,7 +1,7 @@
 (() => {
     const macro = window.Game.systems.worldgenMacro;
     const MINIMUM_LAND_CELLS = 8;
-    const ISLAND_ORIGINS = ['inherited', 'volcanic_satellite', 'fault_uplift', 'erosional_fragment', 'shelf_remnant'];
+    const ISLAND_ORIGINS = ['inherited', 'volcanic_satellite', 'fault_uplift', 'fault_fragment', 'erosional_fragment', 'shelf_remnant'];
     const round = number => Math.round(number * 1e6) / 1e6;
 
     function collectLandComponents(surface) {
@@ -109,6 +109,36 @@
         return runs;
     }
 
+    function traceRestoredLandConnection(surface, cells, coast, mechanism) {
+        const { grid, signed, inherited, mechanisms } = surface;
+        const footprint = new Set(cells);
+        const previous = new Map();
+        const queue = [];
+        const wasCut = cell => signed[cell] <= 0 && inherited[cell] > 0 && mechanisms[cell] === mechanism;
+        for (const [land, water] of coast) {
+            if (!wasCut(water) || previous.has(water)) continue;
+            previous.set(water, land);
+            queue.push(water);
+        }
+        for (let cursor = 0; cursor < queue.length; cursor += 1) {
+            const cell = queue[cursor];
+            let otherLand;
+            macro.forEachCardinalNeighbor(cell, grid.width, signed.length, neighbor => {
+                if (signed[neighbor] > 0 && !footprint.has(neighbor)) otherLand ??= neighbor;
+                else if (wasCut(neighbor) && !previous.has(neighbor)) {
+                    previous.set(neighbor, cell);
+                    queue.push(neighbor);
+                }
+            });
+            if (otherLand !== undefined) {
+                const path = [otherLand];
+                for (let step = cell; step !== undefined; step = previous.get(step)) path.push(step);
+                return path.reverse();
+            }
+        }
+        return null;
+    }
+
     function measureIsland(cells, surface, macroWidth, parentByCell, peaks, hotspotPlateId, plateSeeds) {
         const { grid, signed, inherited, mechanisms } = surface;
         const sum = { x: 0, y: 0, height: 0, slope: 0, depth: 0 };
@@ -163,10 +193,19 @@
         const globalAnchorY = grid.originY * grid.subdivision + Math.floor(anchor / grid.width);
         const macroIslandIds = [...parentIds].sort();
         let origin = 'shelf_remnant';
+        let restoredSeparationPath;
         if (macroIslandIds.length) origin = 'inherited';
         else if (support.volcanicRaisedCells >= support.inheritedLandCells && support.volcanicRaisedCells > support.faultRaisedCells) origin = 'volcanic_satellite';
-        else if (support.faultRaisedCells > support.inheritedLandCells || support.neighboringFaultCutEdges) origin = 'fault_uplift';
-        else if (support.neighboringErosionCutEdges) origin = 'erosional_fragment';
+        else if (support.faultRaisedCells > support.inheritedLandCells) origin = 'fault_uplift';
+        else {
+            const faultConnection = support.neighboringFaultCutEdges && traceRestoredLandConnection(surface, cells, coast, 2);
+            const erosionConnection = support.neighboringErosionCutEdges && traceRestoredLandConnection(surface, cells, coast, 3);
+            if (faultConnection || erosionConnection) {
+                const faultFirst = faultConnection && (!erosionConnection || faultConnection.length <= erosionConnection.length);
+                origin = faultFirst ? 'fault_fragment' : 'erosional_fragment';
+                restoredSeparationPath = faultFirst ? faultConnection : erosionConnection;
+            }
+        }
         const volcanoSupported = origin === 'volcanic_satellite' || origin === 'inherited';
         const sourcePlateId = volcanoSupported ? hotspotPlateId
             : plateSeeds.reduce((nearest, plate) => {
@@ -186,6 +225,7 @@
             nearshoreDepth: { min: round(bands.shallow), max: round(bands.deep), mean: round(sum.depth / coast.length) },
             physicalOrigin: { mechanism: origin, sourcePlateId, macroIslandIds,
                 ...(volcanoSupported ? { parentPeakCell: nearest.peak.cellIndex } : {}),
+                ...(restoredSeparationPath ? { restoredSeparationPath } : {}),
                 regionalVentIds: [...geologicalVents].map(index => surface.vents[index].ventId).sort(),
                 ...support },
             landRuns: encodeLandRuns(cells, grid.width),
@@ -275,4 +315,5 @@
     macro.validateRegionalIslandSurface = validateRegionalIslandSurface;
     macro.extractRegionalArchipelagoIslands = extractRegionalArchipelagoIslands;
     macro.preserveRegionalWaterSeparations = preserveRegionalWaterSeparations;
+    macro.traceRestoredLandConnection = traceRestoredLandConnection;
 })();

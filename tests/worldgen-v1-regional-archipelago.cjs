@@ -81,6 +81,13 @@ function inspectRegionalArchipelago(result, macro) {
             assert(island.physicalOrigin.volcanicRaisedCells > 0);
             assert(island.physicalOrigin.regionalVentIds.length > 0);
         }
+        if (['fault_fragment', 'erosional_fragment'].includes(island.physicalOrigin.mechanism)) {
+            const mechanism = island.physicalOrigin.mechanism === 'fault_fragment' ? 2 : 3;
+            const witness = island.physicalOrigin.restoredSeparationPath;
+            assert(witness?.length >= 3);
+            assert(witness.slice(1, -1).every(cell => payload.inheritedElevation[cell] > 0 && bed[cell] <= 0
+                && payload.verticalChangeMechanism[cell] === mechanism));
+        }
         assert(island.physicalOrigin.regionalVentIds.every(id => vents.has(id)));
     }
     for (const [id, count] of expectedParents) assert(count >= 1, `Inherited island ${id} was removed or merged`);
@@ -166,8 +173,19 @@ function verifyRegionalProcessFixture(macro) {
     assert.equal(signed[17], inherited[17]);
     assert.equal(mechanisms[17], 4);
     assert.deepEqual([signed[16], signed[18], signed[29]], [0.08, 0.06, 0.05]);
+    const cut = { grid, signed, inherited, mechanisms };
+    inherited[17] = 0.01;
+    signed[17] = -0.02;
+    mechanisms[17] = 3;
+    assert.deepEqual(macro.traceRestoredLandConnection(cut, [15, 16], [[16, 17]], 3), [16, 17, 18]);
+    assert.equal(macro.traceRestoredLandConnection(cut, [15, 16], [[16, 17]], 2), null);
+    signed[18] = -0.04;
+    signed[10] = -0.04;
+    signed[24] = -0.04;
+    assert.equal(macro.traceRestoredLandConnection(cut, [15, 16], [[16, 17]], 3), null,
+        'Erosion near a shoreline cannot count as fragmentation without a separate destination');
     return { noUnsupportedEmergence: true, faultUpliftExercised: true, erosionExercised: true,
-        inheritedSaddlePreservesIndependentUplift: true };
+        inheritedSaddlePreservesIndependentUplift: true, independentlyRestoredSeparation: true };
 }
 
 function verifyRegionalCarrierFixture(macro) {

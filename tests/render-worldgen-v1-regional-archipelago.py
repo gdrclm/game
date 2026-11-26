@@ -17,9 +17,9 @@ from matplotlib.patches import Patch
 PAPER = "#f5f1e7"
 INK = "#1a3036"
 SEA = "#244359"
-COLORS = ["#17394e", "#ead290", "#e48b64", "#aa9fd0", "#7ac1a9", "#bad29c"]
-ORIGINS = ["inherited", "volcanic_satellite", "fault_uplift", "erosional_fragment", "shelf_remnant"]
-ORIGIN_LABELS = ["Унаследованное тело", "Вулканический спутник", "Блок разлома", "Эрозионный фрагмент", "Остаток шельфа"]
+COLORS = ["#17394e", "#ead290", "#e48b64", "#aa9fd0", "#7ac1a9", "#bad29c", "#dca8ce"]
+ORIGINS = ["inherited", "volcanic_satellite", "fault_uplift", "erosional_fragment", "shelf_remnant", "fault_fragment"]
+ORIGIN_LABELS = ["Унаследованное тело", "Вулканический спутник", "Поднятый блок", "Эрозионный фрагмент", "Остаток шельфа", "Разломный фрагмент"]
 SIGNED = LinearSegmentedColormap.from_list("regional", ["#152b4e", "#4486a3", "#d1e7d2", "#a3a76a", "#765340", "#f1ddbe"])
 NORM = TwoSlopeNorm(vmin=-0.16, vcenter=0, vmax=0.24)
 
@@ -102,7 +102,19 @@ def render(snapshot):
     vents = regional["vents"]
     ax[2].scatter([row["x"] for row in vents], [row["y"] for row in vents], c="#fff0ba", s=3, alpha=0.46,
                   linewidths=0, label="Центр питания")
-    ax[2].legend(loc="lower right", fontsize=7, facecolor=PAPER)
+    witness = next((island for island in islands if "restoredSeparationPath" in island["physicalOrigin"]), None)
+    ax[2].legend(loc="lower left" if witness else "lower right", fontsize=7, facecolor=PAPER)
+    if witness:
+        path = np.asarray(witness["physicalOrigin"]["restoredSeparationPath"])
+        path_x = x0 + (path % width) / scale
+        path_y = y0 + (path // width) / scale
+        inset = ax[2].inset_axes([0.58, 0.08, 0.41, 0.37])
+        inset.imshow(surface, extent=bounds, cmap=SIGNED, norm=NORM, interpolation="nearest")
+        inset.plot(path_x, path_y, color="#953e74", linewidth=1.0, marker=".", markersize=3)
+        inset.set(xlim=(min(path_x)-0.65, max(path_x)+0.65), ylim=(max(path_y)+0.65, min(path_y)-0.65),
+                  xticks=[], yticks=[], title="Бывшая перемычка")
+        inset.title.set_fontsize(7)
+        ax[2].scatter(path_x[0], path_y[0], marker="+", s=22, color="#dca8ce", linewidths=1.0)
 
     map_axes(ax[3], "Мелководье и подходы к берегу", bounds)
     depth = np.where(surface <= 0, -surface, np.nan)
@@ -134,7 +146,7 @@ def render(snapshot):
         bar.set_label(label, fontsize=8)
         bar.ax.tick_params(labelsize=7)
     fig.legend(handles=[Patch(facecolor=c, label=l) for c, l in zip(COLORS[1:], ORIGIN_LABELS)],
-               loc="lower left", bbox_to_anchor=(0.064, 0.026), ncol=5, frameon=False, fontsize=8)
+               loc="lower left", bbox_to_anchor=(0.064, 0.026), ncol=6, frameon=False, fontsize=8)
     fig.text(0.068, 0.018, "Оси измеряются в макроклетках. Красные точки показывают возможные выходы к открытому морю.",
              color=INK, fontsize=8)
     return fig

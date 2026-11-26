@@ -198,6 +198,16 @@
                 || (row.physicalOrigin.mechanism === 'volcanic_satellite' && !row.physicalOrigin.regionalVentIds.length))) {
                 errors.push('Regional island has unresolved physical sources: ' + row.islandId);
             }
+            const restoredPath = row.physicalOrigin.restoredSeparationPath;
+            if ((restoredPath !== undefined || row.physicalOrigin.mechanism === 'fault_fragment')
+                && (!signed || !Array.isArray(restoredPath) || restoredPath.length < 3
+                || !['fault_fragment', 'erosional_fragment'].includes(row.physicalOrigin.mechanism)
+                || !land.has(restoredPath[0]) || !isLand(restoredPath.at(-1)) || land.has(restoredPath.at(-1))
+                || new Set(restoredPath).size !== restoredPath.length
+                || restoredPath.some((cell, index) => !inside(cell) || (index > 0 && !adjacent(restoredPath[index - 1], cell))
+                    || (index > 0 && index < restoredPath.length - 1 && isLand(cell))))) {
+                errors.push('Regional separation witness contradicts the measured terrain: ' + row.islandId);
+            }
             if (signed && !footprintContainsWater && row.shoreEdges.every(edge => Array.isArray(edge) && edge.length === 2)) {
                 errors.push(...macro.validateRegionalIslandSurface(row, land, grid, signed));
             }
