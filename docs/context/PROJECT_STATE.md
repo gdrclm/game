@@ -1,6 +1,6 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: prompt 02 island environment on branch `worldgen/v1-foundation-closure` (26 November 2026). Baseline HEAD `3b35754`. The measuring code is `15bfdbb`. [Island evidence](review/f8t/local-water/island-overlap.md) · [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45859419936)
+Current checkpoint: `ad47e81`, prompt 02 island environment on branch `worldgen/v1-foundation-closure` (26 November 2026). Baseline HEAD `3b35754`. The verified measuring code is `15bfdbb`; mandatory CI completed successfully. [Island evidence](review/f8t/local-water/island-overlap.md) · [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45859419936)
 
 ## Current status
 
@@ -28,6 +28,8 @@ Phase 1 measures final downhill branches, terminal intersections, potential stor
 
 Phase 1 sums `shelteredWaterAccess` from the same cells as the wind shelter measurement and the same service areas as the whole-island water allocation. Phase 2 carries the exact shelter/source overlap, whole and sheltered ordinary and low-season areal inflow, and allocated low-season supply per sheltered area. Legacy inputs provide the earlier bounds. On `640306144/regional_island_1117_495`, 22 of 27 cells are sheltered and have positive local inflow. Source access is zero and the island has a verified landfall. [Measurements and maps](review/f8t/local-water/island-overlap.md)
 
+Across 220 islands in three accepted control worlds, 32,817 regional cells satisfy both shelter and source reachability; a separate rejected macro control contains 73 islands and 22,867 joint cells. All 293 islands have either full or zero dry-land source reachability under the current unbounded path model. Thus the older overlap bounds already coincided in these actual examples; the new measurement enables joint water metrics and future partial reachability, not evidence of more differentiated accessibility yet. Synthetic disjoint/overlapping masks test the general case. Path exposure, finite practical access and physical retention are unresolved; no implied drinkability or viable settlement claim.
+
 Macro recovery scores before and after the exact island measurement are identical for the three passing controls (42: 0.182541, 16908799: 0.186435, 640306144: 0.207774).
 
 ## Macro recovery causal checkpoint
@@ -51,6 +53,6 @@ Author decisions remain open on playable scale, physical acceptance, single-cont
 
 ## Bounded checkpoint
 
-Prompt 02 completed the [regional spatial measurement](NEXT_ENGINEERING_MILESTONE.md). The remaining macro refuge work requires physical measurements on the macro relief grid. Six original rejections remain in targeted evidence from prompt 01. The full stress cohorts await a stabilized final candidate. [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+Prompt 02 completed the exact [regional spatial measurement](review/f8t/local-water/island-overlap.md). It did not close all local environment questions. Prompt 03 is now the [next bounded milestone](NEXT_ENGINEERING_MILESTONE.md): High / Standard, physical diversity. Preserve the verified seasonal recovery and island measurements. Remaining macro refuge work requires measurements on the macro relief grid, not copying island scores. Keep the macro and local environment blockers explicit for a focused follow-up before final acceptance. Six original rejections remain in targeted evidence from prompt 01; no full stress rerun on current code is claimed. [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 
 [Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).

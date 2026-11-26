@@ -32,10 +32,10 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
-Prompt 01 and [prompt 02](NEXT_ENGINEERING_MILESTONE.md) have verified implementation checkpoints. The remaining items retain their respective evidence and author gates.
+Prompt 01 and [prompt 02](review/f8t/local-water/island-overlap.md) have verified implementation checkpoints, not full closure of their parent tasks. Next execute [prompt 03 — physical diversity](NEXT_ENGINEERING_MILESTONE.md). Keep the remaining macro refuge and local environment work open; evidence from prompt 03 may support a bounded follow-up. Do not skip unresolved blockers in the later audit/acceptance stages.
 
 - [ ] F8-T macro water closure: derive refuge persistence from spatial replenishment and macro wind shelter. Keep source access and delivery separate. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
-- [ ] F8-T local environment: storm attenuation, exposure along paths, actual water persistence and recovery timing require further physical evidence.
+- [ ] F8-T local environment: storm attenuation, exposure along paths, meaningful finite access (all 293 measured islands currently have full or zero reachability), actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
 - [ ] F8-S: investigate the six remaining original Phase 2 stress failures, additional controls 4144686569, 2666689910 and 2030830666, and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
