@@ -1,6 +1,6 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: `c0406d1`, macro recovery on branch `worldgen/v1-foundation-closure` (26 November 2026). Verified baseline HEAD `d0b44e7`. The verified code is `c642b9b`; mandatory CI completed successfully. [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45853942907)
+Current checkpoint: prompt 02 island environment on branch `worldgen/v1-foundation-closure` (26 November 2026). Baseline HEAD `3b35754`. The measuring code is `15bfdbb`. [Island evidence](review/f8t/local-water/island-overlap.md) · [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45859419936)
 
 ## Current status
 
@@ -8,11 +8,12 @@ Current checkpoint: `c0406d1`, macro recovery on branch `worldgen/v1-foundation-
 |---|---|---|
 | Phase 0 | 1,031 seeds, 14 namespaces, deterministic export | Later historical consumers |
 | Phase 1 | Signed relief and bathymetry, physical terrain and climate, regional islands, actual drainage branches, potential retention and conserved source allocation | Tectonic/coastal morphology, atmospheric transitions, physical water persistence |
-| Phase 2 | Record-bound pressure and rhythm, local island water/shelter interpretation, measured seasonal limit for recurring stress | Refuge persistence semantics, macro shelter and remaining Phase 2 stress rejections |
+| Phase 2 | Record-bound pressure and rhythm, exact regional island shelter/source overlap and areal inflow, measured seasonal limit for recurring stress | Refuge persistence semantics, macro shelter and remaining Phase 2 stress rejections |
 | V1 islands | Physical carriers, complete footprints and stable IDs, maritime connectivity and individual physical environment | Playable area/density and final island selection (Phase 16 onward) |
 
 ## Latest verified tests
 
+- `15bfdbb`: local mandatory audit on Node 22.23.5 passed 49/49 worlds, 24/24 checks and the separate Phase 0 audit of 1,031 seeds. Accepted and deterministic controls `42`, `16908799`, `640306144`; repeatable existing rejection `4144686569`. Paired snapshots preserve prior physical and macro recovery fields. The four predeclared holdouts pass, and the intake test accepts legacy bounds and rejects malformed overlap. [Maps and counts](review/f8t/local-water/island-overlap.md) · [CI](https://github.com/gdrclm/game/actions/runs/45859419936)
 - `c642b9b`: GitHub Actions completed successfully with 49/49 mandatory worlds and the Phase 0 audit. The 12 fresh targeted worlds have 4 passing exports versus 2 at `d0b44e7`. On Node 22.23.5 the paired Phase 0 bundles, Phase 1 packages, physical diagnostics and pressure field values match. An additional four predeclared worlds yield 3/4 on both revisions; `2030830666` is a retained independent tension/relief rejection. [CI](https://github.com/gdrclm/game/actions/runs/45853942907) · [Metrics](review/f8r/macro-recovery-seasonality.md)
 - `fd84d39`: 49/49 mandatory worlds and 22/22 substantive checks in local audit, Phase 0 1,031 seeds. GitHub Actions 45844786657 completed successfully.
 - Three accepted controls `42`, `16908799`, `640306144`: 220 island records, deterministic repeated exports; Phase 0–1 and previous Phase 2 fields unchanged relative to `28e0f47`.
@@ -25,9 +26,9 @@ Current checkpoint: `c0406d1`, macro recovery on branch `worldgen/v1-foundation-
 
 Phase 1 measures final downhill branches, terminal intersections, potential storage under first and linked spill saddles, normal/low-season inflow, allocated supply without double counting nested sources, dry-land reachability, distance and elevation gain. Island climate includes local elevation adjustment, windward terrain barriers and inherited storm exposure.
 
-Phase 2 `regionalIslandEnvironmentalProjection` now additionally exports seasonal inflow reduction, exposed-land storm contribution, allocated low-season supply per entire island area, and lower/upper bounds of wind-sheltered land with source access. The intersection is not known exactly when the bounds differ. This is not an estimate of freshwater potability, actual water storage duration, or full recovery dynamics. The island projection remains separate in scale from the macro recovery model.
+Phase 1 sums `shelteredWaterAccess` from the same cells as the wind shelter measurement and the same service areas as the whole-island water allocation. Phase 2 carries the exact shelter/source overlap, whole and sheltered ordinary and low-season areal inflow, and allocated low-season supply per sheltered area. Legacy inputs provide the earlier bounds. On `640306144/regional_island_1117_495`, 22 of 27 cells are sheltered and have positive local inflow. Source access is zero and the island has a verified landfall. [Measurements and maps](review/f8t/local-water/island-overlap.md)
 
-In the island checkpoint the three control worlds retained their earlier macro recovery scores (42: 0.180365; 16908799: 0.189504; 640306144: 0.204803). Positive inflow can coexist with no reachable source. [Measurements and maps](review/f8t/local-water/README.md).
+Macro recovery scores before and after the exact island measurement are identical for the three passing controls (42: 0.182541, 16908799: 0.186435, 640306144: 0.207774).
 
 ## Macro recovery causal checkpoint
 
@@ -39,7 +40,7 @@ On fixed Phase 1 inputs `42` and `16908799` pass with recovery 0.182541 and 0.18
 
 - Macro refuge persistence still uses catchment scale and continuity. The 9,407 land cells of `4144686569/basin_001` drain to 443 terminals. Two distinct relief regions inherit the same structural support despite different source budgets and paths.
 - Five original tension/relief cases remain in targeted replay, together with additional controls `4144686569`, `2666689910` and `2030830666`. `1665754063` still fails differentiation. [Exact evidence and competing hypotheses](HIGH_REASONING_REVIEW_QUEUE.md).
-- Exact spatial overlap between shelter and water access, actual persistence and recovery timing; geometry/atmospheric diversity remain open. Previous atmosphere candidates were not merged because of maritime regressions.
+- Shelter attenuation, exposure along the path to a source, actual persistence and ecological recovery timing remain open. Geometry and atmospheric diversity are tracked independently.
 - Full original and independent stress cohorts must be rerun on a stabilized final candidate before F8 closure. Do not repeatedly run full cohorts during exploratory changes.
 
 ## Island scale and author gates
@@ -48,8 +49,8 @@ Historical 54 accepted original stress worlds: 54/54 with 30 connected candidate
 
 Author decisions remain open on playable scale, physical acceptance, single-continent policy if a physically supported second continent is unavailable, interpretation of differentiation gate, and shelter/water access in harsh worlds. No threshold relaxation or design changes without approval. [Author queue](AUTHOR_REVIEW_QUEUE.md).
 
-## Next action
+## Bounded checkpoint
 
-Prompt 01 produced a verified seasonal split, but the macro refuge persistence item remains open. Continue with prompt 02 (Medium / Standard), [island environment spatial closure](NEXT_ENGINEERING_MILESTONE.md). The exact spatial evidence should also support the later macro refuge audit. Do not rerun the completed seasonal experiment. Return to macro integration only after its missing physical support is measured; separate differentiation audit remains pending. Full stress results have NOT been rerun at c642b9b: six original failures remain in targeted replays, not a newly certified 58/64. [Review queue](HIGH_REASONING_REVIEW_QUEUE.md).
+Prompt 02 completed the [regional spatial measurement](NEXT_ENGINEERING_MILESTONE.md). The remaining macro refuge work requires physical measurements on the macro relief grid. Six original rejections remain in targeted evidence from prompt 01. The full stress cohorts await a stabilized final candidate. [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 
 [Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).

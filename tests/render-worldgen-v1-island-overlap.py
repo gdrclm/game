@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.colors import BoundaryNorm, ListedColormap
+from matplotlib.colors import BoundaryNorm, ListedColormap, PowerNorm
 from matplotlib.patches import Patch
 import numpy as np
 
@@ -52,19 +52,23 @@ def plot_island(case, revision, maximum_inflow, maximum_allocation):
         raster[at] = values
         ax.set(title=title, facecolor=WATER, xticks=[], yticks=[])
         if cmap:
-            image = ax.imshow(raster, extent=extent, interpolation='nearest', cmap=cmap, vmin=0, vmax=vmax)
+            scale = {'norm': PowerNorm(gamma=.5, vmin=0, vmax=vmax)} if cmap == 'Purples' else {'vmin': 0, 'vmax': vmax}
+            image = ax.imshow(raster, extent=extent, interpolation='nearest', cmap=cmap, **scale)
             bar = fig.colorbar(image, ax=ax, orientation='horizontal', pad=.08, fraction=.06, shrink=.79)
+            if cmap == 'Purples':
+                ticks = [vmax * fraction ** 2 for fraction in (0, .25, .5, .75, 1)]
+                bar.set_ticks(ticks, labels=[f'{tick:.2g}' for tick in ticks])
             bar.ax.tick_params(labelsize=8)
         else:
             ax.imshow(raster, extent=extent, interpolation='nearest',
                       cmap=ListedColormap(CLASS_COLORS), norm=BoundaryNorm(np.arange(-.5, 4.5), 4))
             source = np.asarray([cell['source'] for cell in points], dtype=bool)
-            ax.scatter(x[source], y[source], s=5, c=INK, linewidths=0)
+            ax.scatter(x[source], y[source], s=3, c=INK, linewidths=0)
             handles = [Patch(color=color, label=label) for color, label in zip(CLASS_COLORS, CLASS_LABELS)]
             ax.legend(handles=handles, loc='upper center', bbox_to_anchor=(.5, -.05), ncol=2, frameon=False, fontsize=8)
     fig.text(.06, .072, 'Точки отмечают потенциальные источники. Выделенный бюджет показан на единицу обслуживаемой площади.',
              fontsize=9, color=INK)
-    fig.text(.06, .038, f"Региональная сетка ×{case['subdivision']}   ·   {revision[:12]}   ·   шкалы общие для всех карт",
+    fig.text(.06, .038, f"Сетка ×{case['subdivision']}   ·   {revision[:12]}   ·   общие шкалы, для бюджета корневая шкала",
              fontsize=8, color=INK)
     return fig
 

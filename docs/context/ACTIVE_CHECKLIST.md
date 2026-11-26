@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-26 for the bounded macro recovery change `c642b9b`.
+Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-26 for the island spatial measurement `15bfdbb`.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -27,13 +27,15 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 - [x] F8-R macro seasonality: fixed-input tests isolate repeated water stress from tempo capacity, source delivery, retention and island wind. Two original tension/relief failures pass. [Causal evidence](review/f8r/macro-recovery-seasonality.md)
 - [x] Mandatory CI at `c642b9b`: 49/49 worlds, deterministic generation, Phase 0 audit and fixed-input causal interventions. [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45853942907)
+- [x] F8-T prompt 02 regional environment: exact cell overlap of wind shelter and dry-land access to potential water sources, ordinary and low-season replenishment, and conserved allocated budget for sheltered land. Three accepted controls and one Phase 2 rejection measured, legacy projections and malformed input exercised, four independent holdout worlds passed. [Maps and evidence](review/f8t/local-water/island-overlap.md)
+- [x] Mandatory audit on `15bfdbb` passed locally with Node 22.23.5, 49/49 worlds, 24/24 checks and the Phase 0 audit. [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45859419936)
 
 ## Active technical work (do not restart completed milestones)
 
-Prompt 01 has a verified implementation checkpoint, but not full macro closure. Next execute [prompt 02 — island spatial environment](NEXT_ENGINEERING_MILESTONE.md); use its measured joint shelter/replenishment evidence for a later focused macro refuge follow-up. Keep all six open items until their respective evidence and author gates are satisfied.
+Prompt 01 and [prompt 02](NEXT_ENGINEERING_MILESTONE.md) have verified implementation checkpoints. The remaining items retain their respective evidence and author gates.
 
 - [ ] F8-T macro water closure: derive refuge persistence from spatial replenishment and macro wind shelter. Keep source access and delivery separate. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
-- [ ] F8-T local environment: spatial overlap where the exported bounds differ, storm attenuation, actual water persistence and recovery timing require further physical evidence.
+- [ ] F8-T local environment: storm attenuation, exposure along paths, actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
 - [ ] F8-S: investigate the six remaining original Phase 2 stress failures, additional controls 4144686569, 2666689910 and 2030830666, and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
