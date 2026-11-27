@@ -34,12 +34,12 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
-Prompts 01–03 have verified implementation checkpoints. Keep parent tasks open where their physical criteria still require evidence. [Bounded physical diversity work](NEXT_ENGINEERING_MILESTONE.md)
+Prompts 01–03 have verified implementation checkpoints, not full closure of their parent tasks. Next execute [prompt 04 — stress and targeted stabilization](NEXT_ENGINEERING_MILESTONE.md). Do not repeat completed regional relief or island measurements. Preserve macro refuge, local environment and macro physical diversity blockers until evidence or explicit author policy resolves them.
 
 - [ ] F8-T macro water closure: derive refuge persistence from spatial replenishment and macro wind shelter. Keep source access and delivery separate. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, exposure along paths, meaningful finite access (all 293 measured islands currently have full or zero reachability), actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: investigate the six remaining original Phase 2 stress failures, additional controls 4144686569, 2666689910 and 2030830666, and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
+- [ ] F8-S: investigate the six remaining original Phase 2 stress failures, additional controls 4144686569, 2666689910, 2030830666 and 1683167796, and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 

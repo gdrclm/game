@@ -1,6 +1,6 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: prompt 03 regional relief on branch `worldgen/v1-foundation-closure` (27 November 2026). Baseline HEAD `143729c`; verified regional reconstruction code `0260b5d`. [Paired maps and metrics](review/f8t/regional-relief-diversity.md) · [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45866373220)
+Current checkpoint: `449304e`, prompt 03 regional relief on branch `worldgen/v1-foundation-closure` (27 November 2026). Baseline HEAD `143729c`; verified regional reconstruction code `0260b5d`. [Paired maps and metrics](review/f8t/regional-relief-diversity.md) · [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45866373220)
 
 ## Current status
 
@@ -42,7 +42,7 @@ On fixed Phase 1 inputs `42` and `16908799` pass with recovery 0.182541 and 0.18
 ## Remaining engineering blockers
 
 - Macro refuge persistence still uses catchment scale and continuity. The 9,407 land cells of `4144686569/basin_001` drain to 443 terminals. Two distinct relief regions inherit the same structural support despite different source budgets and paths.
-- Five original tension/relief cases remain in targeted replay, together with additional controls `4144686569`, `2666689910` and `2030830666`. `1665754063` still fails differentiation. [Exact evidence and competing hypotheses](HIGH_REASONING_REVIEW_QUEUE.md).
+- Five original tension/relief cases remain in targeted replay, together with additional controls `4144686569`, `2666689910`, `2030830666` and new holdout `1683167796`. `1665754063` still fails differentiation. [Exact evidence and competing hypotheses](HIGH_REASONING_REVIEW_QUEUE.md).
 - Shelter attenuation, exposure along the path to a source, actual persistence and ecological recovery timing remain open. Geometry and atmospheric diversity are tracked independently.
 - Full original and independent stress cohorts must be rerun on a stabilized final candidate before F8 closure. Do not repeatedly run full cohorts during exploratory changes.
 
@@ -54,6 +54,10 @@ Author decisions remain open on playable scale, physical acceptance, single-cont
 
 ## Bounded checkpoint
 
-[Prompt 03](NEXT_ENGINEERING_MILESTONE.md) reduces coarse-grid slope seams in high regional interiors, with a taper at the boundary of the existing coastal processes. The broad interpolation was rejected after losing the fault fragment on `2546155002`. In 14 paired snapshots the retained reconstruction reduces the share of inland slope change concentrated on macro grid lines by 25.2–38.3 percentage points. F8-D remains open for macro plate contacts, shoreline form, atmospheric transitions and origin diversity. Physical measurements for macro refuges and actual local persistence remain open. [Maps](review/f8t/regional-relief-diversity.pdf) · [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+[Prompt 03](review/f8t/regional-relief-diversity.md) reduces coarse-grid slope seams in high regional interiors, with a taper at the boundary of the existing coastal processes. The broad interpolation was rejected after losing the fault fragment on `2546155002`. In 14 paired snapshots the retained reconstruction reduces the share of inland slope change concentrated on macro grid lines by 25.2–38.3 percentage points. F8-D remains open for macro plate contacts, shoreline form, atmospheric transitions and origin diversity. In 14 paired worlds, 1,115 island footprints, provenance, sea depths and marine paths are preserved. Forty-six island sheltered-water summaries change on the refined interior relief; macro packages are unchanged. Capacity at 0.125/0.25/0.5/1.0 macro-cell area is 14/14, 14/14, 11/14, 4/14 worlds with at least 30 connected bodies, including the diagnostic rejected world. This is not playable area acceptance. Physical measurements for macro refuges and actual local persistence remain open. [Maps](review/f8t/regional-relief-diversity.pdf) · [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+
+## Next action
+
+[Prompt 04 — stress and targeted stabilization](NEXT_ENGINEERING_MILESTONE.md), Medium / Standard. Pin the current program revision and run the original and independent 64-world cohorts and seven edge cases before claiming any new full stress result. Maintain the known rejection register, including the four additional controls. Investigate recurring Phase 2 causes rather than repeating failed multiplier experiments. If a blocker needs architectural reasoning, hand off a bounded High follow-up; do not enter author acceptance with unexplained failures. Macro refuge persistence, local environment and macro diversity remain open despite verified checkpoints from prompts 01–03.
 
 [Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).
