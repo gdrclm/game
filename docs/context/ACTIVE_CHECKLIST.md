@@ -37,12 +37,12 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
-Prompts 01–03 have verified implementation checkpoints. Prompt 04 records all fixed cohorts and the remaining rejection families on one program revision. Macro refuge, local environment and macro physical diversity blockers still require evidence or explicit author policy. [Stress checkpoint](review/f8t/closure/prompt-04-stress-audit.md)
+Prompts 01–03 have verified implementation checkpoints; prompt 04 completed the pinned full audit, not all stabilization. Next execute [prompt 05 — independent causal closure audit](NEXT_ENGINEERING_MILESTONE.md). Keep macro refuge, local environment, macro physical diversity and F8-S open until their evidence or explicit author-policy gates are resolved. [Stress checkpoint](review/f8t/closure/prompt-04-stress-audit.md)
 
 - [ ] F8-T macro water closure: establish physically measured refuge persistence under seasonal loss and repeated stress. Test fixed-total changes in the overlap of replenishment and wind shelter. Keep source access and delivery separate and retain both excess and weak recovery controls. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, exposure along paths, meaningful finite access (all 293 measured islands currently have full or zero reachability), actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: keep the rejection register and High follow-up open for macro recovery and sorted pressure/rhythm distributions. Record the author decision for physically single-continent worlds. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned failure register](review/f8t/closure/prompt-04-stress-audit.json) · [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+- [ ] F8-S: resolve or classify all 15 unique reproducible rejections (10 excess recovery, one weak relief, one sorted pressure/rhythm comparison, three continental minimum cases). Record the author decision for physically single-continent worlds. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned failure register](review/f8t/closure/prompt-04-stress-audit.json) · [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 

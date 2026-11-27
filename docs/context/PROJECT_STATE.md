@@ -1,6 +1,6 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: prompt 04 stress audit on branch `worldgen/v1-foundation-closure` (27 November 2026). Pinned program revision `0c11b75890f86354dec208066e95c862ff81fe87`; program code matches the verified regional reconstruction `0260b5d`. [Stress audit and reproducible controls](review/f8t/closure/prompt-04-stress-audit.md) · [Mandatory CI on `0260b5d`](https://github.com/gdrclm/game/actions/runs/45866373220)
+Current checkpoint: `ef7718b`, prompt 04 stress audit on branch `worldgen/v1-foundation-closure` (27 November 2026). Pinned program revision `0c11b75890f86354dec208066e95c862ff81fe87`; program code matches the verified regional reconstruction `0260b5d`. [Stress audit and reproducible controls](review/f8t/closure/prompt-04-stress-audit.md) · [Mandatory CI on `0260b5d`](https://github.com/gdrclm/game/actions/runs/45866373220)
 
 ## Current status
 
@@ -50,7 +50,7 @@ On fixed Phase 1 inputs `42` and `16908799` pass with recovery 0.182541 and 0.18
 
 ## Island scale and author gates
 
-Historical 54 accepted original stress worlds: 54/54 with 30 connected candidates at 0.25 macro-cell area, 48/54 at 0.5, 19/54 at 1.0. Independent cohort: 54/54, 52/54, 23/54 respectively. These are not playable island counts. 30 V1 roles remain the contract; minimum physical area is advisory, not selected. Verified erosion/fault fragments, shelf connectivity and volcanic provenance preserved. [Regional atlas](review/f8t/archipelago/README.md).
+Current pinned audit `0c11b75`: original stress accepted worlds 58/58 with 30 connected candidates at 0.25 macro-cell area, 52/58 at 0.5, 19/58 at 1.0; independent accepted worlds 60/60, 58/60, 26/60 respectively. Mandatory 49/49, 45/49, 15/49; edges 7/7, 7/7, 1/7. Denominators are accepted worlds, not all sampled seeds. These are not playable island counts. 30 V1 roles remain the contract; minimum physical area is advisory, not selected. Verified erosion/fault fragments, shelf connectivity and volcanic provenance preserved. [Regional atlas](review/f8t/archipelago/README.md).
 
 Author decisions remain open on playable scale, physical acceptance, single-continent policy if a physically supported second continent is unavailable, interpretation of differentiation gate, and shelter/water access in harsh worlds. No threshold relaxation or design changes without approval. [Author queue](AUTHOR_REVIEW_QUEUE.md).
 
@@ -61,5 +61,9 @@ Author decisions remain open on playable scale, physical acceptance, single-cont
 ## Pending review
 
 The [prompt 04 checkpoint](review/f8t/closure/prompt-04-stress-audit.md) captures the fixed stress runs and distinguishes measured causal gaps from author policy. The High queue specifies controlled interventions on spatial replenishment, shelter and source delivery and retains the weak-recovery and distribution controls. Macro refuge persistence, practical local environment, coastal and tectonic morphology, atmospheric transitions and origin diversity remain open. [High review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+
+## Next action
+
+[Prompt 05 — independent causal closure audit](NEXT_ENGINEERING_MILESTONE.md), High / Standard. The prompt 04 baseline covers 173 unique seeds, 158 exports and 15 reproducible rejections: 10 excess recovery, one weak relief, one sorted pressure/rhythm comparison, three continental minima. These are four failure families, not 15 independent implementation tasks. Prioritize the shared recovery semantics and validate both extremes; audit the sorted comparison separately. Continental policy requires explicit author choice if no physically supported solution within the current contract. Prompt 04 changed diagnostics and reports, not production generator formulas. Preserve the pinned audit as baseline; only a new full run can certify subsequent code changes. Do not require scientific precision for unsupported V1 processes; classify gaps by downstream consequences and keep genuine blockers open. No Phase 3 or author acceptance yet.
 
 [Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).
