@@ -37,7 +37,7 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
-Prompts 01–03 have verified implementation checkpoints; prompt 04 completed the pinned full audit, not all stabilization. Next execute [prompt 05 — independent causal closure audit](NEXT_ENGINEERING_MILESTONE.md). Keep macro refuge, local environment, macro physical diversity and F8-S open until their evidence or explicit author-policy gates are resolved. [Stress checkpoint](review/f8t/closure/prompt-04-stress-audit.md)
+Prompts 01–03 have verified implementation checkpoints; prompt 04 completed the pinned full audit, not all stabilization. Next execute [prompt 04-B — critical implementation closure](NEXT_ENGINEERING_MILESTONE.md) before [prompt 05 — independent audit](PROMPT_05_INDEPENDENT_CAUSAL_AUDIT.md). Keep macro refuge, local environment, macro physical diversity and F8-S open until their evidence or explicit author-policy gates are resolved. [Stress checkpoint](review/f8t/closure/prompt-04-stress-audit.md)
 
 - [ ] F8-T macro water closure: establish physically measured refuge persistence under seasonal loss and repeated stress. Test fixed-total changes in the overlap of replenishment and wind shelter. Keep source access and delivery separate and retain both excess and weak recovery controls. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, exposure along paths, meaningful finite access (all 293 measured islands currently have full or zero reachability), actual water persistence and recovery timing require further physical evidence.
@@ -45,6 +45,15 @@ Prompts 01–03 have verified implementation checkpoints; prompt 04 completed th
 - [ ] F8-S: resolve or classify all 15 unique reproducible rejections (10 excess recovery, one weak relief, one sorted pressure/rhythm comparison, three continental minimum cases). Record the author decision for physically single-continent worlds. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned failure register](review/f8t/closure/prompt-04-stress-audit.json) · [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
+
+## Pre-audit implementation gate (04-B)
+- [ ] P0 recovery: implement and verify a spatially supported V1 recovery interpretation for both excess and weak relief, or document the exact unresolved technical/author-policy blocker with tests.
+- [ ] P0 differentiation: prove independent causal response of named pressure/rhythm axes; correct demonstrated coupling. If only the sorted gate conflicts with valid causal outputs, obtain author decision rather than changing it silently.
+- [ ] P0 continental export: retain supported geometry; obtain explicit author policy if two minimum continents cannot be physically generated. No forced split or undocumented retry policy.
+- [ ] P1 physical inputs: verify adequate source-access cost, refuge exposure and persistence proxies, and investigate macro contact/coast/climate defects that change future settlement, routes or environmental constraints. Implement material corrections; record justified V1 limits and author questions. Origin diversity is a diagnostic, not a quota.
+- [ ] Verify stabilized code on all pinned cohorts and known controls, preserve 49 mandatory worlds and earlier improvements. Update rejection register and prepare a separate implementation handoff. Do not close the parent tasks on diagnosis alone.
+
+Prompt 05 starts only after the implementation checkpoint; any remaining hard technical blocker prevents author acceptance. Author-policy issues require explicit decisions. These subitems are acceptance gates under existing F8 work, not independent progress percentage units.
 
 ## Boundaries
 No Phase 3, new history or player runtime integration before their respective gates. Do not change main. One archipelago and 30 V1 playable roles are existing scope; the physical candidate threshold is advisory. [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Current state](PROJECT_STATE.md).
