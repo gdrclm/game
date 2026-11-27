@@ -1,6 +1,8 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: `0cde9c9`, prompt 04-B implementation on branch `worldgen/v1-foundation-closure` (27 November 2026). Program revision `a3df0d21ecbad979b1253611ab93621dbd6b0157`. Baseline verification remains recorded on `0c11b75`. [Implementation and verification](CRITICAL_IMPLEMENTATION_CLOSURE.md) · [Baseline stress audit](review/f8t/closure/prompt-04-stress-audit.md)
+Current checkpoint: 04-C residual recovery implementation on branch `worldgen/v1-foundation-closure` (27 November 2026). Program revision `cc06a00cadc4a8c5d1d3cb99d2f4876d1b54da95`. [Recovery evidence](CRITICAL_RESIDUAL_RECOVERY.md) · [04-B baseline](CRITICAL_IMPLEMENTATION_CLOSURE.md)
+
+Pinned verification exported 170/173 unique worlds: 49/49 mandatory with 27/27 checks, 64/64 original stress, 62/64 independent, 7/7 edges, and 8/11 additional. All 165 prior exports retain their Phase 0 and Phase 1 hashes. Both 04-B and all five 04-C regression controls pass. The three unchanged Phase 1 rejects remain under author review. [Verification register](review/f8t/closure/prompt-04c-verification.json) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45965882650)
 
 ## Current status
 
@@ -8,11 +10,12 @@ Current checkpoint: `0cde9c9`, prompt 04-B implementation on branch `worldgen/v1
 |---|---|---|
 | Phase 0 | 1,031 seeds, 14 namespaces, deterministic export | Later historical consumers |
 | Phase 1 | Signed relief and bathymetry, physical terrain and climate, regional inland slope reconstruction, measured dry-land water delivery, supported continental fallback, actual drainage branches and conserved source allocation | Tectonic/coastal morphology, atmospheric transitions, physical water persistence and unsupported continental candidates |
-| Phase 2 | Record-bound pressure and rhythm, distinct static route reliability and weather-driven closures, exact island shelter/source overlap, measured macro shelter/replenishment, seasonal limit for recurring stress | Absolute replenishment and duration of macro refuges, remaining weak/excess recovery rejections |
+| Phase 2 | Record-bound pressure and rhythm, distinct static route reliability and weather-driven closures, exact island shelter/source overlap, macro refuge opportunity, separate ordinary and low-season replenishment on a shared climate scale | Measured retention time, losses and attenuation for environmental processes |
 | V1 islands | Physical carriers, complete footprints and stable IDs, maritime connectivity and individual physical environment | Playable area/density and final island selection (Phase 16 onward) |
 
 ## Latest verified tests
 
+- On `cc06a00` and Node 22.23.5, Phase 0 passes 1,031 seeds in 14 namespaces. Every export and each of the three Phase 1 rejections repeats deterministically. Chromium passes 5 Phase 0 and 270 runtime tests, and the game starts over local HTTP. [Pinned verification](review/f8t/closure/prompt-04c-verification.json) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45965882650)
 - On `a3df0d2` and Node 22.23.5, 49/49 mandatory, 62/64 original stress, 61/64 independent, 7/7 edges and 6/11 additional worlds pass. All 158 prior exports are preserved, and seven seed cases are restored for 165/173 unique exports. The mandatory suite passes 27/27 checks. Phase 0 covers 1,031 seeds, Chromium passes 5 Phase 0 and 270 gameplay tests and game startup, and GitHub Actions passes. [Verified results and remaining failures](CRITICAL_IMPLEMENTATION_CLOSURE.md) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45952961529)
 - The macro refuge checkpoint `c2e6d87` passed 49/49 mandatory worlds and 25/25 checks. On fixed Phase 1 input, `7c24b60` restores the rhythm differentiation case `1665754063` with identical pressure axes. The definite restores `1665754063` and `2666689910` are covered by a separate CI cohort. [Exact controls](CRITICAL_IMPLEMENTATION_CLOSURE.md)
 - On `0c11b75` and Node 22.23.5, all 49 mandatory worlds and 24 checks pass, including causal interventions and deterministic exports. Phase 0 passes on 1,031 seeds in 14 namespaces. Chromium passes 5 Phase 0 and 270 gameplay tests, and game startup. [Exact cohort membership, metrics and hashes](review/f8t/closure/prompt-04-stress-audit.json)
@@ -39,13 +42,13 @@ Macro recovery scores before and after the exact island measurement are identica
 
 ## Macro recovery causal checkpoint
 
-Measured low-season inflow caps the recurring-stress runoff contribution. The recovery tempo capacity uses structural reliability when local inflow is available. Basin drought still enters scarcity and the recurring-stress ceiling. Measured refuge persistence now uses the share of wind-sheltered land multiplied by the seasonal fraction of input in that shelter. The general support window allows dry refuges. The canonical Phase 1 layer also records wet sheltered patches inside final drainage branches. Recovery diagnostics keep local inflow, source reachability, allocated budget, delivery geometry and potential retention separate.
+Measured ordinary local inflow informs the ecological portion of fast recovery. Route reentry and its existing route bonus use separate evidence and remain limited by regional workability. One ordinary density scale converts both ordinary and low-season inputs, preserving the measured seasonal fraction. Basin drought still enters scarcity and the recurring-stress ceiling. Refuge persistence uses the share of wind-sheltered land multiplied by the seasonal fraction of input in that shelter. The general support window allows dry refuges. The canonical Phase 1 layer also records wet sheltered patches inside final drainage branches. Recovery diagnostics keep local inflow, source reachability, allocated budget, delivery geometry and potential retention separate. [Causal interventions](CRITICAL_RESIDUAL_RECOVERY.md)
 
 At the earlier seasonal split checkpoint `c642b9b`, on fixed Phase 1 inputs `42` and `16908799` passed with recovery 0.182541 and 0.186435. `3928839710` and `1054323503` pass the original validation. Both `4144686569` and `2666689910` rejected at that checkpoint; 04-B restores `2666689910`, but not `4144686569`. The stronger variant that also capped refuge duration caused regressions on mandatory `1431655765` and `2964753490`. The committed split passes both in fixed-input replay. [Causal trace and before/after evidence](review/f8r/macro-recovery-seasonality.md)
 
 ## Remaining engineering blockers
 
-- On `4144686569`, the measured macro refuge index distinguishes relief regions that previously shared identical inherited support. Its seasonal fraction still needs explicit absolute replenishment and duration semantics for the remaining excess recovery cases. Weak relief on `2248663653` now passes presence and continues to fail gameplay relevance. [Fixed-input effects and registry](CRITICAL_IMPLEMENTATION_CLOSURE.md)
+- Fixed-input controls on `4144686569` and `2248663653` respond in opposite directions through fast recovery and low-season support. Real water loss and actual refuge duration remain open. The replenishment index tracks absolute local changes on the observed baseline of a given world. [Fixed-input effects and registry](CRITICAL_RESIDUAL_RECOVERY.md)
 - Actual wind attenuation, practical access budgets using measured path geometry, physical retention duration and ecological recovery timing remain open. Geometry and atmospheric diversity are tracked independently.
 - The original unsupported continental cases still require an explicit policy about admissible worlds or a physically justified uplift redesign. The bounded exact-cutoff fallback fixes skipped supported opportunities within current bounds. [Counterexample and supported controls](CRITICAL_IMPLEMENTATION_CLOSURE.md#c-поддержанный-континентальный-срез)
 - Repeat the fixed cohorts after any production change affecting these mechanisms and keep F8-S open pending architectural resolution and author review of documented design cases.
@@ -62,13 +65,9 @@ Author decisions remain open on playable scale, physical acceptance, single-cont
 
 ## Pending review
 
-The [prompt 04 checkpoint](review/f8t/closure/prompt-04-stress-audit.md) captures the fixed stress runs and distinguishes measured causal gaps from author policy. The High queue specifies controlled interventions on spatial replenishment, shelter and source delivery and retains the weak-recovery and distribution controls. Macro refuge persistence, practical local environment, coastal and tectonic morphology, atmospheric transitions and origin diversity remain open. [High review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+The original stress audit distinguishes measured causal gaps from author policy. Stage 04-C establishes the causal controls for ordinary and low-season replenishment. Physical duration of macro refuge persistence, practical local environment, coastal and tectonic morphology, atmospheric transitions and origin diversity remain open. [Original stress audit](review/f8t/closure/prompt-04-stress-audit.md) · [High review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 
 ## Implementation boundary
 
-The 04-B checkpoint records implemented physical corrections and the remaining technical and author-policy blockers. F8-S stays open while those cases remain. Testing is scoped to Phase 0–2. [Closure evidence](CRITICAL_IMPLEMENTATION_CLOSURE.md) · [High review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+The 04-C checkpoint is scoped to Phase 0–2. F8-S retains the three unsupported continental profiles for explicit author disposition. Physical approximations and unresolved measurement limits stay in the High review queue. [Recovery evidence](CRITICAL_RESIDUAL_RECOVERY.md) · [High review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 [Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).
-
-## Next action
-
-[04-C — residual recovery implementation](NEXT_ENGINEERING_MILESTONE.md), High / Standard. Five technical rejects remain (four excessive recovery, one weak gameplay relevance); three Phase 1 continental cases need explicit author policy. Pressure/rhythm separation is implemented and verified, do not repeat it. The next bounded task targets residual tempo/recurring-stress semantics and absolute replenishment without undoing the spatial refuge correction. The independent audit 05 remains deferred until critical implementation is verified or remaining policy questions are explicitly separated. Physical approximations still need a downstream-impact classification before acceptance. No author decisions or new test execution are implied by this documentation reconciliation.

@@ -1,9 +1,11 @@
 # Next engineering milestone — 04-C / residual recovery implementation
 
-Repository: gdrclm/game. Branch: worldgen/v1-foundation-closure. Verify actual HEAD. Evidence checkpoint 0cde9c9; latest verified production a3df0d2 (CI 45952961529 success). High / Standard. Phase 0–2 only. Do not start prompt 05, Phase 3, merge or author acceptance.
+Repository: gdrclm/game. Branch: worldgen/v1-foundation-closure. Phase 0–2 only. Do not start prompt 05, Phase 3, merge or author acceptance.
+
+04-C implementation and verification complete on `cc06a00`. All five Phase 2 targets and all 165 prior exports pass. The three Phase 1 continental cases remain in author review. The sections below preserve the entry baseline and acceptance criteria for this checkpoint. [Implementation and evidence](CRITICAL_RESIDUAL_RECOVERY.md) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45965882650)
 
 ## Baseline and reading
-Read AGENTS.md, PLANS.md, docs/context/PROJECT_STATE.md, ACTIVE_CHECKLIST.md, HIGH_REASONING_REVIEW_QUEUE.md and CRITICAL_IMPLEMENTATION_CLOSURE.md. Use compact metrics from review/f8t/closure/prompt-04b-implementation-audit.json. All 158 previously accepted worlds survive; 165/173 unique export, 62/64 original, 61/64 independent, 7/7 edges, 6/11 additional. Mandatory 49/49, plus separate critical-implementation-regression 2/2; 27/27 checks. Preserve c2e6d87 spatial refuge, 7c24b60 temporal navigation, 0b7b07d exact-cutoff search and a3df0d2 path delivery. Do not repeat them.
+Read AGENTS.md, PLANS.md, docs/context/PROJECT_STATE.md, ACTIVE_CHECKLIST.md, HIGH_REASONING_REVIEW_QUEUE.md and CRITICAL_IMPLEMENTATION_CLOSURE.md. At 04-B production revision `a3df0d2`, all 158 previously accepted worlds survive. Baseline exports total 165/173 unique worlds, 62/64 original, 61/64 independent, 7/7 edges and 6/11 additional. Mandatory 49/49 and 27/27 checks, with a separate critical-implementation-regression at 2/2. Preserve c2e6d87 spatial refuge, 7c24b60 temporal navigation, 0b7b07d exact-cutoff search and a3df0d2 path delivery. [04-B verification](review/f8t/closure/prompt-04b-implementation-audit.json)
 
 ## A. Remaining technical implementation
 Four excess recovery: 1240171611, 4286438917, 4144686569, 1683167796. One weak relevance: 2248663653 (relief_presence restored, relief_relevance remains). On 4144686569 tempo 0.371215 and recurring-stress forgiveness 0.360779 remain high; on 2248663653 0.142924 and 0.163596. Inspect actual definitions and dependencies in Phase 2 rhythm/pressure, not just aggregate scores.

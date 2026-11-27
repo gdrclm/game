@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-27 for the 04-B implementation checkpoint.
+Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-27 for the 04-C recovery checkpoint.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -39,17 +39,17 @@ Current engineering work only. Past iterations and measurements are preserved in
 - [x] 04-B continental search: recover an actual ordinary sea-level split skipped by discrete sampling. Keep positive island support, existing bounds and continental size constraints. [Exact cutoff test](CRITICAL_IMPLEMENTATION_CLOSURE.md)
 - [x] 04-B island delivery: preserve measured distance, ascent and unshielded path distance distributions through the Phase 2 island projection, with validation and legacy compatibility. Preserve four paired geography controls and 302 island footprints. [Paired maps](review/f8t/closure/prompt-04b-physical-controls.pdf)
 - [x] 04-B verification on `a3df0d2`: 49/49 mandatory and 27/27 checks, 62/64 original stress, 61/64 independent, 7/7 edges, 6/11 additional. Preserve all 158 prior exports and restore seven cases. Browser and GitHub Actions pass. [Pinned verification](review/f8t/closure/prompt-04b-implementation-audit.json) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45952961529)
+- [x] 04-C absolute recharge: ordinary inflow supports ecological tempo and low-season inflow limits recurring stress on a common density scale. Route reentry keeps its separate physical support. Fixed inputs cover five restored recovery cases and preserve the pressure fields, stabilization timing and shelter-based persistence. [Recovery implementation and tests](CRITICAL_RESIDUAL_RECOVERY.md)
+- [x] 04-C verification on `cc06a00` exported 170/173 unique worlds and preserved Phase 0 and Phase 1 hashes for all 165 prior exports. Mandatory 49/49 and 27/27 checks, original stress 64/64, independent 62/64, edges 7/7, additional 8/11, and separate regressions 2/2 and 5/5. Deterministic repeats, browser and GitHub Actions passed. [Pinned verification](review/f8t/closure/prompt-04c-verification.json) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45965882650)
 
 ## Active technical work (do not restart completed milestones)
 
-Next execute [04-C — residual recovery implementation](NEXT_ENGINEERING_MILESTONE.md) before [prompt 05](PROMPT_05_INDEPENDENT_CAUSAL_AUDIT.md). The 04-B implementation restores seven unique rejected seeds; 49 mandatory + two separately protected restored seeds pass CI. Five technical recovery rejects and three author-policy continental cases remain. Do not repeat resolved navigation separation, exact-cutoff search or delivery measurement.
+The [04-C checkpoint](CRITICAL_RESIDUAL_RECOVERY.md) preserves the spatial refuge, navigation, continental search and local delivery work. Physical duration, exposure limits and the three unsupported continental profiles remain open under their existing evidence and policy gates.
 
-The [04-B implementation checkpoint](CRITICAL_IMPLEMENTATION_CLOSURE.md) adds measured physical inputs and separates temporal navigation from static route cost. Keep macro refuge, local environment, macro physical diversity and F8-S open until their evidence or explicit author-policy gates are resolved.
-
-- [ ] F8-T macro water closure: establish how absolute replenishment, coherent sheltered area and loss determine refuge duration. Keep source access and delivery separate. Retain both excess and weak recovery controls. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
+- [ ] F8-T macro water closure: establish how coherent sheltered area, water loss and independent duration evidence determine actual refuge persistence. Preserve the verified local replenishment signal and keep source access and delivery separate. [Open hypotheses](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, practical access budgets applied to measured route geometry, actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: resolve or record the explicit disposition of four excess-recovery cases, one weak gameplay signal and three unsupported continental cases. Repeat the fixed cohorts after relevant production changes. [Implementation register](CRITICAL_IMPLEMENTATION_CLOSURE.md) · [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+- [ ] F8-S: record explicit disposition of the three unsupported continental cases. Keep the five restored recovery controls in CI and repeat the fixed cohorts after relevant production changes. [Implementation register](CRITICAL_RESIDUAL_RECOVERY.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 

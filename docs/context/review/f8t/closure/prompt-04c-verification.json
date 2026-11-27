@@ -1,0 +1,4591 @@
+{
+  "schema": "paths-04c-residual-recovery-v1",
+  "revision": "cc06a00cadc4a8c5d1d3cb99d2f4876d1b54da95",
+  "node": "v22.23.5",
+  "baselineRevision": "a3df0d21ecbad979b1253611ab93621dbd6b0157",
+  "phase0": {
+    "sample": {
+      "edges": [
+        0,
+        1,
+        2,
+        2147483647,
+        2147483648,
+        4294967294,
+        4294967295
+      ],
+      "consecutive": 512,
+      "distributed": 512,
+      "total": 1031
+    },
+    "reverseOrderStable": true,
+    "namespaceUniqueValueCounts": {
+      "macroGeographySeed": 1031,
+      "pressureSeed": 1031,
+      "rhythmSeed": 1031,
+      "religionSeed": 1031,
+      "mentalSeed": 1031,
+      "civilizationSeed": 1031,
+      "dynastySeed": 1031,
+      "eventSeed": 1031,
+      "collapseSeed": 1031,
+      "archipelagoSeed": 1031,
+      "islandHistorySeed": 1031,
+      "settlementSeed": 1031,
+      "spatialSeed": 1031,
+      "npcSeed": 1031
+    },
+    "distribution": {
+      "conflictPressure": {
+        "min": 0.020403066251669932,
+        "p05": 0.13270901349635,
+        "median": 0.29076627406760747,
+        "p95": 0.8423277120970754,
+        "max": 0.9598720076841467,
+        "mean": 0.371564
+      },
+      "dynastyPressure": {
+        "min": 0.01258184840293941,
+        "p05": 0.1229843995212675,
+        "median": 0.39974832305891644,
+        "p95": 0.8821231668603029,
+        "max": 0.9627986126129089,
+        "mean": 0.503216
+      },
+      "maritimeDependence": {
+        "min": 0.033087139415170164,
+        "p05": 0.11737800672960941,
+        "median": 0.39408110839211274,
+        "p95": 0.8559618963970986,
+        "max": 0.9421458934498036,
+        "mean": 0.484334
+      },
+      "environmentalVolatility": {
+        "min": 0.050917031565633764,
+        "p05": 0.1288874184578086,
+        "median": 0.3936206619400117,
+        "p95": 0.8520197101119071,
+        "max": 0.957599206841713,
+        "mean": 0.479639
+      },
+      "collapseIntensity": {
+        "min": 0.05276929820139514,
+        "p05": 0.13960633000172673,
+        "median": 0.3916022716441916,
+        "p95": 0.794898696085403,
+        "max": 0.9256438978583792,
+        "mean": 0.473474
+      },
+      "religiousInertia": {
+        "min": 0.04172439165241848,
+        "p05": 0.1627789032650998,
+        "median": 0.6054937725596957,
+        "p95": 0.8404418196084167,
+        "max": 0.9543308955272474,
+        "mean": 0.507552
+      },
+      "institutionalPlasticity": {
+        "min": 0.05981506967647565,
+        "p05": 0.16288413573789506,
+        "median": 0.39991105089171064,
+        "p95": 0.8383179429159459,
+        "max": 0.9390644375651566,
+        "mean": 0.499063
+      },
+      "migrationPressure": {
+        "min": 0.03983548551998839,
+        "p05": 0.1478949163215728,
+        "median": 0.6007524009607732,
+        "p95": 0.8571081106156342,
+        "max": 0.9472491584342964,
+        "mean": 0.500816
+      },
+      "centralizationBias": {
+        "min": 0.012347492097317003,
+        "p05": 0.13829808708969327,
+        "median": 0.39844046715440024,
+        "p95": 0.852344749053519,
+        "max": 0.9400003824228611,
+        "mean": 0.500168
+      },
+      "memoryPersistence": {
+        "min": 0.01149055696442236,
+        "p05": 0.14960018304724376,
+        "median": 0.3997884887746639,
+        "p95": 0.8429794336985907,
+        "max": 0.9736547590648335,
+        "mean": 0.496129
+      },
+      "heroicAgencyBias": {
+        "min": 0.03846439232066973,
+        "p05": 0.1424415981952057,
+        "median": 0.3952028638083074,
+        "p95": 0.8335002228219723,
+        "max": 0.9703215891561918,
+        "mean": 0.490242
+      },
+      "routeFragilityBias": {
+        "min": 0.028803736826613524,
+        "p05": 0.15222606756226442,
+        "median": 0.3959570048439006,
+        "p95": 0.8277971965756554,
+        "max": 0.9015858927607632,
+        "mean": 0.487103
+      },
+      "culturalPermeability": {
+        "min": 0.06375945418365309,
+        "p05": 0.1627697249787311,
+        "median": 0.39976810952441555,
+        "p95": 0.8279942127047177,
+        "max": 0.9597318981096348,
+        "mean": 0.495254
+      }
+    },
+    "categories": {
+      "worldTone": {
+        "storm_shattered_trade_world": 282,
+        "migratory_open_world": 192,
+        "continental_iron_order": 122,
+        "fractured_maritime_age": 40,
+        "dynastic_collapse_frontier": 43,
+        "ritual_basin_civilization": 289,
+        "heroic_shatterbelt_age": 63
+      },
+      "likelyWorldPattern": {
+        "trade_heavy_but_fragile": 322,
+        "continental_hierarchy": 286,
+        "fragmented_maritime_rivals": 72,
+        "ritual_stable_basins": 285,
+        "high_memory_collapse_world": 66
+      },
+      "likelyConflictMode": {
+        "route_conflict": 291,
+        "religious_fragmentation": 119,
+        "resource_and_isolation_conflict": 258,
+        "frontier_pressure_conflict": 47,
+        "dynastic_conflict": 316
+      },
+      "likelyCollapseMode": {
+        "sudden_route_cascade": 305,
+        "ecological_shock_breakdown": 220,
+        "slow_periphery_fade": 380,
+        "dynastic_disintegration": 87,
+        "compound_collapse": 39
+      },
+      "likelyReligiousPattern": {
+        "trade_syncretic": 190,
+        "fear_and_appeasement": 108,
+        "reform_prone": 318,
+        "high_orthodoxy": 381,
+        "memory_bound_ancestral": 34
+      },
+      "likelyArchipelagoRole": {
+        "exilic_edge": 177,
+        "remnant_core": 300,
+        "customs_belt": 68,
+        "wound_of_world": 251,
+        "bridge": 179,
+        "imperial_chain": 56
+      }
+    }
+  },
+  "browser": {
+    "revision": "cc06a00cadc4a8c5d1d3cb99d2f4876d1b54da95",
+    "node": "v22.23.5",
+    "chromium": "156.0.8078.79",
+    "tests": [
+      {
+        "path": "tests/worldgen-phase0-tests.html",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "pageErrors": []
+      },
+      {
+        "path": "tests/crafting-tests.html",
+        "total": 270,
+        "passed": 270,
+        "failed": 0,
+        "pageErrors": []
+      }
+    ],
+    "gameBoot": {
+      "status": 200,
+      "canvases": [
+        "mapCanvas",
+        "gameCanvas",
+        "selectedCharacterPortrait"
+      ],
+      "pageErrors": []
+    }
+  },
+  "githubActions": {
+    "url": "https://github.com/gdrclm/game/actions/runs/45965882650",
+    "conclusion": "success",
+    "headSha": "cc06a00cadc4a8c5d1d3cb99d2f4876d1b54da95"
+  },
+  "reports": {
+    "regional-regression": {
+      "seeds": [
+        42,
+        137,
+        2026,
+        4194307,
+        271828183,
+        698377633,
+        1258291229,
+        1908874353,
+        2576980379,
+        3405691582,
+        4286578687,
+        73537,
+        16908799,
+        422095321,
+        894213317,
+        1536241709,
+        2269445513,
+        3071624507,
+        4011398309,
+        40681987,
+        359393571,
+        801384629,
+        1431655765,
+        2018958301,
+        2764796977,
+        3669891307,
+        4264079171,
+        64847321,
+        958614127,
+        2345998979,
+        3900041903,
+        3508323923,
+        2337086253,
+        2727244283,
+        2964753490,
+        4085637119,
+        2856344,
+        640306144,
+        1880886041,
+        3271942068,
+        792866484,
+        2220939230,
+        2546155002,
+        3840024598,
+        3019978005,
+        2402593754,
+        82211472,
+        3338251652,
+        1715244351
+      ],
+      "accepted": 49
+    },
+    "critical-implementation-regression": {
+      "seeds": [
+        1665754063,
+        2666689910
+      ],
+      "accepted": 2
+    },
+    "edges": {
+      "seeds": [
+        0,
+        1,
+        2,
+        2147483647,
+        2147483648,
+        4294967294,
+        4294967295
+      ],
+      "accepted": 7
+    },
+    "additional": {
+      "seeds": [
+        4144686569,
+        2666689910,
+        2030830666,
+        1683167796,
+        1122193213,
+        3418526133,
+        3479992453,
+        180816365,
+        2461506081,
+        3928839710,
+        1054323503
+      ],
+      "accepted": 8
+    },
+    "stress-0": {
+      "seeds": [
+        2856344,
+        318092342,
+        560997137,
+        822318635,
+        1139020259,
+        1353719581,
+        1665754063,
+        1880886041,
+        2170157783,
+        2461506081,
+        2727244283,
+        2964753490,
+        3271942068,
+        3497266055,
+        3766715046,
+        4085637119
+      ],
+      "accepted": 16
+    },
+    "final-holdout-0": {
+      "seeds": [
+        4091667,
+        318513630,
+        549004743,
+        854949540,
+        1136811783,
+        1399232894,
+        1625188128,
+        1909771886,
+        2186152241,
+        2429982171,
+        2748250067,
+        2995168801,
+        3272015243,
+        3555165180,
+        3759569681,
+        4092365955
+      ],
+      "accepted": 16
+    },
+    "stress-1": {
+      "seeds": [
+        76598953,
+        383299950,
+        640306144,
+        883547113,
+        1148112788,
+        1440166579,
+        1739745302,
+        1952721542,
+        2220939230,
+        2546155002,
+        2777760525,
+        3019978005,
+        3318570709,
+        3568089441,
+        3826957408,
+        4150290747
+      ],
+      "accepted": 16
+    },
+    "final-holdout-1": {
+      "seeds": [
+        82211472,
+        361873626,
+        624031623,
+        875777636,
+        1168653571,
+        1440108742,
+        1715244351,
+        1981263753,
+        2248663653,
+        2513252283,
+        2809128594,
+        3073967311,
+        3338251652,
+        3596127711,
+        3840024598,
+        4115911107
+      ],
+      "accepted": 16
+    },
+    "stress-2": {
+      "seeds": [
+        180816365,
+        406479959,
+        733570811,
+        974163850,
+        1240171611,
+        1500333434,
+        1801620481,
+        2064513479,
+        2335575721,
+        2601869029,
+        2878819102,
+        3088870215,
+        3381507530,
+        3683713563,
+        3928839710,
+        4208830274
+      ],
+      "accepted": 16
+    },
+    "final-holdout-2": {
+      "seeds": [
+        158928527,
+        453639656,
+        684347148,
+        1001386142,
+        1217359681,
+        1541067307,
+        1809118051,
+        2033001457,
+        2327750670,
+        2552393115,
+        2869486218,
+        3104293446,
+        3418526133,
+        3663106187,
+        3928506518,
+        4176392891
+      ],
+      "accepted": 15
+    },
+    "stress-3": {
+      "seeds": [
+        206998703,
+        532213186,
+        792866484,
+        1054323503,
+        1342059918,
+        1545735428,
+        1863959942,
+        2094783996,
+        2402593754,
+        2675813935,
+        2917478163,
+        3206964149,
+        3422738236,
+        3740851705,
+        3991564847,
+        4286438917
+      ],
+      "accepted": 16
+    },
+    "final-holdout-3": {
+      "seeds": [
+        265082804,
+        470489295,
+        764294789,
+        1007421140,
+        1289932853,
+        1570073644,
+        1843480287,
+        2146574712,
+        2407305372,
+        2663581168,
+        2944939198,
+        3220623973,
+        3479992453,
+        3716439855,
+        4005014395,
+        4248553947
+      ],
+      "accepted": 15
+    },
+    "residual-recovery-regression": {
+      "seeds": [
+        1240171611,
+        4286438917,
+        4144686569,
+        1683167796,
+        2248663653
+      ],
+      "accepted": 5
+    }
+  },
+  "worlds": {
+    "42": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "ece13b235e7d0540d40a2214192e4fc6fd083feff5658c4809fbff98d13cdbdd",
+        "phase1": "8d4fe88b07104563425707036831f3bf8d859d4009d5f9a83413e08ac1248329",
+        "phase2": "63ff628aa4ecf0ee20c32e9955526820df9057ad6a5ba8555231fe9d047b7def"
+      },
+      "recovery": 0.181713,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.182249,
+      "samePhase0And1": true
+    },
+    "137": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "211c569e874d4b39ab53165234297ce8ba2ebd99e9a08b0b3487266146a11bb4",
+        "phase1": "aaa707107aaa84e6e9a7cafbb7f2a5a12b244103954ae69925cdb26c13b1ab59",
+        "phase2": "0bf1b5f3116caf0067b840846786816c761da84eeadf5f0ea141f89bb931e3dc"
+      },
+      "recovery": 0.219955,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.230642,
+      "samePhase0And1": true
+    },
+    "2026": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "bb16b6000e71ea627ceb5da92e6fb29d0b5662fedd0b96062b2065f771dd002d",
+        "phase1": "a3da0a0c405fd373f9748498548d8b97058a40f66f596d0c6d7697c09e8bc2b6",
+        "phase2": "143c46afc7ec5fce7fee95f9d900a8bcf87098938e8253c0471b69c358cd655b"
+      },
+      "recovery": 0.195849,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.221005,
+      "samePhase0And1": true
+    },
+    "4194307": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e7bf9472e53490692f9044146d7333e8334ea186be4210600fa89d5ef440ea61",
+        "phase1": "6eae6e781036296114787c7aef3c13c4905c0ca6e7c31e5ad873876b42bb16f0",
+        "phase2": "6317251931917ba604ccb756b9e7c16fa54cf91c4c52a45b401919f6a3dc143d"
+      },
+      "recovery": 0.190948,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.208034,
+      "samePhase0And1": true
+    },
+    "271828183": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "ca49a93a7f5b80b958109b3115af4023d7ff697986de71e2454816687e0416b8",
+        "phase1": "dd307b1bc3ee8384dfe4cf6c8a985161192093e403af0490c1ef7cb005722b76",
+        "phase2": "53104a29ae943e6a06f7df5211703b2936917319322d85bb778960a139b2cc23"
+      },
+      "recovery": 0.256975,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.22688,
+      "samePhase0And1": true
+    },
+    "698377633": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "0b4e76d37d4c2b27a67098da9aa601f98ea29a48c94ba757a081c36230879262",
+        "phase1": "d363062c9208a53b772774dfbc6d06a6fb2ec28cb96200b0c1baaeffef529727",
+        "phase2": "821083cccaced596b06e5b69ab55ce4b4c6ba38075a471da2db0eeddc608475a"
+      },
+      "recovery": 0.198417,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.235427,
+      "samePhase0And1": true
+    },
+    "1258291229": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "94ae1cdf940781e971b2e8fc83fadd192b82a756277fe058e85bd84b99eb3eae",
+        "phase1": "1452bf29872d68ab3202b4d21930549d7e6b07aab6e878a4c0a5555b00bf2979",
+        "phase2": "f81b2f2cdc4bb61f40eebc96ca7973e97ccc855840c1d492ee00e25dcca9e78c"
+      },
+      "recovery": 0.253074,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.257632,
+      "samePhase0And1": true
+    },
+    "1908874353": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "fae71b638c7a9f1e92c6ad75c604a0df6da1f84ba616ffe24a4d9800321e6cc3",
+        "phase1": "ee0b175a936639dc78079954172b9a9184601f3e03b1a6a8fcc2bba620cd303b",
+        "phase2": "ca1208599174a88059bd001c07a16a246d4da3a524501b0539ece8720242cc21"
+      },
+      "recovery": 0.222526,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.236608,
+      "samePhase0And1": true
+    },
+    "2576980379": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "f173e902ef4a23cf637dc825a7c7dc74630df4ab14d49df846a8db884c7df76c",
+        "phase1": "450f81bad79e63515f2b687d958ace863521cf5f02dc37dd6321b2bb60408855",
+        "phase2": "587402392be3b6bf73df71a3495b3b3b7962b134e0193957fc80cafce5873dad"
+      },
+      "recovery": 0.254187,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.221662,
+      "samePhase0And1": true
+    },
+    "3405691582": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "eb90145c4b23d42423656d7d51a90d585cefd414f78a503e1dde20acac1e1ba8",
+        "phase1": "619d567a9e0aaafc7eb9044db4ed812dd05262449bf187cbfccb9f036c5a3fd1",
+        "phase2": "b3a76ffd2361579a6505cd15cc51290f5b03c239e564a076a5eb5f9623767cfc"
+      },
+      "recovery": 0.208494,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.217647,
+      "samePhase0And1": true
+    },
+    "4286578687": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e589477ab0fedc8af772198cc59c18742c9ff87cb127448e2cc15bc7499e0013",
+        "phase1": "24112f9500d834526eff001919e86efb3f1c7037e3895788593eae502c7c0f31",
+        "phase2": "53e630eeb15b6caeb01ea57f554c2e4f375635d3ea6f6e713336da588cc6086d"
+      },
+      "recovery": 0.204438,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.202331,
+      "samePhase0And1": true
+    },
+    "73537": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "d2694cc7c46d2cd5482963feaee116003625a05b3f6178f3035b1a4a3ba6987a",
+        "phase1": "e251077e481dfcb3a23be895d937fcbc391e1301985dbad6c720f9da1c793920",
+        "phase2": "99e358f36caa3168ff78108c23efda2b07419d2323f8dc6df718401ed5363c4f"
+      },
+      "recovery": 0.20879,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.213506,
+      "samePhase0And1": true
+    },
+    "16908799": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "8ac5eeb372c766880c6f48fb3408436c4141ffad064f31b3d9ac085e170bb341",
+        "phase1": "f32e7e6a27d544e8414186f40513c6ac920b737d6a867bc5f16425c2f47abd4c",
+        "phase2": "601e8d839dce695d487036f2a367575633aef118ab558fb1e8bec28d6fd62285"
+      },
+      "recovery": 0.189623,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.193894,
+      "samePhase0And1": true
+    },
+    "422095321": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "2de7c1b91c28a446acc653e1c871f1407e3f576b2ab56b70423185c8e7ab4005",
+        "phase1": "34f6822ea35d228e1be233986fab0171bd9250302153df6ce12d41c4e1555e37",
+        "phase2": "b290e5a952b12face0b9858957e12942421a2ed7e6c95efefb73cd0be716beaa"
+      },
+      "recovery": 0.212701,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.242154,
+      "samePhase0And1": true
+    },
+    "894213317": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "04c462d30eb0065fa4a56795e73182a2ddb324264f9afd4d2427bd2ee29214fc",
+        "phase1": "19d613bd07711a730563c3ba3d1df10c3e3a1beebe8ace709d07f33be95a7d17",
+        "phase2": "0848c817cd7517bb479fe1cf39f3d8843c8a0a4f09a7e966e31ec3a35dbea784"
+      },
+      "recovery": 0.205769,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.242819,
+      "samePhase0And1": true
+    },
+    "1536241709": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "d071e90448870b2167bba62890f133e904addc670b344cc344309bf83ed0014e",
+        "phase1": "bef31533722a80f06e5b5c0c9da9bb15764c4784161f80519f3e4242468f8b13",
+        "phase2": "686a833e893e45acd7aa1cd224042c18b14b021cb7f46a7f63612785f7dabfdc"
+      },
+      "recovery": 0.219338,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.236221,
+      "samePhase0And1": true
+    },
+    "2269445513": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "4c8d415ef7247f28f81338ce281715d3da8e40b3b1e535ec4b7ecd909cc51ad1",
+        "phase1": "d4336ab2247247781ee3fb9b758351d4955ca8a73b2febef3600b6b424a2f452",
+        "phase2": "aab907f563e52b30fee5994165da1fbfd3462a94047126f57136399c7c3abc4b"
+      },
+      "recovery": 0.232009,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.215181,
+      "samePhase0And1": true
+    },
+    "3071624507": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6c9d09d0fe76c05da3c75a6edcd48369afe9dca60ca2892d204aa15737af06d3",
+        "phase1": "7bc7c8e7a9738f92ffc0a6cd984188073b0ee606bbcf7d0697cbd63798e9f930",
+        "phase2": "1905f0fc4d8736d3480109058a19ed7d0f1ce792e6b2a364fd8fbefe311042ce"
+      },
+      "recovery": 0.264995,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.269946,
+      "samePhase0And1": true
+    },
+    "4011398309": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "9d9d0d25b0c274cd9e11e1a308661e5ccc10b367e819ea412349f5c0c1ef861f",
+        "phase1": "0c998d756a36cda8804ccefd3b393ceea625779f6cea5fa5ea43b72df8a35467",
+        "phase2": "4ddbab69c098494224b05839a621121405036252b26402de19c6369d40c28ce8"
+      },
+      "recovery": 0.23118,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.244058,
+      "samePhase0And1": true
+    },
+    "40681987": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "7162d87bb518205f71e38b2c360afee992b69e3076a67bc250ede71acd94b702",
+        "phase1": "82e3d917d0251eb081fba41a06fcde99d855e8e9b1da897a36e6b5eef1d6e412",
+        "phase2": "180d708ce45966c932b74c88b1bb5a7805348e11104dd425a2f5e6cdaa0df412"
+      },
+      "recovery": 0.227954,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.250637,
+      "samePhase0And1": true
+    },
+    "359393571": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "aa20cf8172bc23b8e8469cbb2aed034542dbbe4e1c1af0f66f39bd94d5d3f0f4",
+        "phase1": "ec3fe0dec06af82b46c3dcb96d5c5d9e058ee1b355f7cc14472f9513d6c70b36",
+        "phase2": "42c918778ef52d0ea1f7fa421efcae59b5325ef380a6390e6f1190eb1d6e298b"
+      },
+      "recovery": 0.28269,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.245582,
+      "samePhase0And1": true
+    },
+    "801384629": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e6b323dd63844e07df48cae09bcdd1e246059f82c448f4f3bd67a2be835908e2",
+        "phase1": "b2696dbbdd05feccbb21ae1efcc7b0d3eff7f365e8b3a04069cb03f58aec4449",
+        "phase2": "1454994107f40d4b1064c1c9f7607e3e60349b1a28b1296400c877f5cd73013e"
+      },
+      "recovery": 0.206207,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.218877,
+      "samePhase0And1": true
+    },
+    "1431655765": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "fccfd20c965b4308839a7fcc0736711be317799a404febdaab1404d01c84ffc7",
+        "phase1": "984993a2fa99330be8c574e5e481f242a25447369829b10c40ac1123caa8d701",
+        "phase2": "1b33f92d285557428038825995ea0bdcd9d49300e042fbae496f4168e7da9ab5"
+      },
+      "recovery": 0.220587,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.194964,
+      "samePhase0And1": true
+    },
+    "2018958301": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "9df925de5d1b4b17ece306b5a4c4aa759d39191f7e764af6045dbcf37ecd4c37",
+        "phase1": "4fec31b1bc3a4003a2b8941f4ded1c3d24c4831bde28ef26625995cc3ee19776",
+        "phase2": "2f2386149849dde0540fdc7e890b4718191d545ffa216aa0e327587ecf2c813e"
+      },
+      "recovery": 0.210113,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.19286,
+      "samePhase0And1": true
+    },
+    "2764796977": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6f27bed576a42dcc167f10d6b8167c76932d87318be984ee9be5b353b269ac1c",
+        "phase1": "0c00b4537e3a7ed947d9f5674ac9748f667b7f9c09dd21bdf794cd0c3423778f",
+        "phase2": "435d164015c942bc9a815dd02d686f5dfe4b1fc0eb670f6e932be56827fc15a6"
+      },
+      "recovery": 0.272277,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.261466,
+      "samePhase0And1": true
+    },
+    "3669891307": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "14f43b5adeb81bbc9a2fac5f9738c227b68298f72e7a3ee46ff47316039a41b0",
+        "phase1": "9beb41e7fd38de850512a1c4f84ddfb572374a3573e29bea6ea20849431524bf",
+        "phase2": "13f01c3153d581566249744957337b6363e252e59c2e1492cdfe1cd96053c0f6"
+      },
+      "recovery": 0.204008,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.214951,
+      "samePhase0And1": true
+    },
+    "4264079171": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "fd609d98ec2eef9b15e8fde52cb3c4a15148f3bcbe9e72aafe1795d9224fd526",
+        "phase1": "dbfa3293ab78ee3159bd78a6dfe5634d1c69696a93e63aaae31dab0cab705ab4",
+        "phase2": "bd8dec2b1ab982b34a60603b1b4a2095f9277841d1aa4052bf0ededc44054c65"
+      },
+      "recovery": 0.242459,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.263037,
+      "samePhase0And1": true
+    },
+    "64847321": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "27600c05107853fe169b9356b03544eec89412f9b0132f28a2d5d915f1aed127",
+        "phase1": "e076212c716123fdfe29795eb74f573d39c7b138f35b3aef18b843589a96d20d",
+        "phase2": "62d47a648186c80f58d04a0e2ea29699d2b4b830a0e92033f07030337bc56490"
+      },
+      "recovery": 0.235208,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.211987,
+      "samePhase0And1": true
+    },
+    "958614127": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "8e2a563acc7986d52acefff2906c46503889ffd31b83b19675831fe1a38526a0",
+        "phase1": "c35315f875ce2b75f1c8e2b29351aeb637ba234cb493e35e5c0061e6a58c7581",
+        "phase2": "03879c3ed8190cfc3e3c4c7fe98e4e1eb8e3d6231185659efab2503a58160285"
+      },
+      "recovery": 0.212157,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.224954,
+      "samePhase0And1": true
+    },
+    "2345998979": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "325c4f62459d473dc43722c060b501eea2dbec1008467d5cbefd914ec740a9c3",
+        "phase1": "d6526cc24ec0f9e507cfe244bae59b693d3367c862ab2123c5579e374725bf88",
+        "phase2": "adae22bb75a9901adb8615c319ef4d5d5ab922705c76cd9595aa6d0d7af26a1b"
+      },
+      "recovery": 0.225466,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.273647,
+      "samePhase0And1": true
+    },
+    "3900041903": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6c48ff5380c9354551a27a60b2506fb58b74ab895021c61f7e6ef5be6b84016a",
+        "phase1": "d3596f52a0980ba517a59eccc8989d4af60cfa6bf373167acf2955393491ed82",
+        "phase2": "dbdf3bb68291dd9ecaf6467e99bd387591045142633fbeb0802277c0cbb29368"
+      },
+      "recovery": 0.248268,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.233407,
+      "samePhase0And1": true
+    },
+    "3508323923": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "2a33b9d695bd113f691e1fa7a0b20c0cd9287ab8a1f3befe703f914e33a099fa",
+        "phase1": "da4ae35a0249ae64d952434f613db4febe4a8cd9e40e9da196ea8439760b32d5",
+        "phase2": "649959f8d5d078f8393a74bf8251ebbc6ad1e08f58bff0b33fd912022f85fe02"
+      },
+      "recovery": 0.200948,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.204402,
+      "samePhase0And1": true
+    },
+    "2337086253": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "cc036afbe46a49343abc4102e1f8a10f3da9de2e95e33b9f598fbb111886e797",
+        "phase1": "911ca1bed1beb685f28a0d65d56a6d1904ff6710e9988542c8aab83f7f5ca55c",
+        "phase2": "1b5743b2444814e986c1d528c03c1cacbf9d60758b7d4d68e696d38dba01b6c8"
+      },
+      "recovery": 0.207993,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.213882,
+      "samePhase0And1": true
+    },
+    "2727244283": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "dc65f6278521fc68655fa15b0cb85935f1b6045ed50bda9d7bf5549f8e92cc80",
+        "phase1": "c475048484f4e1d10d9f647442ba8e58440b21a2ce06df84e23064f6f9d103e7",
+        "phase2": "4f9ba24282e38afd27657fa7a6bf1d44b5eb6588bf85b9262d0690448b4d743b"
+      },
+      "recovery": 0.220876,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.215787,
+      "samePhase0And1": true
+    },
+    "2964753490": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "a2829f82f4d21d076e18acce64d0c09eb2a8264bdf52a6c64e38a529cde29f13",
+        "phase1": "2301fcc3e771bb7198bf6896095e07d2b66a4827d767175c868eb1998a5071e5",
+        "phase2": "784172e35023f76f1bf2582a574924c7b22b85f019824cff0c407458162a0335"
+      },
+      "recovery": 0.222373,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.195746,
+      "samePhase0And1": true
+    },
+    "4085637119": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "17cf92177562755ea7548aaea476a6c48621012787238ab5638dfae7ffc7cd0e",
+        "phase1": "b0b87a70dd7663e315ec8776c4c410127f76ad023fe274c06412c7996153d999",
+        "phase2": "6b8bb228757c61b0ffb126fc51843817d0ca86a8722c177edc294aab1da9ee6c"
+      },
+      "recovery": 0.208499,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.202803,
+      "samePhase0And1": true
+    },
+    "2856344": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "06e05dae373c90a8d138e2944fd962f3f2a0a616f0b8d28d74e7e63206dd3af7",
+        "phase1": "9cad309968152e5c6a9cd74e63e086329eb632f658ed2b19831b091731e2d03d",
+        "phase2": "85dc03dc9f5b9c3796814efb4350211d60aa8f02c72855e12d1b3bd54f889bef"
+      },
+      "recovery": 0.218577,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.225091,
+      "samePhase0And1": true
+    },
+    "640306144": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "01ab1208b1e85fc796bc7a7159bd0ebe6b3b76e60991ab43a29b8f840355cbd2",
+        "phase1": "9d80a840bc4756ed4334e816e64dccbef0fcd4793cdc2e80071cd5605d97ea49",
+        "phase2": "1d125642a78a09bebe8dee09d261bbf921f5ee8097b2328da2be5cf619602964"
+      },
+      "recovery": 0.204042,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.204806,
+      "samePhase0And1": true
+    },
+    "1880886041": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "7baf5fa4344d3217ee0926d996b8d20494b1ec60f35a2a4607af9db907c81a17",
+        "phase1": "38c30bf280adf61e1e08dbd8f6b236051f17e69a6f1147c64c46523d84f1c1a7",
+        "phase2": "a99dcc3c0d874dd65506fa3d775c38a1fd839ddbef1caa02be34d63c05186855"
+      },
+      "recovery": 0.222354,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.236977,
+      "samePhase0And1": true
+    },
+    "3271942068": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "ccf77c12b7b99a67d82159fc253c657ab4280792d1996a7123f992d696984191",
+        "phase1": "398b037f7ff5420b1aa01807a10d142046fab74d1a2133ae6df38bb4b8b23af5",
+        "phase2": "1d9ea1a25b237b4fa5e23d4b506de31566f5243e4f772f3e3994cccf1ad4a347"
+      },
+      "recovery": 0.2396,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.261303,
+      "samePhase0And1": true
+    },
+    "792866484": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "84ea256f981143f2c00ab2656f6709ad384f7ea4afd795eb4a1b99d25d7695ce",
+        "phase1": "b70a73a03fbb445621d8e4d8b2b9e554276291f636aa75cab9aa64dccfbee760",
+        "phase2": "192656c94921ee3d420d9e49a5a82351b5f378edc434ee85cb1b2f1cff8f5ef0"
+      },
+      "recovery": 0.22196,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.201415,
+      "samePhase0And1": true
+    },
+    "2220939230": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "b2b6eca9393126bf843f4aa991f3077a92f0ae002f1d4940ca33b597410f7b38",
+        "phase1": "dfadb7a57b9994e62584eb6c429487326eb268232d450f391790021d3d5130ab",
+        "phase2": "c5452237e0874a882fa1f4c016ead2693514d3692e7edfb8fe6c8ea6b59f465a"
+      },
+      "recovery": 0.225404,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.228154,
+      "samePhase0And1": true
+    },
+    "2546155002": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "84be20dd0bcc9d63e438bb3024cade3f7fe20bf5458255f34abe1fc8914a2c16",
+        "phase1": "804c3f918868243e906680fc4643d7d1643661edc19f64d60fb0a93bf7076b6f",
+        "phase2": "38b19dfb9606fa7a82fbea569bbbf909b1438c8e50638980c348616a6d8532ce"
+      },
+      "recovery": 0.181219,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.187137,
+      "samePhase0And1": true
+    },
+    "3840024598": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "78264c8e9b538e533615b72b8fb7e9fdd1fc015117f2a6c77a5ff88cc7ddace4",
+        "phase1": "1dab85332e4d2a1414dfd920624172ff4e10a45a162cca5c2f1f3025e1ed7a09",
+        "phase2": "7ebb8911ca7dd0ec300c278b2bcc3572ca5239181bd0774f5940cf3b39c740a7"
+      },
+      "recovery": 0.224295,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.220828,
+      "samePhase0And1": true
+    },
+    "3019978005": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "0e54f7c0a97e50272a6133de1a08bd37cf7ce2ebe236b86bda525e0d80c804a2",
+        "phase1": "2bdc35059ebf9522f5a69f0f98acd17dec7eb93f1888eecce703ee48f156d155",
+        "phase2": "5410a08faffd2b298e0d49d38f1f99af9c354b4e57c422f3fd61f6f6622035b8"
+      },
+      "recovery": 0.222874,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.231726,
+      "samePhase0And1": true
+    },
+    "2402593754": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "d7f9a0bcb50be1dd0e93f0674241b2f193feb0cf0e4a86f7ed84833fd4b20d69",
+        "phase1": "bb3def1c107e561efab322a26166dd4c31d5a10db0d353cd519e6d8259124ea9",
+        "phase2": "7fa9fc9c5d74cbc119a52161e80b37604b356915776a2bfc7011ef00ee0f099b"
+      },
+      "recovery": 0.215595,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.218862,
+      "samePhase0And1": true
+    },
+    "82211472": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "46c634700084ee0bebd4817c2fca7341922e3ef602bfbb30639c03644b2b4146",
+        "phase1": "c0232ef3ba72435221e988fb98cb10941c81fe3840a257cef02bfa21c1e18bbd",
+        "phase2": "fb69565490346d8e70679c906e6746d49a66398ee08ddd628b47c17bbb9ee80a"
+      },
+      "recovery": 0.219353,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.23416,
+      "samePhase0And1": true
+    },
+    "3338251652": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6ed4dffbeb71e9673fea969bd9b239b8eba4e19336a27ce95e3404626f553ec1",
+        "phase1": "1069cc4e0af79ef85b30416a99cda96921e184e86e28b3c1522037b484873f26",
+        "phase2": "b063a386fc59b9fc1e0ace66792fbd4c7e8a3e287b48ca7477684efee07de7f7"
+      },
+      "recovery": 0.226446,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.211052,
+      "samePhase0And1": true
+    },
+    "1715244351": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "70d208d41a9a7fe4f98d9ab8211703c9b3b4485c44dec72ea597b79d23c106aa",
+        "phase1": "2d82857d96d8b19e7dd45096bc0c4c7f7ddc29bd9c505ff2000a32e574b3e96f",
+        "phase2": "d7bfd3999b38efa2a06ed57a7647c60cfc9b7e8bc2f1a159f1aa807a4927ebb6"
+      },
+      "recovery": 0.211746,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.20885,
+      "samePhase0And1": true
+    },
+    "1665754063": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "803695ba7b49e2c6347a501e6eb0b2ca635caddc7285a03864e96249b20d4fce",
+        "phase1": "e465169b9a3aae74110c677549333dbf4ceb73285d7a9a52148390a9a82506ea",
+        "phase2": "23962b870ff15dde65f32812c0826487d07e60761a6d64d6f8909969c2d44af6"
+      },
+      "recovery": 0.217698,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.244566,
+      "samePhase0And1": true
+    },
+    "2666689910": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "dabd3a5f2cfb9f936cde5a0ea442b1add6e572b4cb590c7f363f9e90ae614c53",
+        "phase1": "766160b626ef2d4d050e4336b48a43e0eb367f42fc2ca79fb9b384db24973650",
+        "phase2": "1673d72c0aeb2f14dffe3121b595e4935735f914a1921fb494e2da7e6cf48b71"
+      },
+      "recovery": 0.243573,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.300467,
+      "samePhase0And1": true
+    },
+    "0": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "3883bf20e27bf1d7402f9b01967adb86a0d8e925a1750d4e971c86e1e3265d9b",
+        "phase1": "edeb5e0eb7d53486ec154c83a9b0258b05517ddd7892625f48b860739d8be89e",
+        "phase2": "709fac4b8481e2ec041c56a478d3217dc0a0b82b6e9081766a3c9cf6cf8944c1"
+      },
+      "recovery": 0.228465,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.213146,
+      "samePhase0And1": true
+    },
+    "1": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "5cc1e3c72f62f0826bc5686db377a4fe7631cacb3395809988b70b5f54a83be9",
+        "phase1": "abfcbdfce5e2b7d0e975f36192e2a5b552189b823b277c6bee78c22c32dcdfe0",
+        "phase2": "f5fee4938902ce652225f98fdaf24795d076d2d5bae66d4f63e5c8a62fe03493"
+      },
+      "recovery": 0.220364,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.218912,
+      "samePhase0And1": true
+    },
+    "2": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "510cc512ba25998cc09d02aeac7fcc272b307e3db07bb9616912dbc1a8065b83",
+        "phase1": "730c3a12b03ebd538ff60208825627e14bf9554c0964747293c9d027a05efabb",
+        "phase2": "c747f8593324abbea66e26f8c2670e9970dedc27f13f52f342f056b08df3da13"
+      },
+      "recovery": 0.222648,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.215254,
+      "samePhase0And1": true
+    },
+    "2147483647": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "9a4f5b60d2d8c587c7ea8dc3785ea603711f30d4955b10c4ffcb3d1d72afa3b1",
+        "phase1": "5ebcace611eda346ab5b7c5dcd98074893ede9a43ef8a1691f52966e9998e376",
+        "phase2": "9c3696ec01c2997e39215af542e641e33a8f571000da50a161a3c0a9461a88f5"
+      },
+      "recovery": 0.221668,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.207696,
+      "samePhase0And1": true
+    },
+    "2147483648": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "2ae5908659afef539d388ec80fdd2d3d532e8c24ad2f229c31ad6469857c8ca6",
+        "phase1": "6b7d3bd415603a3841094e12d9c6dad57d9e431f36d266a2ecc012818ed71a3c",
+        "phase2": "b48e95741057ec93b56ffc1190764ea10524be0cbef343b90cebd9236fcf6f87"
+      },
+      "recovery": 0.267632,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.241884,
+      "samePhase0And1": true
+    },
+    "4294967294": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "8fe4d2452dcf3d62114ce1de3a3ffd3060d10389780cbe29d7a1030a83d1d97d",
+        "phase1": "10d4b1a98980585f1cba9c12a4aea4ffba804ff0de5aed2e269e97bda2ec1cd4",
+        "phase2": "7f4c25e742f93e6908ae238e84b83fd75a0ceba7cd222847d58fc73f6aa1ede6"
+      },
+      "recovery": 0.224395,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.264936,
+      "samePhase0And1": true
+    },
+    "4294967295": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "fbf939d119d06bce7ad7b2d88b7de0815bf232979c34a3fda639949b1e5963cd",
+        "phase1": "e15f1f7ddf96388fb27a87c96c1f3807f3cbc476daa36fa5a0c237a4b3a3ae6b",
+        "phase2": "f4334178920b061add5b74a202a313ed88a6d3c64f81c167af8a550678157970"
+      },
+      "recovery": 0.23798,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.270301,
+      "samePhase0And1": true
+    },
+    "4144686569": {
+      "pass": true,
+      "priorPass": false,
+      "hashes": {
+        "phase0": "6aa8811e6f22d26a1a3ec8d58f0c6beb3d372e0636257b83d1e07fe9956ebb42",
+        "phase1": "93a7b252ce4dbf02855456dd1acdb66a51b37796bad942319eaee8e9f28b5872",
+        "phase2": "f1844f043034edc23880276acf26717d0d25ffef41c366f2d0b7673d9ae649eb"
+      },
+      "recovery": 0.270248,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorGateIds": [
+        "phase2.design.tension_vs_relief"
+      ]
+    },
+    "2030830666": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "fd5960d88aed25f7b0729aa2a43cea1b13e0221c6fba641b9432de1bc3dbe90a",
+        "phase1": "17645766ee3562f776d988f99fa0e06e12083e66025b88d7b63054ca45325d8e",
+        "phase2": "f3c3877d044d5ea11d53b7df7781cbc866ce97031b346cee019f76e9ca14dbd0"
+      },
+      "recovery": 0.212986,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.273518,
+      "samePhase0And1": true
+    },
+    "1683167796": {
+      "pass": true,
+      "priorPass": false,
+      "hashes": {
+        "phase0": "74cc226d2c69963545ac05cb35cd7725192c3842fd918b3f9e651e9ef661ca92",
+        "phase1": "c8f6db72a06acf16391077262bf9482e0bcc8531c67a38b4e314e4dce9687d6f",
+        "phase2": "8b102ba2075ab2b560cd101498ffa02cdfc1ffc519734ac2083a3833c06bdce8"
+      },
+      "recovery": 0.270523,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorGateIds": [
+        "phase2.design.tension_vs_relief"
+      ]
+    },
+    "1122193213": {
+      "pass": false,
+      "priorPass": false,
+      "phase": "phase1",
+      "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+      "gates": [],
+      "repeatedFailureMatches": true,
+      "sameFailureMessage": true
+    },
+    "3418526133": {
+      "pass": false,
+      "priorPass": false,
+      "phase": "phase1",
+      "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+      "gates": [],
+      "repeatedFailureMatches": true,
+      "sameFailureMessage": true
+    },
+    "3479992453": {
+      "pass": false,
+      "priorPass": false,
+      "phase": "phase1",
+      "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+      "gates": [],
+      "repeatedFailureMatches": true,
+      "sameFailureMessage": true
+    },
+    "180816365": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "344e4122e68022445cd944efe6bf9162d7f4f9eca7d0799f18caffd518541ffe",
+        "phase1": "1a43f64fafb534eba05824cd29242fd0d2d6fd0c5c0bb8005f95b2e2e476acd0",
+        "phase2": "2e3e260fe17b3145ec841c82c5531414f9b67fd41d3573403e5d63696baa3134"
+      },
+      "recovery": 0.2119,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.237557,
+      "samePhase0And1": true
+    },
+    "2461506081": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "5af852ff5b383ed6befe4a59655dd63767c662c71958ac32d5c6c5628193a30e",
+        "phase1": "45cbf27423a7a01a1f2fa39aec242f6db20a7c9f3e601cd0a0f26b96e0f74ff4",
+        "phase2": "f6f55f8fce3e1a5438086571e9efbc6c789788a3ea43b51635027ff66dafe297"
+      },
+      "recovery": 0.220638,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.262175,
+      "samePhase0And1": true
+    },
+    "3928839710": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e5954d5b2ab144f103de34a06a712f7061e9f07b050867cba0fb01989717f8ec",
+        "phase1": "ab04db12f250e76fa13bdf60d301d8cf22cf27460de7235246a9abf98c3b03a0",
+        "phase2": "c8b47bb5c5f769fc00c595b7a43df0e2f741e31c9af7be4da8372b7cf68880a4"
+      },
+      "recovery": 0.229749,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.268625,
+      "samePhase0And1": true
+    },
+    "1054323503": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "54ec07328857d0822666c7687d9b9bffda8b7a352901e244de9e3bf232c437df",
+        "phase1": "3e2946daf5334f39b7592f48a5da27338fd56b59d32a0f5f20c73dd36090a2e7",
+        "phase2": "86c22cc77b5ab078fbf90d2bbd3dfd9110e15f8f182c40a822fd834085a2b157"
+      },
+      "recovery": 0.240185,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.278654,
+      "samePhase0And1": true
+    },
+    "318092342": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "dc79cf542aa3543240a73336d5d74bac39ba698265eb5498b7102fd0b001257a",
+        "phase1": "213e616f6a999ff77d59738528795043c3fd8df0f459ce5ca492331625ec395a",
+        "phase2": "763737c0718d66bac33185544ecabe72f7207f67675bc5ca8f7a6d56acc07860"
+      },
+      "recovery": 0.193864,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.222455,
+      "samePhase0And1": true
+    },
+    "560997137": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "53fe4395ef248502047a77520adc78cb340571b58d15e2c51a16fe85277be4c3",
+        "phase1": "ceb13a1779c5cdca41a2fd05adbd1fe20a6ed98886aebe469b7961baa35edc2b",
+        "phase2": "83bef17befdcf819c5cfa8d406b522c824a644f4839faf3d98e61e3d6ebad958"
+      },
+      "recovery": 0.241307,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.202226,
+      "samePhase0And1": true
+    },
+    "822318635": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "2caa28a5dcef17eabeaaebf5bc5996e8f16dcd1a4a74a0f4fafb40441ed1c90d",
+        "phase1": "d0d306e2565730c215943d2c2ecc26c5841ccc27c0ead64f519b53e82dba6bab",
+        "phase2": "aebe6f7adc096886f477f0398e17fa18293f41477e6f8ee720abf25359a15f8e"
+      },
+      "recovery": 0.199208,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.232419,
+      "samePhase0And1": true
+    },
+    "1139020259": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "113ba2384250922aa85a03823e57ee1b3ec4ed750f57c4eeabd60853569dc526",
+        "phase1": "c099c9dc10ae5b9cf68ffe38d63151e2bba022a5c25e20d1c6dbcf4b2f6c0980",
+        "phase2": "8586520d8fab4882f38fef6dd7c53440699764b885ee5be089a7f8c60029962f"
+      },
+      "recovery": 0.210871,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.245189,
+      "samePhase0And1": true
+    },
+    "1353719581": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e6134d32355f8a34176847bf3a9762bd1c1291879f19067f6a1a135aa4e9345b",
+        "phase1": "a27d03816f790cdc1ad74c40155e5158c37fdf69007d5c35323a3579cd955b5e",
+        "phase2": "3294846b2ae1dcb3a527996c28642c5327f3244ebf44cc86e0be493af2bb50de"
+      },
+      "recovery": 0.256706,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.213788,
+      "samePhase0And1": true
+    },
+    "2170157783": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e6a492e4df7d9be8017d7747a5e4a0f8d2c7df4286038828035494ad3f03b4de",
+        "phase1": "ab3b11636c89e080ca30921363a96b785701cd3b21cdca94b512768da32ad227",
+        "phase2": "b218af7f8c014adb5c9337db85c84ac410d7a2f2cd0c71b4f00081f17964afee"
+      },
+      "recovery": 0.217589,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.248024,
+      "samePhase0And1": true
+    },
+    "3497266055": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "d4cce11d7f8e57c425f7209fbb7df6c7937e21c1b1a5abdf4569ce1683fe7525",
+        "phase1": "aec10df05834b970643166a162de121118af51a9994e95667732c723ba72da94",
+        "phase2": "fe355ba18bd1c6513e7a8a9ee93123cae58e4a1b24c01fb4179e10c24899da60"
+      },
+      "recovery": 0.235024,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.22437,
+      "samePhase0And1": true
+    },
+    "3766715046": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "9ca1fa292652ed2144dcbecddea6891ba30a492c7fb806b10c5b6d29fd83e744",
+        "phase1": "687b50316a032223f28495b321de6c6cc7a0f8ada64f876dc98515fbac9172f0",
+        "phase2": "d5e1a8c99d062de33cd4362b35c5ce0a12aeadcc43114900d90529dff33cbc20"
+      },
+      "recovery": 0.222699,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.25082,
+      "samePhase0And1": true
+    },
+    "4091667": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "f73313b2e752d2d11e9ae74b07c406c62ef6b6cfcb75a3811a06c4e8ebcee05d",
+        "phase1": "1ff6f7a795d1e68dffbd1cc958c878c4a689d4f4892df36970f763a536e44796",
+        "phase2": "f2a4c9c43b924cecbd0dfeee8583a4afe5147544ed7ca278e22feb391fae809e"
+      },
+      "recovery": 0.282292,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.246149,
+      "samePhase0And1": true
+    },
+    "318513630": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "acf7f49de76c86266cce57a523a405f0697bc646644100f0e49ef5c74961c3fb",
+        "phase1": "6c060d45283925cc30f4984005049faad1da5b869c6f654cd558af338d7e3086",
+        "phase2": "531f7930c403c63262ea5897a8b856c50da4c6dfe57151ba1c597e22803f9fae"
+      },
+      "recovery": 0.221334,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.200179,
+      "samePhase0And1": true
+    },
+    "549004743": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "cbe829a790e5949df0e01c3496e62518babf356a463b87d21277f296dd00c515",
+        "phase1": "adac2f3831cde48642922ddb351bd8e1826afcbe2b16da816e4be54da68ad0d4",
+        "phase2": "7355b9538eed356914e9fd39955cc3700b1c5407ffba94832841015dd8bf9d56"
+      },
+      "recovery": 0.22184,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.215707,
+      "samePhase0And1": true
+    },
+    "854949540": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "f3c074a8d98777ba028bce10b6612c10756f5516acbc16fc497f2d487272e061",
+        "phase1": "5fcdea075e5c898caaa2ff1a5467b0d345c7d1cf4106cd5836a32ce2c97b30dd",
+        "phase2": "5963376edcd75eaf9f110ac1566bb83071fe443381b3461699fe312ad7f5859a"
+      },
+      "recovery": 0.262261,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.24742,
+      "samePhase0And1": true
+    },
+    "1136811783": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "191f0a012845f9111a5aeaf240a7cc202a3f4546b3c8ac7b701c4183d419ec15",
+        "phase1": "af0b9378b401e06ce97d082225cbcc89571c7f5a65915b17eca4dbc7387573c1",
+        "phase2": "6231f3a763fa95006836dc4145eca86f0841d41ccdebb3baf3dfec5a9f4b0ec5"
+      },
+      "recovery": 0.221859,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.207049,
+      "samePhase0And1": true
+    },
+    "1399232894": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "0fdec729bdb71ec641b666e32cbf6624621b682d0f3b3e5428f4db48ec3778d6",
+        "phase1": "a9eef6bfae8aeb89ed149e247e51e9861f6f86dbcc0cc4707399e88d96591a29",
+        "phase2": "7374821ee283c58a3a20abee32dfd9bf7ce78349e3f4d50f5b97021e7fa4010b"
+      },
+      "recovery": 0.222221,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.227425,
+      "samePhase0And1": true
+    },
+    "1625188128": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "f62acfc97e3388e384ca8d71c7f29ad2ee8445394766fc9709c24ed4bafffdb2",
+        "phase1": "48d0247830f471d8ab5f91855b4e4e80e6089f1be51ff02050fb8c09909dac2d",
+        "phase2": "144f22c3c0b4d9d78773cb30fdaf54046972c6ee4edc78a2f0039444724c07e3"
+      },
+      "recovery": 0.246517,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.216456,
+      "samePhase0And1": true
+    },
+    "1909771886": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "85043f59428a2e03ed7f361b7d1ba130980a46480b09577662dc26d8c4260abd",
+        "phase1": "70964e23a819d366380996f3d7d9736b0c78153a6fc320ec3aff9f8dd7bbdbd6",
+        "phase2": "e97e13f15425af4993f4e4125cac8c04819b54c5c77887e764ebc8accf4eeeb9"
+      },
+      "recovery": 0.202126,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.213272,
+      "samePhase0And1": true
+    },
+    "2186152241": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "dc52b2dd4e2de2d62a078062596377dd4ad98314ed6c92832721e7ed7854e4ef",
+        "phase1": "434f64e8b4573648765b7073e4bc5260846e978087b715173cf7b09a75ecc091",
+        "phase2": "08e600e306cebebba34792f0a4edecf5ed56ea77d57e9ce6032754e2513cbb9e"
+      },
+      "recovery": 0.209047,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.21076,
+      "samePhase0And1": true
+    },
+    "2429982171": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "d0d6ed1b830b86cbd75f13ee2bcd5088b6ba9b8bbe41643f77b47ae560b1ebb4",
+        "phase1": "6ae3dc1214cf4167cfbeb1574e6f3d5e9b48b02bbf56df96df711e7d369458b8",
+        "phase2": "1b524ac4e472e90bf7d5e93b5946a084f44931966d1e2d1268f701cbb02add08"
+      },
+      "recovery": 0.244172,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.202071,
+      "samePhase0And1": true
+    },
+    "2748250067": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "c4ca664a07f359f155d24fb5d6716c171c640c7751a54fd8ca39df514c29359e",
+        "phase1": "7a95cf127c12bbd3c2d072c9c09a8865c2c209759e39395f384a8f85ff93c1ba",
+        "phase2": "2f82e2e1aef9a84ddf20350fb36bfd49b245ca6dc6c31ae90d8018a6c07d28a1"
+      },
+      "recovery": 0.225387,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.231259,
+      "samePhase0And1": true
+    },
+    "2995168801": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "bdac62de640107c33ced189bc56a74a5990706ce5cda075570ec626e2cdb57ea",
+        "phase1": "e06ed7858ac83e176491e4ea43bb1d72398b97b7cbaea030230472700c2f17cb",
+        "phase2": "6a4bdad65f539a15d46381d1ff7b424b6ffbc5fcaa53166b9cc89e3a13843a3b"
+      },
+      "recovery": 0.222241,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.230769,
+      "samePhase0And1": true
+    },
+    "3272015243": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6e365c62af6d397a8d282a67d06bcc9bcd8e0864cceb2c31b092f0af3dff24ab",
+        "phase1": "78e3c0d7d81fc37b030a56d4cfc1ab696eb6a6fff83ae0fa0698a6b8bbca8af9",
+        "phase2": "6de773dad3b87bc161122b1f5c01a525be4f94ba061ffe6449db5daa1908271f"
+      },
+      "recovery": 0.210949,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.21741,
+      "samePhase0And1": true
+    },
+    "3555165180": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "f8cdc430105309639e2762d98a966844d5022e70416f1c1f96265dfb00b9577f",
+        "phase1": "a97c37d9440c3789d466a5d29d5a7c7b24c695ed35d80805e7cbf0c0033eaaf9",
+        "phase2": "60c1b508230c44701be92df70dd49f5ec31cde14e902b20a7db0c3bec634254b"
+      },
+      "recovery": 0.25766,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.24986,
+      "samePhase0And1": true
+    },
+    "3759569681": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "a6767a8541052f144f24c31ae8a16201b9b9acecc24827c31316d114d6a1e06b",
+        "phase1": "2c927970230b9cec4cf9aa33a6ebe647b5e191240d22c44540cd0954286e50a6",
+        "phase2": "ee41b9257106aa95cc96b199a5b93037a668d37f5205733ddf61ee398b9cd529"
+      },
+      "recovery": 0.233464,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.245321,
+      "samePhase0And1": true
+    },
+    "4092365955": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "89781eae54432de3ea15afd0e92847d7febc8cdb19ab16af555b925cb3b41f7d",
+        "phase1": "a4afbe23196b2597766e8ae5d69a7a68fe22227187aabaa7190b50bf886ab1e9",
+        "phase2": "45df1576c36a604ebdc1df29fc391bde1a7051d233c1458bbcc2ff29e1c94f5f"
+      },
+      "recovery": 0.243283,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.229861,
+      "samePhase0And1": true
+    },
+    "76598953": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e3a5bc052f89112ce214b721565ad6edf8cc8c3eba2572f9746aa8f20b674617",
+        "phase1": "96e1b2dbb5358bf5337e2fc08b5457da88341384ed5399b931b9fbba9b842bdc",
+        "phase2": "7e9bafd8fcb7bdc235690a5089ad828cd2ceda64d85fbccfe462b12fc3de9841"
+      },
+      "recovery": 0.213676,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.21494,
+      "samePhase0And1": true
+    },
+    "383299950": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "54a94362d1fe36c6346b842aedb4fee7fe45e876aecff3264ffb3d6b309af0ee",
+        "phase1": "4e22f7a0a39e7f5b7e745b5b04c5b2c21340d23eef851f9afa55f93f32d6da71",
+        "phase2": "5fafb1392463f18013cdcb856298ae48ec8f70af129670a7ab301c9750233d28"
+      },
+      "recovery": 0.210343,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.205058,
+      "samePhase0And1": true
+    },
+    "883547113": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "bcb1a5e2720506900573ee10f6e8a910e80a98bdcf9d2807c59f6f278dca6a5a",
+        "phase1": "3273965dee15191b66659199d974b1b916f73a7553bd3508c5f89bc5bcc96f14",
+        "phase2": "fd0d453564f1ac3e5a93d29015cd8970d09d4aa399dd5cde7d7b92abfb6ac3c1"
+      },
+      "recovery": 0.249408,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.214678,
+      "samePhase0And1": true
+    },
+    "1148112788": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "b896d5c275a8fe8f165fa5e2278347261704d412e86bf17aa8c0daf11627a7be",
+        "phase1": "5e8fc69fb273192793c1f9a0b8635932c4dffe2fbb05903aa49112c3bdcd0720",
+        "phase2": "4401ab00f5a7e3457dd79c6bc82228af0ed4f9a247c7f0fc7ef64f8a5d1b023e"
+      },
+      "recovery": 0.249987,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.231678,
+      "samePhase0And1": true
+    },
+    "1440166579": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "03419c13965f85dc4e9d7ac09620803c7f66d9f36497e10bd352a053651d6067",
+        "phase1": "2f54f1c525fa7a5cb87e60573226124dfcd3a5da84f7f95b6bec97d2df36c574",
+        "phase2": "91b1aa154b3116898386297803005d16d2382e148712b6aab0d63b397cf6b574"
+      },
+      "recovery": 0.230148,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.234347,
+      "samePhase0And1": true
+    },
+    "1739745302": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "732aa6a3a7087c8abd630b9794473235f5813ee273a8e39ead4eb15cd2c6b419",
+        "phase1": "d4601097fbaa9784e93ec79f64568899be35444748f411ea36bdd6ced7353dcf",
+        "phase2": "4d183a292491144df005acb8bace213244011d09d83e1fc34a6724843ec03fc8"
+      },
+      "recovery": 0.206977,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.2228,
+      "samePhase0And1": true
+    },
+    "1952721542": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "22c661f457201e172b84987258671b63adb822ef09c405fd2caf12024498cf53",
+        "phase1": "807f4537b6fdf3713ae4e6c55f6598a3d5bfb3074cb7232a32b41126f47db711",
+        "phase2": "b216ec01aad9cd6d5931ed6eb42dd6b2ba7e5674c6a3a182a318e4bafbea398d"
+      },
+      "recovery": 0.230909,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.24346,
+      "samePhase0And1": true
+    },
+    "2777760525": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "03604efa5192e9f6fa0b01d9ab1cb0f15f2b8d59bb260cd8d7c821a9df643405",
+        "phase1": "f26005c21f99e673bee3989a30862af207e9c70f97e28fb31a03eccb8c4f3c06",
+        "phase2": "9f80cdb7321f86f5781ed1e6b3ed7f3191c1be62e9f1a9730b1853d76fa36366"
+      },
+      "recovery": 0.244079,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.22427,
+      "samePhase0And1": true
+    },
+    "3318570709": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "855e5ddfc4d124276fa07bb81c37fc2f82f04dc2d922861c41559ae40da1e51a",
+        "phase1": "be0f91fb436d4c0c278e4a84c852c69481ec6109326a549bc074a685aa188374",
+        "phase2": "5a93848a8e413679c990ddb3864aff6bfac9bc7a698671597dfc2dcdc5852bdd"
+      },
+      "recovery": 0.230011,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.238242,
+      "samePhase0And1": true
+    },
+    "3568089441": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "58ac0c4ef315c6f142c02999a5b0967e1918d29f5ea999da0cf576107270016a",
+        "phase1": "08b7591e4e538c360a5955720b6fb4dc5587451a7550e258c2b767ab14a41f55",
+        "phase2": "cbc3927be76a7149ff6745b717b8869b1d872babfa95610187d6c762a99381e9"
+      },
+      "recovery": 0.217727,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.219517,
+      "samePhase0And1": true
+    },
+    "3826957408": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "5c6c7926eb0e80de2a1af8a60b0ae7c7c469031f9a7c41abc22ee9f22f09d64e",
+        "phase1": "e5129e65414feea021aad816b4c640b681d38f555cd0d364b20f95164c2354af",
+        "phase2": "b0dfb0e11d3011a52eedf244c3acf957146e71b2c18c3b35304fbd7b12e483cd"
+      },
+      "recovery": 0.198263,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.19255,
+      "samePhase0And1": true
+    },
+    "4150290747": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "09ba111517151bf35292903b497a0cb0db42fbe32bd7031b935ba8052f4b986f",
+        "phase1": "a2ae22837fd1309344ed894b77e828dece06c2d775b047f16e1a46beda2ee3a0",
+        "phase2": "ca929cfca90ac02cc2e17f6f9e7fa30f7f5d46cbaf382f3cf51d8bcc606aae44"
+      },
+      "recovery": 0.252222,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.259414,
+      "samePhase0And1": true
+    },
+    "361873626": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "752e0f9b88479c77b48f074040bceb62bde1e3ef46883dcc4cc05b3291bbee0e",
+        "phase1": "b765ba2f8ca7b509c6f050d97ca131a38fd9191ab6b7c3995087fe3568b5fb1f",
+        "phase2": "de7aa0f68b676b6f8067581dbe18203af81383ce29058b56f0499db853f5c593"
+      },
+      "recovery": 0.253924,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.291741,
+      "samePhase0And1": true
+    },
+    "624031623": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "1bfd3a532cb7191bc8d25296cc3c2a23e2ac015de48339651259e63b8fc7bb6a",
+        "phase1": "5e87309d71d254d55cabd0010b2b7c87370a2224bcd8d64244982f871f17813b",
+        "phase2": "2f73a673f3cefbce35e22a3c8793dcae0ce6961c69a92a41a98569943e6d582b"
+      },
+      "recovery": 0.216357,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.203423,
+      "samePhase0And1": true
+    },
+    "875777636": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "ca235c729c5bca5d892eb358fdd1c4bfd8af822cd62b5ca701387eeba043e931",
+        "phase1": "b83db4a173edc6a0e2f26d553bf5d92d67ee1245ffd771b25b5c284760c5135d",
+        "phase2": "8b40de9322d3be1b56bc5487dfd0cc86c2942ed28d7e1949224dad97014b7dcc"
+      },
+      "recovery": 0.199371,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.19251,
+      "samePhase0And1": true
+    },
+    "1168653571": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "95216cf6ec55c5b5039062ca7cd190cbd91eca66b6630b9242f491eef1298a8d",
+        "phase1": "0535d79eb87de9debece834aca13448bbea7df0324d4e53c2d6eccfcfe4754e0",
+        "phase2": "bec3635162ad042f89ea3109fb882467ca524e5bb584c5e353dd667a5bcdde11"
+      },
+      "recovery": 0.263074,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.206924,
+      "samePhase0And1": true
+    },
+    "1440108742": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "1c1bc950d7bc966da5fd8aeb73679f29d5c16d5a331f7c3e03024131e2774d0f",
+        "phase1": "782c1cb893f9fae43b90462a9104dcb697198613142e787e6edca2c57526754a",
+        "phase2": "cf567eefbd66edec45505f0348575aecbe154234fe333fb42cdd700dae854904"
+      },
+      "recovery": 0.220368,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.218945,
+      "samePhase0And1": true
+    },
+    "1981263753": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "d8bf03ee2de87dc94f0018170d587941acc0c9122e8b1c42e4205d4ace2643b0",
+        "phase1": "23ec0600bec99bcb2d9944b6c5ce9a3790092f7a492dcb902b3c4254a2d831a5",
+        "phase2": "3c25c74e66acf4e86ac0cc689ef03f492d55fb950798d27beb77b16a11bea6d2"
+      },
+      "recovery": 0.201646,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.207594,
+      "samePhase0And1": true
+    },
+    "2248663653": {
+      "pass": true,
+      "priorPass": false,
+      "hashes": {
+        "phase0": "af4d82d21203f17ddad1508a097fd1ac4c1acc39fff5d6fafbd14b7f31d656b0",
+        "phase1": "c08a416bd71d1ec48f8665a3153d533f530effc24e6d38574468890d0efb4d0c",
+        "phase2": "79ceb599deba8abdd44200a48adcf379cb588a5808f538d5bb353cd032cafef1"
+      },
+      "recovery": 0.209226,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorGateIds": [
+        "phase2.gameplay.relief_relevance"
+      ]
+    },
+    "2513252283": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "5c235b3b814784bc683fdcca032833f42e12eae54e95294a196315674a592dda",
+        "phase1": "51d93da14185578e5eb46f68774b2c5da84bca31b4873e915b6a692a74722fee",
+        "phase2": "454b80b048ed1bc3f156564a53a70f19d2cbc45fecd47f4318f815158a03d8c4"
+      },
+      "recovery": 0.277803,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.260896,
+      "samePhase0And1": true
+    },
+    "2809128594": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "fafdd28f4d8ad66a1f9e080329cb864531fa8c8fab3dcf500eb8866de87f2363",
+        "phase1": "9885ad654818d212e5acb3fd8daaa07f3913ed97f10070322a8340a17f8349dc",
+        "phase2": "2399e3994ef7f4e8d4d7debc71435742f05aed5677f174acae2bfd39805dfd3a"
+      },
+      "recovery": 0.236433,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.217771,
+      "samePhase0And1": true
+    },
+    "3073967311": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "48f36c5eea3808f1f4aa7651734e8d7cc5f0f4b191e35c460641fc2c75ce6c42",
+        "phase1": "4880ad2087055a31d644d444b7dc798dbcd81f6067c89b3f230a8975f4e23a52",
+        "phase2": "703fae8b30d7f2229fa9ef4767c362b6ed9693ad8b17400bc696261cceee8f5f"
+      },
+      "recovery": 0.215777,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.209319,
+      "samePhase0And1": true
+    },
+    "3596127711": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "9a5bbc9c62a85c67789bb99ce2acbb6a347e69d817a33998e126f72f0d2f120e",
+        "phase1": "f9552ccad6ee1db2ac74ecf175b9065eb4acc8f7dfdb501572f83815e8ecda51",
+        "phase2": "d70631ffdac701e3aa12bdb424c68ece9f71556f02e96e196e5a0fb8a2bde48a"
+      },
+      "recovery": 0.212504,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.231762,
+      "samePhase0And1": true
+    },
+    "4115911107": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "b0e143ec3b4f191123e5b4567dcf81699273fabcf3d63f9bb4c38232dcf105b5",
+        "phase1": "8683210a93749056f1eaf9d031e33c5fd304789248d35698809b0640d7fb1e91",
+        "phase2": "47fe6c3ddecaf6623ed1b5016b52ce38ba72e94994995acfdd8690cc7a6524e0"
+      },
+      "recovery": 0.24245,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.207637,
+      "samePhase0And1": true
+    },
+    "406479959": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "f6c6b609de2c48115bc3010b5e14d215f5a3c43ac0bd840097c49f3c347d16ed",
+        "phase1": "9be3a5bffa2d385cc432c48dc253d8dc1cf839ded57f5bda6df9550fa911ee11",
+        "phase2": "e3749314b8953894e29626729f5acef399ce19d3720242e5b971ac71eb3c6fce"
+      },
+      "recovery": 0.200115,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.197743,
+      "samePhase0And1": true
+    },
+    "733570811": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "2f99fd973120f348958198cfa50626dd44b5f7c853564844a00c0020762d30bc",
+        "phase1": "0065b3cd977317bd694cc38aba070944d03035ed97c6c8c64c06ef73560c1fed",
+        "phase2": "9da3a6f5e90b6183aa5a65b44a356a0547ac697b4930f76ad6da1f7cf6805516"
+      },
+      "recovery": 0.259922,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.248002,
+      "samePhase0And1": true
+    },
+    "974163850": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "58e3a12fb768c8a553ec03e945be0aeb85861b5ba9587a6b0e6b18fb1d3a79e5",
+        "phase1": "bc58e896d14aec185da4d65aa201060b98ee0f07dfd316054cd6da13e0c0c121",
+        "phase2": "6e5abe3e12057587f1059253bcea5e785137f32dbc044e9468bac94dc09eab1b"
+      },
+      "recovery": 0.242494,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.20136,
+      "samePhase0And1": true
+    },
+    "1240171611": {
+      "pass": true,
+      "priorPass": false,
+      "hashes": {
+        "phase0": "4eb6406005deddc271465312f67dfa96ed896d4bf4d1bda2df3dcb7200dcb5d3",
+        "phase1": "59411bd6671d355797f70dd0610a94f0ed9210c6c15a10d80c9b93615473082d",
+        "phase2": "c5ab73dd8d6eb9bfca3eaad08834a7681b2605fba04f9d27f5b1a3b688a8faa4"
+      },
+      "recovery": 0.25068,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorGateIds": [
+        "phase2.design.tension_vs_relief"
+      ]
+    },
+    "1500333434": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "ff5ac6346996bdb0ba8661df73ef6c61ec62ee8ce44232392e9dec0a11b7fffe",
+        "phase1": "91fccc6051521b7d30ce3f6c77e4ff630f87cb14fc60170c3faebbf89b99a425",
+        "phase2": "49b4d83eebce6fb2f23ede40c9be8ef31069dee2db16b17d578cb59ca33842b1"
+      },
+      "recovery": 0.241129,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.212057,
+      "samePhase0And1": true
+    },
+    "1801620481": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6d8198845cebfc5d5bfb3f5d2b4200eff10a692c929f79513f5703b5ecbb0c49",
+        "phase1": "33e29b502b0f6c009dd55214b75ed95d36380d58cb2d178636f5945e802da585",
+        "phase2": "6ff69172baa2e43c8c26f92371c4f3c591fdb3ec72b1fe79e8b5e9848ff87279"
+      },
+      "recovery": 0.226912,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.241147,
+      "samePhase0And1": true
+    },
+    "2064513479": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "a2b3fb0a3ad92e7058ba5a210910c88590021cf40a62527be553be2bd3a7ea3e",
+        "phase1": "6a971d32f429e3e313a8fae1653c2a64431874ef07cac7cf4016f4de345d6ab6",
+        "phase2": "8a94ac19a006b6d70729f82525ebf5f2c8f48d0118380d232dcea8ba3bd23047"
+      },
+      "recovery": 0.249862,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.213013,
+      "samePhase0And1": true
+    },
+    "2335575721": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "efb9182bed5a7d47ecf08f097ef2e97a9c3b42f0108e5e59cc20482df24e0d04",
+        "phase1": "d4c5c1e24c8d859c8f164127db602f5f3070ce4f1e8899c616d1ce68bb3441f6",
+        "phase2": "115ef5bdfba843f740df0cbe1742f84ea409a3008500691df61da7501d42572f"
+      },
+      "recovery": 0.234774,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.217206,
+      "samePhase0And1": true
+    },
+    "2601869029": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "19881a19cb56a9d73ffec5ee7aba35cd26ca28b9d86fc1e2224a6304f0da4db7",
+        "phase1": "83ad625f4840b1b2e2d6ff324b9ee66ccc4471a7c45a67158a15000f87a0d321",
+        "phase2": "02b932e6ef97b81354f5e4589336340ffcbc37a471d121a6d6592037d255ac43"
+      },
+      "recovery": 0.265833,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.248632,
+      "samePhase0And1": true
+    },
+    "2878819102": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "edd3210473a2afe3249fdc8fe604d371adae602470149bcf2e9c1ad7000a43aa",
+        "phase1": "76757040226da51d888ae3610a4545e5874f8c44afa1e325054a1a7562ca4de6",
+        "phase2": "bec7a417dcc645aa8c1a3a28cafd7fb38904df36d67ecba1d3f4856c6463fee8"
+      },
+      "recovery": 0.229199,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.219442,
+      "samePhase0And1": true
+    },
+    "3088870215": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "174bad89ab788d3201e84709962422fd41581dd55ca13e1463b0ac5351df7da4",
+        "phase1": "741112af438d35e8e0c96c68395293189637b72ec017b54e0e673283c97ae039",
+        "phase2": "5da903aceaad29f3112059686c68a6ec3c02fab2dd0919a3536b5326c3a5830f"
+      },
+      "recovery": 0.233256,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.222907,
+      "samePhase0And1": true
+    },
+    "3381507530": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "b659d2ddbb64b88f50649c51a2447ec601d736c43ad06cf4b91c16d5eb1c2e41",
+        "phase1": "737f40ca10cf4875cdb117b842ae3492059462ddeda3f9e06f56065e255aa89e",
+        "phase2": "d1c8295e90bbf7d0a677acb5b8f6275485470341cbb71317cffb2285bf29d8b3"
+      },
+      "recovery": 0.206811,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.211802,
+      "samePhase0And1": true
+    },
+    "3683713563": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "060e800f75e7cec5e75e57b76a8fa555610b6e72e3199e9e78490d803f692bd1",
+        "phase1": "8a281379cd6f34974bc89acbf2b1b2771eb38878fe634b55762c9af74a05b026",
+        "phase2": "f62f3ad35b811dae4673bc4dc1458d1f4f2912f143766e27f015dd49e8dcdc44"
+      },
+      "recovery": 0.240712,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.244288,
+      "samePhase0And1": true
+    },
+    "4208830274": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "0d07bae1629b1e51d5f5ab2ec9d37c90b8e7a4f390601023dfd3716e13314bf6",
+        "phase1": "638c3142350cdd64db88159dbd9d30dba9bce01337f14931aafbe04d27c1a330",
+        "phase2": "796d776471735f3c5600b21bfa9d460a2cfc814633904c3034623797b9464f6c"
+      },
+      "recovery": 0.25317,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.266562,
+      "samePhase0And1": true
+    },
+    "158928527": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "b18ba1a69049a2cfb88769810c5b0f9ed096eb0655ea423a4bee97e25d15cd85",
+        "phase1": "e06fdcfe358e750f7bf4cbeb6f4d6eb5f28fe8293d2ae4af116ddd915f59cd64",
+        "phase2": "5722a7223472be3ab24efc8b1af5d4380c3f955609929ed3952fcb341476036c"
+      },
+      "recovery": 0.224525,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.232806,
+      "samePhase0And1": true
+    },
+    "453639656": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "5aa6d635517c890f729f19c8e138d59e1221f951aaf2df9beb867002fccba633",
+        "phase1": "e8a3b82f769dec5027c6f1b9279cdeb9f6fcb0846b42e2b10e6c427819b45b0e",
+        "phase2": "a74fe40b8ce09b82939295c7a04c7c6169eb488aae2f468b3c3731d3cad6f0fb"
+      },
+      "recovery": 0.274936,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.264511,
+      "samePhase0And1": true
+    },
+    "684347148": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "71d5b745b88b7df2b3a0da8c34f5d10381096edc115b3fe73b9666567166f691",
+        "phase1": "cf5bb2e7e0b8d9835e3fac3c08fdbfe3885c23f0a82a24a06158ce1ade764a49",
+        "phase2": "acdd695c6b4ab05673aec8804b8194ff036bcaba2902f022453b0fca7615a9d9"
+      },
+      "recovery": 0.216201,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.211936,
+      "samePhase0And1": true
+    },
+    "1001386142": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "0443b6d17c6f693c8d5ac3148350db210b6e4e1ba8e69a10e469b93bb4c2d84f",
+        "phase1": "d7666e72b3c6867fe65b3a5494bd5d70bd5ab9e30d01cad5fdcb56b9a94b146e",
+        "phase2": "54f63ac24e2973bdce02efe29c75d66d4953eef1161a2b36636128cd10a2a2fb"
+      },
+      "recovery": 0.201813,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.203322,
+      "samePhase0And1": true
+    },
+    "1217359681": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e729dbcff4d23ce1a0f0acbb347176b917d166fb0b7891b4dbe79f85ab93ec47",
+        "phase1": "4c87fe1502c83663fdc28b7b068e11fdfbd15c55c42c079f76b53265bc6fa01b",
+        "phase2": "e1d6370714c7b753f7c7be0bdaf295e4afb2ad8c62da4644cf1caf533069a5a1"
+      },
+      "recovery": 0.226838,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.215345,
+      "samePhase0And1": true
+    },
+    "1541067307": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "97ca459f840a62fde7d234aa5ef503ae059b6e106cbb6094bf78ab1c77e860dc",
+        "phase1": "cca73193c0c85e630e89afde76f53f1dbd7e610e9c588be3e73c8ba19491a80d",
+        "phase2": "09f55c7c4b9f50c5e2b58715415f88aa3ba18fa773490fc52d0c5bfefe9a7535"
+      },
+      "recovery": 0.228527,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.213423,
+      "samePhase0And1": true
+    },
+    "1809118051": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "94736a18fa53371eedd3fd62827df8d93f10aa3caa1e9f8778fb3b4bd615a548",
+        "phase1": "eec0c2a578f61be3348b51c0e6f7a5011c53f50f1f1dfd5ad949bddb8cc3784d",
+        "phase2": "55e5c3956ca1168e00b3e386884ff1fa277a4c5084d6c8102db2c1e68091e961"
+      },
+      "recovery": 0.258652,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.263186,
+      "samePhase0And1": true
+    },
+    "2033001457": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "0a21d8aef1b3681e46646c6f9e7f5a54bbb4a0066e155a94ea60cb290b4906a2",
+        "phase1": "e50e0260d5a0b2953c3e915b433e08df72184d6ae8fe22f6abf6668368546808",
+        "phase2": "1938989a1499f7a224bae27f81d80ecad618afea402460721c3ebcc8275ab870"
+      },
+      "recovery": 0.266803,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.276351,
+      "samePhase0And1": true
+    },
+    "2327750670": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "463c93237e339bb104918f90c935ca96ae3423f34d2f414477c27d91cb47fa9f",
+        "phase1": "4502fde4fbf11e2be9bd9736c29bfd4a0dc767250c55db84db60a43f8dc501fc",
+        "phase2": "74cb4174b4f35a28457813a32fe548d2938a2992669c2cab235a3c8ab7db5a3b"
+      },
+      "recovery": 0.214512,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.2203,
+      "samePhase0And1": true
+    },
+    "2552393115": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6706414cd9324b882234286746b287756fb8f31e12ba1667dd45f7287d7e1c34",
+        "phase1": "b3f59b6ad7a69158dbc3ef3db5ebf12d41cbb6cb3ac0feb97d0586b0fc34df9d",
+        "phase2": "e649c34a7ee4015974d6f80ac1a864f82285bc97830b5123619c8567570c3c8c"
+      },
+      "recovery": 0.246845,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.215158,
+      "samePhase0And1": true
+    },
+    "2869486218": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6c5b80b1fdee0f86600f641f14e818fb7079ce127c4f575a7371bf6571e5369c",
+        "phase1": "5de6b52a6cd105ad49824e47f4902d9f20ec7bdcfa49720a60b4ee856223477b",
+        "phase2": "2a607ec329169585f856cdccfb2198b5cdea7b949f5f1cf2e5d70b75183464ab"
+      },
+      "recovery": 0.286789,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.275134,
+      "samePhase0And1": true
+    },
+    "3104293446": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "e9a5f690465838203a3e2f6997f4014b17baeb443ff1130d9b71c053f2400392",
+        "phase1": "4ce0f89f2892c129573cf67e96a9f1302cae21b0d396793870a18af1fbc71033",
+        "phase2": "15d31d26b2669fa58526202fb34590297218e82994acdc9d96929cfb87fdd74b"
+      },
+      "recovery": 0.223296,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.228278,
+      "samePhase0And1": true
+    },
+    "3663106187": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "2fe696234aa0ab1e0e0060ef55bfd74e5e20c9bbdde20fdaa53bd9e8826771ef",
+        "phase1": "904f9c93170e157c3b31d7eebfaad964bdeef25cefccbbc194a9a3f34e0b9e67",
+        "phase2": "23497a82649892af7f2d92bec6b72dfd273be0222cf195234483d42c1af744ed"
+      },
+      "recovery": 0.233067,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.207049,
+      "samePhase0And1": true
+    },
+    "3928506518": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "245ce4d91334fa91ea75ffd036bc3a7d6726068931ae36f08470266ce9d0ae92",
+        "phase1": "32efa8e8ce303510cd7992e417b37c647af1c040a2c88f30253a229199768901",
+        "phase2": "442518a64568edf8d9d74eee4360f01ad0869199c85d67590fc2bab7912b3f8b"
+      },
+      "recovery": 0.226154,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.225106,
+      "samePhase0And1": true
+    },
+    "4176392891": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "49f348ee7325b6d2672cdf508edb4c2af960516e662f550c6bfa85cde426d4b4",
+        "phase1": "3299cc889c495ae7fd318b3b5b44a651a3ef5aea72d85c84ecb7b8bde1ac9916",
+        "phase2": "f5077b665fd6bf78837bce17883d6d655a157797bc85c4fdb0a10ab07746bc61"
+      },
+      "recovery": 0.198166,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.201825,
+      "samePhase0And1": true
+    },
+    "206998703": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "a41caa66c3018fc652b45132858626aaaa51fcfe3413c9a0875d60b1d48436fd",
+        "phase1": "858db3e10b7ee237c84b0d6b5d74e9d9d0c7c55ccdc877db67ef119ffa6ffbd9",
+        "phase2": "505c9cbfdfe973dd90ca8892ca056f3fd6b1f93f2847e7b83b0a6c0c5e841483"
+      },
+      "recovery": 0.231521,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.220061,
+      "samePhase0And1": true
+    },
+    "532213186": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "817b4c318aff1e71bd3717f5f53694a8fb103dbf1b8fe2b123d27c36061cecac",
+        "phase1": "f17e63c6149676df028dcdb450ef5258f7a212642344ef076814a2f384d222c5",
+        "phase2": "3e87a83880ab4dda26df4a3bf602fc4379309033ff67b706887c30702c06560a"
+      },
+      "recovery": 0.233584,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.236014,
+      "samePhase0And1": true
+    },
+    "1342059918": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "540ff7db0bdeb272f4c4b251cceac85eb9b8de2e8d713b21ab5551d6599cf9b4",
+        "phase1": "2580f8c8fde6a12c4e8ba236b0f5f9b539760d7afbacf3631029df2cee910934",
+        "phase2": "9b6f9d4c65f9b36a5d44055f6795a76ecde5f9a155f421779e6f52a76cf1c547"
+      },
+      "recovery": 0.205274,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.20011,
+      "samePhase0And1": true
+    },
+    "1545735428": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "4ae824851005a446128c959dc583cff1a56b0a3ecab064a4948cc725e000138d",
+        "phase1": "664cd0c294253de208708844a04002bb50f694547b6f2f8047c94f1a1db9fba1",
+        "phase2": "e98354812b3d211bedfd7225c63cdf5bca524de9133349851ba048e27361546a"
+      },
+      "recovery": 0.23041,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.254082,
+      "samePhase0And1": true
+    },
+    "1863959942": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "ca9e1548c80f15bf538c9edaa7a7fcda72ec1566c184fded61c74a4df513af0a",
+        "phase1": "602ac6731c64dbfe2cff1a5456688288f0db68a1b04aa4835baf4b6c3d1c0875",
+        "phase2": "69e53788589889e531a70e70ef1d7584b5b559d0ca9a8b8b827fb5f83dddc586"
+      },
+      "recovery": 0.195238,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.189717,
+      "samePhase0And1": true
+    },
+    "2094783996": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "4db83255d7035bb22eb93a22e89f8e1157f46870ec516578fd2628e3cf6a9a9e",
+        "phase1": "f4033f026d0acd2917a6c0957abda431678f17f694efcb12baced69dbf70cd89",
+        "phase2": "cf1a01317afaec87bdf3781f7cc9b1956e873cd4bbd2e2dca2fce5e263948a55"
+      },
+      "recovery": 0.242727,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.287007,
+      "samePhase0And1": true
+    },
+    "2675813935": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "47d5e24af9834489ce85f9d420a465c263f835161ceaa64baa04bebbde26c042",
+        "phase1": "6a1bdcece923ccd2029f4623e7d6b34fe0df18766554a1412c31f76c0e8c90c3",
+        "phase2": "1a26983812e098df4a2b58e37c157a1d0e5591e9ec5777a1f8ba177b9ac5eec2"
+      },
+      "recovery": 0.24452,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.233512,
+      "samePhase0And1": true
+    },
+    "2917478163": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "07243a401010da686b143db5e047618a82b85d5962e705a1a51624149080bb26",
+        "phase1": "32ccea5769a804013b85d3e06f83f3887905a2b58f03a4088b4b6af426eb79c8",
+        "phase2": "dffac2d0760e7a562905d6aa92bf5e27a623f6ac431d256bccccd4bef0d45bc0"
+      },
+      "recovery": 0.256322,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.283614,
+      "samePhase0And1": true
+    },
+    "3206964149": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "9462f3d6631a7965d85e473bf9f284d46556138d1c1d4303c8fcdb9b63eace23",
+        "phase1": "a71e02179ed4c71f58024a20379b5bfaf73b443f81da6bb2dc600eaf0c95b266",
+        "phase2": "677fe784ad2ef618b9472b03f1f8dc6bc685373c900f7fff66aff8a5a8a0d071"
+      },
+      "recovery": 0.249833,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.277007,
+      "samePhase0And1": true
+    },
+    "3422738236": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "965bb1f73288157cfa9e51d1bcd194a8e5c183bba0c6a72c128a970ae0e71025",
+        "phase1": "1994129062f3f3742119f28d5714caa25b3ecf8c5aa9844b85db862cea9b6f2b",
+        "phase2": "85e3862f183d388868eb4fb8241e0157d31072409044b82af0ab4f74158f8a8e"
+      },
+      "recovery": 0.22141,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.239848,
+      "samePhase0And1": true
+    },
+    "3740851705": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "c2e42b8d23fbd316c954e68e18ed4d7fbb6ff92e632c31d501fe217275de1b88",
+        "phase1": "8418159151611b58ad0e5541031df397bf042c6273fd5d97ea2d633b3e1854ad",
+        "phase2": "fd0464b6e39148e34cd516515c69fca359edb5f096aa7425d1842454c580ced6"
+      },
+      "recovery": 0.194663,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.192075,
+      "samePhase0And1": true
+    },
+    "3991564847": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "565aae142009a9769e20b50e5ac9357c02655c99fe1329b682dd6e89dbb09ad6",
+        "phase1": "fc409704284705ffca30aee15818d931e36d200315d70b68c467a30a90fb9c22",
+        "phase2": "63dbb5d1d69760face16165993503da1ff1a4150374c70a7166b20fe49751a56"
+      },
+      "recovery": 0.236539,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.234528,
+      "samePhase0And1": true
+    },
+    "4286438917": {
+      "pass": true,
+      "priorPass": false,
+      "hashes": {
+        "phase0": "f9f874b0950ac6133fb3e0f573732463754a18fb03e3143ad7a9e7e65c3dec2c",
+        "phase1": "ca4bed6ee4da7de4afc0810582f40d2888f499ba95cdf49ffc36a55124cfaed6",
+        "phase2": "6a8d040df41907b4bd2c8ce1645c682660c9fe152da21449012563bd8222f585"
+      },
+      "recovery": 0.244789,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorGateIds": [
+        "phase2.design.tension_vs_relief"
+      ]
+    },
+    "265082804": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "ca83187672fdc8b850fd106036a22023e9fb1e45997ac5fa87189b47fe33baa0",
+        "phase1": "31ce7ebb4607f8c1edeaa1e551f3f5d76e0b848bfe5304b416ea116fe69275b7",
+        "phase2": "196fc0606afc5f61d246734bca683b138ae5d80e025381c8100a8d5377652553"
+      },
+      "recovery": 0.235341,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.219749,
+      "samePhase0And1": true
+    },
+    "470489295": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "77c9cbc3fdf4ed3dfc3614779777ef8bd09b1a489590dacda9fde4f1fcd7738e",
+        "phase1": "ce371d89a8e04c72fe1c1544bc14ba9b6f35734b8d210570a70d946ba8f55ce4",
+        "phase2": "d71cedd763a4ff0b4add14f9fd395059b03b357a6ddbd0daba97e55ff5d6c16c"
+      },
+      "recovery": 0.236696,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.223019,
+      "samePhase0And1": true
+    },
+    "764294789": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "191d4752f9c09431bd2a3226351a194b5c5d7c0aac81f9310a9337fb8c9c1cd0",
+        "phase1": "044cf6c32cb84259444ecd8314ade51b702a5992625b1c7db76895fb56d7b579",
+        "phase2": "87a5e02fcd599d4743f0ba424d020ba8ff74a137ec75e246366546c0cfd4c426"
+      },
+      "recovery": 0.216744,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.197668,
+      "samePhase0And1": true
+    },
+    "1007421140": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "4c772b974e5a02fe79d26fe35d45ea8b60910240cb2849b5b9c6772963ea02b1",
+        "phase1": "1254669cd1a074258ab23670821bb426ed1cf2787a81739b07a385bd95fa91eb",
+        "phase2": "6b5d45d366e7277599bc97e17475d68a1c7eec989c7f4fbbeca3232e8e0e4423"
+      },
+      "recovery": 0.236233,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.238049,
+      "samePhase0And1": true
+    },
+    "1289932853": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "6e87220a504fdf3d1f7bda84c874614e63ac76d7477d49032f47a8d2fefda49d",
+        "phase1": "2fa0509999e5b775ff0cd9b00dad2c977489ba30421535b6f73466ac4bee644a",
+        "phase2": "b92f4b1b4fbcc851069286873caf5bfc1a184e5c9a5f2acd7ffedf47f35bcc34"
+      },
+      "recovery": 0.278517,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.292586,
+      "samePhase0And1": true
+    },
+    "1570073644": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "5d122b0c871a571bf69e0ecae7db7796b6d7d304c61f5abf747fd538542498ad",
+        "phase1": "1265d243d470b233dbde596c0b68b7f8b8b7d51a6656ffdcf7e7085cc3613d33",
+        "phase2": "21896d74fab9dc0a6e87a4bab9ca6d74db29d97069f146fa03e85d0bee58b960"
+      },
+      "recovery": 0.264494,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.263393,
+      "samePhase0And1": true
+    },
+    "1843480287": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "54f7529a2ad89d7725186ed9955c23ff0ccb7bd9cb7631fce47b9558f469f80f",
+        "phase1": "c6ec6df95036f0dc0954e41b2dff891d0e6ae3039c93f2914c4a96b24fa5435f",
+        "phase2": "588ad10ef402ecc10a92f8bb527252d4181ba71e3d7dbc3909acf40420cd7e3d"
+      },
+      "recovery": 0.234873,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.224021,
+      "samePhase0And1": true
+    },
+    "2146574712": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "ec52c2fa56530aee2c0bb030da2f96e3961c30753b144b27a62cd7a610bf7649",
+        "phase1": "9f40b5d55a960f8bcb08a8628213a0f18927c98681f9394b44a6c0d1154cc953",
+        "phase2": "0b6541bf023cf39bdd14bcb79560c9b61a055b07535c582ff7bd21f9f71e0c2b"
+      },
+      "recovery": 0.225156,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.227509,
+      "samePhase0And1": true
+    },
+    "2407305372": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "abd3798dfe97fee674100346f95f0c6cadeae2839648ad8a012a9ee241825d41",
+        "phase1": "f87a2fea343cd448a4a1bffd867dfe03fe243de4fd839f5e2cc4574a2668f735",
+        "phase2": "f10502676e43b9e53d83442467a028cb74557d3d3f384f8c22e5e62a96f1f8a2"
+      },
+      "recovery": 0.181746,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.195626,
+      "samePhase0And1": true
+    },
+    "2663581168": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "10001db38cec0cc3481476020c4e6f22b7063d01aae6ab2f62c88f2544cfc8f7",
+        "phase1": "b43117ae7432e420b8c6d3735b3b7c68c47e9fa6d4e3074b176803ca72d06329",
+        "phase2": "8f6d568f4b2bdd5582eb78990a0e76e3f5e82033e227eb7a013b83c129012f6b"
+      },
+      "recovery": 0.223831,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.22021,
+      "samePhase0And1": true
+    },
+    "2944939198": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "650b7c9ec7a0fd6027570651e016f5671a30f83fefc482b2f75567ff078fbbaa",
+        "phase1": "3d92bc8a6267b999e0c0ef8438d4abbba217097bd1343cc07f9cb54463cc32de",
+        "phase2": "4823bf471d74c1e61096488999a445aafd7b7e665baf350055ec2ef8e773a01c"
+      },
+      "recovery": 0.223926,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.233133,
+      "samePhase0And1": true
+    },
+    "3220623973": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "7a4bae06a97c352b1f51dcaf3b84e9f7a3426175f3c3caa506634d3719ab9c7e",
+        "phase1": "22d6a159f11f47e5b9b0264befb6c88e9f1bf280394331556c51f54a4fdfc345",
+        "phase2": "652e7fca550a8b292c44f9b1c262ba72035cb320e2b52c5ad809b0df10da4ad5"
+      },
+      "recovery": 0.261895,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.217656,
+      "samePhase0And1": true
+    },
+    "3716439855": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "697c65bb415fbd8e352766035910a4e4eb3c65054a278f602b4d300efe71ea73",
+        "phase1": "76bf22c6bf528a8dac8f906af97983331c3f4fc8c65c09bbc5e218873c6c603f",
+        "phase2": "f7daf575c118e617f91fbb98ba176fdfd12f2ad2a218b6bf8a07706c4fadf5a9"
+      },
+      "recovery": 0.231449,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.197436,
+      "samePhase0And1": true
+    },
+    "4005014395": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "288619480101acbc6dbfef90f7ba5d9ab9569574de27998b294766fac1ccfb3f",
+        "phase1": "8099b99f772b327549138b0c6db8924a1e63bd1cef6907c1af2b8e4f3e20cadd",
+        "phase2": "1e5b471194c5be145fd28a17db2e130466b2792acd299cbf5a00238b03a7ad2a"
+      },
+      "recovery": 0.223021,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.253111,
+      "samePhase0And1": true
+    },
+    "4248553947": {
+      "pass": true,
+      "priorPass": true,
+      "hashes": {
+        "phase0": "4e834dcfb4500ffad7219f544923c4dfa629c709aebe8bf5281d8942eecb66fa",
+        "phase1": "f4ec76a76c18d87ef0ec2913b73f63e88f256ff1448aed1959a0c47f48b864dd",
+        "phase2": "5db031b50d4b22bed6ff8438220a348a7da6eba0eee62c9359a27fe0eefda532"
+      },
+      "recovery": 0.240296,
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "priorRecovery": 0.26297,
+      "samePhase0And1": true
+    }
+  },
+  "mandatoryChecks": [
+    {
+      "name": "Phase 0 official intake and seed tamper rejection",
+      "pass": true,
+      "details": true
+    },
+    {
+      "name": "Maritime demand requires supported sea routes",
+      "pass": true,
+      "details": [
+        0.3585,
+        0.3717,
+        0.394
+      ]
+    },
+    {
+      "name": "Phase 2 fixture harness",
+      "pass": true,
+      "details": {
+        "smoke": {
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "status": "pass"
+        },
+        "regression": {
+          "total": 6,
+          "passed": 6,
+          "failed": 0,
+          "status": "pass"
+        }
+      }
+    },
+    {
+      "name": "Physical passage closure and terminal negative controls",
+      "pass": true,
+      "details": [
+        "terminal cell rejected",
+        "terminal access rejected",
+        "disconnection",
+        "no effect",
+        "alternate water path"
+      ]
+    },
+    {
+      "name": "A coast node must enter a connected water segment",
+      "pass": true,
+      "details": {
+        "isolatedBorderWaterRejected": true
+      }
+    },
+    {
+      "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+      "pass": true,
+      "details": {
+        "flatPreservesDrift": true,
+        "tiltedShelfShiftsPeaks": [
+          0,
+          1,
+          2,
+          1,
+          0
+        ]
+      }
+    },
+    {
+      "name": "Land-weighted pressure and local recovery timing",
+      "pass": true,
+      "details": {
+        "splitPreservesPressure": 0.625,
+        "splitPreservesRecovery": 0.35,
+        "recoveryByDelayLocation": [
+          0.35,
+          0.625
+        ]
+      }
+    },
+    {
+      "name": "Signed final terrain and carved-bed controls",
+      "pass": true,
+      "details": {
+        "assignments": [
+          "original",
+          "cleanup_submergence",
+          "cleanup_fill",
+          "marine_carving",
+          "marine_accretion"
+        ],
+        "alteredBedFollowsAvailableWater": true
+      }
+    },
+    {
+      "name": "Boundary-only water stays physical without becoming a macro sea",
+      "pass": true,
+      "details": {
+        "boundaryWaterRetainedInFloodFill": true,
+        "observedInteriorRequiredForOpenSea": true,
+        "enclosedWaterUnaffected": true
+      }
+    },
+    {
+      "name": "Inland bottlenecks bind measured relief while retaining segment provenance",
+      "pass": true,
+      "details": {
+        "adjacentRecordsFollowActualReliefOverlap": true,
+        "internalSegmentProvenanceRetained": true
+      }
+    },
+    {
+      "name": "High sea reaches measured continental saddles with supported offshore islands",
+      "pass": true,
+      "details": {
+        "saddleSeparatesInheritedContinentalBodies": true,
+        "higherSeaRequiresSupportedArchipelago": true,
+        "ordinaryShorelinePreferred": true,
+        "observesOrdinarySplitBetweenSampledLevels": true
+      }
+    },
+    {
+      "name": "Final downhill routing and water receiver controls",
+      "pass": true,
+      "details": {
+        "terminalTypes": [
+          "ocean",
+          "inland_water",
+          "local_depression"
+        ],
+        "diagonalRequiresContinuousDescent": true
+      }
+    },
+    {
+      "name": "Saddles require both rising and falling transects",
+      "pass": true,
+      "details": {
+        "saddleRequiresOppositeSlopes": true
+      }
+    },
+    {
+      "name": "Regional landfalls require open water",
+      "pass": true,
+      "details": {
+        "enclosedWaterRejected": true
+      }
+    },
+    {
+      "name": "Regional surface requires local physical support",
+      "pass": true,
+      "details": {
+        "noUnsupportedEmergence": true,
+        "sharedParentSamplesAndLocalRange": true,
+        "symmetricReconstruction": true,
+        "inheritedSlopeJump": {
+          "linear": 0.005624999999999998,
+          "reconstructed": 0.0008706897497177124
+        },
+        "faultUpliftExercised": true,
+        "erosionExercised": true,
+        "inheritedSaddlePreservesIndependentUplift": true,
+        "independentlyRestoredSeparation": true
+      }
+    },
+    {
+      "name": "Regional carrier capacity and complete raster-backed island geometry",
+      "pass": true,
+      "details": {
+        "distinctWaterNetworks": true,
+        "smallTransitIslandAllowed": true,
+        "completeLandComponent": true,
+        "completeShoreline": true,
+        "measuredElevation": true
+      }
+    },
+    {
+      "name": "Regional drainage conserves land and responds to wetness",
+      "pass": true,
+      "details": {
+        "drainageConservesArea": true,
+        "wetnessChangesRunoffNotGeometry": true,
+        "depressionNotAssumedWater": true
+      }
+    },
+    {
+      "name": "Local water retains geometry, seasonal input, and travel evidence independently",
+      "pass": true,
+      "details": {
+        "retainedSpaceRequiresRelief": true,
+        "dryBowlHasNoSupply": true,
+        "seasonChangesLowInputOnly": true,
+        "accessCannotCrossWater": true,
+        "nestedBowlsRequireSecondSaddle": true,
+        "sealedBowlHasNoMeasuredExit": true,
+        "nestedSourcesDoNotDoubleCountUpstreamWater": true
+      }
+    },
+    {
+      "name": "Water-delivery profiles follow dry paths and measure path exposure independently",
+      "pass": true,
+      "details": {
+        "partlyShielded": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 5,
+          "distance": {
+            "p50": 1,
+            "p90": 2,
+            "max": 2
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.4,
+            "max": 0.4
+          },
+          "unshieldedDistance": {
+            "p50": 0.5,
+            "p90": 1,
+            "max": 1
+          }
+        },
+        "fullyExposed": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 5,
+          "distance": {
+            "p50": 1,
+            "p90": 2,
+            "max": 2
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.4,
+            "max": 0.4
+          },
+          "unshieldedDistance": {
+            "p50": 1,
+            "p90": 2,
+            "max": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "Macro refuge overlap preserves fixed inflow, wind direction and drainage provenance",
+      "pass": true,
+      "details": {
+        "intoShelter": {
+          "classifiedLandCells": 4,
+          "shelteredLandCells": 3,
+          "ordinaryInput": 1,
+          "lowSeasonInput": 0.5,
+          "wateredLandCells": 2,
+          "wateredPatchCount": 1,
+          "largestWateredPatch": 2
+        },
+        "ontoOpenLand": {
+          "classifiedLandCells": 4,
+          "shelteredLandCells": 3,
+          "ordinaryInput": 0,
+          "lowSeasonInput": 0,
+          "wateredLandCells": 0,
+          "wateredPatchCount": 0,
+          "largestWateredPatch": 0
+        },
+        "differentWind": {
+          "classifiedLandCells": 4,
+          "shelteredLandCells": 1,
+          "ordinaryInput": 0.5,
+          "lowSeasonInput": 0.25,
+          "wateredLandCells": 1,
+          "wateredPatchCount": 1,
+          "largestWateredPatch": 1
+        },
+        "splitDrainage": {
+          "classifiedLandCells": 4,
+          "shelteredLandCells": 3,
+          "ordinaryInput": 1,
+          "lowSeasonInput": 0.5,
+          "wateredLandCells": 2,
+          "wateredPatchCount": 2,
+          "largestWateredPatch": 1
+        }
+      }
+    },
+    {
+      "name": "Timing distinguishes static travel burden, storms and seasonal scarcity",
+      "pass": true,
+      "details": {
+        "navigation": {
+          "calmCosts": [
+            0.652471,
+            0.608956
+          ],
+          "calmFrequency": 0,
+          "stormFrequency": 0.508607
+        },
+        "scarcity": {
+          "fixedPressure": [
+            0.209078,
+            0.670847
+          ],
+          "fixedSeason": [
+            0.30103,
+            0.572882
+          ]
+        }
+      }
+    },
+    {
+      "name": "Regional pressure and recovery follow independent water, shelter and movement measurements",
+      "pass": true,
+      "details": {
+        "windDirectionChangesShelter": true,
+        "upliftCoolsLand": true,
+        "shelterLeavesWaterAndSeaLinksIndependent": true,
+        "localPressureAndRecoveryExerciseIndependentDrivers": true
+      }
+    },
+    {
+      "name": "Island water measurements conserve supply and count exact wind shelter and source overlap",
+      "pass": true,
+      "details": {
+        "sameMarginalsDisjointAndOverlapping": true,
+        "seasonalInputIndependentOfReachability": true,
+        "validBoundsAndConservedAllocation": true
+      }
+    },
+    {
+      "name": "Immutable handoffs and fail-closed Phase 2",
+      "pass": true,
+      "details": {
+        "invalidRootRejected": true,
+        "invalidCoverageRejected": true,
+        "unresolvedReferenceRejected": true,
+        "legacyIslandBoundsAccepted": true,
+        "tamperedIslandOverlapBlocked": true,
+        "invalidExportBlocked": true,
+        "noPhase2AfterFailedPhase1": true,
+        "rejectedCandidateDiagnosticOnly": true
+      }
+    },
+    {
+      "name": "Macro recovery responds to local season without importing access or island shelter",
+      "pass": true,
+      "details": {
+        "reliefRegionId": "relief_001",
+        "seasonalFraction": 0.5454158542096598,
+        "absoluteReference": 0.13197489655172412,
+        "tempoAtHalfInput": [
+          0.182776,
+          0.161479
+        ],
+        "forgivenessAtHalfInput": [
+          0.18361,
+          0.158621
+        ],
+        "reentryContribution": 0.075741,
+        "persistenceAfterMovingLowSeasonInputOutOfShelter": [
+          0.314193,
+          0.142167
+        ],
+        "forgivenessAfterSeasonChange": [
+          0.18361,
+          0.127636
+        ],
+        "scarcityDragWithDrought": [
+          0.251549,
+          0.374708
+        ],
+        "pressureHeldFixed": true,
+        "accessRetentionAndIslandWindIndependent": true,
+        "legacyInputAccepted": true
+      }
+    },
+    {
+      "name": "Fixed-seed upstream interventions",
+      "pass": true,
+      "details": {
+        "seed": 42,
+        "fixedSubseeds": {
+          "macroGeographySeed": 363947094,
+          "pressureSeed": 4107865506,
+          "rhythmSeed": 306034812
+        },
+        "routeCarriers": {
+          "routeId": "macro_route_001",
+          "seaRegionIds": [
+            "sea_01"
+          ],
+          "reliefRegionIds": [
+            "relief_001",
+            "relief_002"
+          ],
+          "navigationWindows": [
+            0.72978,
+            0.46486
+          ]
+        },
+        "environmentalVolatility": {
+          "values": [
+            0.1,
+            0.9
+          ],
+          "changedStormCells": 21973,
+          "physicalControls": [
+            "platePressureField",
+            "coastJaggednessControlledLandWaterMaskField",
+            "seaLevelAppliedElevationField",
+            "temperatureColdLoadField",
+            "wetnessField"
+          ],
+          "seaRegionId": "sea_01",
+          "seaStormPressure": [
+            0.44126315689571427,
+            0.48550968426474994
+          ],
+          "stormBreakRisk": [
+            0.126827,
+            0.130371
+          ],
+          "stormCadence": [
+            0.171081,
+            0.1715
+          ]
+        },
+        "routeFragilityBias": {
+          "values": [
+            0.1,
+            0.9
+          ],
+          "supportedRoutes": 10,
+          "susceptibility": [
+            [
+              "macro_route_001",
+              0.47,
+              0.53
+            ],
+            [
+              "macro_route_002",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_003",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_004",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_005",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_006",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_007",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_008",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_009",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_010",
+              0.88,
+              1
+            ]
+          ],
+          "phase2ControlsStable": true
+        },
+        "socialControls": [
+          {
+            "channel": "conflictPressure",
+            "phase1ControlsStable": true,
+            "phase2ReceivesSameInput": true
+          },
+          {
+            "channel": "collapseIntensity",
+            "phase1ControlsStable": true,
+            "phase2ReceivesSameInput": true
+          }
+        ],
+        "rainShadow": {
+          "namespace": "macro.climateEnvelope.rainShadow",
+          "fixedSeed": 1733297584,
+          "shadowedCells": [
+            0,
+            11058
+          ],
+          "mean": [
+            0,
+            0.081224
+          ]
+        },
+        "catchmentScale": {
+          "range": [
+            0.032,
+            0.42
+          ],
+          "riverBasinId": "basin_001",
+          "reliefRegionId": "relief_002",
+          "waterReliabilityInverse": [
+            0.517878,
+            0.04837
+          ],
+          "runoffSupport": [
+            0.076666,
+            0.163368
+          ],
+          "recoveryTempo": [
+            0.135383,
+            0.151269
+          ],
+          "foodClimateBandId": "climate_006",
+          "foodStress": [
+            0.185306,
+            0.066949
+          ],
+          "unchangedIndependentBands": 117,
+          "climateControlsStable": true
+        }
+      }
+    },
+    {
+      "name": "Recovery locality on seed 16908799",
+      "pass": true,
+      "details": {
+        "isolation": {
+          "zoneId": "iso_002",
+          "localId": "relief_004",
+          "unchangedPeer": "relief_002",
+          "stabilizationDrag": [
+            0.121204,
+            0.262836
+          ]
+        },
+        "transport": {
+          "routeId": "macro_route_001",
+          "reliefId": "relief_001",
+          "mobilitySupport": [
+            0.50901,
+            0.551269
+          ],
+          "regionsWithoutRouteBonus": [
+            "relief_004",
+            "relief_005",
+            "relief_006"
+          ]
+        },
+        "terrain": {
+          "reliefId": "relief_001",
+          "recoveryTempo": [
+            0.254113,
+            0.042998
+          ]
+        },
+        "climate": {
+          "climateBandId": "climate_002",
+          "supportWindow": [
+            0.748925,
+            0.760012
+          ]
+        }
+      }
+    }
+  ],
+  "cohorts": {
+    "mandatory": {
+      "total": 49,
+      "accepted": 49
+    },
+    "criticalImplementation": {
+      "total": 2,
+      "accepted": 2
+    },
+    "residualRecovery": {
+      "total": 5,
+      "accepted": 5
+    },
+    "edges": {
+      "total": 7,
+      "accepted": 7
+    },
+    "additional": {
+      "total": 11,
+      "accepted": 8
+    },
+    "originalStress": {
+      "total": 64,
+      "accepted": 64
+    },
+    "independent": {
+      "total": 64,
+      "accepted": 62
+    }
+  },
+  "unique": {
+    "total": 173,
+    "accepted": 170,
+    "preservedPhase0And1": 165,
+    "restored": [
+      1240171611,
+      1683167796,
+      2248663653,
+      4144686569,
+      4286438917
+    ],
+    "newlyRejected": [],
+    "stillRejected": [
+      1122193213,
+      3418526133,
+      3479992453
+    ]
+  },
+  "fixedComparisons": [
+    {
+      "seed": 42,
+      "sourceHash": "eae92fe11cbb0513c0453fae19701ef03bcf5a26f376f310c6a1c26f90f98bbf",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.182249,
+        "pressureHash": "1f6af8122b88c9a96f32e0804c7b55db7791508b262667218f2cb256b9836327",
+        "pressureMean": 0.272949,
+        "failures": [],
+        "recoveryTempo": 0.128044,
+        "stabilizationInterval": 0.073223,
+        "reliefPersistence": 0.272271,
+        "environmentalForgiveness": 0.20488
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.181713,
+        "pressureHash": "1f6af8122b88c9a96f32e0804c7b55db7791508b262667218f2cb256b9836327",
+        "pressureMean": 0.272949,
+        "failures": [],
+        "recoveryTempo": 0.155155,
+        "stabilizationInterval": 0.073223,
+        "reliefPersistence": 0.272271,
+        "environmentalForgiveness": 0.16448
+      }
+    },
+    {
+      "seed": 16908799,
+      "sourceHash": "50dcdbc9ddfbe40a922053921e170a54e61854b8aa045502564d3df11e03fef4",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.193894,
+        "pressureHash": "c7ea71db2bd281c04d42718becb3545aaa3d7f7dbf3c0fe7272c5fd0c4b64e53",
+        "pressureMean": 0.259572,
+        "failures": [],
+        "recoveryTempo": 0.123352,
+        "stabilizationInterval": 0.065917,
+        "reliefPersistence": 0.315997,
+        "environmentalForgiveness": 0.200127
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.189623,
+        "pressureHash": "c7ea71db2bd281c04d42718becb3545aaa3d7f7dbf3c0fe7272c5fd0c4b64e53",
+        "pressureMean": 0.259572,
+        "failures": [],
+        "recoveryTempo": 0.138421,
+        "stabilizationInterval": 0.065917,
+        "reliefPersistence": 0.315997,
+        "environmentalForgiveness": 0.162574
+      }
+    },
+    {
+      "seed": 1431655765,
+      "sourceHash": "c4e3766251a6647bf6bafff239a0c7e2737026af474dc52dbfb346d2c4c6b8bc",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.194964,
+        "pressureHash": "4a04688a5d0b60a6d5e3ef0192514bb45aa265efba862d468c902e9a4156d796",
+        "pressureMean": 0.27273,
+        "failures": [],
+        "recoveryTempo": 0.183226,
+        "stabilizationInterval": 0.079089,
+        "reliefPersistence": 0.275505,
+        "environmentalForgiveness": 0.174413
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.220587,
+        "pressureHash": "4a04688a5d0b60a6d5e3ef0192514bb45aa265efba862d468c902e9a4156d796",
+        "pressureMean": 0.27273,
+        "failures": [],
+        "recoveryTempo": 0.263815,
+        "stabilizationInterval": 0.079089,
+        "reliefPersistence": 0.275505,
+        "environmentalForgiveness": 0.158114
+      }
+    },
+    {
+      "seed": 2964753490,
+      "sourceHash": "a4e8ee26c53810dac9c6c4ea99338d1ccd4607bff92bcbe555519f20a4d6afa1",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.195746,
+        "pressureHash": "e51883ebfb7fcc6f24f1c1bd62e7443adf168b482b134b98fab173664c8aaf04",
+        "pressureMean": 0.291571,
+        "failures": [],
+        "recoveryTempo": 0.192405,
+        "stabilizationInterval": 0.087369,
+        "reliefPersistence": 0.279308,
+        "environmentalForgiveness": 0.166113
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.222373,
+        "pressureHash": "e51883ebfb7fcc6f24f1c1bd62e7443adf168b482b134b98fab173664c8aaf04",
+        "pressureMean": 0.291571,
+        "failures": [],
+        "recoveryTempo": 0.274909,
+        "stabilizationInterval": 0.087369,
+        "reliefPersistence": 0.279308,
+        "environmentalForgiveness": 0.151902
+      }
+    },
+    {
+      "seed": 4144686569,
+      "sourceHash": "260b158ff02d0c003de491063db11f73b51cf1356c997312c6575693255060a8",
+      "before": {
+        "exported": false,
+        "recoveryProfile": 0.373015,
+        "pressureHash": "3ee8e27dba6268258ae01a23b35eee587002d5b4991df6c28d2760f50cf39d61",
+        "pressureMean": 0.209431,
+        "failures": [
+          "phase2.design.tension_vs_relief"
+        ],
+        "recoveryTempo": 0.371215,
+        "stabilizationInterval": 0.023845,
+        "reliefPersistence": 0.411396,
+        "environmentalForgiveness": 0.360779
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.270248,
+        "pressureHash": "3ee8e27dba6268258ae01a23b35eee587002d5b4991df6c28d2760f50cf39d61",
+        "pressureMean": 0.209431,
+        "failures": [],
+        "recoveryTempo": 0.221345,
+        "stabilizationInterval": 0.023845,
+        "reliefPersistence": 0.411396,
+        "environmentalForgiveness": 0.201572
+      }
+    },
+    {
+      "seed": 2248663653,
+      "sourceHash": "bb498c0d7df06b9922fdb5f488825112d6031edcb405109bee039c58cf4d7cae",
+      "before": {
+        "exported": false,
+        "recoveryProfile": 0.178468,
+        "pressureHash": "8baa2eae3b064d4c3ad057b68b609f4a03502f4b16371bb405a5f3efdcb1c79d",
+        "pressureMean": 0.287781,
+        "failures": [
+          "phase2.gameplay.relief_relevance"
+        ],
+        "recoveryTempo": 0.142924,
+        "stabilizationInterval": 0.089011,
+        "reliefPersistence": 0.285443,
+        "environmentalForgiveness": 0.163596
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.209226,
+        "pressureHash": "8baa2eae3b064d4c3ad057b68b609f4a03502f4b16371bb405a5f3efdcb1c79d",
+        "pressureMean": 0.287781,
+        "failures": [],
+        "recoveryTempo": 0.232399,
+        "stabilizationInterval": 0.089011,
+        "reliefPersistence": 0.285443,
+        "environmentalForgiveness": 0.155426
+      }
+    },
+    {
+      "seed": 1240171611,
+      "sourceHash": "851386e39affe4214f99d4f652d6df91edecd581408ee428823caf049505c53d",
+      "before": {
+        "exported": false,
+        "recoveryProfile": 0.288336,
+        "pressureHash": "b5e184f346566cb654c9d77b8198153aa504bbdcb35fcd7babba8d021e902855",
+        "pressureMean": 0.200669,
+        "failures": [
+          "phase2.design.tension_vs_relief"
+        ],
+        "recoveryTempo": 0.28381,
+        "stabilizationInterval": 0.039175,
+        "reliefPersistence": 0.343482,
+        "environmentalForgiveness": 0.270535
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.25068,
+        "pressureHash": "b5e184f346566cb654c9d77b8198153aa504bbdcb35fcd7babba8d021e902855",
+        "pressureMean": 0.200669,
+        "failures": [],
+        "recoveryTempo": 0.24226,
+        "stabilizationInterval": 0.039175,
+        "reliefPersistence": 0.343482,
+        "environmentalForgiveness": 0.191703
+      }
+    },
+    {
+      "seed": 4286438917,
+      "sourceHash": "e354736de80dc50f55e88ba6a4178b4dabe0935732748a915405c476e3e3dbd0",
+      "before": {
+        "exported": false,
+        "recoveryProfile": 0.306238,
+        "pressureHash": "38157215a58cf05bdf36549faded5bb63129512b8c9966c79cb189e466be9777",
+        "pressureMean": 0.217973,
+        "failures": [
+          "phase2.design.tension_vs_relief"
+        ],
+        "recoveryTempo": 0.255385,
+        "stabilizationInterval": 0.026368,
+        "reliefPersistence": 0.39474,
+        "environmentalForgiveness": 0.304788
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.244789,
+        "pressureHash": "38157215a58cf05bdf36549faded5bb63129512b8c9966c79cb189e466be9777",
+        "pressureMean": 0.217973,
+        "failures": [],
+        "recoveryTempo": 0.177711,
+        "stabilizationInterval": 0.026368,
+        "reliefPersistence": 0.39474,
+        "environmentalForgiveness": 0.191912
+      }
+    },
+    {
+      "seed": 1683167796,
+      "sourceHash": "9e05cbe89733239c7e1124f74400899d65129f3ac40a114db34951613493c96a",
+      "before": {
+        "exported": false,
+        "recoveryProfile": 0.310551,
+        "pressureHash": "4a7c9847e0d3fa15beb36424af4e38e26b3a0fe399bd931ce3f59ede9a1c327e",
+        "pressureMean": 0.203143,
+        "failures": [
+          "phase2.design.tension_vs_relief"
+        ],
+        "recoveryTempo": 0.305341,
+        "stabilizationInterval": 0.035154,
+        "reliefPersistence": 0.375037,
+        "environmentalForgiveness": 0.280385
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.270523,
+        "pressureHash": "4a7c9847e0d3fa15beb36424af4e38e26b3a0fe399bd931ce3f59ede9a1c327e",
+        "pressureMean": 0.203143,
+        "failures": [],
+        "recoveryTempo": 0.256949,
+        "stabilizationInterval": 0.035154,
+        "reliefPersistence": 0.375037,
+        "environmentalForgiveness": 0.203478
+      }
+    },
+    {
+      "seed": 1665754063,
+      "sourceHash": "769e8efb74b41ec6c6acc0dac8d39becc3889812e736579730c5f95fadf14fe4",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.244566,
+        "pressureHash": "a180838acba61b92dc518a147fce7b0ee1a9b3096a55bc0fe77d21cc3b69861c",
+        "pressureMean": 0.286117,
+        "failures": [],
+        "recoveryTempo": 0.211359,
+        "stabilizationInterval": 0.054878,
+        "reliefPersistence": 0.314713,
+        "environmentalForgiveness": 0.259135
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.217698,
+        "pressureHash": "a180838acba61b92dc518a147fce7b0ee1a9b3096a55bc0fe77d21cc3b69861c",
+        "pressureMean": 0.286117,
+        "failures": [],
+        "recoveryTempo": 0.194213,
+        "stabilizationInterval": 0.054878,
+        "reliefPersistence": 0.314713,
+        "environmentalForgiveness": 0.182824
+      }
+    },
+    {
+      "seed": 2094783996,
+      "sourceHash": "902bf70be307251905232f6f0bd8911109a25b09bfdd951e0b63e1a3452d5b09",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.287007,
+        "pressureHash": "8d2fe1124411662d6f832abd6c8255fa88fb09de874aa59a67ee2fb7cc3831a0",
+        "pressureMean": 0.223911,
+        "failures": [],
+        "recoveryTempo": 0.27514,
+        "stabilizationInterval": 0.042924,
+        "reliefPersistence": 0.340779,
+        "environmentalForgiveness": 0.282933
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.242727,
+        "pressureHash": "8d2fe1124411662d6f832abd6c8255fa88fb09de874aa59a67ee2fb7cc3831a0",
+        "pressureMean": 0.223911,
+        "failures": [],
+        "recoveryTempo": 0.227437,
+        "stabilizationInterval": 0.042924,
+        "reliefPersistence": 0.340779,
+        "environmentalForgiveness": 0.189172
+      }
+    },
+    {
+      "seed": 2917478163,
+      "sourceHash": "04d8bd6907aafcd0707b8dd69a1cd34d6f3edb308e8c826c914b7656cbc5421c",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.283614,
+        "pressureHash": "a95dd3666b9ca5eae7c813cf98dd58e32e85f11d0c41aa3afaace36660b8f036",
+        "pressureMean": 0.213384,
+        "failures": [],
+        "recoveryTempo": 0.261949,
+        "stabilizationInterval": 0.045578,
+        "reliefPersistence": 0.357366,
+        "environmentalForgiveness": 0.275278
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.256322,
+        "pressureHash": "a95dd3666b9ca5eae7c813cf98dd58e32e85f11d0c41aa3afaace36660b8f036",
+        "pressureMean": 0.213384,
+        "failures": [],
+        "recoveryTempo": 0.240751,
+        "stabilizationInterval": 0.045578,
+        "reliefPersistence": 0.357366,
+        "environmentalForgiveness": 0.204306
+      }
+    },
+    {
+      "seed": 3206964149,
+      "sourceHash": "dc6736460ea015738dee40e8fc8084ea133158ff03d9d132b5e6cba223b9e94f",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.277007,
+        "pressureHash": "86592f6c79bb2fd0d0c378401fb3ddadf20a3f8c3ffa36f877c47218a8ab47d0",
+        "pressureMean": 0.215554,
+        "failures": [],
+        "recoveryTempo": 0.256271,
+        "stabilizationInterval": 0.043774,
+        "reliefPersistence": 0.343257,
+        "environmentalForgiveness": 0.273894
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.249833,
+        "pressureHash": "86592f6c79bb2fd0d0c378401fb3ddadf20a3f8c3ffa36f877c47218a8ab47d0",
+        "pressureMean": 0.215554,
+        "failures": [],
+        "recoveryTempo": 0.235996,
+        "stabilizationInterval": 0.043774,
+        "reliefPersistence": 0.343257,
+        "environmentalForgiveness": 0.20204
+      }
+    },
+    {
+      "seed": 1289932853,
+      "sourceHash": "70f13dcdfc99577bc8680cf166de3f31cbf0b48a61030c6b3e0f4f9e0ff0a9b5",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.292586,
+        "pressureHash": "37bddfc5565809a7f8a11506b5dcede5c1f256da226140cf926f8185737c9207",
+        "pressureMean": 0.22037,
+        "failures": [],
+        "recoveryTempo": 0.24806,
+        "stabilizationInterval": 0.02595,
+        "reliefPersistence": 0.386016,
+        "environmentalForgiveness": 0.274651
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.278517,
+        "pressureHash": "37bddfc5565809a7f8a11506b5dcede5c1f256da226140cf926f8185737c9207",
+        "pressureMean": 0.22037,
+        "failures": [],
+        "recoveryTempo": 0.24053,
+        "stabilizationInterval": 0.02595,
+        "reliefPersistence": 0.386016,
+        "environmentalForgiveness": 0.23428
+      }
+    },
+    {
+      "seed": 2666689910,
+      "sourceHash": "831dd8b4cbeee11412b67aab6e59258ea2618986f9eb25827f51df41c7bdc398",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.300467,
+        "pressureHash": "3cc8d932db68fb286249a985d073729c694ede3f93bd96e7be492e9ca71ab6e1",
+        "pressureMean": 0.222637,
+        "failures": [],
+        "recoveryTempo": 0.301872,
+        "stabilizationInterval": 0.043743,
+        "reliefPersistence": 0.34753,
+        "environmentalForgiveness": 0.288218
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.243573,
+        "pressureHash": "3cc8d932db68fb286249a985d073729c694ede3f93bd96e7be492e9ca71ab6e1",
+        "pressureMean": 0.222637,
+        "failures": [],
+        "recoveryTempo": 0.227061,
+        "stabilizationInterval": 0.043743,
+        "reliefPersistence": 0.34753,
+        "environmentalForgiveness": 0.185193
+      }
+    },
+    {
+      "seed": 2030830666,
+      "sourceHash": "a6a8c81d8a448881845a620c3bbb8c04bcb5a65400b61ece75f4ed997a35f01a",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.273518,
+        "pressureHash": "2a38aeba87cf323ac49b7f5ee799bddf7b4b2ca94953637ad492f1f1eef5b06a",
+        "pressureMean": 0.221244,
+        "failures": [],
+        "recoveryTempo": 0.256196,
+        "stabilizationInterval": 0.03985,
+        "reliefPersistence": 0.319987,
+        "environmentalForgiveness": 0.283811
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.212986,
+        "pressureHash": "2a38aeba87cf323ac49b7f5ee799bddf7b4b2ca94953637ad492f1f1eef5b06a",
+        "pressureMean": 0.221244,
+        "failures": [],
+        "recoveryTempo": 0.175688,
+        "stabilizationInterval": 0.03985,
+        "reliefPersistence": 0.319987,
+        "environmentalForgiveness": 0.174516
+      }
+    },
+    {
+      "seed": 3928839710,
+      "sourceHash": "92f90dbdcaa280d045e344c88ae6d880938a94e39ed72d3586ac40ab839fe5d1",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.268625,
+        "pressureHash": "9aaf9f109a389abe02416724935903b2949b134728bb62596cc1bdb09de6b0ee",
+        "pressureMean": 0.215678,
+        "failures": [],
+        "recoveryTempo": 0.211473,
+        "stabilizationInterval": 0.030957,
+        "reliefPersistence": 0.36177,
+        "environmentalForgiveness": 0.270994
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.229749,
+        "pressureHash": "9aaf9f109a389abe02416724935903b2949b134728bb62596cc1bdb09de6b0ee",
+        "pressureMean": 0.215678,
+        "failures": [],
+        "recoveryTempo": 0.172358,
+        "stabilizationInterval": 0.030957,
+        "reliefPersistence": 0.36177,
+        "environmentalForgiveness": 0.185819
+      }
+    },
+    {
+      "seed": 1054323503,
+      "sourceHash": "7d01fada17eb4e5fa1fcae6b92ed0fb064a20506b7c45fe770510a4bd91f775b",
+      "before": {
+        "exported": true,
+        "recoveryProfile": 0.278654,
+        "pressureHash": "d350d49000a9cbceb5156d5ce8fd2724d24dfc09d50b9be681e8d66f8a5f81d7",
+        "pressureMean": 0.232541,
+        "failures": [],
+        "recoveryTempo": 0.229872,
+        "stabilizationInterval": 0.042453,
+        "reliefPersistence": 0.379096,
+        "environmentalForgiveness": 0.274393
+      },
+      "after": {
+        "exported": true,
+        "recoveryProfile": 0.240185,
+        "pressureHash": "d350d49000a9cbceb5156d5ce8fd2724d24dfc09d50b9be681e8d66f8a5f81d7",
+        "pressureMean": 0.232541,
+        "failures": [],
+        "recoveryTempo": 0.18648,
+        "stabilizationInterval": 0.042453,
+        "reliefPersistence": 0.379096,
+        "environmentalForgiveness": 0.194292
+      }
+    }
+  ],
+  "diagnosticAlternatives": {
+    "routeWorkability": [
+      {
+        "value": 0.1,
+        "variant": "04B",
+        "pass": true,
+        "recovery": 0.180831,
+        "failure": []
+      },
+      {
+        "value": 0.1,
+        "variant": "ecologyAndReentryTerrain",
+        "pass": false,
+        "recovery": 0.179374,
+        "failure": [
+          "phase2.gameplay.relief_relevance"
+        ]
+      },
+      {
+        "value": 0.1,
+        "variant": "ecologyTerrainOnly",
+        "pass": true,
+        "recovery": 0.199115,
+        "failure": []
+      },
+      {
+        "value": 0.9,
+        "variant": "04B",
+        "pass": true,
+        "recovery": 0.182236,
+        "failure": []
+      },
+      {
+        "value": 0.9,
+        "variant": "ecologyAndReentryTerrain",
+        "pass": true,
+        "recovery": 0.180809,
+        "failure": []
+      },
+      {
+        "value": 0.9,
+        "variant": "ecologyTerrainOnly",
+        "pass": true,
+        "recovery": 0.200711,
+        "failure": []
+      }
+    ],
+    "separateSeasonalScale": {
+      "worlds": 170,
+      "exports": 169,
+      "previousExportRegressed": 2869486218,
+      "recovery": 0.28967
+    }
+  },
+  "fixedInputReplay": {
+    "total": 170,
+    "accepted": 170,
+    "preserved": 165,
+    "restored": [
+      1240171611,
+      1683167796,
+      2248663653,
+      4144686569,
+      4286438917
+    ]
+  }
+}
