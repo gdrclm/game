@@ -1,6 +1,6 @@
 # WorldGen V1 · Этап 04-B · Критические исправления
 
-Рабочая ветка `worldgen/v1-foundation-closure`. Исходный HEAD `fa0cd64b66b4c1a4767f27d4cafa7d712de0d7d4`. Базовые числа относятся к программной ревизии `0c11b75` с тем же исходным кодом генерации. Область работ ограничена Phase 0–2. [Требования 04-B](NEXT_ENGINEERING_MILESTONE.md) · [Исходный стресс-аудит](review/f8t/closure/prompt-04-stress-audit.md)
+Рабочая ветка `worldgen/v1-foundation-closure`. Исходный HEAD `fa0cd64b66b4c1a4767f27d4cafa7d712de0d7d4`. Базовые числа относятся к программной ревизии `0c11b75` с тем же исходным кодом генерации. Область работ ограничена Phase 0–2. [Требования 04-B на исходной ревизии](https://github.com/gdrclm/game/blob/fa0cd64b66b4c1a4767f27d4cafa7d712de0d7d4/docs/context/NEXT_ENGINEERING_MILESTONE.md) · [Исходный стресс-аудит](review/f8t/closure/prompt-04-stress-audit.md)
 
 ## A. Пространственные измерения макроубежищ
 

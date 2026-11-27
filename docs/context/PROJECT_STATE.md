@@ -1,6 +1,6 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: prompt 04-B implementation on branch `worldgen/v1-foundation-closure` (27 November 2026). Program revision `a3df0d21ecbad979b1253611ab93621dbd6b0157`. Baseline verification remains recorded on `0c11b75`. [Implementation and verification](CRITICAL_IMPLEMENTATION_CLOSURE.md) · [Baseline stress audit](review/f8t/closure/prompt-04-stress-audit.md)
+Current checkpoint: `0cde9c9`, prompt 04-B implementation on branch `worldgen/v1-foundation-closure` (27 November 2026). Program revision `a3df0d21ecbad979b1253611ab93621dbd6b0157`. Baseline verification remains recorded on `0c11b75`. [Implementation and verification](CRITICAL_IMPLEMENTATION_CLOSURE.md) · [Baseline stress audit](review/f8t/closure/prompt-04-stress-audit.md)
 
 ## Current status
 
@@ -22,7 +22,7 @@ Current checkpoint: prompt 04-B implementation on branch `worldgen/v1-foundation
 - `c642b9b`: GitHub Actions completed successfully with 49/49 mandatory worlds and the Phase 0 audit. The 12 fresh targeted worlds have 4 passing exports versus 2 at `d0b44e7`. On Node 22.23.5 the paired Phase 0 bundles, Phase 1 packages, physical diagnostics and pressure field values match. An additional four predeclared worlds yield 3/4 on both revisions; `2030830666` is a retained independent tension/relief rejection. [CI](https://github.com/gdrclm/game/actions/runs/45853942907) · [Metrics](review/f8r/macro-recovery-seasonality.md)
 - `fd84d39`: 49/49 mandatory worlds and 22/22 substantive checks in local audit, Phase 0 1,031 seeds. GitHub Actions 45844786657 completed successfully.
 - Three accepted controls `42`, `16908799`, `640306144`: 220 island records, deterministic repeated exports; Phase 0–1 and previous Phase 2 fields unchanged relative to `28e0f47`.
-- Four predeclared new seeds: 3/4 on both revisions. `2666689910` reproducibly rejects on tension_vs_relief; not introduced by the latest change.
+- Historical island interpretation holdout: 3/4 on both then-tested revisions; `2666689910` subsequently restored in 04-B and now protected by CI.
 - Original stress set: 56/64 on `1bb7f39`, all eight remaining rejections in Phase 2. Four continental cases fixed by observed highstand fallback; `1715244351` fixed by denser supported drift-track search; `3840024598` fixed by excluding edge-only macro sea; mandatory cohort grew to 49. [Scale report](review/f8t/closure/highstand-scale-audit.json).
 - Earlier pinned checkpoint `4ff1f8f`: original stress 54/64, independent stress 54/64, edge 7/7. [Historical independent report](review/f8t/closure/independent-holdout-audit.json).
 - Chromium Phase 0 5/5 and existing runtime harness 270/270 reported at `27eebca`. [CI](https://github.com/gdrclm/game/actions/runs/45838652344).
@@ -41,7 +41,7 @@ Macro recovery scores before and after the exact island measurement are identica
 
 Measured low-season inflow caps the recurring-stress runoff contribution. The recovery tempo capacity uses structural reliability when local inflow is available. Basin drought still enters scarcity and the recurring-stress ceiling. Measured refuge persistence now uses the share of wind-sheltered land multiplied by the seasonal fraction of input in that shelter. The general support window allows dry refuges. The canonical Phase 1 layer also records wet sheltered patches inside final drainage branches. Recovery diagnostics keep local inflow, source reachability, allocated budget, delivery geometry and potential retention separate.
 
-On fixed Phase 1 inputs `42` and `16908799` pass with recovery 0.182541 and 0.186435. `3928839710` and `1054323503` pass the original validation. `4144686569` and `2666689910` still reject. The stronger variant that also capped refuge duration caused regressions on mandatory `1431655765` and `2964753490`. The committed split passes both in fixed-input replay. [Causal trace and before/after evidence](review/f8r/macro-recovery-seasonality.md)
+At the earlier seasonal split checkpoint `c642b9b`, on fixed Phase 1 inputs `42` and `16908799` passed with recovery 0.182541 and 0.186435. `3928839710` and `1054323503` pass the original validation. Both `4144686569` and `2666689910` rejected at that checkpoint; 04-B restores `2666689910`, but not `4144686569`. The stronger variant that also capped refuge duration caused regressions on mandatory `1431655765` and `2964753490`. The committed split passes both in fixed-input replay. [Causal trace and before/after evidence](review/f8r/macro-recovery-seasonality.md)
 
 ## Remaining engineering blockers
 
@@ -52,9 +52,9 @@ On fixed Phase 1 inputs `42` and `16908799` pass with recovery 0.182541 and 0.18
 
 ## Island scale and author gates
 
-On baseline `0c11b75`, the original stress set supplied at least 30 connected candidates in 58/58 accepted worlds at 0.25 macro-cell area, 52/58 at 0.5 and 19/58 at 1.0. The independent set yielded 60/60, 58/60 and 26/60. Mandatory counts were 49/49, 45/49 and 15/49. Edge counts were 7/7, 7/7 and 1/7. These are physical candidate counts among accepted worlds. The contract retains 30 V1 roles and the physical area thresholds are diagnostic. Verified erosion/fault fragments, shelf connectivity and volcanic provenance preserved. [Regional atlas](review/f8t/archipelago/README.md).
+On verified `a3df0d2`, the original stress set supplies at least 30 connected candidates in 62/62 accepted worlds at 0.25 macro-cell area, 56/62 at 0.5 and 22/62 at 1.0. The independent set yields 61/61, 59/61 and 26/61. Earlier baseline `0c11b75` mandatory counts were 49/49, 45/49 and 15/49; edge counts 7/7, 7/7 and 1/7. These are physical candidate counts among accepted worlds. The contract retains 30 V1 roles and the physical area thresholds are diagnostic. Verified erosion/fault fragments, shelf connectivity and volcanic provenance preserved. [Regional atlas](review/f8t/archipelago/README.md).
 
-Author decisions remain open on playable scale, physical acceptance, single-continent policy if a physically supported second continent is unavailable, interpretation of differentiation gate, and shelter/water access in harsh worlds. No threshold relaxation or design changes without approval. [Author queue](AUTHOR_REVIEW_QUEUE.md).
+Author decisions remain open on playable scale, physical acceptance, single-continent policy if a physically supported second continent is unavailable, shelter/water access in harsh worlds. No threshold relaxation or design changes without approval. [Author queue](AUTHOR_REVIEW_QUEUE.md).
 
 ## Bounded checkpoint
 
@@ -68,3 +68,7 @@ The [prompt 04 checkpoint](review/f8t/closure/prompt-04-stress-audit.md) capture
 
 The 04-B checkpoint records implemented physical corrections and the remaining technical and author-policy blockers. F8-S stays open while those cases remain. Testing is scoped to Phase 0–2. [Closure evidence](CRITICAL_IMPLEMENTATION_CLOSURE.md) · [High review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 [Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).
+
+## Next action
+
+[04-C — residual recovery implementation](NEXT_ENGINEERING_MILESTONE.md), High / Standard. Five technical rejects remain (four excessive recovery, one weak gameplay relevance); three Phase 1 continental cases need explicit author policy. Pressure/rhythm separation is implemented and verified, do not repeat it. The next bounded task targets residual tempo/recurring-stress semantics and absolute replenishment without undoing the spatial refuge correction. The independent audit 05 remains deferred until critical implementation is verified or remaining policy questions are explicitly separated. Physical approximations still need a downstream-impact classification before acceptance. No author decisions or new test execution are implied by this documentation reconciliation.

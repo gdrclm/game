@@ -42,6 +42,8 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
+Next execute [04-C — residual recovery implementation](NEXT_ENGINEERING_MILESTONE.md) before [prompt 05](PROMPT_05_INDEPENDENT_CAUSAL_AUDIT.md). The 04-B implementation restores seven unique rejected seeds; 49 mandatory + two separately protected restored seeds pass CI. Five technical recovery rejects and three author-policy continental cases remain. Do not repeat resolved navigation separation, exact-cutoff search or delivery measurement.
+
 The [04-B implementation checkpoint](CRITICAL_IMPLEMENTATION_CLOSURE.md) adds measured physical inputs and separates temporal navigation from static route cost. Keep macro refuge, local environment, macro physical diversity and F8-S open until their evidence or explicit author-policy gates are resolved.
 
 - [ ] F8-T macro water closure: establish how absolute replenishment, coherent sheltered area and loss determine refuge duration. Keep source access and delivery separate. Retain both excess and weak recovery controls. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
