@@ -80,6 +80,28 @@ function verifyLocalWaterFixture(macro) {
         nestedSourcesDoNotDoubleCountUpstreamWater: true };
 }
 
+function verifyWaterDeliveryFixture(macro) {
+    const signed = [0.5, 0.9, 0.6, 0.4, 0.2, -0.1, 0.4];
+    const cells = [0, 1, 2, 3, 4, 6];
+    const access = { ...macro.traceDryLandAccess(signed, signed.length, cell => signed[cell] > 0, [4],
+        { recordPaths: true }), subdivision: 2 };
+    const summarize = sheltered => macro.summarizeWaterDelivery(cells, access,
+        macro.measureUnshieldedPathSteps(access, sheltered));
+    const partlyShielded = summarize([1, 0, 1, 0, 0, 0, 0]);
+    const fullyExposed = summarize([]);
+    assert.deepEqual(Array.from(access.nextTowardWater), [1, 2, 3, 4, -1, -1, -1]);
+    assert.equal(access.sourceCell[6], -1);
+    assert.equal(partlyShielded.reachableLandCells, 5);
+    assert.deepEqual(partlyShielded.distance, { p50: 1, p90: 2, max: 2 });
+    assert.deepEqual(partlyShielded.ascent, { p50: 0, p90: 0.4, max: 0.4 });
+    assert.deepEqual(partlyShielded.unshieldedDistance, { p50: 0.5, p90: 1, max: 1 });
+    assert.deepEqual(fullyExposed.distance, partlyShielded.distance);
+    assert.deepEqual(fullyExposed.ascent, partlyShielded.ascent);
+    assert.deepEqual(fullyExposed.unshieldedDistance, fullyExposed.distance);
+    assert.deepEqual(macro.summarizeWaterDelivery([6], access).distance, null);
+    return { partlyShielded, fullyExposed };
+}
+
 function inspectLocalWater(result, macro) {
     const geography = result.phase1.macroGeographyPackage;
     const water = geography.environmentalCoverage.localWater;
@@ -118,6 +140,8 @@ function inspectLocalWater(result, macro) {
         assert.equal(row.waterAccess.landCellCount, row.landCellCount);
         const projected = projection.get(row.islandId);
         assert.deepEqual(projected.waterAccess, row.waterAccess);
+        assert.deepEqual(projected.waterDelivery, row.waterDelivery);
+        assert(macro.validateWaterDelivery(row.waterDelivery, row.waterAccess, geography.regionalArchipelago.grid.subdivision));
         const access = row.waterAccess;
         const coveredArea = access.reachableCellCount / geography.regionalArchipelago.grid.subdivision ** 2;
         assert(access.allocatedSupplyPerArea * coveredArea <= access.inputPotential + (coveredArea + 1) * 1e-6);
@@ -307,4 +331,5 @@ function verifyIslandOverlapFixture(macro, phase2) {
         validBoundsAndConservedAllocation: true };
 }
 
-module.exports = { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture, verifyIslandOverlapFixture };
+module.exports = { verifyLocalWaterFixture, verifyWaterDeliveryFixture, inspectLocalWater, verifyIslandExposureFixture,
+    verifyIslandOverlapFixture };

@@ -44,7 +44,7 @@
         }
     }
 
-    function measureLocalWater({ signed, width, subdivision = 1, drainage, wetness, seasonality }) {
+    function measureLocalWater({ signed, width, subdivision = 1, drainage, wetness, seasonality, recordAccessPaths = false }) {
         const size = signed.length;
         const { downstreamCellIndices: downstream, terminalLandCellIndices: terminal, outlets } = drainage;
         const cellArea = 1 / subdivision ** 2;
@@ -116,7 +116,7 @@
                 allocatedLowInput[next] += allocatedLowInput[cell];
             }
         }
-        const access = traceDryLandAccess(signed, width, cell => terminal[cell] >= 0, sourceCells);
+        const access = traceDryLandAccess(signed, width, cell => terminal[cell] >= 0, sourceCells, { recordPaths: recordAccessPaths });
         const areaServed = new Uint32Array(size);
         for (const cell of land) {
             const source = access.sourceCell[cell];
@@ -126,11 +126,12 @@
             subdivision, signed, cellArea, allocatedInput, allocatedLowInput, areaServed };
     }
 
-    function traceDryLandAccess(signed, width, isLand, sourceCells) {
+    function traceDryLandAccess(signed, width, isLand, sourceCells, { recordPaths = false } = {}) {
         const size = signed.length;
         const distance = new Int32Array(size).fill(-1);
         const sourceCell = new Int32Array(size).fill(-1);
         const ascent = new Float64Array(size);
+        const nextTowardWater = recordPaths ? new Int32Array(size).fill(-1) : null;
         const queue = sourceCells.slice();
         for (const cell of queue) {
             distance[cell] = 0;
@@ -150,9 +151,51 @@
                     || (nextAscent === ascent[neighbor] && sourceCell[cell] >= sourceCell[neighbor])) return;
                 ascent[neighbor] = nextAscent;
                 sourceCell[neighbor] = sourceCell[cell];
+                if (nextTowardWater) nextTowardWater[neighbor] = cell;
             });
         }
-        return { distance, sourceCell, ascent };
+        return { distance, sourceCell, ascent, ...(nextTowardWater && { nextTowardWater, distanceOrder: queue }) };
+    }
+
+    function measureUnshieldedPathSteps({ nextTowardWater, distanceOrder }, sheltered) {
+        const steps = new Uint32Array(nextTowardWater.length);
+        for (const cell of distanceOrder) {
+            const next = nextTowardWater[cell];
+            // The route to the source counts departures from each traversed
+            // cell. The source itself contributes no distance.
+            if (next >= 0) steps[cell] = steps[next] + Number(!sheltered[cell]);
+        }
+        return steps;
+    }
+
+    function summarizeWaterDelivery(cells, access, unshieldedSteps) {
+        const reachable = cells.filter(cell => access.distance[cell] >= 0);
+        const distribution = read => {
+            if (!reachable.length) return null;
+            const values = reachable.map(read).sort((a, b) => a - b);
+            return { p50: round(values[Math.ceil(values.length * 0.5) - 1]),
+                p90: round(values[Math.ceil(values.length * 0.9) - 1]), max: round(values.at(-1)) };
+        };
+        return { method: 'shortest_dry_land_then_minimum_ascent', reachableLandCells: reachable.length,
+            distance: distribution(cell => access.distance[cell] / access.subdivision),
+            ascent: distribution(cell => access.ascent[cell]),
+            ...(unshieldedSteps && { unshieldedDistance: distribution(cell => unshieldedSteps[cell] / access.subdivision) }) };
+    }
+
+    function validateWaterDelivery(profile, water, subdivision) {
+        if (!profile || !water || profile.method !== 'shortest_dry_land_then_minimum_ascent'
+            || profile.reachableLandCells !== water.reachableCellCount) return false;
+        const quantiles = (row, limit) => row && nonnegative(row.p50) && row.p50 <= row.p90
+            && row.p90 <= row.max && row.max <= limit + 1e-6;
+        if (!profile.reachableLandCells) {
+            return profile.distance === null && profile.ascent === null && profile.unshieldedDistance == null;
+        }
+        const { distance, ascent, unshieldedDistance } = profile;
+        return quantiles(distance, (water.landCellCount - 1) / subdivision)
+            && quantiles(ascent, distance.max * subdivision)
+            && distance.max >= water.meanDistance && ascent.max >= water.meanAscent
+            && (unshieldedDistance === undefined || (quantiles(unshieldedDistance, distance.max)
+                && unshieldedDistance.p50 <= distance.p50 && unshieldedDistance.p90 <= distance.p90));
     }
 
     function createWaterAccessSummary() {
@@ -344,5 +387,5 @@
 
     Object.assign(macro, { measureLocalWater, createWaterAccessSummary, addWaterAccessCell, summarizeWaterAccess,
         serializeDrainageBranch, validateDrainageCoverage, validateWaterAccessSummary, validateWaterAccessSubset, validRetentionToSurfaceWater,
-        traceDryLandAccess });
+        traceDryLandAccess, measureUnshieldedPathSteps, summarizeWaterDelivery, validateWaterDelivery });
 })();

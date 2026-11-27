@@ -219,6 +219,7 @@
                 return {islandId:row.islandId,landCellCount:row.landCellCount,
                     localClimate:row.climate,runoffPotential:row.runoffPotential,
                     ...(row.waterAccess && { waterAccess: row.waterAccess }),
+                    ...(row.waterDelivery && { waterDelivery: row.waterDelivery }),
                     ...(row.shelteredWaterAccess && { shelteredWaterAccess: row.shelteredWaterAccess }),
                     ...(row.physicalSetting && { physicalSetting: row.physicalSetting }),
                     ...phase2.interpretRegionalIslandEnvironment(row, environment.cellAreaInMacroCells),

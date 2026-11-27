@@ -79,7 +79,10 @@
         });
         const drainage = macro.routeSurfaceDrainage({ signed, width: grid.width, wetness, landCells,
             receiverAt: cell => open[cell] ? 'ocean' : 'inland_water' });
-        const water = macro.measureLocalWater({ signed, width: grid.width, subdivision: grid.subdivision, drainage, wetness, seasonality });
+        const wind = fields.prevailingWindField;
+        const traceShelterAlongPaths = Boolean(wind?.xValues && wind?.yValues && network);
+        const water = macro.measureLocalWater({ signed, width: grid.width, subdivision: grid.subdivision, drainage, wetness, seasonality,
+            recordAccessPaths: traceShelterAlongPaths });
         const byId = new Map(records.map(row => [row.islandId, { record: row, summary: macro.createWaterAccessSummary() }]));
         for (const cell of landCells) macro.addWaterAccessCell(byId.get(islandByCell[cell]).summary, water, cell);
         for (const outlet of drainage.outlets.sort((a, b) => a.outletCellIndex - b.outletCellIndex)) {
@@ -94,8 +97,8 @@
             record.waterAccess = macro.summarizeWaterAccess(summary);
             record.runoffPotential = record.waterAccess.inputPotential;
         }
-        const wind = fields.prevailingWindField;
-        if (wind?.xValues && wind?.yValues && network) {
+        let unshieldedSteps;
+        if (traceShelterAlongPaths) {
             const readWind = cell => {
                 const [x, y] = coordinates(cell);
                 return [sample(wind.xValues, bounds.width, bounds.height, x, y),
@@ -105,14 +108,22 @@
             const linkCounts = countIslandSeaLinks(network.links);
             const landTravel = macro.traceDryLandAccess(signed, grid.width, cell => Boolean(islandByCell[cell]),
                 network.landfalls.map(port => port.landCell));
+            const sheltered = new Uint8Array(signed.length);
             for (const record of records) {
                 const shelteredWater = macro.createWaterAccessSummary();
                 record.physicalSetting = macro.measureIslandPhysicalSetting({ cells: cellsByIsland.get(record.islandId),
                     surface, readClimate: read, readWind, landTravel, landfall: ports.get(record.islandId),
                     seaLinkCount: linkCounts.get(record.islandId) || 0,
-                    visitShelteredCell: cell => macro.addWaterAccessCell(shelteredWater, water, cell) });
+                    visitShelteredCell: cell => {
+                        sheltered[cell] = 1;
+                        macro.addWaterAccessCell(shelteredWater, water, cell);
+                    } });
                 record.shelteredWaterAccess = macro.summarizeWaterAccess(shelteredWater);
             }
+            unshieldedSteps = macro.measureUnshieldedPathSteps(water, sheltered);
+        }
+        for (const record of records) {
+            record.waterDelivery = macro.summarizeWaterDelivery(cellsByIsland.get(record.islandId), water, unshieldedSteps);
         }
         return {version:1,climateResolution:'interpolated_macro_baseline',runoffUnits:'wetness_times_macro_cell_area',
             cellAreaInMacroCells: water.cellArea,
@@ -206,6 +217,10 @@
                     || access.allocatedLowSupplyPerArea * servedArea > access.lowInputPotential + tolerance) {
                     errors.push(`Allocated water supply exceeds measured island input in ${row.islandId}.`);
                 }
+            }
+            if (row.waterDelivery !== undefined && (!macro.validateWaterDelivery(row.waterDelivery, row.waterAccess, grid.subdivision)
+                || (row.waterDelivery.unshieldedDistance !== undefined && !row.physicalSetting))) {
+                errors.push(`Regional water delivery is invalid in ${row.islandId}.`);
             }
             if (!macro.validateIslandPhysicalSetting(row.physicalSetting, island, landfalls.get(row.islandId), linkCounts.get(row.islandId) || 0)) {
                 errors.push(`Regional terrain, local climate or landfall access is invalid in ${row.islandId}.`);

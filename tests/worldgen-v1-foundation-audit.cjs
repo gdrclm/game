@@ -14,7 +14,7 @@ const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixtur
     verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture,
     verifyContinentalShorelineFixture } = require('./worldgen-v1-terrain.cjs');
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
-const { verifyLocalWaterFixture, inspectLocalWater, verifyIslandExposureFixture,
+const { verifyLocalWaterFixture, verifyWaterDeliveryFixture, inspectLocalWater, verifyIslandExposureFixture,
     verifyIslandOverlapFixture } = require('./worldgen-v1-local-water.cjs');
 
 const canonical = [42, 137, 2026];
@@ -33,6 +33,7 @@ const originalRegionalRegression = foundationRegression.concat(2856344, 64030614
     792866484, 2220939230, 2546155002);
 const regionalRegression = originalRegionalRegression.concat(3840024598,
     3019978005, 2402593754, 82211472, 3338251652, 1715244351);
+const criticalImplementationRegression = [1665754063, 2666689910];
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 function stratifiedSeeds(namespace) {
     return Array.from({ length: 64 }, (_, index) => {
@@ -50,7 +51,7 @@ assert.equal(new Set(foundationRegression).size, 36, 'Foundation regression must
 assert.equal(new Set(originalRegionalRegression).size, 43, 'Preserve every mandatory regional regression');
 const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression,
     'foundation-regression': foundationRegression, 'regional-regression': regionalRegression,
-    'known-physical': knownPhysical, edges,
+    'known-physical': knownPhysical, 'critical-implementation-regression': criticalImplementationRegression, edges,
     ...Object.fromEntries([0, 1, 2, 3].flatMap(id => [
         [`stress-${id}`, stress.filter((_, index) => index % 4 === id)],
         [`final-holdout-${id}`, finalHoldout.filter((_, index) => index % 4 === id)]
@@ -142,6 +143,7 @@ check('Regional surface requires local physical support', () => verifyRegionalPr
 check('Regional carrier capacity and complete raster-backed island geometry', () => verifyRegionalCarrierFixture(macro));
 check('Regional drainage conserves land and responds to wetness', () => verifyRegionalEnvironmentFixture(macro));
 check('Local water retains geometry, seasonal input, and travel evidence independently', () => verifyLocalWaterFixture(macro));
+check('Water-delivery profiles follow dry paths and measure path exposure independently', () => verifyWaterDeliveryFixture(macro));
 check('Macro refuge overlap preserves fixed inflow, wind direction and drainage provenance', () => verifyMacroRefugeGeometry(macro));
 check('Timing distinguishes static travel burden, storms and seasonal scarcity', () => ({
     navigation: verifyNavigationTiming(phase2), scarcity: verifyScarcityTiming(phase2)
@@ -277,7 +279,7 @@ function testHandoffs(result) {
     }), /does not resolve/);
     const regional = structuredClone(geography.regionalArchipelago);
     const { cellAreaInMacroCells, records, ...environment } = geography.regionalArchipelago.islandEnvironment;
-    const legacyRecords = records.map(({ shelteredWaterAccess, ...row }) => row);
+    const legacyRecords = records.map(({ shelteredWaterAccess, waterDelivery, ...row }) => row);
     const legacyExport = engine.run({ ...args, macroGeographyPackage: {
         ...geography, regionalArchipelago: { ...geography.regionalArchipelago,
             islandEnvironment: { ...environment, records: legacyRecords } }
@@ -285,7 +287,7 @@ function testHandoffs(result) {
     assert(legacyExport.exported);
     assert(legacyExport.bundle.regionalIslandEnvironmentalProjection.records.every(row => {
         const bounds = row.localRecovery.windShelteredLandWithSourceAccess;
-        return bounds && !Object.hasOwn(bounds, 'exactLandCells');
+        return bounds && !Object.hasOwn(bounds, 'exactLandCells') && !Object.hasOwn(row, 'waterDelivery');
     }));
     const tampered = { ...records[0], shelteredWaterAccess: { ...records[0].shelteredWaterAccess,
         reachableCellCount: records[0].shelteredWaterAccess.landCellCount + 1 } };
@@ -293,6 +295,10 @@ function testHandoffs(result) {
         ...geography, regionalArchipelago: { ...geography.regionalArchipelago,
             islandEnvironment: { ...environment, cellAreaInMacroCells, records: [tampered, ...records.slice(1)] } }
     } }), /invalid_regional_island_environment|sheltered water access/);
+    const incorrectDelivery = structuredClone(geography.regionalArchipelago);
+    incorrectDelivery.islandEnvironment.records[0].waterDelivery.reachableLandCells += 1;
+    assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, regionalArchipelago: incorrectDelivery } }),
+        /invalid_regional_island_environment/);
     const port = regional.waterNetwork.landfalls[0];
     const nearby = regional.waterNetwork.links.find(link => link.fromIslandId === port.islandId || link.toIslandId === port.islandId);
     nearby.waterPathCellIndices[0] = port.landCell;
