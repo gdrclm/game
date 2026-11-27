@@ -1,6 +1,6 @@
 # Phase 1–2 — independent static gap review after 04-D
 
-Implementation results and measured dispositions are recorded separately. [05 causal audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md)
+**Historical static review on 3289ac9.** G2, R1 and R2 subsequently corrected on 06738ab; G1 remains open. Two additional pre-existing Phase 1 failures were discovered in the new 16-seed holdout. See [05 causal audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md) and [current 05-B task](NEXT_ENGINEERING_MILESTONE.md). Findings below describe the original baseline, not current defects.
 
 27 November 2026. Reviewed evidence HEAD b843d70, production 3289ac96209fa31f4e6c270333f3b8718441d078. This is a source/contract and saved-evidence review, not a new execution or visual inspection of the PDF atlases. All 173 pinned worlds pass according to the committed audit and successful CI 46032224014. No new seed failures claimed. [04-D evidence](CRITICAL_GEOGRAPHY_CLOSURE.md).
 

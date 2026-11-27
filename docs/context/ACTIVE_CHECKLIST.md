@@ -51,18 +51,20 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 - [x] 05 pinned verification on `06738ab`. Preserve 173/173 prior worlds and run 14/16 fresh exports, 31/31 required checks, deterministic repeats, browser and CI. [Verification](review/f8t/closure/prompt-05-causal-verification.json)
 
+- [x] F8-C / 05 G2, R1, R2: authoritative marine raster/graph validation and current-format survey integrity; measured path-local weather; canonical numerical axes distinct from readability calibration. 31/31 checks and all 173 prior exports preserved. [05 evidence](FOUNDATION_FINAL_CAUSAL_AUDIT.md)
+
 ## Active technical work (do not restart completed milestones)
 
-The [05 audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md) records repaired marine integrity, weather along actual paths and independent synthesized axes. Actual water and timing limits and the remaining deformation blocker stay visible.
+The [05 audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md) records repaired marine integrity, weather along actual paths and independent synthesized axes. Next [05-B — residual Phase 1 implementation](NEXT_ENGINEERING_MILESTONE.md). All 173 previous worlds and 14/16 fresh worlds pass (187/189 unique). Two pre-existing Phase 1 rejects and G1 remain. Actual water and timing limits stay visible.
 
 - [ ] 05 G1: test a globally coherent deformation carrier that preserves the verified fragment on `2546155002` and recovery on `3479992453`. The canonical package exposes contact-model selection under current V1 policy. [Causal trace](FOUNDATION_FINAL_CAUSAL_AUDIT.md#g1--тектонические-контакты-и-носитель-деформации)
-- [ ] Independent Phase 1 cases: trace climate support for enclosed one-cell `sea_02` on `813476365`, and compare physical route outages against chokepoint search coverage on `3224355349`. Both are reproducible on 04-D and 05. [Negative controls](FOUNDATION_FINAL_CAUSAL_AUDIT.md#два-отказа-независимой-выборки)
+- [ ] 05-B independent Phase 1 cases: trace climate support for enclosed one-cell `sea_02` on `813476365`, and compare physical route outages against chokepoint search coverage on `3224355349`. Both are reproducible on 04-D and 05. Implement supported fixes, preserve real enclosed water and do not create fake chokepoints. [Negative controls](FOUNDATION_FINAL_CAUSAL_AUDIT.md#два-отказа-независимой-выборки)
 
 - [ ] F8-T macro water closure: establish how coherent sheltered area, water loss and independent duration evidence determine actual refuge persistence. Preserve the verified local replenishment signal and keep source access and delivery separate. [Open hypotheses](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, practical access budgets applied to measured route geometry, actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or justify conditional contact model (G1), rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
 - [ ] F8-D: the V1 area rule accepts two new second landmasses with entirely oceanic plate labels. Continental crust composition, minimum playable island scale and diversity of origin remain under author review. [Implementation register](CRITICAL_GEOGRAPHY_CLOSURE.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md)
-- [ ] F8-C: verify canonical marine path completeness and physical integrity (G2), path-specific weather exposure (R1), and distinguish summary calibration from causal data (R2). Correct proven defects. [Static review](PHASE_1_2_REMAINING_GAPS.md)
+
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 
