@@ -229,6 +229,44 @@
             : new Error(`[worldgen/macro] ${entryName} is unavailable.`);
     }
 
+    function readReliefSupport(relief) {
+        const { fields, intermediateOutputs } = relief.outputs;
+        const seaLevel = fields.seaLevelAppliedElevationField.seaLevelModel;
+        return {
+            continentAreas: intermediateOutputs.continentBodies.continentBodies.map(body => body.cellCount),
+            landFraction: seaLevel.landRatio,
+            offshoreBodies: seaLevel.hotspotChain?.distinctEmergenceCount ?? 0
+        };
+    }
+
+    function resolvePlateContactRelief(stageContext, inheritedRelief) {
+        const inheritedSupport = readReliefSupport(inheritedRelief);
+        if (inheritedSupport.continentAreas.length >= 2) return inheritedRelief;
+
+        // Reinterpret the same fixed plates and motions where the inherited
+        // relief lacks separate continental bodies. Keep both physical results.
+        const inheritedTectonics = stageContext.tectonicSkeleton;
+        const tectonicSkeleton = macro.generateSharedFaceTectonicSkeleton(stageContext, inheritedTectonics);
+        const boundaryIds = tectonics => tectonics.outputs.intermediateOutputs.plateBoundaryClassification
+            .boundaryClassifications.map(row => row.boundaryId);
+        const inheritedContacts = new Set(boundaryIds(inheritedTectonics));
+        const sharedContacts = new Set(boundaryIds(tectonicSkeleton));
+        const removedContacts = [...inheritedContacts].filter(id => !sharedContacts.has(id));
+        const addedContacts = [...sharedContacts].filter(id => !inheritedContacts.has(id));
+        if (!removedContacts.length && !addedContacts.length) return inheritedRelief;
+
+        const faceRelief = macro.generateReliefElevation({ ...stageContext, tectonicSkeleton });
+        const sharedFaceSupport = readReliefSupport(faceRelief);
+        const useSharedFaces = sharedFaceSupport.continentAreas.length >= 2 && sharedFaceSupport.offshoreBodies >= 3;
+        stageContext.plateContactReliefComparison = {
+            selected: useSharedFaces ? 'sharedPlateRasterFacesV1' : 'nearestSeedGraphV1',
+            inheritedSupport, sharedFaceSupport, removedContacts, addedContacts
+        };
+        if (!useSharedFaces) return inheritedRelief;
+        stageContext.tectonicSkeleton = tectonicSkeleton;
+        return faceRelief;
+    }
+
     function materializeStageBundles(input = {}, normalizedSeed = 0, worldBounds = DEFAULT_WORLD_BOUNDS) {
         const stageContext = {
             ...input,
@@ -239,7 +277,11 @@
 
         STAGE_SEQUENCE.forEach((stageDescriptor) => {
             const providedBundle = resolveProvidedStageBundle(stageContext, stageDescriptor);
-            const stageBundle = providedBundle || invokeStageGenerator(stageDescriptor, stageContext);
+            let stageBundle = providedBundle || invokeStageGenerator(stageDescriptor, stageContext);
+            if (stageDescriptor.key === 'reliefElevation' && !providedBundle && !input.tectonicSkeleton) {
+                stageBundle = resolvePlateContactRelief(stageContext, stageBundle);
+                stageBundles.tectonicSkeleton = stageContext.tectonicSkeleton;
+            }
             stageBundles[stageDescriptor.key] = stageBundle;
             stageContext[stageDescriptor.key] = stageBundle;
 

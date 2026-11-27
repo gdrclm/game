@@ -16,6 +16,7 @@ const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixtur
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 const { verifyLocalWaterFixture, verifyWaterDeliveryFixture, inspectLocalWater, verifyIslandExposureFixture,
     verifyIslandOverlapFixture } = require('./worldgen-v1-local-water.cjs');
+const { verifyPlateContacts, inspectMarineRouteGeometry } = require('./worldgen-v1-geography.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -35,6 +36,7 @@ const regionalRegression = originalRegionalRegression.concat(3840024598,
     3019978005, 2402593754, 82211472, 3338251652, 1715244351);
 const criticalImplementationRegression = [1665754063, 2666689910];
 const residualRecoveryRegression = [1240171611, 4286438917, 4144686569, 1683167796, 2248663653];
+const plateContactRegression = [1122193213, 3479992453, 3418526133];
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 function stratifiedSeeds(namespace) {
     return Array.from({ length: 64 }, (_, index) => {
@@ -53,7 +55,7 @@ assert.equal(new Set(originalRegionalRegression).size, 43, 'Preserve every manda
 const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression,
     'foundation-regression': foundationRegression, 'regional-regression': regionalRegression,
     'known-physical': knownPhysical, 'critical-implementation-regression': criticalImplementationRegression,
-    'residual-recovery-regression': residualRecoveryRegression, edges,
+    'residual-recovery-regression': residualRecoveryRegression, 'plate-contact-regression': plateContactRegression, edges,
     ...Object.fromEntries([0, 1, 2, 3].flatMap(id => [
         [`stress-${id}`, stress.filter((_, index) => index % 4 === id)],
         [`final-holdout-${id}`, finalHoldout.filter((_, index) => index % 4 === id)]
@@ -138,6 +140,7 @@ check('Signed final terrain and carved-bed controls', () => verifyFinalTerrainFi
 check('Boundary-only water stays physical without becoming a macro sea', () => verifySeaBoundaryFixture(macro));
 check('Inland bottlenecks bind measured relief while retaining segment provenance', () => verifyInlandChokepointFixture(macro));
 check('High sea reaches measured continental saddles with supported offshore islands', () => verifyContinentalShorelineFixture(macro));
+check('Only shared plate faces transfer direct compression or divergence', () => verifyPlateContacts(macro));
 check('Final downhill routing and water receiver controls', () => verifyFinalDrainageFixture(macro));
 check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));
 check('Regional landfalls require open water', () => verifyRegionalNetworkFixture(macro));
@@ -225,6 +228,13 @@ function inspectGeometry(result) {
         assert.equal(remaining.size, 0, `Disconnected watershed ${watershed.watershedId}`);
     }
     const shoreline = geometry(debug, 'seaLevelModel');
+    const contactComparison = debug.intermediateOutputs.find(row => row.artifactId === 'foundation_geometry_plateContactReliefComparison')?.payload;
+    if (contactComparison?.selected === 'sharedPlateRasterFacesV1') {
+        assert(contactComparison.inheritedSupport.continentAreas.length < 2);
+        assert(contactComparison.sharedFaceSupport.continentAreas.length >= 2 && contactComparison.sharedFaceSupport.offshoreBodies >= 3);
+        assert.deepEqual(contactComparison.sharedFaceSupport.continentAreas,
+            geometry(debug, 'continentBodies').continentBodies.map(row => row.cellCount));
+    }
     return {
         landRatio: values.filter(value => value >= threshold).length / values.length,
         continentCells: geometry(debug, 'continentBodies').continentBodies.map(row => row.cellCount),
@@ -235,6 +245,8 @@ function inspectGeometry(result) {
         shorelineAttempts: shoreline.shorelineAttempts.length,
         coastalPorts: topology.ports.length,
         seaLanes: sea.edges.length,
+        routeGeometry: inspectMarineRouteGeometry(result, macro, isLand),
+        ...(contactComparison && { contactComparison }),
         brittleCorridors: corridorSummary.brittleCorridorCount,
         redundantCorridors: corridorSummary.redundantCorridorCount
     };
@@ -402,8 +414,10 @@ for (const seed of seeds) {
         assert(Object.values(determinism).every(Boolean), `Determinism failure for seed ${seed}`);
         const map = inspectGeometry(first);
         const geography = first.phase1.macroGeographyPackage;
+        const { marineRouteGeometry, ...previousGeography } = geography;
         report.seeds.push({
             seed, pass: true, macroSeed: geography.macroSeed, firstMs, repeatMs, hashes, determinism, map,
+            phase1HashWithoutMarineRouteGeometry: hash({ ...first.phase1, macroGeographyPackage: previousGeography }),
             terrain: inspectFinalTerrain(first),
             environment: inspectClimateAndPressure(first),
             regionalArchipelago: inspectRegionalArchipelago(first, macro),

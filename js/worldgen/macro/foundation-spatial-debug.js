@@ -51,6 +51,15 @@
     ];
 
     function buildFoundationSpatialDebug(input, makeEntry, categories) {
+        if (input.plateContactReliefComparison) {
+            categories.intermediateOutputs.push(makeEntry({
+                artifactId: 'foundation_geometry_plateContactReliefComparison',
+                artifactKind: 'intermediateOutput',
+                stageId: 'reliefElevation',
+                sourceLayerId: 'plateContactReliefComparison',
+                payload: input.plateContactReliefComparison
+            }, 'intermediateOutputs'));
+        }
         for (const [stageId, fieldId] of fields) {
             const field = input[stageId]?.outputs?.fields?.[fieldId];
             if (!field?.values?.length && !field?.xValues?.length) continue;

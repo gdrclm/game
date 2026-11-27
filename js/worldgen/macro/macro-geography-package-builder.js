@@ -771,6 +771,10 @@
         const mountainSystems = buildMountainSystemRecords(input, reliefRegions);
         const volcanicZones = buildVolcanicZoneRecords(input, mountainSystems);
         const macroRoutes = buildMacroRouteRecords(input);
+        const marineRouteGeometry = macro.buildMarineRouteGeometry(
+            findInputIntermediateOutput(input, 'macroRoutes')?.candidateRoutes,
+            findInputIntermediateOutput(input, 'hybridConnectivityGraph'), macroRoutes
+        );
         const strategicRegions = buildStrategicRegionRecords(input);
         const coastalOpportunityMap = buildCoastalOpportunityPackageLayer(input);
         const isolatedZones = buildIsolatedZonePackageLayer(input);
@@ -794,6 +798,7 @@
             coastalOpportunityMap,
             chokepoints,
             macroRoutes,
+            marineRouteGeometry,
             isolatedZones,
             strategicRegions,
             environmentalCoverage,

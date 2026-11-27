@@ -58,6 +58,7 @@
         ...STRATEGIC_OPTIONAL_ARRAY_KEYS,
         'environmentalCoverage',
         'regionalArchipelago',
+        'marineRouteGeometry',
         'debugArtifacts'
     ]);
     const ROOT_ARRAY_KEYS = Object.freeze([
@@ -339,6 +340,9 @@
             ...(normalizedInput.regionalArchipelago !== undefined && {
                 regionalArchipelago: cloneValue(normalizedInput.regionalArchipelago)
             }),
+            ...(normalizedInput.marineRouteGeometry !== undefined && {
+                marineRouteGeometry: cloneValue(normalizedInput.marineRouteGeometry)
+            }),
             debugArtifacts: isPlainObject(normalizedInput.debugArtifacts)
                 ? cloneValue(normalizedInput.debugArtifacts)
                 : {},
@@ -433,6 +437,11 @@
                     optional: true,
                     version: 1,
                     description: 'Regional physical island footprints and measured water links for an existing archipelago.'
+                },
+                marineRouteGeometry: {
+                    type: 'array',
+                    optional: true,
+                    description: 'Ordered measured marine legs of exported macro routes, with land and water cells in the macro raster.'
                 },
                 debugArtifacts: {
                     type: 'object',
@@ -734,6 +743,7 @@
         });
         for (const error of macro.validateEnvironmentalCoverage?.(candidate) || []) pushError(errors, error);
         for (const error of macro.validateRegionalArchipelago?.(candidate.regionalArchipelago, candidate) || []) pushError(errors, error);
+        for (const error of macro.validateMarineRouteGeometry?.(candidate) || []) pushError(errors, error);
 
         if (hasOwn(candidate, 'debugArtifacts') && !isPlainObject(candidate.debugArtifacts)) {
             pushError(errors, '"debugArtifacts" must be a plain object when present.');

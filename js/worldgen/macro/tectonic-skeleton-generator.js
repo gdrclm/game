@@ -484,7 +484,7 @@
                 'volcanicPotential',
                 'volcanicSourceHint'
             ],
-            description: 'Deterministic nearest-seed plate boundary classification for future uplift, subsidence, and volcanic passes. Does not build relief or climate effects.'
+            description: 'Deterministic relative-motion classification for uplift, subsidence and volcanism, using the inherited proximity graph or shared plate raster faces.'
         };
     }
 
@@ -1752,7 +1752,7 @@
         );
     }
 
-    function buildBoundaryPairs(plateSeeds = []) {
+    function buildProximityBoundaryPairs(plateSeeds = []) {
         const normalizedSeeds = plateSeeds.map(normalizePlateSeedForBoundary);
         const neighborTarget = getBoundaryNeighborTarget(normalizedSeeds.length);
         const pairMap = new Map();
@@ -1795,6 +1795,43 @@
             neighborTarget,
             pairs: Array.from(pairMap.values()).sort((left, right) => left.boundaryId.localeCompare(right.boundaryId))
         };
+    }
+
+    function buildSharedFaceBoundaryPairs(plateSeeds, { width, height }) {
+        const plates = plateSeeds.map(normalizePlateSeedForBoundary)
+            .sort((left, right) => left.plateId.localeCompare(right.plateId));
+        if (plates.length < 2) return [];
+
+        // A shared face uses the same nearest-seed ownership as continent composition.
+        // Center proximity alone can connect plates separated by a third territory.
+        const owners = new Uint16Array(width * height);
+        for (let cell = 0; cell < owners.length; cell += 1) {
+            const x = cell % width;
+            const y = Math.floor(cell / width);
+            let nearestDistance = Infinity;
+            for (const [index, { seedPoint }] of plates.entries()) {
+                const distance = (seedPoint.x - x) ** 2 + (seedPoint.y - y) ** 2;
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    owners[cell] = index;
+                }
+            }
+        }
+
+        const pairs = new Map();
+        function recordContact(left, right) {
+            if (left === right) return;
+            const plateA = plates[Math.min(left, right)];
+            const plateB = plates[Math.max(left, right)];
+            const boundaryId = createBoundaryId(plateA.plateId, plateB.plateId);
+            if (pairs.has(boundaryId)) return;
+            pairs.set(boundaryId, { boundaryId, plateA, plateB, distance: getPointDistance(plateA.seedPoint, plateB.seedPoint) });
+        }
+        for (let cell = 0; cell < owners.length; cell += 1) {
+            if (cell % width < width - 1) recordContact(owners[cell], owners[cell + 1]);
+            if (cell + width < owners.length) recordContact(owners[cell], owners[cell + width]);
+        }
+        return [...pairs.values()].sort((left, right) => left.boundaryId.localeCompare(right.boundaryId));
     }
 
     function scoreBoundaryType(collisionScore, divergenceScore, transformScore) {
@@ -1925,7 +1962,7 @@
         };
     }
 
-    function generatePlateBoundaryClassification(input = {}) {
+    function generatePlateBoundaryClassification(input = {}, { useSharedFaces = false } = {}) {
         const normalizedInput = normalizeInput(input);
         const plateSeedDistribution = resolvePlateSeedDistribution(input, normalizedInput);
         const plateMotionVectors = resolvePlateMotionVectors(input, normalizedInput, plateSeedDistribution);
@@ -1941,8 +1978,10 @@
             ? cloneValue(plateSeedDistribution.worldBounds)
             : cloneValue(normalizedInput.worldBounds);
         const worldDiagonal = getWorldDiagonal(worldBounds);
-        const boundaryPairs = buildBoundaryPairs(plateSeeds);
-        const boundaryClassifications = boundaryPairs.pairs.map((pair) => classifyBoundaryPair(
+        const boundaryGraph = useSharedFaces
+            ? { pairs: buildSharedFaceBoundaryPairs(plateSeeds, worldBounds) }
+            : buildProximityBoundaryPairs(plateSeeds);
+        const boundaryClassifications = boundaryGraph.pairs.map((pair) => classifyBoundaryPair(
             pair,
             motionLookup,
             worldDiagonal
@@ -1970,10 +2009,10 @@
             worldBounds,
             plateCount: plateSeeds.length,
             boundaryCount: boundaryClassifications.length,
-            adjacencyModel: 'nearestSeedGraphV1',
+            adjacencyModel: useSharedFaces ? 'sharedPlateRasterFacesV1' : 'nearestSeedGraphV1',
             classificationModel: 'relativeMotionNormalTangentialV1',
             options: {
-                neighborTarget: boundaryPairs.neighborTarget,
+                ...(!useSharedFaces && { neighborTarget: boundaryGraph.neighborTarget }),
                 boundaryTypes: BOUNDARY_TYPES.slice()
             },
             preparationTargets: [
@@ -5802,10 +5841,10 @@
         });
     }
 
-    function createTectonicSkeletonPipeline(input = {}) {
+    function createTectonicSkeletonPipeline(input = {}, inheritedKinematics) {
         const normalizedInput = normalizeInput(input);
-        const plateSeedDistribution = generatePlateSeedDistribution(normalizedInput);
-        const plateMotionVectors = generatePlateMotionVectors({
+        const plateSeedDistribution = inheritedKinematics?.plateSeedDistribution || generatePlateSeedDistribution(normalizedInput);
+        const plateMotionVectors = inheritedKinematics?.plateMotionVectors || generatePlateMotionVectors({
             ...normalizedInput,
             plateSeedDistribution
         });
@@ -5813,7 +5852,7 @@
             ...normalizedInput,
             plateSeedDistribution,
             plateMotionVectors
-        });
+        }, { useSharedFaces: Boolean(inheritedKinematics) });
         const upliftField = generateUpliftField({
             ...normalizedInput,
             plateSeedDistribution,
@@ -5997,6 +6036,11 @@
         return createTectonicSkeletonPipeline(input);
     }
 
+    function generateSharedFaceTectonicSkeleton(input, inherited) {
+        const kinematics = inherited.outputs.intermediateOutputs;
+        return createTectonicSkeletonPipeline(input, kinematics);
+    }
+
     function getTectonicSkeletonGeneratorDescriptor() {
         return {
             moduleId: MODULE_ID,
@@ -6081,6 +6125,7 @@
         generatePlainLowlandSmoothingField,
         buildTectonicFieldSnapshots,
         createTectonicSkeletonPipeline,
-        generateTectonicSkeleton
+        generateTectonicSkeleton,
+        generateSharedFaceTectonicSkeleton
     });
 })();

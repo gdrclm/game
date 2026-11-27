@@ -187,5 +187,61 @@
         return { restrictedCells, blockedEdgeIds };
     }
 
-    Object.assign(macro, { buildMarineAccessEdges, findIslandPassages, measureChangedLanes, collectCorridorOutage });
+    function buildMarineRouteGeometry(routes, graph, routeRecords) {
+        if (!routes?.length || !graph?.edges || !graph.nodes) return undefined;
+        const published = new Set(routeRecords.map(row => row.routeId));
+        const edges = new Map(graph.edges.map(edge => [edge.edgeId, edge]));
+        const nodes = new Map(graph.nodes.map(node => [node.nodeId, node]));
+        const result = [];
+        for (const route of routes) {
+            if (!published.has(route.routeId)) continue;
+            const legs = [];
+            for (const [index, edgeId] of route.edgePathIds.entries()) {
+                const edge = edges.get(edgeId);
+                if (!edge?.waterPathCellIndices?.length) continue;
+                const forward = edge.fromNodeId === route.nodePathIds[index];
+                const from = nodes.get(forward ? edge.fromNodeId : edge.toNodeId);
+                const to = nodes.get(forward ? edge.toNodeId : edge.fromNodeId);
+                legs.push({
+                    fromLandCellIndex: from?.anchorCellIndex,
+                    toLandCellIndex: to?.anchorCellIndex,
+                    waterPathCellIndices: forward ? edge.waterPathCellIndices.slice() : edge.waterPathCellIndices.slice().reverse()
+                });
+            }
+            if (legs.length) result.push({ routeId: route.routeId, legs });
+        }
+        return result;
+    }
+
+    function validateMarineRouteGeometry({ marineRouteGeometry, macroRoutes, worldBounds }) {
+        if (marineRouteGeometry === undefined) return [];
+        const { width, height } = worldBounds || {};
+        if (!Array.isArray(marineRouteGeometry) || !Number.isSafeInteger(width) || width <= 0
+            || !Number.isSafeInteger(height) || height <= 0 || !Number.isSafeInteger(width * height)) {
+            return ['"marineRouteGeometry" requires rows and a valid macro raster.'];
+        }
+        const errors = [];
+        const knownRoutes = new Set(Array.isArray(macroRoutes) ? macroRoutes.map(row => row?.routeId) : []);
+        const seen = new Set();
+        const validCell = cell => Number.isSafeInteger(cell) && cell >= 0 && cell < width * height;
+        const adjacent = (a, b) => Math.abs(a % width - b % width) + Math.abs(Math.floor(a / width) - Math.floor(b / width)) === 1;
+        function validLeg(leg) {
+            const { fromLandCellIndex: from, toLandCellIndex: to, waterPathCellIndices: path } = leg || {};
+            return validCell(from) && validCell(to) && Array.isArray(path) && path.length > 0
+                && path.every((cell, index) => validCell(cell) && cell !== from && cell !== to && (!index || adjacent(path[index - 1], cell)))
+                && adjacent(from, path[0]) && adjacent(to, path.at(-1));
+        }
+        for (const row of marineRouteGeometry) {
+            const { routeId, legs } = row || {};
+            if (typeof routeId !== 'string' || !knownRoutes.has(routeId) || seen.has(routeId)
+                || !Array.isArray(legs) || !legs.length || !legs.every(validLeg)) {
+                errors.push(`Invalid marine path geometry for route "${routeId}".`);
+            }
+            seen.add(routeId);
+        }
+        return errors;
+    }
+
+    Object.assign(macro, { buildMarineAccessEdges, findIslandPassages, measureChangedLanes, collectCorridorOutage,
+        buildMarineRouteGeometry, validateMarineRouteGeometry });
 })();
