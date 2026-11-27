@@ -2,6 +2,8 @@
 
 Repository: gdrclm/game. Branch: worldgen/v1-foundation-closure. Verify actual HEAD. Evidence b843d70; verified program 3289ac9, CI 46032224014 success. High / Standard. Phase 0–2 only; no Phase 3, historical simulation, merge, deployment or author acceptance.
 
+The pinned 05 audit on `06738ab` preserves 173/173 prior worlds and records 14/16 fresh exports. The report records the implemented corrections, remaining deformation blocker and author questions. The content below preserves the entry specification. [05 checkpoint](FOUNDATION_FINAL_CAUSAL_AUDIT.md)
+
 ## Read and baseline
 Read AGENTS.md, PLANS.md, PROJECT_STATE.md, ACTIVE_CHECKLIST.md, HIGH_REASONING_REVIEW_QUEUE.md, AUTHOR_REVIEW_QUEUE.md, PHASE_1_2_REMAINING_GAPS.md, SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md and CRITICAL_GEOGRAPHY_CLOSURE.md (under docs/context). Read targeted contracts and source. Prior planned audit PROMPT_05_INDEPENDENT_CAUSAL_AUDIT.md is historical; this milestone supersedes it. Do not repeat verified 04-B/C/D fixes. Baseline 173/173 unique exports, 49 mandatory, 28 checks, fixed 64+64+7+11, separate 2+5+3 controls, Phase 0 1,031, browser 5 and runtime 270. All 170 pre-04-D packages unchanged apart from marine geometry addition in Phase 1.
 

@@ -1,17 +1,21 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: b843d70, 04-D geography (27 November 2026), branch `worldgen/v1-foundation-closure`. Program revision `3289ac96209fa31f4e6c270333f3b8718441d078`. [04-D evidence](CRITICAL_GEOGRAPHY_CLOSURE.md) · [04-C baseline](CRITICAL_RESIDUAL_RECOVERY.md)
+Current checkpoint: 05 causal audit (28 November 2026), branch `worldgen/v1-foundation-closure`. Program revision `06738ab7a690c233b8ac4168a207e57ecd06bb05`. [Causal audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md) · [04-D baseline](CRITICAL_GEOGRAPHY_CLOSURE.md)
 
 ## Current status
 
 | System | Confirmed | Open |
 |---|---|---|
 | Phase 0 | 1,031 seeds, 14 namespaces, deterministic export | Historical consumers in later phases |
-| Phase 1 | Signed relief and bathymetry, actual drainage branches, measured water delivery, shared-face continental support and measured marine route legs | Continental crust composition, macro contact/coastal morphology and atmospheric transitions |
-| Phase 2 | Separate weather closure and static route burden; local shelter/replenishment and source delivery; macro refuge opportunity and distinct ecological tempo, route reentry, repeated-stress support | Actual attenuation, water losses, retention duration and practical access budgets; no known export failure among current valid Phase 1 inputs |
+| Phase 1 | Signed relief, measured hydrology and delivery, source-checked marine route legs with raster weather, explicit contact-model provenance | Globally valid deformation carrier, crust composition, coastal morphology and atmospheric transitions |
+| Phase 2 | Independent numerical axes and presentation contrast, path-local and regional weather, static route burden, measured refuge opportunity and separate recovery channels | Actual attenuation, water losses, retention duration, synchronized closure chronology and practical access budgets |
 | V1 islands | Full footprints, stable IDs, physical origins, maritime connectivity and local environment | Playable scale, density, selection and origin diversity |
 
 ## Latest pinned verification
+
+On `06738ab` and Node 22.23.5, all 173/173 prior worlds were retained. Mandatory 49/49, 31/31 checks, fixed stress 64/64 and 64/64, edges 7/7, additional 11/11 and separate controls 2/2, 5/5 and 3/3. The fresh predeclared holdout exports 14/16. Phase 0 hashes, existing Phase 1 contents, recovery aggregates and physical island capacities match 04-D on all 173 prior worlds. Browser, runtime and GitHub Actions passed. [Verification](review/f8t/closure/prompt-05-causal-verification.json) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/46047096914)
+
+## 04-D baseline verification
 
 On `3289ac9` and Node 22.23.5, **173/173 unique exports** pass. Mandatory 49/49 and 28/28 checks, original 64/64, independent 64/64, edges 7/7, additional 11/11, separate controls 2/2, 5/5 and 3/3. All 170 previous worlds retain Phase 0 and Phase 2 hashes and the previous Phase 1 hash when the new marine path field is omitted. Deterministic repeats, Phase 0 distribution, Chromium 5/5 Phase 0 and 270/270 runtime, game startup and GitHub Actions passed. [Verification register](review/f8t/closure/prompt-04d-verification.json) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/46032224014)
 
@@ -23,6 +27,7 @@ All five residual Phase 2 targets `1240171611`, `4286438917`, `4144686569`, `168
 
 ## Verified causal implementation
 
+- 05: maritime survey binds every published marine leg to the original graph, corresponding landfalls and the signed surface. Phase 2 uses local path weather for record-bound navigation and independent physical axes for pressure and rhythm. Existing presentation gates retain their own calibrated values. Fixed-source interventions identify the contact that joins two landmasses on `0` and compare alternative deformation carriers. The foundational hybrid is recorded in the package. [Causal tests and map evidence](FOUNDATION_FINAL_CAUSAL_AUDIT.md)
 - 04-B: same-cell macro shelter and local replenishment, connected wet sheltered patches, distinct periodic weather closures, exact supported continental cutoff search, and p50/p90/max delivery path distance, ascent and unshielded length. [Evidence](CRITICAL_IMPLEMENTATION_CLOSURE.md).
 - 04-C: ordinary inflow density q and low-season l use the same within-world reference r (maximum ordinary density across nonempty relief regions). q/(q+r) supports ecological fast recovery and l/(q+r) constrains recurring-stress support together with existing basin-risk limit. The route contribution remains independent of water and limited by regional workability. The index is relative within a world, not a physical volume or duration law. Scaling the entire world including r preserves indices. Fixed-input interventions preserve pressure, stabilization and refuge persistence. [Recovery evidence](CRITICAL_RESIDUAL_RECOVERY.md).
 - Regional environment: exact shelter/source overlap, separate local inflow, allocation and potential retention; practical human cost remains undefined. On 293 earlier measured islands reachability is full or zero under unbounded dry-land tracing; measured path distributions now distinguish delivery effort.
@@ -42,6 +47,8 @@ Macro contact/coastal artifacts, wind-band transitions, origin skew, water loss,
 
 ## Workflow
 
-04-D is verified on 3289ac9. [Independent static gap review](PHASE_1_2_REMAINING_GAPS.md) identifies four priority issues: conditional contact physics, incomplete canonical marine path validation, route weather aggregation and cross-axis summary calibration. Next [prompt 05 — independent causal audit and bounded corrections](NEXT_ENGINEERING_MILESTONE.md), High / Standard. Verify actual code and implement proven material corrections before author package 06; do not treat 173/173 as proof of physical sufficiency. The original 04-D task is historical (see commit 27d58b1). Final F8/F9 acceptance requires explicit author approval. No Phase 3 or merge.
+The 05 audit records implemented physical corrections and explicit technical, author, V1 and later-phase boundaries. Global contact deformation remains open. The task is bounded to Phase 0–2 and F8/F9 require explicit author approval. [Disposition](FOUNDATION_FINAL_CAUSAL_AUDIT.md#диспозиция)
+
+Two independent Phase 1 cases reproduce on 04-D and 05. `813476365` has a one-cell enclosed water body without a classified shore. `3224355349` has measured routes and corridors with zero generated chokepoint candidates. The remaining work addresses basin classification and physical coverage of passage search. [Source traces](FOUNDATION_FINAL_CAUSAL_AUDIT.md#два-отказа-независимой-выборки)
 
 [Active checklist](ACTIVE_CHECKLIST.md) · [High queue](HIGH_REASONING_REVIEW_QUEUE.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [Archipelago plan](FOUNDATION_ARCHIPELAGO_PLAN.md). Earlier revisions, detailed experiments and measurements are retained in linked reports and git, not repeated as current status.

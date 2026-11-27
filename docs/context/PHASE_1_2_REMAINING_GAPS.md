@@ -1,5 +1,7 @@
 # Phase 1–2 — independent static gap review after 04-D
 
+Implementation results and measured dispositions are recorded separately. [05 causal audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md)
+
 27 November 2026. Reviewed evidence HEAD b843d70, production 3289ac96209fa31f4e6c270333f3b8718441d078. This is a source/contract and saved-evidence review, not a new execution or visual inspection of the PDF atlases. All 173 pinned worlds pass according to the committed audit and successful CI 46032224014. No new seed failures claimed. [04-D evidence](CRITICAL_GEOGRAPHY_CLOSURE.md).
 
 ## High-priority causal/contract work before author acceptance

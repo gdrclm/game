@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-27 for the 04-D geography checkpoint.
+Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-28 for the 05 causal audit.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -46,9 +46,17 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 - [x] 04-D full verification on `3289ac9`: 173/173 unique exports, all 170 prior packages byte-identical apart from the new marine path field in Phase 1. Mandatory 49/49 with 28/28 checks, fixed stress 64/64 and 64/64, edges 7/7, additional 11/11, and separate controls 2/2, 5/5 and 3/3. Deterministic repeats, browser and GitHub Actions passed. [Pinned verification](review/f8t/closure/prompt-04d-verification.json)
 
+- [x] 05 G2: bind the complete current marine export to source graph orientation and signed land/water at assembly. Reject omissions, nonphysical paths and inconsistent preserved evidence. Accept legacy geometry at its historical format.
+- [x] 05 R1 and R2: expose route-specific path timing and split numerical causal axes from the display profile. Hold fixed water, pressure and regional weather in separate counterfactuals. [Audit and counterfactuals](FOUNDATION_FINAL_CAUSAL_AUDIT.md)
+
+- [x] 05 pinned verification on `06738ab`. Preserve 173/173 prior worlds and run 14/16 fresh exports, 31/31 required checks, deterministic repeats, browser and CI. [Verification](review/f8t/closure/prompt-05-causal-verification.json)
+
 ## Active technical work (do not restart completed milestones)
 
-The [04-D checkpoint](CRITICAL_GEOGRAPHY_CLOSURE.md) records all 173 fixed exports. Next [prompt 05](NEXT_ENGINEERING_MILESTONE.md) verifies and corrects the [independent static gap review](PHASE_1_2_REMAINING_GAPS.md). Priority subgates: G1 conditional contact model, G2 marine path integrity, R1 actual path weather exposure, R2 summary calibration coupling. These are evidence-led subgates, not independent progress percentage units. Preserve all prior cohorts and add a fresh predeclared holdout. Author package 06 remains deferred.
+The [05 audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md) records repaired marine integrity, weather along actual paths and independent synthesized axes. Actual water and timing limits and the remaining deformation blocker stay visible.
+
+- [ ] 05 G1: test a globally coherent deformation carrier that preserves the verified fragment on `2546155002` and recovery on `3479992453`. The canonical package exposes contact-model selection under current V1 policy. [Causal trace](FOUNDATION_FINAL_CAUSAL_AUDIT.md#g1--тектонические-контакты-и-носитель-деформации)
+- [ ] Independent Phase 1 cases: trace climate support for enclosed one-cell `sea_02` on `813476365`, and compare physical route outages against chokepoint search coverage on `3224355349`. Both are reproducible on 04-D and 05. [Negative controls](FOUNDATION_FINAL_CAUSAL_AUDIT.md#два-отказа-независимой-выборки)
 
 - [ ] F8-T macro water closure: establish how coherent sheltered area, water loss and independent duration evidence determine actual refuge persistence. Preserve the verified local replenishment signal and keep source access and delivery separate. [Open hypotheses](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, practical access budgets applied to measured route geometry, actual water persistence and recovery timing require further physical evidence.
