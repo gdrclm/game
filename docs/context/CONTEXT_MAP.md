@@ -6,7 +6,7 @@ Purpose: shared context between ChatGPT Project and Codex; navigation rather tha
 Read AGENTS.md, PLANS.md, [PROJECT_STATE.md](PROJECT_STATE.md), [ACTIVE_CHECKLIST.md](ACTIVE_CHECKLIST.md) and [NEXT_ENGINEERING_MILESTONE.md](NEXT_ENGINEERING_MILESTONE.md). Consult [HIGH_REASONING_REVIEW_QUEUE.md](HIGH_REASONING_REVIEW_QUEUE.md) for unresolved causal problems. The full reading order below is a reference map, not a requirement to reread every document per session. Use targeted file ranges and extracted metrics.
 
 ## Reading order
-1. [Authorial vision](PATHS_AUTHORIAL_VISION.md) and [design decisions](DESIGN_DECISIONS.md): distilled author direction and uncertainty.
+1. [Authorial vision](PATHS_AUTHORIAL_VISION.md) and [design decisions](DESIGN_DECISIONS.md): distilled author direction and uncertainty. [Settlement migration and territorial continuity](SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md): author direction for historical migration, abandonment, reoccupation and causal material traces; required when designing Phase 3–17 and later materialization.
 2. [Project state](PROJECT_STATE.md), [active checklist](ACTIVE_CHECKLIST.md), [author review queue](AUTHOR_REVIEW_QUEUE.md): current handoff.
    [Foundation execution plan](FOUNDATION_EXECUTION_PLAN.md) and [author review packet](review/README.md) contain the current tests and actual maps.
    [Physical work plan](FOUNDATION_PHYSICAL_PLAN.md) and [coverage matrix](FOUNDATION_PHYSICAL_COVERAGE.md) describe the F8-T/C/D/S/V checkpoints.

@@ -58,3 +58,7 @@ technical decisions from decisions requiring author approval. Living narrative
 requires autonomy, ordinary life, ambiguity, contradictions, material consequences,
 and meaningful non-combat decisions. No requirement to make every event tragic,
 every conversation a quest, or every story resolve to one interpretation.
+
+## Settlement history acceptance (future historical phases)
+
+Apply the [author direction](../../../../docs/context/SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md) at its relevant gates. Use controlled pairs to distinguish physical ability to move from willingness to move; verify migration feasibility, optional vacancy, persistence of population identity across a move and valid ordering of occupation layers. Demonstrate different cultural/social decisions under similar physical circumstances, and material traces that reference established historical facts. Cases are proposed checks, not mandatory per-world plot outcomes. Do not require implementation during the current Phase 0–2 milestone.

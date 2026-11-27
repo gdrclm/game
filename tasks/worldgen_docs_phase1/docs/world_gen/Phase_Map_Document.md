@@ -495,6 +495,10 @@ Use:
 
 ---
 
+### Cross-phase author direction: population movement and territorial continuity
+
+Historical communities may remain, migrate along physically supported maritime routes, split, adapt or perish. Territory may remain vacant or be occupied or shared later through context-dependent conflict, partition, negotiated or responsible relocation and other cultural, religious, political or everyday causes. Separate the continuity of land, population and institutions. Physical opportunity constrains actions but does not prescribe decisions. Phase 10–14 establish changes and consequences, Phase 15–17 inherit them, Phase 17.5 and 18–25 project them into evidence and places; do not invent ownership history during materialization. [Author direction](../../../../docs/context/SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md). No player combat implied.
+
 ## PHASE 11 — ERA SIMULATION GENERATOR
 
 ### Purpose
