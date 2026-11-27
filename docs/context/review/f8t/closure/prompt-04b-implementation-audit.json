@@ -1,0 +1,4251 @@
+{
+  "schema": "paths-04b-critical-implementation-verification-v1",
+  "revision": "a3df0d21ecbad979b1253611ab93621dbd6b0157",
+  "node": "v22.23.5",
+  "baselineRevision": "0c11b75890f86354dec208066e95c862ff81fe87",
+  "phase0": {
+    "sample": {
+      "edges": [
+        0,
+        1,
+        2,
+        2147483647,
+        2147483648,
+        4294967294,
+        4294967295
+      ],
+      "consecutive": 512,
+      "distributed": 512,
+      "total": 1031
+    },
+    "reverseOrderStable": true,
+    "namespaceUniqueValueCounts": {
+      "macroGeographySeed": 1031,
+      "pressureSeed": 1031,
+      "rhythmSeed": 1031,
+      "religionSeed": 1031,
+      "mentalSeed": 1031,
+      "civilizationSeed": 1031,
+      "dynastySeed": 1031,
+      "eventSeed": 1031,
+      "collapseSeed": 1031,
+      "archipelagoSeed": 1031,
+      "islandHistorySeed": 1031,
+      "settlementSeed": 1031,
+      "spatialSeed": 1031,
+      "npcSeed": 1031
+    },
+    "distribution": {
+      "conflictPressure": {
+        "min": 0.020403066251669932,
+        "p05": 0.13270901349635,
+        "median": 0.29076627406760747,
+        "p95": 0.8423277120970754,
+        "max": 0.9598720076841467,
+        "mean": 0.371564
+      },
+      "dynastyPressure": {
+        "min": 0.01258184840293941,
+        "p05": 0.1229843995212675,
+        "median": 0.39974832305891644,
+        "p95": 0.8821231668603029,
+        "max": 0.9627986126129089,
+        "mean": 0.503216
+      },
+      "maritimeDependence": {
+        "min": 0.033087139415170164,
+        "p05": 0.11737800672960941,
+        "median": 0.39408110839211274,
+        "p95": 0.8559618963970986,
+        "max": 0.9421458934498036,
+        "mean": 0.484334
+      },
+      "environmentalVolatility": {
+        "min": 0.050917031565633764,
+        "p05": 0.1288874184578086,
+        "median": 0.3936206619400117,
+        "p95": 0.8520197101119071,
+        "max": 0.957599206841713,
+        "mean": 0.479639
+      },
+      "collapseIntensity": {
+        "min": 0.05276929820139514,
+        "p05": 0.13960633000172673,
+        "median": 0.3916022716441916,
+        "p95": 0.794898696085403,
+        "max": 0.9256438978583792,
+        "mean": 0.473474
+      },
+      "religiousInertia": {
+        "min": 0.04172439165241848,
+        "p05": 0.1627789032650998,
+        "median": 0.6054937725596957,
+        "p95": 0.8404418196084167,
+        "max": 0.9543308955272474,
+        "mean": 0.507552
+      },
+      "institutionalPlasticity": {
+        "min": 0.05981506967647565,
+        "p05": 0.16288413573789506,
+        "median": 0.39991105089171064,
+        "p95": 0.8383179429159459,
+        "max": 0.9390644375651566,
+        "mean": 0.499063
+      },
+      "migrationPressure": {
+        "min": 0.03983548551998839,
+        "p05": 0.1478949163215728,
+        "median": 0.6007524009607732,
+        "p95": 0.8571081106156342,
+        "max": 0.9472491584342964,
+        "mean": 0.500816
+      },
+      "centralizationBias": {
+        "min": 0.012347492097317003,
+        "p05": 0.13829808708969327,
+        "median": 0.39844046715440024,
+        "p95": 0.852344749053519,
+        "max": 0.9400003824228611,
+        "mean": 0.500168
+      },
+      "memoryPersistence": {
+        "min": 0.01149055696442236,
+        "p05": 0.14960018304724376,
+        "median": 0.3997884887746639,
+        "p95": 0.8429794336985907,
+        "max": 0.9736547590648335,
+        "mean": 0.496129
+      },
+      "heroicAgencyBias": {
+        "min": 0.03846439232066973,
+        "p05": 0.1424415981952057,
+        "median": 0.3952028638083074,
+        "p95": 0.8335002228219723,
+        "max": 0.9703215891561918,
+        "mean": 0.490242
+      },
+      "routeFragilityBias": {
+        "min": 0.028803736826613524,
+        "p05": 0.15222606756226442,
+        "median": 0.3959570048439006,
+        "p95": 0.8277971965756554,
+        "max": 0.9015858927607632,
+        "mean": 0.487103
+      },
+      "culturalPermeability": {
+        "min": 0.06375945418365309,
+        "p05": 0.1627697249787311,
+        "median": 0.39976810952441555,
+        "p95": 0.8279942127047177,
+        "max": 0.9597318981096348,
+        "mean": 0.495254
+      }
+    },
+    "categories": {
+      "worldTone": {
+        "storm_shattered_trade_world": 282,
+        "migratory_open_world": 192,
+        "continental_iron_order": 122,
+        "fractured_maritime_age": 40,
+        "dynastic_collapse_frontier": 43,
+        "ritual_basin_civilization": 289,
+        "heroic_shatterbelt_age": 63
+      },
+      "likelyWorldPattern": {
+        "trade_heavy_but_fragile": 322,
+        "continental_hierarchy": 286,
+        "fragmented_maritime_rivals": 72,
+        "ritual_stable_basins": 285,
+        "high_memory_collapse_world": 66
+      },
+      "likelyConflictMode": {
+        "route_conflict": 291,
+        "religious_fragmentation": 119,
+        "resource_and_isolation_conflict": 258,
+        "frontier_pressure_conflict": 47,
+        "dynastic_conflict": 316
+      },
+      "likelyCollapseMode": {
+        "sudden_route_cascade": 305,
+        "ecological_shock_breakdown": 220,
+        "slow_periphery_fade": 380,
+        "dynastic_disintegration": 87,
+        "compound_collapse": 39
+      },
+      "likelyReligiousPattern": {
+        "trade_syncretic": 190,
+        "fear_and_appeasement": 108,
+        "reform_prone": 318,
+        "high_orthodoxy": 381,
+        "memory_bound_ancestral": 34
+      },
+      "likelyArchipelagoRole": {
+        "exilic_edge": 177,
+        "remnant_core": 300,
+        "customs_belt": 68,
+        "wound_of_world": 251,
+        "bridge": 179,
+        "imperial_chain": 56
+      }
+    }
+  },
+  "browser": {
+    "revision": "a3df0d21ecbad979b1253611ab93621dbd6b0157",
+    "node": "v22.23.5",
+    "chromium": "156.0.8078.79",
+    "tests": [
+      {
+        "path": "tests/worldgen-phase0-tests.html",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "pageErrors": []
+      },
+      {
+        "path": "tests/crafting-tests.html",
+        "total": 270,
+        "passed": 270,
+        "failed": 0,
+        "pageErrors": []
+      }
+    ],
+    "gameBoot": {
+      "status": 200,
+      "canvases": [
+        "mapCanvas",
+        "gameCanvas",
+        "selectedCharacterPortrait"
+      ],
+      "pageErrors": []
+    }
+  },
+  "githubActions": {
+    "url": "https://github.com/gdrclm/game/actions/runs/45952961529",
+    "revision": "a3df0d21ecbad979b1253611ab93621dbd6b0157",
+    "conclusion": "success"
+  },
+  "mandatoryCausalChecks": [
+    {
+      "name": "Phase 0 official intake and seed tamper rejection",
+      "pass": true,
+      "details": true
+    },
+    {
+      "name": "Maritime demand requires supported sea routes",
+      "pass": true,
+      "details": [
+        0.3585,
+        0.3717,
+        0.394
+      ]
+    },
+    {
+      "name": "Phase 2 fixture harness",
+      "pass": true,
+      "details": {
+        "smoke": {
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "status": "pass"
+        },
+        "regression": {
+          "total": 6,
+          "passed": 6,
+          "failed": 0,
+          "status": "pass"
+        }
+      }
+    },
+    {
+      "name": "Physical passage closure and terminal negative controls",
+      "pass": true,
+      "details": [
+        "terminal cell rejected",
+        "terminal access rejected",
+        "disconnection",
+        "no effect",
+        "alternate water path"
+      ]
+    },
+    {
+      "name": "A coast node must enter a connected water segment",
+      "pass": true,
+      "details": {
+        "isolatedBorderWaterRejected": true
+      }
+    },
+    {
+      "name": "Hotspot curvature follows shallow crust at fixed plate drift",
+      "pass": true,
+      "details": {
+        "flatPreservesDrift": true,
+        "tiltedShelfShiftsPeaks": [
+          0,
+          1,
+          2,
+          1,
+          0
+        ]
+      }
+    },
+    {
+      "name": "Land-weighted pressure and local recovery timing",
+      "pass": true,
+      "details": {
+        "splitPreservesPressure": 0.625,
+        "splitPreservesRecovery": 0.35,
+        "recoveryByDelayLocation": [
+          0.35,
+          0.625
+        ]
+      }
+    },
+    {
+      "name": "Signed final terrain and carved-bed controls",
+      "pass": true,
+      "details": {
+        "assignments": [
+          "original",
+          "cleanup_submergence",
+          "cleanup_fill",
+          "marine_carving",
+          "marine_accretion"
+        ],
+        "alteredBedFollowsAvailableWater": true
+      }
+    },
+    {
+      "name": "Boundary-only water stays physical without becoming a macro sea",
+      "pass": true,
+      "details": {
+        "boundaryWaterRetainedInFloodFill": true,
+        "observedInteriorRequiredForOpenSea": true,
+        "enclosedWaterUnaffected": true
+      }
+    },
+    {
+      "name": "Inland bottlenecks bind measured relief while retaining segment provenance",
+      "pass": true,
+      "details": {
+        "adjacentRecordsFollowActualReliefOverlap": true,
+        "internalSegmentProvenanceRetained": true
+      }
+    },
+    {
+      "name": "High sea reaches measured continental saddles with supported offshore islands",
+      "pass": true,
+      "details": {
+        "saddleSeparatesInheritedContinentalBodies": true,
+        "higherSeaRequiresSupportedArchipelago": true,
+        "ordinaryShorelinePreferred": true,
+        "observesOrdinarySplitBetweenSampledLevels": true
+      }
+    },
+    {
+      "name": "Final downhill routing and water receiver controls",
+      "pass": true,
+      "details": {
+        "terminalTypes": [
+          "ocean",
+          "inland_water",
+          "local_depression"
+        ],
+        "diagonalRequiresContinuousDescent": true
+      }
+    },
+    {
+      "name": "Saddles require both rising and falling transects",
+      "pass": true,
+      "details": {
+        "saddleRequiresOppositeSlopes": true
+      }
+    },
+    {
+      "name": "Regional landfalls require open water",
+      "pass": true,
+      "details": {
+        "enclosedWaterRejected": true
+      }
+    },
+    {
+      "name": "Regional surface requires local physical support",
+      "pass": true,
+      "details": {
+        "noUnsupportedEmergence": true,
+        "sharedParentSamplesAndLocalRange": true,
+        "symmetricReconstruction": true,
+        "inheritedSlopeJump": {
+          "linear": 0.005624999999999998,
+          "reconstructed": 0.0008706897497177124
+        },
+        "faultUpliftExercised": true,
+        "erosionExercised": true,
+        "inheritedSaddlePreservesIndependentUplift": true,
+        "independentlyRestoredSeparation": true
+      }
+    },
+    {
+      "name": "Regional carrier capacity and complete raster-backed island geometry",
+      "pass": true,
+      "details": {
+        "distinctWaterNetworks": true,
+        "smallTransitIslandAllowed": true,
+        "completeLandComponent": true,
+        "completeShoreline": true,
+        "measuredElevation": true
+      }
+    },
+    {
+      "name": "Regional drainage conserves land and responds to wetness",
+      "pass": true,
+      "details": {
+        "drainageConservesArea": true,
+        "wetnessChangesRunoffNotGeometry": true,
+        "depressionNotAssumedWater": true
+      }
+    },
+    {
+      "name": "Local water retains geometry, seasonal input, and travel evidence independently",
+      "pass": true,
+      "details": {
+        "retainedSpaceRequiresRelief": true,
+        "dryBowlHasNoSupply": true,
+        "seasonChangesLowInputOnly": true,
+        "accessCannotCrossWater": true,
+        "nestedBowlsRequireSecondSaddle": true,
+        "sealedBowlHasNoMeasuredExit": true,
+        "nestedSourcesDoNotDoubleCountUpstreamWater": true
+      }
+    },
+    {
+      "name": "Water-delivery profiles follow dry paths and measure path exposure independently",
+      "pass": true,
+      "details": {
+        "partlyShielded": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 5,
+          "distance": {
+            "p50": 1,
+            "p90": 2,
+            "max": 2
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.4,
+            "max": 0.4
+          },
+          "unshieldedDistance": {
+            "p50": 0.5,
+            "p90": 1,
+            "max": 1
+          }
+        },
+        "fullyExposed": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 5,
+          "distance": {
+            "p50": 1,
+            "p90": 2,
+            "max": 2
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.4,
+            "max": 0.4
+          },
+          "unshieldedDistance": {
+            "p50": 1,
+            "p90": 2,
+            "max": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "Macro refuge overlap preserves fixed inflow, wind direction and drainage provenance",
+      "pass": true,
+      "details": {
+        "intoShelter": {
+          "classifiedLandCells": 4,
+          "shelteredLandCells": 3,
+          "ordinaryInput": 1,
+          "lowSeasonInput": 0.5,
+          "wateredLandCells": 2,
+          "wateredPatchCount": 1,
+          "largestWateredPatch": 2
+        },
+        "ontoOpenLand": {
+          "classifiedLandCells": 4,
+          "shelteredLandCells": 3,
+          "ordinaryInput": 0,
+          "lowSeasonInput": 0,
+          "wateredLandCells": 0,
+          "wateredPatchCount": 0,
+          "largestWateredPatch": 0
+        },
+        "differentWind": {
+          "classifiedLandCells": 4,
+          "shelteredLandCells": 1,
+          "ordinaryInput": 0.5,
+          "lowSeasonInput": 0.25,
+          "wateredLandCells": 1,
+          "wateredPatchCount": 1,
+          "largestWateredPatch": 1
+        },
+        "splitDrainage": {
+          "classifiedLandCells": 4,
+          "shelteredLandCells": 3,
+          "ordinaryInput": 1,
+          "lowSeasonInput": 0.5,
+          "wateredLandCells": 2,
+          "wateredPatchCount": 2,
+          "largestWateredPatch": 1
+        }
+      }
+    },
+    {
+      "name": "Timing distinguishes static travel burden, storms and seasonal scarcity",
+      "pass": true,
+      "details": {
+        "navigation": {
+          "calmCosts": [
+            0.652471,
+            0.608956
+          ],
+          "calmFrequency": 0,
+          "stormFrequency": 0.508607
+        },
+        "scarcity": {
+          "fixedPressure": [
+            0.209078,
+            0.670847
+          ],
+          "fixedSeason": [
+            0.30103,
+            0.572882
+          ]
+        }
+      }
+    },
+    {
+      "name": "Regional pressure and recovery follow independent water, shelter and movement measurements",
+      "pass": true,
+      "details": {
+        "windDirectionChangesShelter": true,
+        "upliftCoolsLand": true,
+        "shelterLeavesWaterAndSeaLinksIndependent": true,
+        "localPressureAndRecoveryExerciseIndependentDrivers": true
+      }
+    },
+    {
+      "name": "Island water measurements conserve supply and count exact wind shelter and source overlap",
+      "pass": true,
+      "details": {
+        "sameMarginalsDisjointAndOverlapping": true,
+        "seasonalInputIndependentOfReachability": true,
+        "validBoundsAndConservedAllocation": true
+      }
+    },
+    {
+      "name": "Immutable handoffs and fail-closed Phase 2",
+      "pass": true,
+      "details": {
+        "invalidRootRejected": true,
+        "invalidCoverageRejected": true,
+        "unresolvedReferenceRejected": true,
+        "legacyIslandBoundsAccepted": true,
+        "tamperedIslandOverlapBlocked": true,
+        "invalidExportBlocked": true,
+        "noPhase2AfterFailedPhase1": true,
+        "rejectedCandidateDiagnosticOnly": true
+      }
+    },
+    {
+      "name": "Macro recovery responds to local season without importing access or island shelter",
+      "pass": true,
+      "details": {
+        "reliefRegionId": "relief_001",
+        "seasonalFraction": 0.5454158542096598,
+        "persistenceAfterMovingLowSeasonInputOutOfShelter": [
+          0.314193,
+          0.142167
+        ],
+        "forgivenessAfterSeasonChange": [
+          0.220096,
+          0.127636
+        ],
+        "scarcityDragWithDrought": [
+          0.251549,
+          0.374708
+        ],
+        "pressureHeldFixed": true,
+        "accessRetentionAndIslandWindIndependent": true,
+        "legacyInputAccepted": true
+      }
+    },
+    {
+      "name": "Fixed-seed upstream interventions",
+      "pass": true,
+      "details": {
+        "seed": 42,
+        "fixedSubseeds": {
+          "macroGeographySeed": 363947094,
+          "pressureSeed": 4107865506,
+          "rhythmSeed": 306034812
+        },
+        "routeCarriers": {
+          "routeId": "macro_route_001",
+          "seaRegionIds": [
+            "sea_01"
+          ],
+          "reliefRegionIds": [
+            "relief_001",
+            "relief_002"
+          ],
+          "navigationWindows": [
+            0.729763,
+            0.464843
+          ]
+        },
+        "environmentalVolatility": {
+          "values": [
+            0.1,
+            0.9
+          ],
+          "changedStormCells": 21973,
+          "physicalControls": [
+            "platePressureField",
+            "coastJaggednessControlledLandWaterMaskField",
+            "seaLevelAppliedElevationField",
+            "temperatureColdLoadField",
+            "wetnessField"
+          ],
+          "seaRegionId": "sea_01",
+          "seaStormPressure": [
+            0.44126315689571427,
+            0.48550968426474994
+          ],
+          "stormBreakRisk": [
+            0.126827,
+            0.130371
+          ],
+          "stormCadence": [
+            0.171081,
+            0.1715
+          ]
+        },
+        "routeFragilityBias": {
+          "values": [
+            0.1,
+            0.9
+          ],
+          "supportedRoutes": 10,
+          "susceptibility": [
+            [
+              "macro_route_001",
+              0.47,
+              0.53
+            ],
+            [
+              "macro_route_002",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_003",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_004",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_005",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_006",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_007",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_008",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_009",
+              0.88,
+              1
+            ],
+            [
+              "macro_route_010",
+              0.88,
+              1
+            ]
+          ],
+          "phase2ControlsStable": true
+        },
+        "socialControls": [
+          {
+            "channel": "conflictPressure",
+            "phase1ControlsStable": true,
+            "phase2ReceivesSameInput": true
+          },
+          {
+            "channel": "collapseIntensity",
+            "phase1ControlsStable": true,
+            "phase2ReceivesSameInput": true
+          }
+        ],
+        "rainShadow": {
+          "namespace": "macro.climateEnvelope.rainShadow",
+          "fixedSeed": 1733297584,
+          "shadowedCells": [
+            0,
+            11058
+          ],
+          "mean": [
+            0,
+            0.081224
+          ]
+        },
+        "catchmentScale": {
+          "range": [
+            0.032,
+            0.42
+          ],
+          "riverBasinId": "basin_001",
+          "reliefRegionId": "relief_002",
+          "waterReliabilityInverse": [
+            0.517878,
+            0.04837
+          ],
+          "runoffSupport": [
+            0.076666,
+            0.163368
+          ],
+          "recoveryTempo": [
+            0.075656,
+            0.12403
+          ],
+          "foodClimateBandId": "climate_006",
+          "foodStress": [
+            0.185306,
+            0.066949
+          ],
+          "unchangedIndependentBands": 117,
+          "climateControlsStable": true
+        }
+      }
+    },
+    {
+      "name": "Recovery locality on seed 16908799",
+      "pass": true,
+      "details": {
+        "isolation": {
+          "zoneId": "iso_002",
+          "localId": "relief_004",
+          "unchangedPeer": "relief_002",
+          "stabilizationDrag": [
+            0.121204,
+            0.262836
+          ]
+        },
+        "transport": {
+          "routeId": "macro_route_001",
+          "reliefId": "relief_001",
+          "mobilitySupport": [
+            0.50901,
+            0.551269
+          ],
+          "regionsWithoutRouteBonus": [
+            "relief_004",
+            "relief_005",
+            "relief_006"
+          ]
+        },
+        "terrain": {
+          "reliefId": "relief_001",
+          "recoveryTempo": [
+            0.200134,
+            0.033924
+          ]
+        },
+        "climate": {
+          "climateBandId": "climate_002",
+          "supportWindow": [
+            0.748925,
+            0.760012
+          ]
+        }
+      }
+    }
+  ],
+  "cohorts": {
+    "mandatory": {
+      "total": 49,
+      "passed": 49,
+      "seeds": [
+        42,
+        137,
+        2026,
+        4194307,
+        271828183,
+        698377633,
+        1258291229,
+        1908874353,
+        2576980379,
+        3405691582,
+        4286578687,
+        73537,
+        16908799,
+        422095321,
+        894213317,
+        1536241709,
+        2269445513,
+        3071624507,
+        4011398309,
+        40681987,
+        359393571,
+        801384629,
+        1431655765,
+        2018958301,
+        2764796977,
+        3669891307,
+        4264079171,
+        64847321,
+        958614127,
+        2345998979,
+        3900041903,
+        3508323923,
+        2337086253,
+        2727244283,
+        2964753490,
+        4085637119,
+        2856344,
+        640306144,
+        1880886041,
+        3271942068,
+        792866484,
+        2220939230,
+        2546155002,
+        3840024598,
+        3019978005,
+        2402593754,
+        82211472,
+        3338251652,
+        1715244351
+      ],
+      "acceptedWith30ConnectedAtThreshold": [
+        49,
+        49,
+        45,
+        15
+      ],
+      "recovered": [],
+      "newlyRejected": []
+    },
+    "originalStress": {
+      "total": 64,
+      "passed": 62,
+      "seeds": [
+        2856344,
+        318092342,
+        560997137,
+        822318635,
+        1139020259,
+        1353719581,
+        1665754063,
+        1880886041,
+        2170157783,
+        2461506081,
+        2727244283,
+        2964753490,
+        3271942068,
+        3497266055,
+        3766715046,
+        4085637119,
+        76598953,
+        383299950,
+        640306144,
+        883547113,
+        1148112788,
+        1440166579,
+        1739745302,
+        1952721542,
+        2220939230,
+        2546155002,
+        2777760525,
+        3019978005,
+        3318570709,
+        3568089441,
+        3826957408,
+        4150290747,
+        180816365,
+        406479959,
+        733570811,
+        974163850,
+        1240171611,
+        1500333434,
+        1801620481,
+        2064513479,
+        2335575721,
+        2601869029,
+        2878819102,
+        3088870215,
+        3381507530,
+        3683713563,
+        3928839710,
+        4208830274,
+        206998703,
+        532213186,
+        792866484,
+        1054323503,
+        1342059918,
+        1545735428,
+        1863959942,
+        2094783996,
+        2402593754,
+        2675813935,
+        2917478163,
+        3206964149,
+        3422738236,
+        3740851705,
+        3991564847,
+        4286438917
+      ],
+      "acceptedWith30ConnectedAtThreshold": [
+        62,
+        62,
+        56,
+        22
+      ],
+      "recovered": [
+        1665754063,
+        2094783996,
+        2917478163,
+        3206964149
+      ],
+      "newlyRejected": []
+    },
+    "independentHoldout": {
+      "total": 64,
+      "passed": 61,
+      "seeds": [
+        4091667,
+        318513630,
+        549004743,
+        854949540,
+        1136811783,
+        1399232894,
+        1625188128,
+        1909771886,
+        2186152241,
+        2429982171,
+        2748250067,
+        2995168801,
+        3272015243,
+        3555165180,
+        3759569681,
+        4092365955,
+        82211472,
+        361873626,
+        624031623,
+        875777636,
+        1168653571,
+        1440108742,
+        1715244351,
+        1981263753,
+        2248663653,
+        2513252283,
+        2809128594,
+        3073967311,
+        3338251652,
+        3596127711,
+        3840024598,
+        4115911107,
+        158928527,
+        453639656,
+        684347148,
+        1001386142,
+        1217359681,
+        1541067307,
+        1809118051,
+        2033001457,
+        2327750670,
+        2552393115,
+        2869486218,
+        3104293446,
+        3418526133,
+        3663106187,
+        3928506518,
+        4176392891,
+        265082804,
+        470489295,
+        764294789,
+        1007421140,
+        1289932853,
+        1570073644,
+        1843480287,
+        2146574712,
+        2407305372,
+        2663581168,
+        2944939198,
+        3220623973,
+        3479992453,
+        3716439855,
+        4005014395,
+        4248553947
+      ],
+      "acceptedWith30ConnectedAtThreshold": [
+        61,
+        61,
+        59,
+        26
+      ],
+      "recovered": [
+        1289932853
+      ],
+      "newlyRejected": []
+    },
+    "edges": {
+      "total": 7,
+      "passed": 7,
+      "seeds": [
+        0,
+        1,
+        2,
+        2147483647,
+        2147483648,
+        4294967294,
+        4294967295
+      ],
+      "acceptedWith30ConnectedAtThreshold": [
+        7,
+        7,
+        7,
+        1
+      ],
+      "recovered": [],
+      "newlyRejected": []
+    },
+    "additional": {
+      "total": 11,
+      "passed": 6,
+      "seeds": [
+        4144686569,
+        2666689910,
+        2030830666,
+        1683167796,
+        1122193213,
+        3418526133,
+        3479992453,
+        180816365,
+        2461506081,
+        3928839710,
+        1054323503
+      ],
+      "acceptedWith30ConnectedAtThreshold": [
+        6,
+        6,
+        6,
+        3
+      ],
+      "recovered": [
+        2666689910,
+        2030830666
+      ],
+      "newlyRejected": []
+    },
+    "restoredRegression": {
+      "total": 2,
+      "passed": 2,
+      "seeds": [
+        1665754063,
+        2666689910
+      ],
+      "acceptedWith30ConnectedAtThreshold": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "recovered": [
+        1665754063,
+        2666689910
+      ],
+      "newlyRejected": []
+    }
+  },
+  "worlds": {
+    "42": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "ece13b235e7d0540d40a2214192e4fc6fd083feff5658c4809fbff98d13cdbdd",
+        "phase1": "8d4fe88b07104563425707036831f3bf8d859d4009d5f9a83413e08ac1248329",
+        "phase2": "295c753fb5c8b53dc0ca047cdfb1cb733d18deef5545bdb2ab74bbb4659e3a24"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.182249,
+      "samePhysicalSummary": true
+    },
+    "137": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "211c569e874d4b39ab53165234297ce8ba2ebd99e9a08b0b3487266146a11bb4",
+        "phase1": "aaa707107aaa84e6e9a7cafbb7f2a5a12b244103954ae69925cdb26c13b1ab59",
+        "phase2": "3b10773b30ba27f7fd4320adc79873c7fa755bd023b14d72a08ce1a061b0750c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.230642,
+      "samePhysicalSummary": true
+    },
+    "2026": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "bb16b6000e71ea627ceb5da92e6fb29d0b5662fedd0b96062b2065f771dd002d",
+        "phase1": "a3da0a0c405fd373f9748498548d8b97058a40f66f596d0c6d7697c09e8bc2b6",
+        "phase2": "e856828d1d1a4afca18085d68ec40f3d45ebbc6f0acd046d4b9654851b2c9491"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.221005,
+      "samePhysicalSummary": true
+    },
+    "4194307": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e7bf9472e53490692f9044146d7333e8334ea186be4210600fa89d5ef440ea61",
+        "phase1": "6eae6e781036296114787c7aef3c13c4905c0ca6e7c31e5ad873876b42bb16f0",
+        "phase2": "b61851370f563498557eba74caef11e2b967a489d2efde0ab6547cc55b21d262"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.208034,
+      "samePhysicalSummary": true
+    },
+    "271828183": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "ca49a93a7f5b80b958109b3115af4023d7ff697986de71e2454816687e0416b8",
+        "phase1": "dd307b1bc3ee8384dfe4cf6c8a985161192093e403af0490c1ef7cb005722b76",
+        "phase2": "43ee37b0fe21be10a4dd611c6c1fe16b52d6ef889fedd07274833be4a99bef41"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.22688,
+      "samePhysicalSummary": true
+    },
+    "698377633": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "0b4e76d37d4c2b27a67098da9aa601f98ea29a48c94ba757a081c36230879262",
+        "phase1": "d363062c9208a53b772774dfbc6d06a6fb2ec28cb96200b0c1baaeffef529727",
+        "phase2": "da3ab7adc0d87723848e2cdc2248646d216530eaf1f6df6a1065fa7454102dab"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.235427,
+      "samePhysicalSummary": true
+    },
+    "1258291229": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "94ae1cdf940781e971b2e8fc83fadd192b82a756277fe058e85bd84b99eb3eae",
+        "phase1": "1452bf29872d68ab3202b4d21930549d7e6b07aab6e878a4c0a5555b00bf2979",
+        "phase2": "cc27f5afad27d6a887566954b8778b222946847cd3a3619f261c133a660d6b1b"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.257632,
+      "samePhysicalSummary": true
+    },
+    "1908874353": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "fae71b638c7a9f1e92c6ad75c604a0df6da1f84ba616ffe24a4d9800321e6cc3",
+        "phase1": "ee0b175a936639dc78079954172b9a9184601f3e03b1a6a8fcc2bba620cd303b",
+        "phase2": "1a75cd493524cdc0a2af6859aa3415cb3cfcd31be1890f168970c6f9cff12b61"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.236608,
+      "samePhysicalSummary": true
+    },
+    "2576980379": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "f173e902ef4a23cf637dc825a7c7dc74630df4ab14d49df846a8db884c7df76c",
+        "phase1": "450f81bad79e63515f2b687d958ace863521cf5f02dc37dd6321b2bb60408855",
+        "phase2": "c75550b906f5eeeaf1f82c3974a75f2c1db7e7759bfa3d2131946434e4330eca"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.221662,
+      "samePhysicalSummary": true
+    },
+    "3405691582": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "eb90145c4b23d42423656d7d51a90d585cefd414f78a503e1dde20acac1e1ba8",
+        "phase1": "619d567a9e0aaafc7eb9044db4ed812dd05262449bf187cbfccb9f036c5a3fd1",
+        "phase2": "17c2a39d60733656d55ef86b82a6d8af72e3520e1e07b8be529960d02a890418"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.217647,
+      "samePhysicalSummary": true
+    },
+    "4286578687": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e589477ab0fedc8af772198cc59c18742c9ff87cb127448e2cc15bc7499e0013",
+        "phase1": "24112f9500d834526eff001919e86efb3f1c7037e3895788593eae502c7c0f31",
+        "phase2": "071abda10f468ca5068a1b2f9bd30765184b889b940315693ab326a0a5371076"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.202331,
+      "samePhysicalSummary": true
+    },
+    "73537": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "d2694cc7c46d2cd5482963feaee116003625a05b3f6178f3035b1a4a3ba6987a",
+        "phase1": "e251077e481dfcb3a23be895d937fcbc391e1301985dbad6c720f9da1c793920",
+        "phase2": "ceae3506e3069d7a6825e05734630ea4d5672c5505b66f8d8340622e5b2ffaef"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.213506,
+      "samePhysicalSummary": true
+    },
+    "16908799": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "8ac5eeb372c766880c6f48fb3408436c4141ffad064f31b3d9ac085e170bb341",
+        "phase1": "f32e7e6a27d544e8414186f40513c6ac920b737d6a867bc5f16425c2f47abd4c",
+        "phase2": "666ace913eb6cfe16120a1e5004cc500d4f8e6346015d8b7b89466910640289c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.193894,
+      "samePhysicalSummary": true
+    },
+    "422095321": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "2de7c1b91c28a446acc653e1c871f1407e3f576b2ab56b70423185c8e7ab4005",
+        "phase1": "34f6822ea35d228e1be233986fab0171bd9250302153df6ce12d41c4e1555e37",
+        "phase2": "78389d034653079195d2923a45794318a50c767d6f2e0ec2cd36dcda6640ea45"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.242154,
+      "samePhysicalSummary": true
+    },
+    "894213317": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "04c462d30eb0065fa4a56795e73182a2ddb324264f9afd4d2427bd2ee29214fc",
+        "phase1": "19d613bd07711a730563c3ba3d1df10c3e3a1beebe8ace709d07f33be95a7d17",
+        "phase2": "b73a9a7c0c959e73a3e26c8b2e7e71ce59e68c4cf1fc7617e2dc476501cc7f56"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.242819,
+      "samePhysicalSummary": true
+    },
+    "1536241709": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "d071e90448870b2167bba62890f133e904addc670b344cc344309bf83ed0014e",
+        "phase1": "bef31533722a80f06e5b5c0c9da9bb15764c4784161f80519f3e4242468f8b13",
+        "phase2": "14d920dad87419fcb8ef09abe21a63bd65d9457bc183983ee6bca411b60815ba"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.236221,
+      "samePhysicalSummary": true
+    },
+    "2269445513": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "4c8d415ef7247f28f81338ce281715d3da8e40b3b1e535ec4b7ecd909cc51ad1",
+        "phase1": "d4336ab2247247781ee3fb9b758351d4955ca8a73b2febef3600b6b424a2f452",
+        "phase2": "cf89ed212f652c4d62f090f78511c78c7472ba17df2ac8981b4c719c40d51e8c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.215181,
+      "samePhysicalSummary": true
+    },
+    "3071624507": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "6c9d09d0fe76c05da3c75a6edcd48369afe9dca60ca2892d204aa15737af06d3",
+        "phase1": "7bc7c8e7a9738f92ffc0a6cd984188073b0ee606bbcf7d0697cbd63798e9f930",
+        "phase2": "84c008482030542348e22ddf56a502f067b43887caec30b1d36370b84e9af416"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.269946,
+      "samePhysicalSummary": true
+    },
+    "4011398309": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "9d9d0d25b0c274cd9e11e1a308661e5ccc10b367e819ea412349f5c0c1ef861f",
+        "phase1": "0c998d756a36cda8804ccefd3b393ceea625779f6cea5fa5ea43b72df8a35467",
+        "phase2": "267170f22ac3a3ffd5d453ed156f582f8c0f57709a5c5728bd12456a170c4741"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.244058,
+      "samePhysicalSummary": true
+    },
+    "40681987": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "7162d87bb518205f71e38b2c360afee992b69e3076a67bc250ede71acd94b702",
+        "phase1": "82e3d917d0251eb081fba41a06fcde99d855e8e9b1da897a36e6b5eef1d6e412",
+        "phase2": "3a95ba234b6b87f3a795395a5a6391a552815a382ea4df550cff3d8e288f0288"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.250637,
+      "samePhysicalSummary": true
+    },
+    "359393571": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "aa20cf8172bc23b8e8469cbb2aed034542dbbe4e1c1af0f66f39bd94d5d3f0f4",
+        "phase1": "ec3fe0dec06af82b46c3dcb96d5c5d9e058ee1b355f7cc14472f9513d6c70b36",
+        "phase2": "1940232a8ec36a27ffd3095910e47b52c2725e0323c93f0b904e8d95dc3522a4"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.245582,
+      "samePhysicalSummary": true
+    },
+    "801384629": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e6b323dd63844e07df48cae09bcdd1e246059f82c448f4f3bd67a2be835908e2",
+        "phase1": "b2696dbbdd05feccbb21ae1efcc7b0d3eff7f365e8b3a04069cb03f58aec4449",
+        "phase2": "1dac523d6af066e4d1acfd57906e3e2e327333cf039b901428d153eaadb9db28"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.218877,
+      "samePhysicalSummary": true
+    },
+    "1431655765": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "fccfd20c965b4308839a7fcc0736711be317799a404febdaab1404d01c84ffc7",
+        "phase1": "984993a2fa99330be8c574e5e481f242a25447369829b10c40ac1123caa8d701",
+        "phase2": "41709d058c8d9584617a548a5d993806673f8aa4369a4234bb52a7fd5ea474b7"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.194964,
+      "samePhysicalSummary": true
+    },
+    "2018958301": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "9df925de5d1b4b17ece306b5a4c4aa759d39191f7e764af6045dbcf37ecd4c37",
+        "phase1": "4fec31b1bc3a4003a2b8941f4ded1c3d24c4831bde28ef26625995cc3ee19776",
+        "phase2": "fa37cf54863555da93261c5f4324be503811042cc527206b6c0e4ffeaca97a03"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.19286,
+      "samePhysicalSummary": true
+    },
+    "2764796977": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "6f27bed576a42dcc167f10d6b8167c76932d87318be984ee9be5b353b269ac1c",
+        "phase1": "0c00b4537e3a7ed947d9f5674ac9748f667b7f9c09dd21bdf794cd0c3423778f",
+        "phase2": "947dcc0b00015749ef884219c0cc085d5518b7ec6a120f879964e6b57db83dfd"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.261466,
+      "samePhysicalSummary": true
+    },
+    "3669891307": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "14f43b5adeb81bbc9a2fac5f9738c227b68298f72e7a3ee46ff47316039a41b0",
+        "phase1": "9beb41e7fd38de850512a1c4f84ddfb572374a3573e29bea6ea20849431524bf",
+        "phase2": "3f9bce1d062cf8ac8f064bc07f3e762f80d98628f85b637e6f8a0d421eeb89d4"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.214951,
+      "samePhysicalSummary": true
+    },
+    "4264079171": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "fd609d98ec2eef9b15e8fde52cb3c4a15148f3bcbe9e72aafe1795d9224fd526",
+        "phase1": "dbfa3293ab78ee3159bd78a6dfe5634d1c69696a93e63aaae31dab0cab705ab4",
+        "phase2": "ee1f8efbad8dfa0de490f5dcd9ea925ee8d9444b64f84bf74acb3685b4e761fe"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.263037,
+      "samePhysicalSummary": true
+    },
+    "64847321": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "27600c05107853fe169b9356b03544eec89412f9b0132f28a2d5d915f1aed127",
+        "phase1": "e076212c716123fdfe29795eb74f573d39c7b138f35b3aef18b843589a96d20d",
+        "phase2": "eaafaf75025c1b105b07d81057e39cd8a274aed0a64ff453942527acaee4df65"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.211987,
+      "samePhysicalSummary": true
+    },
+    "958614127": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "8e2a563acc7986d52acefff2906c46503889ffd31b83b19675831fe1a38526a0",
+        "phase1": "c35315f875ce2b75f1c8e2b29351aeb637ba234cb493e35e5c0061e6a58c7581",
+        "phase2": "f9e9bcb3a4c679119e8a877977ac457a907914c4256c2106caaa1404dc01c780"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.224954,
+      "samePhysicalSummary": true
+    },
+    "2345998979": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "325c4f62459d473dc43722c060b501eea2dbec1008467d5cbefd914ec740a9c3",
+        "phase1": "d6526cc24ec0f9e507cfe244bae59b693d3367c862ab2123c5579e374725bf88",
+        "phase2": "76331aa1ed411ee62e5f48cf4d00c3ec9d1721bf08f7dddbfc970066a7efa283"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.273647,
+      "samePhysicalSummary": true
+    },
+    "3900041903": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "6c48ff5380c9354551a27a60b2506fb58b74ab895021c61f7e6ef5be6b84016a",
+        "phase1": "d3596f52a0980ba517a59eccc8989d4af60cfa6bf373167acf2955393491ed82",
+        "phase2": "fdaec07381453ee2b13a05650d26ccbfdcbec10d8fdefeb492be40576bfe3a42"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.233407,
+      "samePhysicalSummary": true
+    },
+    "3508323923": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "2a33b9d695bd113f691e1fa7a0b20c0cd9287ab8a1f3befe703f914e33a099fa",
+        "phase1": "da4ae35a0249ae64d952434f613db4febe4a8cd9e40e9da196ea8439760b32d5",
+        "phase2": "f7c17460abb94b50fd9e89b9f86d4c02bb6408f7004c90518643773f51571d82"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.204402,
+      "samePhysicalSummary": true
+    },
+    "2337086253": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "cc036afbe46a49343abc4102e1f8a10f3da9de2e95e33b9f598fbb111886e797",
+        "phase1": "911ca1bed1beb685f28a0d65d56a6d1904ff6710e9988542c8aab83f7f5ca55c",
+        "phase2": "37b04cee17a5a54d041bc1fee2d679cb47de7015b988ad47f9911eecf18dfba4"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.213882,
+      "samePhysicalSummary": true
+    },
+    "2727244283": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "dc65f6278521fc68655fa15b0cb85935f1b6045ed50bda9d7bf5549f8e92cc80",
+        "phase1": "c475048484f4e1d10d9f647442ba8e58440b21a2ce06df84e23064f6f9d103e7",
+        "phase2": "63cb19552e8bec4131e40e8ae56a0ca3659efd6bc61ef4edd6e77ac4e7bd4157"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.215787,
+      "samePhysicalSummary": true
+    },
+    "2964753490": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "a2829f82f4d21d076e18acce64d0c09eb2a8264bdf52a6c64e38a529cde29f13",
+        "phase1": "2301fcc3e771bb7198bf6896095e07d2b66a4827d767175c868eb1998a5071e5",
+        "phase2": "f82b2dcfc5bfa966a5ba8a81f152c394eff0071b3268215ad09cb58f72d079fc"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.195746,
+      "samePhysicalSummary": true
+    },
+    "4085637119": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "17cf92177562755ea7548aaea476a6c48621012787238ab5638dfae7ffc7cd0e",
+        "phase1": "b0b87a70dd7663e315ec8776c4c410127f76ad023fe274c06412c7996153d999",
+        "phase2": "b2b694a8f388a34aedffd4d989e62ab2271a8997b032c03aa685cc6ecbf6c306"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.202803,
+      "samePhysicalSummary": true
+    },
+    "2856344": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "06e05dae373c90a8d138e2944fd962f3f2a0a616f0b8d28d74e7e63206dd3af7",
+        "phase1": "9cad309968152e5c6a9cd74e63e086329eb632f658ed2b19831b091731e2d03d",
+        "phase2": "cca1c5eaf486b75a8525cf7a560d43e522800c0a7476f021b12a26507ee673ae"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.225091,
+      "samePhysicalSummary": true
+    },
+    "640306144": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "01ab1208b1e85fc796bc7a7159bd0ebe6b3b76e60991ab43a29b8f840355cbd2",
+        "phase1": "9d80a840bc4756ed4334e816e64dccbef0fcd4793cdc2e80071cd5605d97ea49",
+        "phase2": "861876996010838cef2a6d5ec974476bbd8deae02fd0888712e4401a4cc42f1a"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.204806,
+      "samePhysicalSummary": true
+    },
+    "1880886041": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "7baf5fa4344d3217ee0926d996b8d20494b1ec60f35a2a4607af9db907c81a17",
+        "phase1": "38c30bf280adf61e1e08dbd8f6b236051f17e69a6f1147c64c46523d84f1c1a7",
+        "phase2": "cd2c174edc2d2d9360e5f44d9e1686394607268061a017929400dc5edbf2f71c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.236977,
+      "samePhysicalSummary": true
+    },
+    "3271942068": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "ccf77c12b7b99a67d82159fc253c657ab4280792d1996a7123f992d696984191",
+        "phase1": "398b037f7ff5420b1aa01807a10d142046fab74d1a2133ae6df38bb4b8b23af5",
+        "phase2": "0fc43e61acce2a0c669e517f3c726622ff2b2dbc6f194c170430f4ea2ed8ef19"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.261303,
+      "samePhysicalSummary": true
+    },
+    "792866484": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "84ea256f981143f2c00ab2656f6709ad384f7ea4afd795eb4a1b99d25d7695ce",
+        "phase1": "b70a73a03fbb445621d8e4d8b2b9e554276291f636aa75cab9aa64dccfbee760",
+        "phase2": "2021c4a19fd8670565926d14bf35fa4aef8140b7eb5a994d4a2e88ffde3ba293"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.201415,
+      "samePhysicalSummary": true
+    },
+    "2220939230": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "b2b6eca9393126bf843f4aa991f3077a92f0ae002f1d4940ca33b597410f7b38",
+        "phase1": "dfadb7a57b9994e62584eb6c429487326eb268232d450f391790021d3d5130ab",
+        "phase2": "1c65422230fda55bf83a36f431cf0d69db1ef126c0960463c9f8dac74f6972cd"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.228154,
+      "samePhysicalSummary": true
+    },
+    "2546155002": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "84be20dd0bcc9d63e438bb3024cade3f7fe20bf5458255f34abe1fc8914a2c16",
+        "phase1": "804c3f918868243e906680fc4643d7d1643661edc19f64d60fb0a93bf7076b6f",
+        "phase2": "714e9fc62133c6ae96882855cb25465ac489b78e630200057d255777f07999e8"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.187137,
+      "samePhysicalSummary": true
+    },
+    "3840024598": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "78264c8e9b538e533615b72b8fb7e9fdd1fc015117f2a6c77a5ff88cc7ddace4",
+        "phase1": "1dab85332e4d2a1414dfd920624172ff4e10a45a162cca5c2f1f3025e1ed7a09",
+        "phase2": "c4c10ce425279f883a0fa83b49827c0fc2d0829c54832fad04138e5fd5edd39c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.220828,
+      "samePhysicalSummary": true
+    },
+    "3019978005": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "0e54f7c0a97e50272a6133de1a08bd37cf7ce2ebe236b86bda525e0d80c804a2",
+        "phase1": "2bdc35059ebf9522f5a69f0f98acd17dec7eb93f1888eecce703ee48f156d155",
+        "phase2": "b59df34f9224e59586bb22e51a8e63421e5d4e771a968fb602d974e4a6298835"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.231726,
+      "samePhysicalSummary": true
+    },
+    "2402593754": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "d7f9a0bcb50be1dd0e93f0674241b2f193feb0cf0e4a86f7ed84833fd4b20d69",
+        "phase1": "bb3def1c107e561efab322a26166dd4c31d5a10db0d353cd519e6d8259124ea9",
+        "phase2": "ebf3b95b61979b57d789473f563d3ec9ac64f5ca70e74434a0f56d2577b49bd6"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.218862,
+      "samePhysicalSummary": true
+    },
+    "82211472": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "46c634700084ee0bebd4817c2fca7341922e3ef602bfbb30639c03644b2b4146",
+        "phase1": "c0232ef3ba72435221e988fb98cb10941c81fe3840a257cef02bfa21c1e18bbd",
+        "phase2": "2b3e1f15626378108df769694d425df2c489dc394e08cf60e8194569173851eb"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.23416,
+      "samePhysicalSummary": true
+    },
+    "3338251652": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "6ed4dffbeb71e9673fea969bd9b239b8eba4e19336a27ce95e3404626f553ec1",
+        "phase1": "1069cc4e0af79ef85b30416a99cda96921e184e86e28b3c1522037b484873f26",
+        "phase2": "29b1effdf3be32416a6fdc69911eb02a19b55e12a4ae5100cfd42d206be947af"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.211052,
+      "samePhysicalSummary": true
+    },
+    "1715244351": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "70d208d41a9a7fe4f98d9ab8211703c9b3b4485c44dec72ea597b79d23c106aa",
+        "phase1": "2d82857d96d8b19e7dd45096bc0c4c7f7ddc29bd9c505ff2000a32e574b3e96f",
+        "phase2": "0ef6cd2e8486ba1df98de0bc18c87f186d2f294ef637f1017c0660d9762bfcaf"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.20885,
+      "samePhysicalSummary": true
+    },
+    "318092342": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "dc79cf542aa3543240a73336d5d74bac39ba698265eb5498b7102fd0b001257a",
+        "phase1": "213e616f6a999ff77d59738528795043c3fd8df0f459ce5ca492331625ec395a",
+        "phase2": "9da2794145118c4ffe074422e34d2bc07488d659ab0cccb8606f862844f75a96"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.222455,
+      "samePhysicalSummary": true
+    },
+    "560997137": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "53fe4395ef248502047a77520adc78cb340571b58d15e2c51a16fe85277be4c3",
+        "phase1": "ceb13a1779c5cdca41a2fd05adbd1fe20a6ed98886aebe469b7961baa35edc2b",
+        "phase2": "61569cba45d04d0c79a384ce51c9bbf223189a2cc7adc6098f856710a19e5d21"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.202226,
+      "samePhysicalSummary": true
+    },
+    "822318635": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "2caa28a5dcef17eabeaaebf5bc5996e8f16dcd1a4a74a0f4fafb40441ed1c90d",
+        "phase1": "d0d306e2565730c215943d2c2ecc26c5841ccc27c0ead64f519b53e82dba6bab",
+        "phase2": "37951c61fa7c868fd922eeef41881fc9f0cccb9954b08865614b09dd3b00a6dc"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.232419,
+      "samePhysicalSummary": true
+    },
+    "1139020259": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "113ba2384250922aa85a03823e57ee1b3ec4ed750f57c4eeabd60853569dc526",
+        "phase1": "c099c9dc10ae5b9cf68ffe38d63151e2bba022a5c25e20d1c6dbcf4b2f6c0980",
+        "phase2": "e1898967fdfa95ca6498c2d41c679427b02b1debb15aa2151091851db89bb706"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.245189,
+      "samePhysicalSummary": true
+    },
+    "1353719581": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e6134d32355f8a34176847bf3a9762bd1c1291879f19067f6a1a135aa4e9345b",
+        "phase1": "a27d03816f790cdc1ad74c40155e5158c37fdf69007d5c35323a3579cd955b5e",
+        "phase2": "d8246e31461a9f62b3b8eaa6b9a2b5a7abbbf1d1019e3f5755bd6cd3fea6b273"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.213788,
+      "samePhysicalSummary": true
+    },
+    "1665754063": {
+      "pass": true,
+      "baselinePass": false,
+      "hashes": {
+        "phase0": "803695ba7b49e2c6347a501e6eb0b2ca635caddc7285a03864e96249b20d4fce",
+        "phase1": "e465169b9a3aae74110c677549333dbf4ceb73285d7a9a52148390a9a82506ea",
+        "phase2": "021efec133e9cfbbf6ede11af0bd22b85ef5fcfe6926f26354cb2e3934ae3cb9"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.244566
+    },
+    "2170157783": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e6a492e4df7d9be8017d7747a5e4a0f8d2c7df4286038828035494ad3f03b4de",
+        "phase1": "ab3b11636c89e080ca30921363a96b785701cd3b21cdca94b512768da32ad227",
+        "phase2": "8bc3857b9b5634e75abbed0c34e421f9c94e641690d02ef6704af54de8fd9d3e"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.248024,
+      "samePhysicalSummary": true
+    },
+    "2461506081": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "5af852ff5b383ed6befe4a59655dd63767c662c71958ac32d5c6c5628193a30e",
+        "phase1": "45cbf27423a7a01a1f2fa39aec242f6db20a7c9f3e601cd0a0f26b96e0f74ff4",
+        "phase2": "fccf72afe379db8fb42815b269144e4f20080fd79f9665473bb294859f60e441"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.262175,
+      "samePhysicalSummary": true
+    },
+    "3497266055": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "d4cce11d7f8e57c425f7209fbb7df6c7937e21c1b1a5abdf4569ce1683fe7525",
+        "phase1": "aec10df05834b970643166a162de121118af51a9994e95667732c723ba72da94",
+        "phase2": "22a9aee67093b118b47ba34cea4856e57474d28ec6ebf06cdbc755e8a87e5031"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.22437,
+      "samePhysicalSummary": true
+    },
+    "3766715046": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "9ca1fa292652ed2144dcbecddea6891ba30a492c7fb806b10c5b6d29fd83e744",
+        "phase1": "687b50316a032223f28495b321de6c6cc7a0f8ada64f876dc98515fbac9172f0",
+        "phase2": "4549e46a994fc1bfb6973ede6206ca08b4148072e5aa54f9fc1096892ac8b4db"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.25082,
+      "samePhysicalSummary": true
+    },
+    "76598953": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e3a5bc052f89112ce214b721565ad6edf8cc8c3eba2572f9746aa8f20b674617",
+        "phase1": "96e1b2dbb5358bf5337e2fc08b5457da88341384ed5399b931b9fbba9b842bdc",
+        "phase2": "f7de074139693846e9cb1eee246e7c4275bc271ac3ca44098cda29e53cf24f08"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.21494,
+      "samePhysicalSummary": true
+    },
+    "383299950": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "54a94362d1fe36c6346b842aedb4fee7fe45e876aecff3264ffb3d6b309af0ee",
+        "phase1": "4e22f7a0a39e7f5b7e745b5b04c5b2c21340d23eef851f9afa55f93f32d6da71",
+        "phase2": "1afa761295faa405dc1a79f77c4970970c0873b39215009794130d93eecc19b3"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.205058,
+      "samePhysicalSummary": true
+    },
+    "883547113": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "bcb1a5e2720506900573ee10f6e8a910e80a98bdcf9d2807c59f6f278dca6a5a",
+        "phase1": "3273965dee15191b66659199d974b1b916f73a7553bd3508c5f89bc5bcc96f14",
+        "phase2": "b500631b54d037fe4d146736ebea0c749550e7049323779ce2dc24bb5cb1a598"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.214678,
+      "samePhysicalSummary": true
+    },
+    "1148112788": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "b896d5c275a8fe8f165fa5e2278347261704d412e86bf17aa8c0daf11627a7be",
+        "phase1": "5e8fc69fb273192793c1f9a0b8635932c4dffe2fbb05903aa49112c3bdcd0720",
+        "phase2": "80a462edc6dcd3b7820befd6dbb2a89a49735417238cb7b56f473ddad43ceda1"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.231678,
+      "samePhysicalSummary": true
+    },
+    "1440166579": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "03419c13965f85dc4e9d7ac09620803c7f66d9f36497e10bd352a053651d6067",
+        "phase1": "2f54f1c525fa7a5cb87e60573226124dfcd3a5da84f7f95b6bec97d2df36c574",
+        "phase2": "d4788107038c4e6d01a30ed020c92f82bec0e4264cc8cad7fb3e98117d18882c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.234347,
+      "samePhysicalSummary": true
+    },
+    "1739745302": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "732aa6a3a7087c8abd630b9794473235f5813ee273a8e39ead4eb15cd2c6b419",
+        "phase1": "d4601097fbaa9784e93ec79f64568899be35444748f411ea36bdd6ced7353dcf",
+        "phase2": "783a58b0b896a736a72d7397d5d6a5a2f962d702409602eff6d83cb90e4568af"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.2228,
+      "samePhysicalSummary": true
+    },
+    "1952721542": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "22c661f457201e172b84987258671b63adb822ef09c405fd2caf12024498cf53",
+        "phase1": "807f4537b6fdf3713ae4e6c55f6598a3d5bfb3074cb7232a32b41126f47db711",
+        "phase2": "5e5f5dafd960aed0b90b59f55e8cf868a2c3a60306b3af846d3169e5fbced848"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.24346,
+      "samePhysicalSummary": true
+    },
+    "2777760525": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "03604efa5192e9f6fa0b01d9ab1cb0f15f2b8d59bb260cd8d7c821a9df643405",
+        "phase1": "f26005c21f99e673bee3989a30862af207e9c70f97e28fb31a03eccb8c4f3c06",
+        "phase2": "11b8c349454ecf8b27819d69e1deff6638595bd737029328c52226922df06114"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.22427,
+      "samePhysicalSummary": true
+    },
+    "3318570709": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "855e5ddfc4d124276fa07bb81c37fc2f82f04dc2d922861c41559ae40da1e51a",
+        "phase1": "be0f91fb436d4c0c278e4a84c852c69481ec6109326a549bc074a685aa188374",
+        "phase2": "a189b4e257490393872e1772c99b1929821d41b639b784deb6381b584b4646c3"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.238242,
+      "samePhysicalSummary": true
+    },
+    "3568089441": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "58ac0c4ef315c6f142c02999a5b0967e1918d29f5ea999da0cf576107270016a",
+        "phase1": "08b7591e4e538c360a5955720b6fb4dc5587451a7550e258c2b767ab14a41f55",
+        "phase2": "e2ea9c96f202045fad621148bc6ea7f1aa68dcc8360fb71869e3420876fcb973"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.219517,
+      "samePhysicalSummary": true
+    },
+    "3826957408": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "5c6c7926eb0e80de2a1af8a60b0ae7c7c469031f9a7c41abc22ee9f22f09d64e",
+        "phase1": "e5129e65414feea021aad816b4c640b681d38f555cd0d364b20f95164c2354af",
+        "phase2": "92c39d4c54990840cc3b7f83a39fb9d8ac0f4a125eb1feade4a745121b38ca31"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.19255,
+      "samePhysicalSummary": true
+    },
+    "4150290747": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "09ba111517151bf35292903b497a0cb0db42fbe32bd7031b935ba8052f4b986f",
+        "phase1": "a2ae22837fd1309344ed894b77e828dece06c2d775b047f16e1a46beda2ee3a0",
+        "phase2": "d556b4d910d8ec57a87b7fbb5e34b7ea38233499dc35e024de0802ca75ac7554"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.259414,
+      "samePhysicalSummary": true
+    },
+    "180816365": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "344e4122e68022445cd944efe6bf9162d7f4f9eca7d0799f18caffd518541ffe",
+        "phase1": "1a43f64fafb534eba05824cd29242fd0d2d6fd0c5c0bb8005f95b2e2e476acd0",
+        "phase2": "88ca73513af66c4a16297a6a489b1a75ed3299ae289b8af62be112f5d61d4625"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.237557,
+      "samePhysicalSummary": true
+    },
+    "406479959": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "f6c6b609de2c48115bc3010b5e14d215f5a3c43ac0bd840097c49f3c347d16ed",
+        "phase1": "9be3a5bffa2d385cc432c48dc253d8dc1cf839ded57f5bda6df9550fa911ee11",
+        "phase2": "daa9bfeeb9488489b7ce832fea621454176409ec3d53326b2d5b9180ab295930"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.197743,
+      "samePhysicalSummary": true
+    },
+    "733570811": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "2f99fd973120f348958198cfa50626dd44b5f7c853564844a00c0020762d30bc",
+        "phase1": "0065b3cd977317bd694cc38aba070944d03035ed97c6c8c64c06ef73560c1fed",
+        "phase2": "382a2ff46de743d2e20e68a073c17ec0b8d3f1b9c76dc653e77561b5df393404"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.248002,
+      "samePhysicalSummary": true
+    },
+    "974163850": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "58e3a12fb768c8a553ec03e945be0aeb85861b5ba9587a6b0e6b18fb1d3a79e5",
+        "phase1": "bc58e896d14aec185da4d65aa201060b98ee0f07dfd316054cd6da13e0c0c121",
+        "phase2": "a1fc1fb1da43a8d424ef1d64d6d24a79048660a397869156b3e3bdef009ad3b5"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.20136,
+      "samePhysicalSummary": true
+    },
+    "1240171611": {
+      "pass": false,
+      "baselinePass": false,
+      "phase": "phase2",
+      "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+      "reportedGates": [
+        {
+          "checkId": "phase2.design.tension_vs_relief",
+          "status": "rebalance_required",
+          "details": [
+            "pressureMean=0.201",
+            "recoveryMean=0.288",
+            "tensionReliefDelta=-0.088"
+          ]
+        }
+      ],
+      "phase1Errors": [],
+      "repeatedFailureMatches": true
+    },
+    "1500333434": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "ff5ac6346996bdb0ba8661df73ef6c61ec62ee8ce44232392e9dec0a11b7fffe",
+        "phase1": "91fccc6051521b7d30ce3f6c77e4ff630f87cb14fc60170c3faebbf89b99a425",
+        "phase2": "10122518c2978646c24bd650f74c80da9c05158d5f4df64746579877db22d9d0"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.212057,
+      "samePhysicalSummary": true
+    },
+    "1801620481": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "6d8198845cebfc5d5bfb3f5d2b4200eff10a692c929f79513f5703b5ecbb0c49",
+        "phase1": "33e29b502b0f6c009dd55214b75ed95d36380d58cb2d178636f5945e802da585",
+        "phase2": "feb45990ac14e0e60e5b7c15a60b22cbbdbbf1a35c0add991eb3d55a6f502ce0"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.241147,
+      "samePhysicalSummary": true
+    },
+    "2064513479": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "a2b3fb0a3ad92e7058ba5a210910c88590021cf40a62527be553be2bd3a7ea3e",
+        "phase1": "6a971d32f429e3e313a8fae1653c2a64431874ef07cac7cf4016f4de345d6ab6",
+        "phase2": "db32d0bd7cbd12443635f2ef5855b06db6c3e04ed8f5e24a2bd92eb8b2652174"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.213013,
+      "samePhysicalSummary": true
+    },
+    "2335575721": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "efb9182bed5a7d47ecf08f097ef2e97a9c3b42f0108e5e59cc20482df24e0d04",
+        "phase1": "d4c5c1e24c8d859c8f164127db602f5f3070ce4f1e8899c616d1ce68bb3441f6",
+        "phase2": "118ca817c7c504c5638090516a77208c34b53fdfb88c0d0a6e33d77590de65cc"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.217206,
+      "samePhysicalSummary": true
+    },
+    "2601869029": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "19881a19cb56a9d73ffec5ee7aba35cd26ca28b9d86fc1e2224a6304f0da4db7",
+        "phase1": "83ad625f4840b1b2e2d6ff324b9ee66ccc4471a7c45a67158a15000f87a0d321",
+        "phase2": "ac1008007275ffdef94e17e4e63ed3022c08596e16843ee53fe04ff8d5b52be7"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.248632,
+      "samePhysicalSummary": true
+    },
+    "2878819102": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "edd3210473a2afe3249fdc8fe604d371adae602470149bcf2e9c1ad7000a43aa",
+        "phase1": "76757040226da51d888ae3610a4545e5874f8c44afa1e325054a1a7562ca4de6",
+        "phase2": "f3a560e20322c1db4969f5fe2479b36de5ac9a3801e5566063c24cc1b3ba259d"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.219442,
+      "samePhysicalSummary": true
+    },
+    "3088870215": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "174bad89ab788d3201e84709962422fd41581dd55ca13e1463b0ac5351df7da4",
+        "phase1": "741112af438d35e8e0c96c68395293189637b72ec017b54e0e673283c97ae039",
+        "phase2": "1556ddbd451cbd59d31f250ee7b132a3168a9b54e99d45b9e98f9c3f26464120"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.222907,
+      "samePhysicalSummary": true
+    },
+    "3381507530": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "b659d2ddbb64b88f50649c51a2447ec601d736c43ad06cf4b91c16d5eb1c2e41",
+        "phase1": "737f40ca10cf4875cdb117b842ae3492059462ddeda3f9e06f56065e255aa89e",
+        "phase2": "e50fbce4029017e54fad77cd022187ea1dcccbd87b18afd827039fdbfc58d029"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.211802,
+      "samePhysicalSummary": true
+    },
+    "3683713563": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "060e800f75e7cec5e75e57b76a8fa555610b6e72e3199e9e78490d803f692bd1",
+        "phase1": "8a281379cd6f34974bc89acbf2b1b2771eb38878fe634b55762c9af74a05b026",
+        "phase2": "310f1fc9953e603ff7647211ec04f808c251435842763b4695a18569a10ca592"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.244288,
+      "samePhysicalSummary": true
+    },
+    "3928839710": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e5954d5b2ab144f103de34a06a712f7061e9f07b050867cba0fb01989717f8ec",
+        "phase1": "ab04db12f250e76fa13bdf60d301d8cf22cf27460de7235246a9abf98c3b03a0",
+        "phase2": "fb37f375a6e4da27e3bff697a17f5f976cb7f23045a0e821aa044fe14d603a7c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.268625,
+      "samePhysicalSummary": true
+    },
+    "4208830274": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "0d07bae1629b1e51d5f5ab2ec9d37c90b8e7a4f390601023dfd3716e13314bf6",
+        "phase1": "638c3142350cdd64db88159dbd9d30dba9bce01337f14931aafbe04d27c1a330",
+        "phase2": "d222c45a3a37a941c6c82afdc5dd94169f070d09ce0c0414500ad9d1863dc55b"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.266562,
+      "samePhysicalSummary": true
+    },
+    "206998703": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "a41caa66c3018fc652b45132858626aaaa51fcfe3413c9a0875d60b1d48436fd",
+        "phase1": "858db3e10b7ee237c84b0d6b5d74e9d9d0c7c55ccdc877db67ef119ffa6ffbd9",
+        "phase2": "98cab812d23002b452b5a9dc6044d52011cbc6ec62004680f8c2ef94ec993030"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.220061,
+      "samePhysicalSummary": true
+    },
+    "532213186": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "817b4c318aff1e71bd3717f5f53694a8fb103dbf1b8fe2b123d27c36061cecac",
+        "phase1": "f17e63c6149676df028dcdb450ef5258f7a212642344ef076814a2f384d222c5",
+        "phase2": "fb33e31f4e8e2b8019443bce265b7384230ce8bc161ba4cba84366afa65191d1"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.236014,
+      "samePhysicalSummary": true
+    },
+    "1054323503": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "54ec07328857d0822666c7687d9b9bffda8b7a352901e244de9e3bf232c437df",
+        "phase1": "3e2946daf5334f39b7592f48a5da27338fd56b59d32a0f5f20c73dd36090a2e7",
+        "phase2": "f1709ec504d4c4b9d26c207ee164c8533d510b8bbe083cd8b41af9d55a4e3c90"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.278654,
+      "samePhysicalSummary": true
+    },
+    "1342059918": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "540ff7db0bdeb272f4c4b251cceac85eb9b8de2e8d713b21ab5551d6599cf9b4",
+        "phase1": "2580f8c8fde6a12c4e8ba236b0f5f9b539760d7afbacf3631029df2cee910934",
+        "phase2": "f9faf6a2576222cef34477a3696fa087523ab5880ee411d0dc5d5f3dbe5961cb"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.20011,
+      "samePhysicalSummary": true
+    },
+    "1545735428": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "4ae824851005a446128c959dc583cff1a56b0a3ecab064a4948cc725e000138d",
+        "phase1": "664cd0c294253de208708844a04002bb50f694547b6f2f8047c94f1a1db9fba1",
+        "phase2": "716d343a72b72b15686b10fadd9cbcc8e476e8521306afb2c05bc8af97ffc4f4"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.254082,
+      "samePhysicalSummary": true
+    },
+    "1863959942": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "ca9e1548c80f15bf538c9edaa7a7fcda72ec1566c184fded61c74a4df513af0a",
+        "phase1": "602ac6731c64dbfe2cff1a5456688288f0db68a1b04aa4835baf4b6c3d1c0875",
+        "phase2": "e2f563a4072bd123348716329f30c924808134aeb0952bcb952432d1370b29c6"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.189717,
+      "samePhysicalSummary": true
+    },
+    "2094783996": {
+      "pass": true,
+      "baselinePass": false,
+      "hashes": {
+        "phase0": "4db83255d7035bb22eb93a22e89f8e1157f46870ec516578fd2628e3cf6a9a9e",
+        "phase1": "f4033f026d0acd2917a6c0957abda431678f17f694efcb12baced69dbf70cd89",
+        "phase2": "c97212e7c2d25d27eb1acbc49da10a7f33ca1edfcffc2050e66415456c1c2058"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.287007
+    },
+    "2675813935": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "47d5e24af9834489ce85f9d420a465c263f835161ceaa64baa04bebbde26c042",
+        "phase1": "6a1bdcece923ccd2029f4623e7d6b34fe0df18766554a1412c31f76c0e8c90c3",
+        "phase2": "ed3c90931f16e0901be7cb57d01284abe2bab3279272b652ec968f2bc5223910"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.233512,
+      "samePhysicalSummary": true
+    },
+    "2917478163": {
+      "pass": true,
+      "baselinePass": false,
+      "hashes": {
+        "phase0": "07243a401010da686b143db5e047618a82b85d5962e705a1a51624149080bb26",
+        "phase1": "32ccea5769a804013b85d3e06f83f3887905a2b58f03a4088b4b6af426eb79c8",
+        "phase2": "e1aaec7d031f6d9d275d4bc9eb50c93881304111f833f8510daa9ba04102c365"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.283614
+    },
+    "3206964149": {
+      "pass": true,
+      "baselinePass": false,
+      "hashes": {
+        "phase0": "9462f3d6631a7965d85e473bf9f284d46556138d1c1d4303c8fcdb9b63eace23",
+        "phase1": "a71e02179ed4c71f58024a20379b5bfaf73b443f81da6bb2dc600eaf0c95b266",
+        "phase2": "7d2bb2a5d4f61248dfe831b65af2a6d6eb85ee5849000720b7303c0665ae7609"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.277007
+    },
+    "3422738236": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "965bb1f73288157cfa9e51d1bcd194a8e5c183bba0c6a72c128a970ae0e71025",
+        "phase1": "1994129062f3f3742119f28d5714caa25b3ecf8c5aa9844b85db862cea9b6f2b",
+        "phase2": "0e8e84ea4d31660570dea4bccff4b1aa1cc1e03073dd83638d355b055c59bac9"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.239848,
+      "samePhysicalSummary": true
+    },
+    "3740851705": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "c2e42b8d23fbd316c954e68e18ed4d7fbb6ff92e632c31d501fe217275de1b88",
+        "phase1": "8418159151611b58ad0e5541031df397bf042c6273fd5d97ea2d633b3e1854ad",
+        "phase2": "0a9b701428a8ffa47e6944fd9de871756457069d4ee9fec6836e7c54d4812ab5"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.192075,
+      "samePhysicalSummary": true
+    },
+    "3991564847": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "565aae142009a9769e20b50e5ac9357c02655c99fe1329b682dd6e89dbb09ad6",
+        "phase1": "fc409704284705ffca30aee15818d931e36d200315d70b68c467a30a90fb9c22",
+        "phase2": "1ebc9c61064b5eb9b8c371fd485f5d96b317605c383f8bba4c37e72fcb43aa3c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.234528,
+      "samePhysicalSummary": true
+    },
+    "4286438917": {
+      "pass": false,
+      "baselinePass": false,
+      "phase": "phase2",
+      "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+      "reportedGates": [
+        {
+          "checkId": "phase2.design.tension_vs_relief",
+          "status": "rebalance_required",
+          "details": [
+            "pressureMean=0.218",
+            "recoveryMean=0.306",
+            "tensionReliefDelta=-0.088"
+          ]
+        }
+      ],
+      "phase1Errors": [],
+      "repeatedFailureMatches": true
+    },
+    "4091667": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "f73313b2e752d2d11e9ae74b07c406c62ef6b6cfcb75a3811a06c4e8ebcee05d",
+        "phase1": "1ff6f7a795d1e68dffbd1cc958c878c4a689d4f4892df36970f763a536e44796",
+        "phase2": "2d30b740ebfb982d9b773bd79765f728482d9c0475397707df67bf05930fbcae"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.246149,
+      "samePhysicalSummary": true
+    },
+    "318513630": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "acf7f49de76c86266cce57a523a405f0697bc646644100f0e49ef5c74961c3fb",
+        "phase1": "6c060d45283925cc30f4984005049faad1da5b869c6f654cd558af338d7e3086",
+        "phase2": "9e9322e9513d19486afb901bd4ab0b473c5921899b9dbb84fc168555e3783216"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.200179,
+      "samePhysicalSummary": true
+    },
+    "549004743": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "cbe829a790e5949df0e01c3496e62518babf356a463b87d21277f296dd00c515",
+        "phase1": "adac2f3831cde48642922ddb351bd8e1826afcbe2b16da816e4be54da68ad0d4",
+        "phase2": "08b69734061d06c46178caa0f79dd89459f4cc6f43ead94e46e5d4e977921a2f"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.215707,
+      "samePhysicalSummary": true
+    },
+    "854949540": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "f3c074a8d98777ba028bce10b6612c10756f5516acbc16fc497f2d487272e061",
+        "phase1": "5fcdea075e5c898caaa2ff1a5467b0d345c7d1cf4106cd5836a32ce2c97b30dd",
+        "phase2": "32e8dc573bf8dd0d0da9de8f996abc1cae767b25947a076bf39e978ad4280f9d"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.24742,
+      "samePhysicalSummary": true
+    },
+    "1136811783": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "191f0a012845f9111a5aeaf240a7cc202a3f4546b3c8ac7b701c4183d419ec15",
+        "phase1": "af0b9378b401e06ce97d082225cbcc89571c7f5a65915b17eca4dbc7387573c1",
+        "phase2": "476f6a7fbac2ad7a502e61a4502c0a6661aebbf66cbce63055c0041848265eac"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.207049,
+      "samePhysicalSummary": true
+    },
+    "1399232894": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "0fdec729bdb71ec641b666e32cbf6624621b682d0f3b3e5428f4db48ec3778d6",
+        "phase1": "a9eef6bfae8aeb89ed149e247e51e9861f6f86dbcc0cc4707399e88d96591a29",
+        "phase2": "99d400ae06f5cd0539a3f0ea089f77a2d4e35e90c88a70ab890bd97249d8450d"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.227425,
+      "samePhysicalSummary": true
+    },
+    "1625188128": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "f62acfc97e3388e384ca8d71c7f29ad2ee8445394766fc9709c24ed4bafffdb2",
+        "phase1": "48d0247830f471d8ab5f91855b4e4e80e6089f1be51ff02050fb8c09909dac2d",
+        "phase2": "26138474da8c09b81df2553355a0a3a7446a3e1335f92c455325fea009d0db1e"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.216456,
+      "samePhysicalSummary": true
+    },
+    "1909771886": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "85043f59428a2e03ed7f361b7d1ba130980a46480b09577662dc26d8c4260abd",
+        "phase1": "70964e23a819d366380996f3d7d9736b0c78153a6fc320ec3aff9f8dd7bbdbd6",
+        "phase2": "33bee16c3fb79553c589ca7336aa8d75a486b50cb9ab9a89a1184648e0efa699"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.213272,
+      "samePhysicalSummary": true
+    },
+    "2186152241": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "dc52b2dd4e2de2d62a078062596377dd4ad98314ed6c92832721e7ed7854e4ef",
+        "phase1": "434f64e8b4573648765b7073e4bc5260846e978087b715173cf7b09a75ecc091",
+        "phase2": "78ba0a4180c738925188438f27310dbaed2108e46b023ce0141d783969093c07"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.21076,
+      "samePhysicalSummary": true
+    },
+    "2429982171": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "d0d6ed1b830b86cbd75f13ee2bcd5088b6ba9b8bbe41643f77b47ae560b1ebb4",
+        "phase1": "6ae3dc1214cf4167cfbeb1574e6f3d5e9b48b02bbf56df96df711e7d369458b8",
+        "phase2": "190ea6787a4c274efd4e2bcc390d8ba734298063224eaa08bea5119f3d754cb5"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.202071,
+      "samePhysicalSummary": true
+    },
+    "2748250067": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "c4ca664a07f359f155d24fb5d6716c171c640c7751a54fd8ca39df514c29359e",
+        "phase1": "7a95cf127c12bbd3c2d072c9c09a8865c2c209759e39395f384a8f85ff93c1ba",
+        "phase2": "97307a5ba4ebccabe82a52bc625f85577911aa0a0da40c8b2a9cf231b27c4aa7"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.231259,
+      "samePhysicalSummary": true
+    },
+    "2995168801": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "bdac62de640107c33ced189bc56a74a5990706ce5cda075570ec626e2cdb57ea",
+        "phase1": "e06ed7858ac83e176491e4ea43bb1d72398b97b7cbaea030230472700c2f17cb",
+        "phase2": "3ddfd5f203e33f0389094a1d070cce077745755341fd2e8cf543c00fee854267"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.230769,
+      "samePhysicalSummary": true
+    },
+    "3272015243": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "6e365c62af6d397a8d282a67d06bcc9bcd8e0864cceb2c31b092f0af3dff24ab",
+        "phase1": "78e3c0d7d81fc37b030a56d4cfc1ab696eb6a6fff83ae0fa0698a6b8bbca8af9",
+        "phase2": "48bf84934eb4700da2ba80476f95cc0fe0172f7660044079fb3a8bbf10636de1"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.21741,
+      "samePhysicalSummary": true
+    },
+    "3555165180": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "f8cdc430105309639e2762d98a966844d5022e70416f1c1f96265dfb00b9577f",
+        "phase1": "a97c37d9440c3789d466a5d29d5a7c7b24c695ed35d80805e7cbf0c0033eaaf9",
+        "phase2": "75f3dc9d4b8b2edaaaae4c0472ebbeaf2b3e0512e4945484d7bd986bd40e97ec"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.24986,
+      "samePhysicalSummary": true
+    },
+    "3759569681": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "a6767a8541052f144f24c31ae8a16201b9b9acecc24827c31316d114d6a1e06b",
+        "phase1": "2c927970230b9cec4cf9aa33a6ebe647b5e191240d22c44540cd0954286e50a6",
+        "phase2": "9958a7e073dd99328a94f162c51b6ac4c76d9d180ee6aa73d915101de264f476"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.245321,
+      "samePhysicalSummary": true
+    },
+    "4092365955": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "89781eae54432de3ea15afd0e92847d7febc8cdb19ab16af555b925cb3b41f7d",
+        "phase1": "a4afbe23196b2597766e8ae5d69a7a68fe22227187aabaa7190b50bf886ab1e9",
+        "phase2": "99b4ae21d346609fcfdfc7939a9c40994c36d9a07829f4f29f9dfbda692af394"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.229861,
+      "samePhysicalSummary": true
+    },
+    "361873626": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "752e0f9b88479c77b48f074040bceb62bde1e3ef46883dcc4cc05b3291bbee0e",
+        "phase1": "b765ba2f8ca7b509c6f050d97ca131a38fd9191ab6b7c3995087fe3568b5fb1f",
+        "phase2": "e57967508060fe3d24c49571f63c70abf674c14e36d62116da0da955f8d19094"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.291741,
+      "samePhysicalSummary": true
+    },
+    "624031623": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "1bfd3a532cb7191bc8d25296cc3c2a23e2ac015de48339651259e63b8fc7bb6a",
+        "phase1": "5e87309d71d254d55cabd0010b2b7c87370a2224bcd8d64244982f871f17813b",
+        "phase2": "b6c93554c52932539418c56a188fc3bc42590d940f666878db502b6fb81731a5"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.203423,
+      "samePhysicalSummary": true
+    },
+    "875777636": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "ca235c729c5bca5d892eb358fdd1c4bfd8af822cd62b5ca701387eeba043e931",
+        "phase1": "b83db4a173edc6a0e2f26d553bf5d92d67ee1245ffd771b25b5c284760c5135d",
+        "phase2": "e9f6c22b34d5dd3fff5af38790ef01561cbb428287cad9e8621834b58f87afa6"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.19251,
+      "samePhysicalSummary": true
+    },
+    "1168653571": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "95216cf6ec55c5b5039062ca7cd190cbd91eca66b6630b9242f491eef1298a8d",
+        "phase1": "0535d79eb87de9debece834aca13448bbea7df0324d4e53c2d6eccfcfe4754e0",
+        "phase2": "ce598060d892312923a23b2d3fc61c21a6f29220fd7aae19a503aeea9b7881c5"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.206924,
+      "samePhysicalSummary": true
+    },
+    "1440108742": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "1c1bc950d7bc966da5fd8aeb73679f29d5c16d5a331f7c3e03024131e2774d0f",
+        "phase1": "782c1cb893f9fae43b90462a9104dcb697198613142e787e6edca2c57526754a",
+        "phase2": "8782cb353806c488892bbc0607de0ee2cf8fe1f4b654f9c7b03335dc9e27290b"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.218945,
+      "samePhysicalSummary": true
+    },
+    "1981263753": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "d8bf03ee2de87dc94f0018170d587941acc0c9122e8b1c42e4205d4ace2643b0",
+        "phase1": "23ec0600bec99bcb2d9944b6c5ce9a3790092f7a492dcb902b3c4254a2d831a5",
+        "phase2": "8866970a8cd89e20c84382c699bffb0a3ee36c2e8deaccaf5b4cca71ba28cdab"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.207594,
+      "samePhysicalSummary": true
+    },
+    "2248663653": {
+      "pass": false,
+      "baselinePass": false,
+      "phase": "phase2",
+      "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+      "reportedGates": [
+        {
+          "checkId": "phase2.gameplay.relief_relevance",
+          "status": "fail",
+          "details": [
+            "signalCount=2",
+            "recoveryProfile=0.178",
+            "reliefPersistence=0.285"
+          ]
+        }
+      ],
+      "phase1Errors": [],
+      "repeatedFailureMatches": true
+    },
+    "2513252283": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "5c235b3b814784bc683fdcca032833f42e12eae54e95294a196315674a592dda",
+        "phase1": "51d93da14185578e5eb46f68774b2c5da84bca31b4873e915b6a692a74722fee",
+        "phase2": "8b52ae4d2db8d1e73a5e278e7d9cc6de774e2c6dee72a759409bcb5919359357"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.260896,
+      "samePhysicalSummary": true
+    },
+    "2809128594": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "fafdd28f4d8ad66a1f9e080329cb864531fa8c8fab3dcf500eb8866de87f2363",
+        "phase1": "9885ad654818d212e5acb3fd8daaa07f3913ed97f10070322a8340a17f8349dc",
+        "phase2": "5bb60e79aa19f1eef5135a07b71c2d3134c135e3c64199368588062f6bef18af"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.217771,
+      "samePhysicalSummary": true
+    },
+    "3073967311": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "48f36c5eea3808f1f4aa7651734e8d7cc5f0f4b191e35c460641fc2c75ce6c42",
+        "phase1": "4880ad2087055a31d644d444b7dc798dbcd81f6067c89b3f230a8975f4e23a52",
+        "phase2": "85eaede210ddb70bea8b26fdc664ba6269eed2c24462a67bd27c66781585049a"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.209319,
+      "samePhysicalSummary": true
+    },
+    "3596127711": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "9a5bbc9c62a85c67789bb99ce2acbb6a347e69d817a33998e126f72f0d2f120e",
+        "phase1": "f9552ccad6ee1db2ac74ecf175b9065eb4acc8f7dfdb501572f83815e8ecda51",
+        "phase2": "9278f4de74216f10c7fcaae67cc99758c3b04ad4ee5665899e739873d520f736"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.231762,
+      "samePhysicalSummary": true
+    },
+    "4115911107": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "b0e143ec3b4f191123e5b4567dcf81699273fabcf3d63f9bb4c38232dcf105b5",
+        "phase1": "8683210a93749056f1eaf9d031e33c5fd304789248d35698809b0640d7fb1e91",
+        "phase2": "952af742f18432fe828b490b499a6a170c28935005fa84c1e4716d82b1117ce8"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.207637,
+      "samePhysicalSummary": true
+    },
+    "158928527": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "b18ba1a69049a2cfb88769810c5b0f9ed096eb0655ea423a4bee97e25d15cd85",
+        "phase1": "e06fdcfe358e750f7bf4cbeb6f4d6eb5f28fe8293d2ae4af116ddd915f59cd64",
+        "phase2": "b2f2daf473939cee60a1bde4eda495d0661331af42e07bf3ba8b20cb41c08e6f"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.232806,
+      "samePhysicalSummary": true
+    },
+    "453639656": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "5aa6d635517c890f729f19c8e138d59e1221f951aaf2df9beb867002fccba633",
+        "phase1": "e8a3b82f769dec5027c6f1b9279cdeb9f6fcb0846b42e2b10e6c427819b45b0e",
+        "phase2": "82d3bec48c32c177f95f8870a32d0e7537a97e7fe946029501f09f910991a977"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.264511,
+      "samePhysicalSummary": true
+    },
+    "684347148": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "71d5b745b88b7df2b3a0da8c34f5d10381096edc115b3fe73b9666567166f691",
+        "phase1": "cf5bb2e7e0b8d9835e3fac3c08fdbfe3885c23f0a82a24a06158ce1ade764a49",
+        "phase2": "e1033f37a31448084fe56dd2af94438336be20a81c999131644f6f04bb58dad6"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.211936,
+      "samePhysicalSummary": true
+    },
+    "1001386142": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "0443b6d17c6f693c8d5ac3148350db210b6e4e1ba8e69a10e469b93bb4c2d84f",
+        "phase1": "d7666e72b3c6867fe65b3a5494bd5d70bd5ab9e30d01cad5fdcb56b9a94b146e",
+        "phase2": "256993852867cc3c80180594f16f7fc8c9e6a929d4c10cbc5be94024fba59dca"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.203322,
+      "samePhysicalSummary": true
+    },
+    "1217359681": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e729dbcff4d23ce1a0f0acbb347176b917d166fb0b7891b4dbe79f85ab93ec47",
+        "phase1": "4c87fe1502c83663fdc28b7b068e11fdfbd15c55c42c079f76b53265bc6fa01b",
+        "phase2": "bebbfc60236ca22e80fbdbf9d6b27e2f71face0800172ca09ccf158ced58f5df"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.215345,
+      "samePhysicalSummary": true
+    },
+    "1541067307": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "97ca459f840a62fde7d234aa5ef503ae059b6e106cbb6094bf78ab1c77e860dc",
+        "phase1": "cca73193c0c85e630e89afde76f53f1dbd7e610e9c588be3e73c8ba19491a80d",
+        "phase2": "df981f5e6978ecebcfe02fdac7bce2345762cf7c468d78465fdffc7799925355"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.213423,
+      "samePhysicalSummary": true
+    },
+    "1809118051": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "94736a18fa53371eedd3fd62827df8d93f10aa3caa1e9f8778fb3b4bd615a548",
+        "phase1": "eec0c2a578f61be3348b51c0e6f7a5011c53f50f1f1dfd5ad949bddb8cc3784d",
+        "phase2": "52be1a2272136caaee918b5829990282d069d8d1524c6929c68ff0b6f7d3c678"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.263186,
+      "samePhysicalSummary": true
+    },
+    "2033001457": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "0a21d8aef1b3681e46646c6f9e7f5a54bbb4a0066e155a94ea60cb290b4906a2",
+        "phase1": "e50e0260d5a0b2953c3e915b433e08df72184d6ae8fe22f6abf6668368546808",
+        "phase2": "78e62905555569bfc0bec2e6bd769da40ac2e7fdb96e1100dd2d8f92079ae6cf"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.276351,
+      "samePhysicalSummary": true
+    },
+    "2327750670": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "463c93237e339bb104918f90c935ca96ae3423f34d2f414477c27d91cb47fa9f",
+        "phase1": "4502fde4fbf11e2be9bd9736c29bfd4a0dc767250c55db84db60a43f8dc501fc",
+        "phase2": "bcbb37454d82bdf6f437c7bb9cc01daa608a06bf2c6de5b3d47d4d4e9a09f0fc"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.2203,
+      "samePhysicalSummary": true
+    },
+    "2552393115": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "6706414cd9324b882234286746b287756fb8f31e12ba1667dd45f7287d7e1c34",
+        "phase1": "b3f59b6ad7a69158dbc3ef3db5ebf12d41cbb6cb3ac0feb97d0586b0fc34df9d",
+        "phase2": "361c4ec1a04a6ed056182071b5a4bfa0a3a6fbcacb3c6f0f81956a35f935bbb1"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.215158,
+      "samePhysicalSummary": true
+    },
+    "2869486218": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "6c5b80b1fdee0f86600f641f14e818fb7079ce127c4f575a7371bf6571e5369c",
+        "phase1": "5de6b52a6cd105ad49824e47f4902d9f20ec7bdcfa49720a60b4ee856223477b",
+        "phase2": "b08c9baced3317a762e1f5cd7b2f03b0f58685a61e6409133cae88f191629840"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.275134,
+      "samePhysicalSummary": true
+    },
+    "3104293446": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "e9a5f690465838203a3e2f6997f4014b17baeb443ff1130d9b71c053f2400392",
+        "phase1": "4ce0f89f2892c129573cf67e96a9f1302cae21b0d396793870a18af1fbc71033",
+        "phase2": "8bb9b8e698c784fcb0d80ef4a46f0bfc3af91fe3c2d771fbfa12488cae063520"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.228278,
+      "samePhysicalSummary": true
+    },
+    "3418526133": {
+      "pass": false,
+      "baselinePass": false,
+      "phase": "phase1",
+      "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+      "reportedGates": [],
+      "phase1Errors": [],
+      "repeatedFailureMatches": true
+    },
+    "3663106187": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "2fe696234aa0ab1e0e0060ef55bfd74e5e20c9bbdde20fdaa53bd9e8826771ef",
+        "phase1": "904f9c93170e157c3b31d7eebfaad964bdeef25cefccbbc194a9a3f34e0b9e67",
+        "phase2": "f4bbc58a83665431a8dca423e3359e13032b162e2e787be4c72276981a2bc5c2"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.207049,
+      "samePhysicalSummary": true
+    },
+    "3928506518": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "245ce4d91334fa91ea75ffd036bc3a7d6726068931ae36f08470266ce9d0ae92",
+        "phase1": "32efa8e8ce303510cd7992e417b37c647af1c040a2c88f30253a229199768901",
+        "phase2": "fcd2807f1762ee4aae265012d670f19ec978625d890fb0464572ee8592bdb850"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.225106,
+      "samePhysicalSummary": true
+    },
+    "4176392891": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "49f348ee7325b6d2672cdf508edb4c2af960516e662f550c6bfa85cde426d4b4",
+        "phase1": "3299cc889c495ae7fd318b3b5b44a651a3ef5aea72d85c84ecb7b8bde1ac9916",
+        "phase2": "52bbe451ac7b50f4a0a020e15f1d41c4ca75afad06331cca8b045d4da988c924"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.201825,
+      "samePhysicalSummary": true
+    },
+    "265082804": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "ca83187672fdc8b850fd106036a22023e9fb1e45997ac5fa87189b47fe33baa0",
+        "phase1": "31ce7ebb4607f8c1edeaa1e551f3f5d76e0b848bfe5304b416ea116fe69275b7",
+        "phase2": "472a49455920c99a02ea97e23f1f653de74811cceb2c746c2f4cacaa6f721d12"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.219749,
+      "samePhysicalSummary": true
+    },
+    "470489295": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "77c9cbc3fdf4ed3dfc3614779777ef8bd09b1a489590dacda9fde4f1fcd7738e",
+        "phase1": "ce371d89a8e04c72fe1c1544bc14ba9b6f35734b8d210570a70d946ba8f55ce4",
+        "phase2": "e842db68774494ece7719e70ec32c442869e3e1a24891c4da692f206c2ccabb3"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.223019,
+      "samePhysicalSummary": true
+    },
+    "764294789": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "191d4752f9c09431bd2a3226351a194b5c5d7c0aac81f9310a9337fb8c9c1cd0",
+        "phase1": "044cf6c32cb84259444ecd8314ade51b702a5992625b1c7db76895fb56d7b579",
+        "phase2": "dd5571668202bad68af27185396eb1e4b8c35e2627fb2cf67973b19f27d0630a"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.197668,
+      "samePhysicalSummary": true
+    },
+    "1007421140": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "4c772b974e5a02fe79d26fe35d45ea8b60910240cb2849b5b9c6772963ea02b1",
+        "phase1": "1254669cd1a074258ab23670821bb426ed1cf2787a81739b07a385bd95fa91eb",
+        "phase2": "aafab437c39f2652a1fb75b1084797c759d05879f4b307044b98505eaa7dc04f"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.238049,
+      "samePhysicalSummary": true
+    },
+    "1289932853": {
+      "pass": true,
+      "baselinePass": false,
+      "hashes": {
+        "phase0": "6e87220a504fdf3d1f7bda84c874614e63ac76d7477d49032f47a8d2fefda49d",
+        "phase1": "2fa0509999e5b775ff0cd9b00dad2c977489ba30421535b6f73466ac4bee644a",
+        "phase2": "f1f16ea221388da23d551f725e1833aaa03ec1acccca73952ef52256780d1ccf"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.292586
+    },
+    "1570073644": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "5d122b0c871a571bf69e0ecae7db7796b6d7d304c61f5abf747fd538542498ad",
+        "phase1": "1265d243d470b233dbde596c0b68b7f8b8b7d51a6656ffdcf7e7085cc3613d33",
+        "phase2": "43f75b8df5a2c5b9e15e6831c836d2005afd579bb73ca6f8cf4f311f78719048"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.263393,
+      "samePhysicalSummary": true
+    },
+    "1843480287": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "54f7529a2ad89d7725186ed9955c23ff0ccb7bd9cb7631fce47b9558f469f80f",
+        "phase1": "c6ec6df95036f0dc0954e41b2dff891d0e6ae3039c93f2914c4a96b24fa5435f",
+        "phase2": "a43dbb366675e73bd790c774a46deab881c1ef424da6c14326575eb805a8c792"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.224021,
+      "samePhysicalSummary": true
+    },
+    "2146574712": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "ec52c2fa56530aee2c0bb030da2f96e3961c30753b144b27a62cd7a610bf7649",
+        "phase1": "9f40b5d55a960f8bcb08a8628213a0f18927c98681f9394b44a6c0d1154cc953",
+        "phase2": "12576427b45872609302851d428350f76189a3bed4885f1c0c155bceca234b15"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.227509,
+      "samePhysicalSummary": true
+    },
+    "2407305372": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "abd3798dfe97fee674100346f95f0c6cadeae2839648ad8a012a9ee241825d41",
+        "phase1": "f87a2fea343cd448a4a1bffd867dfe03fe243de4fd839f5e2cc4574a2668f735",
+        "phase2": "14465ced6d6f64e8b6f24d43e77017e7ff83efa19979406c914552960de81929"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.195626,
+      "samePhysicalSummary": true
+    },
+    "2663581168": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "10001db38cec0cc3481476020c4e6f22b7063d01aae6ab2f62c88f2544cfc8f7",
+        "phase1": "b43117ae7432e420b8c6d3735b3b7c68c47e9fa6d4e3074b176803ca72d06329",
+        "phase2": "6b33e1848f21d943e83e0d586837ed02718d9c1abe5c4dff19f92a38ce7fc8a2"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.22021,
+      "samePhysicalSummary": true
+    },
+    "2944939198": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "650b7c9ec7a0fd6027570651e016f5671a30f83fefc482b2f75567ff078fbbaa",
+        "phase1": "3d92bc8a6267b999e0c0ef8438d4abbba217097bd1343cc07f9cb54463cc32de",
+        "phase2": "1b9bac1c5ae39e947d38873e64095e707106fd710403ba2d46ca72c24a940e7d"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.233133,
+      "samePhysicalSummary": true
+    },
+    "3220623973": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "7a4bae06a97c352b1f51dcaf3b84e9f7a3426175f3c3caa506634d3719ab9c7e",
+        "phase1": "22d6a159f11f47e5b9b0264befb6c88e9f1bf280394331556c51f54a4fdfc345",
+        "phase2": "ca2851dba449e082afbbd51020345380a7f5df72ed8bcba830285aebff423555"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.217656,
+      "samePhysicalSummary": true
+    },
+    "3479992453": {
+      "pass": false,
+      "baselinePass": false,
+      "phase": "phase1",
+      "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+      "reportedGates": [],
+      "phase1Errors": [],
+      "repeatedFailureMatches": true
+    },
+    "3716439855": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "697c65bb415fbd8e352766035910a4e4eb3c65054a278f602b4d300efe71ea73",
+        "phase1": "76bf22c6bf528a8dac8f906af97983331c3f4fc8c65c09bbc5e218873c6c603f",
+        "phase2": "69fe48ebc9d0cf904ca4c7bf28d018b584529f85f78100644967ac121a00e9e0"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.197436,
+      "samePhysicalSummary": true
+    },
+    "4005014395": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "288619480101acbc6dbfef90f7ba5d9ab9569574de27998b294766fac1ccfb3f",
+        "phase1": "8099b99f772b327549138b0c6db8924a1e63bd1cef6907c1af2b8e4f3e20cadd",
+        "phase2": "5478b6739b1a628dda0d0827307861890c1e6838503c8de2d8fb594f42da19ed"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.253111,
+      "samePhysicalSummary": true
+    },
+    "4248553947": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "4e834dcfb4500ffad7219f544923c4dfa629c709aebe8bf5281d8942eecb66fa",
+        "phase1": "f4ec76a76c18d87ef0ec2913b73f63e88f256ff1448aed1959a0c47f48b864dd",
+        "phase2": "5355f3c628b56347768d91977d6cff565423346c76ab205986ec2c06af6ae870"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.26297,
+      "samePhysicalSummary": true
+    },
+    "0": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "3883bf20e27bf1d7402f9b01967adb86a0d8e925a1750d4e971c86e1e3265d9b",
+        "phase1": "edeb5e0eb7d53486ec154c83a9b0258b05517ddd7892625f48b860739d8be89e",
+        "phase2": "576e7f4c29d4d8efc76786b3c376611cd45864f68c22072db629d6a8340e2d56"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.213146,
+      "samePhysicalSummary": true
+    },
+    "1": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "5cc1e3c72f62f0826bc5686db377a4fe7631cacb3395809988b70b5f54a83be9",
+        "phase1": "abfcbdfce5e2b7d0e975f36192e2a5b552189b823b277c6bee78c22c32dcdfe0",
+        "phase2": "53e214dac30880c28ed674232906622145b0fde80544d4ec1abaf8a967472997"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.218912,
+      "samePhysicalSummary": true
+    },
+    "2": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "510cc512ba25998cc09d02aeac7fcc272b307e3db07bb9616912dbc1a8065b83",
+        "phase1": "730c3a12b03ebd538ff60208825627e14bf9554c0964747293c9d027a05efabb",
+        "phase2": "e584683513a5fa71849441931eee8b19c7501642034b2153bc53ec5ad4d64fbf"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.215254,
+      "samePhysicalSummary": true
+    },
+    "2147483647": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "9a4f5b60d2d8c587c7ea8dc3785ea603711f30d4955b10c4ffcb3d1d72afa3b1",
+        "phase1": "5ebcace611eda346ab5b7c5dcd98074893ede9a43ef8a1691f52966e9998e376",
+        "phase2": "9862c104b7f48e70170355f2877cbb7bed34172552fab3481ce1cc8f8381dd99"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.207696,
+      "samePhysicalSummary": true
+    },
+    "2147483648": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "2ae5908659afef539d388ec80fdd2d3d532e8c24ad2f229c31ad6469857c8ca6",
+        "phase1": "6b7d3bd415603a3841094e12d9c6dad57d9e431f36d266a2ecc012818ed71a3c",
+        "phase2": "90abaa9bd050c0b007b22d5fec8332a53a97b3a81442396d773bd0fb000e909c"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.241884,
+      "samePhysicalSummary": true
+    },
+    "4294967294": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "8fe4d2452dcf3d62114ce1de3a3ffd3060d10389780cbe29d7a1030a83d1d97d",
+        "phase1": "10d4b1a98980585f1cba9c12a4aea4ffba804ff0de5aed2e269e97bda2ec1cd4",
+        "phase2": "5c54d9d05a2c1569a21d0c20fdc2f5e2e166f4870eddc190f75e06d62d3588af"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.264936,
+      "samePhysicalSummary": true
+    },
+    "4294967295": {
+      "pass": true,
+      "baselinePass": true,
+      "hashes": {
+        "phase0": "fbf939d119d06bce7ad7b2d88b7de0815bf232979c34a3fda639949b1e5963cd",
+        "phase1": "e15f1f7ddf96388fb27a87c96c1f3807f3cbc476daa36fa5a0c237a4b3a3ae6b",
+        "phase2": "d2bd8565216fd2f345c136e4a4e70509890238ad5d9179bacefec4e502e015c4"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.270301,
+      "samePhysicalSummary": true
+    },
+    "4144686569": {
+      "pass": false,
+      "baselinePass": false,
+      "phase": "phase2",
+      "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+      "reportedGates": [
+        {
+          "checkId": "phase2.design.tension_vs_relief",
+          "status": "rebalance_required",
+          "details": [
+            "pressureMean=0.209",
+            "recoveryMean=0.373",
+            "tensionReliefDelta=-0.164"
+          ]
+        }
+      ],
+      "phase1Errors": [],
+      "repeatedFailureMatches": true
+    },
+    "2666689910": {
+      "pass": true,
+      "baselinePass": false,
+      "hashes": {
+        "phase0": "dabd3a5f2cfb9f936cde5a0ea442b1add6e572b4cb590c7f363f9e90ae614c53",
+        "phase1": "766160b626ef2d4d050e4336b48a43e0eb367f42fc2ca79fb9b384db24973650",
+        "phase2": "b671a61936d4afd38853f092df46a1367eea63a2e6b602acf4b69c0757cde241"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.300467
+    },
+    "2030830666": {
+      "pass": true,
+      "baselinePass": false,
+      "hashes": {
+        "phase0": "fd5960d88aed25f7b0729aa2a43cea1b13e0221c6fba641b9432de1bc3dbe90a",
+        "phase1": "17645766ee3562f776d988f99fa0e06e12083e66025b88d7b63054ca45325d8e",
+        "phase2": "3365e74eca2bd1ac8ca770b38f8ca6188515ebe09b39e1038eba17d4f71db118"
+      },
+      "determinism": {
+        "phase0": true,
+        "phase1": true,
+        "phase2": true
+      },
+      "recovery": 0.273518
+    },
+    "1683167796": {
+      "pass": false,
+      "baselinePass": false,
+      "phase": "phase2",
+      "message": "[worldgen/foundation] phase2: Phase 2 export blocked by validation.",
+      "reportedGates": [
+        {
+          "checkId": "phase2.design.tension_vs_relief",
+          "status": "rebalance_required",
+          "details": [
+            "pressureMean=0.203",
+            "recoveryMean=0.311",
+            "tensionReliefDelta=-0.107"
+          ]
+        }
+      ],
+      "phase1Errors": [],
+      "repeatedFailureMatches": true
+    },
+    "1122193213": {
+      "pass": false,
+      "baselinePass": false,
+      "phase": "phase1",
+      "message": "[worldgen/foundation] phase1: [macroGeographyPackage] \"continents\" must contain at least 2 item(s) for a semantically complete package.",
+      "reportedGates": [],
+      "phase1Errors": [],
+      "repeatedFailureMatches": true
+    }
+  },
+  "unique": {
+    "total": 173,
+    "passed": 165,
+    "recovered": [
+      1665754063,
+      2094783996,
+      2917478163,
+      3206964149,
+      1289932853,
+      2666689910,
+      2030830666
+    ],
+    "newlyRejected": [],
+    "previousExportsWithIdenticalPhysicalSummaries": 158
+  },
+  "physicalControls": [
+    {
+      "seed": 137,
+      "islands": 56,
+      "withSources": 30,
+      "short": {
+        "islandId": "regional_island_1323_775",
+        "landCells": 138,
+        "delivery": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 138,
+          "distance": {
+            "p50": 0.25,
+            "p90": 0.375,
+            "max": 0.75
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.024661,
+            "max": 0.056333
+          },
+          "unshieldedDistance": {
+            "p50": 0,
+            "p90": 0.375,
+            "max": 0.5
+          }
+        }
+      },
+      "long": {
+        "islandId": "regional_island_1232_872",
+        "landCells": 2909,
+        "delivery": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 2909,
+          "distance": {
+            "p50": 0.75,
+            "p90": 2.25,
+            "max": 3.25
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.000295,
+            "max": 0.06929
+          },
+          "unshieldedDistance": {
+            "p50": 0.125,
+            "p90": 1.25,
+            "max": 3
+          }
+        }
+      },
+      "revision": "a3df0d21ecbad979b1253611ab93621dbd6b0157"
+    },
+    {
+      "seed": 180816365,
+      "islands": 97,
+      "withSources": 74,
+      "short": {
+        "islandId": "regional_island_269_721",
+        "landCells": 297,
+        "delivery": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 297,
+          "distance": {
+            "p50": 0.25,
+            "p90": 0.375,
+            "max": 0.875
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.019141,
+            "max": 0.051228
+          },
+          "unshieldedDistance": {
+            "p50": 0,
+            "p90": 0.375,
+            "max": 0.625
+          }
+        }
+      },
+      "long": {
+        "islandId": "regional_island_296_808",
+        "landCells": 13322,
+        "delivery": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 13322,
+          "distance": {
+            "p50": 0.875,
+            "p90": 3.25,
+            "max": 4.75
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0,
+            "max": 0.080937
+          },
+          "unshieldedDistance": {
+            "p50": 0,
+            "p90": 2,
+            "max": 4.625
+          }
+        }
+      },
+      "revision": "a3df0d21ecbad979b1253611ab93621dbd6b0157"
+    },
+    {
+      "seed": 16908799,
+      "islands": 86,
+      "withSources": 50,
+      "short": {
+        "islandId": "regional_island_289_597",
+        "landCells": 100,
+        "delivery": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 100,
+          "distance": {
+            "p50": 0.25,
+            "p90": 0.375,
+            "max": 0.625
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.020062,
+            "max": 0.038689
+          },
+          "unshieldedDistance": {
+            "p50": 0,
+            "p90": 0.375,
+            "max": 0.625
+          }
+        }
+      },
+      "long": {
+        "islandId": "regional_island_304_664",
+        "landCells": 5870,
+        "delivery": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 5870,
+          "distance": {
+            "p50": 0.75,
+            "p90": 2.875,
+            "max": 4.625
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.000428,
+            "max": 0.087598
+          },
+          "unshieldedDistance": {
+            "p50": 0,
+            "p90": 1.375,
+            "max": 4.125
+          }
+        }
+      },
+      "revision": "a3df0d21ecbad979b1253611ab93621dbd6b0157"
+    },
+    {
+      "seed": 2546155002,
+      "islands": 63,
+      "withSources": 43,
+      "short": {
+        "islandId": "regional_island_1467_713",
+        "landCells": 46,
+        "delivery": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 46,
+          "distance": {
+            "p50": 0.25,
+            "p90": 0.375,
+            "max": 0.625
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 0.045519,
+            "max": 0.05874
+          },
+          "unshieldedDistance": {
+            "p50": 0.125,
+            "p90": 0.375,
+            "max": 0.5
+          }
+        }
+      },
+      "long": {
+        "islandId": "regional_island_1272_632",
+        "landCells": 4349,
+        "delivery": {
+          "method": "shortest_dry_land_then_minimum_ascent",
+          "reachableLandCells": 4349,
+          "distance": {
+            "p50": 0.5,
+            "p90": 2.5,
+            "max": 3.75
+          },
+          "ascent": {
+            "p50": 0,
+            "p90": 4.6e-05,
+            "max": 0.09085
+          },
+          "unshieldedDistance": {
+            "p50": 0,
+            "p90": 1.375,
+            "max": 3.5
+          }
+        }
+      },
+      "revision": "a3df0d21ecbad979b1253611ab93621dbd6b0157"
+    }
+  ],
+  "fixedPressureRhythmOn1665754063": [
+    {
+      "exported": false,
+      "pressureHash": "1e6328adcd8a09372ea8db50a4dc2468106e7a5c2979c04ba2886d487b8feb7f",
+      "gate": {
+        "checkId": "phase2.distribution.pressure_rhythm_differentiation",
+        "status": "fail",
+        "message": "Pressure and rhythm layers are too distributionally similar and risk monotony.",
+        "details": [
+          "meanAbsDifference=0.033",
+          "pressureSpread=0.561",
+          "rhythmSpread=0.582"
+        ],
+        "affectedPaths": [
+          "pressureFieldPackage.synthesized",
+          "environmentalRhythmPackage.synthesized"
+        ],
+        "meta": {
+          "distributionValidation": true,
+          "meanAbsDifference": 0.033478,
+          "pressureSpread": 0.561335,
+          "rhythmSpread": 0.582463
+        }
+      },
+      "axes": {
+        "seasonalityProfile": 0.267797,
+        "stormRhythm": 0.219828,
+        "navigationRhythm": 0.494906,
+        "scarcityRhythm": 0.117387,
+        "predictabilityProfile": 0.69985,
+        "ruptureProfile": 0.16564,
+        "recoveryProfile": 0.244566
+      }
+    },
+    {
+      "exported": true,
+      "pressureHash": "1e6328adcd8a09372ea8db50a4dc2468106e7a5c2979c04ba2886d487b8feb7f",
+      "gate": {
+        "checkId": "phase2.distribution.pressure_rhythm_differentiation",
+        "status": "pass",
+        "message": "Pressure and rhythm layers remain distributionally differentiated.",
+        "details": [
+          "meanAbsDifference=0.055",
+          "pressureSpread=0.561",
+          "rhythmSpread=0.606"
+        ],
+        "affectedPaths": [
+          "pressureFieldPackage.synthesized",
+          "environmentalRhythmPackage.synthesized"
+        ],
+        "meta": {
+          "distributionValidation": true,
+          "meanAbsDifference": 0.055127,
+          "pressureSpread": 0.561335,
+          "rhythmSpread": 0.606276
+        }
+      },
+      "axes": {
+        "seasonalityProfile": 0.265977,
+        "stormRhythm": 0.218008,
+        "navigationRhythm": 0.601942,
+        "scarcityRhythm": 0.115567,
+        "predictabilityProfile": 0.721843,
+        "ruptureProfile": 0.141312,
+        "recoveryProfile": 0.244566
+      }
+    }
+  ],
+  "rejectedRefugeAreaSubstitutions": [
+    {
+      "seed": 42,
+      "mode": "locallyWateredArea",
+      "pass": false,
+      "recovery": 0.166507,
+      "gates": [
+        "phase2.distribution.relief_presence"
+      ]
+    },
+    {
+      "seed": 42,
+      "mode": "largestWateredPatch",
+      "pass": false,
+      "recovery": 0.148297,
+      "gates": [
+        "phase2.distribution.relief_presence",
+        "phase2.gameplay.relief_relevance"
+      ]
+    },
+    {
+      "seed": 16908799,
+      "mode": "locallyWateredArea",
+      "pass": false,
+      "recovery": 0.15603,
+      "gates": [
+        "phase2.distribution.relief_presence"
+      ]
+    },
+    {
+      "seed": 16908799,
+      "mode": "largestWateredPatch",
+      "pass": false,
+      "recovery": 0.146744,
+      "gates": [
+        "phase2.distribution.relief_presence",
+        "phase2.gameplay.relief_relevance"
+      ]
+    },
+    {
+      "seed": 1431655765,
+      "mode": "locallyWateredArea",
+      "pass": true,
+      "recovery": 0.184345,
+      "gates": []
+    },
+    {
+      "seed": 1431655765,
+      "mode": "largestWateredPatch",
+      "pass": false,
+      "recovery": 0.15705,
+      "gates": [
+        "phase2.distribution.relief_presence",
+        "phase2.gameplay.relief_relevance"
+      ]
+    },
+    {
+      "seed": 2964753490,
+      "mode": "locallyWateredArea",
+      "pass": true,
+      "recovery": 0.181337,
+      "gates": []
+    },
+    {
+      "seed": 2964753490,
+      "mode": "largestWateredPatch",
+      "pass": false,
+      "recovery": 0.159145,
+      "gates": [
+        "phase2.distribution.relief_presence",
+        "phase2.gameplay.relief_relevance"
+      ]
+    },
+    {
+      "seed": 4144686569,
+      "mode": "locallyWateredArea",
+      "pass": false,
+      "recovery": 0.338303,
+      "gates": [
+        "phase2.design.tension_vs_relief"
+      ]
+    },
+    {
+      "seed": 4144686569,
+      "mode": "largestWateredPatch",
+      "pass": false,
+      "recovery": 0.313094,
+      "gates": [
+        "phase2.design.tension_vs_relief"
+      ]
+    },
+    {
+      "seed": 2248663653,
+      "mode": "locallyWateredArea",
+      "pass": false,
+      "recovery": 0.165876,
+      "gates": [
+        "phase2.gameplay.relief_relevance"
+      ]
+    },
+    {
+      "seed": 2248663653,
+      "mode": "largestWateredPatch",
+      "pass": false,
+      "recovery": 0.136349,
+      "gates": [
+        "phase2.distribution.relief_presence",
+        "phase2.gameplay.relief_relevance"
+      ]
+    }
+  ]
+}
