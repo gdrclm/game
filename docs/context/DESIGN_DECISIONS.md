@@ -7,6 +7,7 @@ Labels: AUTHOR = explicit author direction in available discussion; CONTRACT = r
 | AUTHOR | Emergent contextual facts from probabilities and prior culture/environment/history | Selecting prewritten NPC grave stories as canonical facts |
 | AUTHOR | No combat; non-combat survival, crafting, exploration and investigation | Combat RPG or loot primarily for fighting |
 | AUTHOR | Settlements and populations can move by physically possible maritime routes, remain, divide, perish or adapt; later occupation and territorial transfer arise from context and history | Fixed settlement-to-land identity, automatic flight/death, unconditional takeover, scripted wars or migration stories |
+| AUTHOR | Distinct personal, elite, institutional and population trajectories; small individual circumstances emerge from earlier physical and historical causes | Copy collective fate to all actors, preset cowardly ruler, invent personal lore at NPC realization |
 | AUTHOR | Independent detective pillar; separate early test slice | Reducing detective to survival modifiers or a collect-and-click quest |
 | CONTRACT | Full causal sequence 0–26 with bridge 17.5; reduce density in V1 | Skip religion, mentality, memory or history to get playable islands faster |
 | CONTRACT | Phase 17.5 translates established history into gameplay-facing biases | Late runtime invents why island/merchant/ruin exists |
@@ -27,3 +28,5 @@ Record new author decisions with date, source (chat excerpt or approved summary)
 ## Author decision — historical settlement continuity (2026-11-27)
 
 Source: current project discussion; author explicitly requested that communities may migrate by sea, remain and perish, and that other communities may later occupy their land, through conflict, partition, responsible relocation or culturally/religiously/everyday motivated circumstances. This is an approved historical-generation principle, not approval of a particular algorithm or story. [Detailed direction and proposed acceptance checks](SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md). Scope: Phase 3–17 causal history, 17.5 evidence projection, 18–25 materialization; Phase 0–2 remain physical inputs. Historical wars are possible, not player combat. Specific event schema, rates, population resolution and ownership law remain design/contract work for their phases.
+
+Author clarification (2026-11-27): a leader may abandon a population that later perishes and live on an allied continent. Keep individual and collective outcomes causally separate. This is an illustrative possible outcome, not a mandatory scenario. [Actor continuity and proposed checks](SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md#5-расхождение-коллективной-и-личной-судьбы-дополнение-автора-2026-11-27).
