@@ -1,18 +1,19 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: `ad47e81`, prompt 02 island environment on branch `worldgen/v1-foundation-closure` (26 November 2026). Baseline HEAD `3b35754`. The verified measuring code is `15bfdbb`; mandatory CI completed successfully. [Island evidence](review/f8t/local-water/island-overlap.md) · [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45859419936)
+Current checkpoint: prompt 03 regional relief on branch `worldgen/v1-foundation-closure` (27 November 2026). Baseline HEAD `143729c`; verified regional reconstruction code `0260b5d`. [Paired maps and metrics](review/f8t/regional-relief-diversity.md) · [Mandatory CI](https://github.com/gdrclm/game/actions/runs/45866373220)
 
 ## Current status
 
 | System | Confirmed | Open |
 |---|---|---|
 | Phase 0 | 1,031 seeds, 14 namespaces, deterministic export | Later historical consumers |
-| Phase 1 | Signed relief and bathymetry, physical terrain and climate, regional islands, actual drainage branches, potential retention and conserved source allocation | Tectonic/coastal morphology, atmospheric transitions, physical water persistence |
+| Phase 1 | Signed relief and bathymetry, physical terrain and climate, regional islands with improved inland slope reconstruction, actual drainage branches, potential retention and conserved source allocation | Tectonic/coastal morphology, atmospheric transitions, physical water persistence |
 | Phase 2 | Record-bound pressure and rhythm, exact regional island shelter/source overlap and areal inflow, measured seasonal limit for recurring stress | Refuge persistence semantics, macro shelter and remaining Phase 2 stress rejections |
 | V1 islands | Physical carriers, complete footprints and stable IDs, maritime connectivity and individual physical environment | Playable area/density and final island selection (Phase 16 onward) |
 
 ## Latest verified tests
 
+- `0260b5d`: GitHub Actions passed the mandatory audit. On Node 22.23.5 the local suite passed 49/49 worlds and 24/24 checks, and the Phase 0 audit passed on 1,031 seeds. Fourteen paired worlds preserve regional footprints, sea depths, source provenance and marine networks. Thirteen export and the existing `4144686569` rejection repeats. Phase 0, the macro part of Phase 1 and the macro pressure and rhythm packages match. A predeclared four-world holdout has three passing worlds and the same `1683167796` tension/relief rejection on both revisions. [Evidence](review/f8t/regional-relief-diversity.md)
 - `15bfdbb`: local mandatory audit on Node 22.23.5 passed 49/49 worlds, 24/24 checks and the separate Phase 0 audit of 1,031 seeds. Accepted and deterministic controls `42`, `16908799`, `640306144`; repeatable existing rejection `4144686569`. Paired snapshots preserve prior physical and macro recovery fields. The four predeclared holdouts pass, and the intake test accepts legacy bounds and rejects malformed overlap. [Maps and counts](review/f8t/local-water/island-overlap.md) · [CI](https://github.com/gdrclm/game/actions/runs/45859419936)
 - `c642b9b`: GitHub Actions completed successfully with 49/49 mandatory worlds and the Phase 0 audit. The 12 fresh targeted worlds have 4 passing exports versus 2 at `d0b44e7`. On Node 22.23.5 the paired Phase 0 bundles, Phase 1 packages, physical diagnostics and pressure field values match. An additional four predeclared worlds yield 3/4 on both revisions; `2030830666` is a retained independent tension/relief rejection. [CI](https://github.com/gdrclm/game/actions/runs/45853942907) · [Metrics](review/f8r/macro-recovery-seasonality.md)
 - `fd84d39`: 49/49 mandatory worlds and 22/22 substantive checks in local audit, Phase 0 1,031 seeds. GitHub Actions 45844786657 completed successfully.
@@ -53,6 +54,6 @@ Author decisions remain open on playable scale, physical acceptance, single-cont
 
 ## Bounded checkpoint
 
-Prompt 02 completed the exact [regional spatial measurement](review/f8t/local-water/island-overlap.md). It did not close all local environment questions. Prompt 03 is now the [next bounded milestone](NEXT_ENGINEERING_MILESTONE.md): High / Standard, physical diversity. Preserve the verified seasonal recovery and island measurements. Remaining macro refuge work requires measurements on the macro relief grid, not copying island scores. Keep the macro and local environment blockers explicit for a focused follow-up before final acceptance. Six original rejections remain in targeted evidence from prompt 01; no full stress rerun on current code is claimed. [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
+[Prompt 03](NEXT_ENGINEERING_MILESTONE.md) reduces coarse-grid slope seams in high regional interiors, with a taper at the boundary of the existing coastal processes. The broad interpolation was rejected after losing the fault fragment on `2546155002`. In 14 paired snapshots the retained reconstruction reduces the share of inland slope change concentrated on macro grid lines by 25.2–38.3 percentage points. F8-D remains open for macro plate contacts, shoreline form, atmospheric transitions and origin diversity. Physical measurements for macro refuges and actual local persistence remain open. [Maps](review/f8t/regional-relief-diversity.pdf) · [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 
 [Active checklist](ACTIVE_CHECKLIST.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [F8-Q evidence](review/f8q/README.md) · [F8-R evidence](review/f8r/README.md) · [F8-T evidence](review/f8t/README.md).

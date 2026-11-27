@@ -34,16 +34,19 @@ def variations(elevation, axis, subdivision):
     return jump, aligned
 
 
-def curvature_share(elevation, reference, subdivision):
+def curvature_metrics(elevation, reference, subdivision):
     aligned_total = total = 0.0
+    aligned_count = 0
     for axis in (0, 1):
         jump, aligned = variations(elevation, axis, subdivision)
         heights = np.moveaxis(reference, axis, -1)
         inland = ((heights[..., :-2] > INLAND_LIMIT) & (heights[..., 1:-1] > INLAND_LIMIT)
                   & (heights[..., 2:] > INLAND_LIMIT))
         aligned_total += jump[inland & aligned].sum()
+        aligned_count += np.count_nonzero(inland & aligned)
         total += jump[inland].sum()
-    return float(aligned_total / total) if total else None
+    return (float(aligned_total / total) if total else None,
+            float(aligned_total / aligned_count) if aligned_count else None)
 
 
 def longest_shore_run(elevation):
@@ -83,16 +86,26 @@ def metrics(before, after):
     assert old_region['grid'] == new_region['grid']
     subdivision = old_region['grid']['subdivision']
     old_macro, new_macro = controls(old_fields), controls(new_fields)
+    def footprints(region):
+        return {row['islandId']: (row['landRuns'], row['physicalOrigin']) for row in region['islandRecords']}
+
     rows = {'changedLandWaterCells': int(np.count_nonzero((old_bed > 0) != (new_bed > 0))),
+            'unchangedRegionalSeaDepths': bool(np.array_equal(old_bed[old_bed <= 0], new_bed[old_bed <= 0])),
+            'unchangedFootprintsAndOrigins': footprints(old_region) == footprints(new_region),
+            'unchangedRegionalNetwork': old_region['waterNetwork'] == new_region['waterNetwork'],
             'unchangedPlatePressureAndWetness': old_macro == new_macro,
             'wetnessBeltTransitionMean': old_macro['wetnessBeltTransitionMean']}
     for key, region, inherited, bed in [('before', old_region, old_inherited, old_bed),
                                         ('after', new_region, new_inherited, new_bed)]:
         slopes = np.hypot(*np.gradient(bed)) * subdivision
         inland_slopes = slopes[old_inherited > INLAND_LIMIT]
+        inherited_share, inherited_mean = curvature_metrics(inherited, old_inherited, subdivision)
+        final_share, final_mean = curvature_metrics(bed, old_inherited, subdivision)
         rows[key] = {
-            'inheritedInlandSeamShare': curvature_share(inherited, old_inherited, subdivision),
-            'finalInlandSeamShare': curvature_share(bed, old_inherited, subdivision),
+            'inheritedInlandSeamShare': inherited_share,
+            'inheritedInlandMeanSeamJump': inherited_mean,
+            'finalInlandSeamShare': final_share,
+            'finalInlandMeanSeamJump': final_mean,
             'inlandSlopeMedianP95': [float(v) for v in np.quantile(inland_slopes, [.5, .95])] if inland_slopes.size else [],
             'longestStraightCoastMacroCells': longest_shore_run(bed) / subdivision,
             'origins': region['summary']['originCounts'],
@@ -159,11 +172,14 @@ def main():
     parser.add_argument('--maps', type=int, nargs='+')
     parser.add_argument('--macro-map', type=int)
     args = parser.parse_args()
-    result = {}
+    result = {'baselineRevision': None, 'candidateRevision': None, 'worlds': {}}
     with PdfPages(args.atlas) as pdf:
         for seed in args.seeds:
             before, after = [load_snapshot(path, seed) for path in (args.baseline, args.candidate)]
-            result[seed] = metrics(before, after)
+            if result['baselineRevision'] is None:
+                result['baselineRevision'], result['candidateRevision'] = before[0], after[0]
+            assert (before[0], after[0]) == (result['baselineRevision'], result['candidateRevision'])
+            result['worlds'][seed] = metrics(before, after)
             if args.maps is None or seed in args.maps or seed == args.macro_map:
                 figure = plot_pair(seed, before, after, seed == args.macro_map)
                 pdf.savefig(figure)

@@ -1,0 +1,818 @@
+{
+  "baselineRevision": "143729cbcda7c69ba4cbb67b5330b8c5708fbc55",
+  "candidateRevision": "0260b5d781cbd17ec7fa39a17fea9fbefc38bbad",
+  "worlds": {
+    "42": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.04157893987507405,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999851723864038,
+        "inheritedInlandMeanSeamJump": 0.017777351679506635,
+        "finalInlandSeamShare": 0.4940619066642584,
+        "finalInlandMeanSeamJump": 0.022087211341052116,
+        "inlandSlopeMedianP95": [
+          0.04268654502584852,
+          0.07801573643963627
+        ],
+        "longestStraightCoastMacroCells": 1.875,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 71,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          74,
+          56,
+          32,
+          6
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.3374888052312204,
+        "inheritedInlandMeanSeamJump": 0.0070475181506564856,
+        "finalInlandSeamShare": 0.24231086443653388,
+        "finalInlandMeanSeamJump": 0.011530413071924943,
+        "inlandSlopeMedianP95": [
+          0.04232858276127301,
+          0.07976743652665896
+        ],
+        "longestStraightCoastMacroCells": 1.875,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 71,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          74,
+          56,
+          32,
+          6
+        ]
+      }
+    },
+    "137": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.06211325066681297,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999853757042847,
+        "inheritedInlandMeanSeamJump": 0.019300084757394944,
+        "finalInlandSeamShare": 0.5933911539607396,
+        "finalInlandMeanSeamJump": 0.02072622739005869,
+        "inlandSlopeMedianP95": [
+          0.041872728125849176,
+          0.08154312370219742
+        ],
+        "longestStraightCoastMacroCells": 2.625,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 53,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          56,
+          43,
+          16,
+          6
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.32445732004721123,
+        "inheritedInlandMeanSeamJump": 0.007532432667096985,
+        "finalInlandSeamShare": 0.2321851200520974,
+        "finalInlandMeanSeamJump": 0.008978255279052277,
+        "inlandSlopeMedianP95": [
+          0.03959070246459595,
+          0.08644891732088487
+        ],
+        "longestStraightCoastMacroCells": 2.625,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 53,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          56,
+          43,
+          16,
+          6
+        ]
+      }
+    },
+    "2026": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.03635151308537167,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999491106180725,
+        "inheritedInlandMeanSeamJump": 0.006206335985892407,
+        "finalInlandSeamShare": 0.6350200246294954,
+        "finalInlandMeanSeamJump": 0.006742618358866919,
+        "inlandSlopeMedianP95": [
+          0.019162033474177234,
+          0.0546349607517064
+        ],
+        "longestStraightCoastMacroCells": 2.25,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 72,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          75,
+          68,
+          62,
+          36
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.3639948663490611,
+        "inheritedInlandMeanSeamJump": 0.002502899431586115,
+        "finalInlandSeamShare": 0.27015480286717336,
+        "finalInlandMeanSeamJump": 0.0030502135230002004,
+        "inlandSlopeMedianP95": [
+          0.019262613449285683,
+          0.05609246352439991
+        ],
+        "longestStraightCoastMacroCells": 2.25,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 72,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          75,
+          68,
+          62,
+          36
+        ]
+      }
+    },
+    "16908799": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.06270780362656496,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999815200862189,
+        "inheritedInlandMeanSeamJump": 0.017433568628047656,
+        "finalInlandSeamShare": 0.49021330624874215,
+        "finalInlandMeanSeamJump": 0.01987393453555067,
+        "inlandSlopeMedianP95": [
+          0.0424633130658177,
+          0.08184071201332288
+        ],
+        "longestStraightCoastMacroCells": 1.75,
+        "origins": {
+          "inherited": 4,
+          "volcanic_satellite": 82,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          86,
+          65,
+          31,
+          9
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.29078371529133057,
+        "inheritedInlandMeanSeamJump": 0.005999424410342017,
+        "finalInlandSeamShare": 0.19686913724332256,
+        "finalInlandMeanSeamJump": 0.008570005096936601,
+        "inlandSlopeMedianP95": [
+          0.04324891656143298,
+          0.08742753203069321
+        ],
+        "longestStraightCoastMacroCells": 1.75,
+        "origins": {
+          "inherited": 4,
+          "volcanic_satellite": 82,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          86,
+          65,
+          31,
+          9
+        ]
+      }
+    },
+    "640306144": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.027350844663844975,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999707993247412,
+        "inheritedInlandMeanSeamJump": 0.010496943338715599,
+        "finalInlandSeamShare": 0.5227566790130492,
+        "finalInlandMeanSeamJump": 0.01143981962133825,
+        "inlandSlopeMedianP95": [
+          0.02670407979563054,
+          0.06875805839048699
+        ],
+        "longestStraightCoastMacroCells": 4.5,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 57,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          60,
+          58,
+          47,
+          28
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.31727485891767504,
+        "inheritedInlandMeanSeamJump": 0.0037947364859000627,
+        "finalInlandSeamShare": 0.20487428394386845,
+        "finalInlandMeanSeamJump": 0.004782828319248109,
+        "inlandSlopeMedianP95": [
+          0.026410347730155992,
+          0.07198260913704
+        ],
+        "longestStraightCoastMacroCells": 4.5,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 57,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          60,
+          58,
+          47,
+          28
+        ]
+      }
+    },
+    "2546155002": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.03297123140921343,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999545455646653,
+        "inheritedInlandMeanSeamJump": 0.007312245212321182,
+        "finalInlandSeamShare": 0.6093815903875291,
+        "finalInlandMeanSeamJump": 0.00795211366137145,
+        "inlandSlopeMedianP95": [
+          0.02254315289867449,
+          0.06673684959684598
+        ],
+        "longestStraightCoastMacroCells": 1.875,
+        "origins": {
+          "inherited": 4,
+          "volcanic_satellite": 58,
+          "fault_uplift": 0,
+          "fault_fragment": 1,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          63,
+          47,
+          29,
+          10
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.29560675634622974,
+        "inheritedInlandMeanSeamJump": 0.002538615160175162,
+        "finalInlandSeamShare": 0.22639440554635262,
+        "finalInlandMeanSeamJump": 0.0032382895015721372,
+        "inlandSlopeMedianP95": [
+          0.02266660787298279,
+          0.07067933918373281
+        ],
+        "longestStraightCoastMacroCells": 1.875,
+        "origins": {
+          "inherited": 4,
+          "volcanic_satellite": 58,
+          "fault_uplift": 0,
+          "fault_fragment": 1,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          63,
+          47,
+          29,
+          10
+        ]
+      }
+    },
+    "180816365": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.020415802912252857,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999782633747524,
+        "inheritedInlandMeanSeamJump": 0.01459388197778172,
+        "finalInlandSeamShare": 0.5403228695990889,
+        "finalInlandMeanSeamJump": 0.015817779821790272,
+        "inlandSlopeMedianP95": [
+          0.04510316903547466,
+          0.06560933813503757
+        ],
+        "longestStraightCoastMacroCells": 1.75,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 94,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          97,
+          83,
+          65,
+          34
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.2897692542954473,
+        "inheritedInlandMeanSeamJump": 0.004775252462474953,
+        "finalInlandSeamShare": 0.19362133793826647,
+        "finalInlandMeanSeamJump": 0.006029026775660576,
+        "inlandSlopeMedianP95": [
+          0.045209954034719724,
+          0.06810491364437166
+        ],
+        "longestStraightCoastMacroCells": 1.75,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 94,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          97,
+          83,
+          65,
+          34
+        ]
+      }
+    },
+    "1431655765": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.03499805707244931,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999816217129094,
+        "inheritedInlandMeanSeamJump": 0.01761446594953823,
+        "finalInlandSeamShare": 0.5167070578967556,
+        "finalInlandMeanSeamJump": 0.019671856833132943,
+        "inlandSlopeMedianP95": [
+          0.04818577421301815,
+          0.07530342041128552
+        ],
+        "longestStraightCoastMacroCells": 1.5,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 100,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          103,
+          82,
+          51,
+          18
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.2948169529830991,
+        "inheritedInlandMeanSeamJump": 0.005983848537009952,
+        "finalInlandSeamShare": 0.19889632809624588,
+        "finalInlandMeanSeamJump": 0.008085797631259542,
+        "inlandSlopeMedianP95": [
+          0.04803476579957555,
+          0.07846618611079394
+        ],
+        "longestStraightCoastMacroCells": 1.5,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 100,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          103,
+          82,
+          51,
+          18
+        ]
+      }
+    },
+    "2964753490": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.03236219634612074,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999773132571065,
+        "inheritedInlandMeanSeamJump": 0.014126662394953422,
+        "finalInlandSeamShare": 0.45283911793873094,
+        "finalInlandMeanSeamJump": 0.01563910532541346,
+        "inlandSlopeMedianP95": [
+          0.044939128609437586,
+          0.0656799784578925
+        ],
+        "longestStraightCoastMacroCells": 2.0,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 79,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          82,
+          79,
+          65,
+          41
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.2916956890730915,
+        "inheritedInlandMeanSeamJump": 0.004622183585515121,
+        "finalInlandSeamShare": 0.17005273009184999,
+        "finalInlandMeanSeamJump": 0.00615681045457946,
+        "inlandSlopeMedianP95": [
+          0.044661840852995814,
+          0.06671335081457343
+        ],
+        "longestStraightCoastMacroCells": 2.0,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 79,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          82,
+          79,
+          65,
+          41
+        ]
+      }
+    },
+    "1715244351": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.03661304898620736,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999737455700412,
+        "inheritedInlandMeanSeamJump": 0.010711398047500474,
+        "finalInlandSeamShare": 0.4876608019353086,
+        "finalInlandMeanSeamJump": 0.01257353388343892,
+        "inlandSlopeMedianP95": [
+          0.030165830693325738,
+          0.05979736149472665
+        ],
+        "longestStraightCoastMacroCells": 2.375,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 82,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          85,
+          73,
+          63,
+          37
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.36311704696757685,
+        "inheritedInlandMeanSeamJump": 0.004304891683297527,
+        "finalInlandSeamShare": 0.23014481402796497,
+        "finalInlandMeanSeamJump": 0.0061934707457042245,
+        "inlandSlopeMedianP95": [
+          0.02983392803763435,
+          0.0624761607399084
+        ],
+        "longestStraightCoastMacroCells": 2.375,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 82,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          85,
+          73,
+          63,
+          37
+        ]
+      }
+    },
+    "3019978005": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.07532287101586477,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999830343969296,
+        "inheritedInlandMeanSeamJump": 0.018964022061034064,
+        "finalInlandSeamShare": 0.4696818645304818,
+        "finalInlandMeanSeamJump": 0.02173861983845282,
+        "inlandSlopeMedianP95": [
+          0.050739277705710684,
+          0.083241074009476
+        ],
+        "longestStraightCoastMacroCells": 2.75,
+        "origins": {
+          "inherited": 4,
+          "volcanic_satellite": 108,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          112,
+          79,
+          38,
+          9
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.27675890928632507,
+        "inheritedInlandMeanSeamJump": 0.0061911208714222786,
+        "finalInlandSeamShare": 0.1837597742701201,
+        "finalInlandMeanSeamJump": 0.009102271588977856,
+        "inlandSlopeMedianP95": [
+          0.05065412369915965,
+          0.08658804493235873
+        ],
+        "longestStraightCoastMacroCells": 2.75,
+        "origins": {
+          "inherited": 4,
+          "volcanic_satellite": 108,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 0,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          112,
+          79,
+          38,
+          9
+        ]
+      }
+    },
+    "2220939230": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.02608852640040794,
+      "before": {
+        "inheritedInlandSeamShare": 0.999981943201324,
+        "inheritedInlandMeanSeamJump": 0.017187028643107727,
+        "finalInlandSeamShare": 0.4703553509550583,
+        "finalInlandMeanSeamJump": 0.01965773764893928,
+        "inlandSlopeMedianP95": [
+          0.0457754801018236,
+          0.0743886509317916
+        ],
+        "longestStraightCoastMacroCells": 2.625,
+        "origins": {
+          "inherited": 4,
+          "volcanic_satellite": 82,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 1,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          87,
+          75,
+          53,
+          26
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.3043623363967107,
+        "inheritedInlandMeanSeamJump": 0.006032676064916088,
+        "finalInlandSeamShare": 0.19354100068918664,
+        "finalInlandMeanSeamJump": 0.008588842164753828,
+        "inlandSlopeMedianP95": [
+          0.0462979920550443,
+          0.07795723951685647
+        ],
+        "longestStraightCoastMacroCells": 2.625,
+        "origins": {
+          "inherited": 4,
+          "volcanic_satellite": 82,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 1,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          87,
+          75,
+          53,
+          26
+        ]
+      }
+    },
+    "792866484": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.03410320622802774,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999855096220753,
+        "inheritedInlandMeanSeamJump": 0.019766634176932904,
+        "finalInlandSeamShare": 0.6061488035022358,
+        "finalInlandMeanSeamJump": 0.02081164767886295,
+        "inlandSlopeMedianP95": [
+          0.043613831728865946,
+          0.08576995945196957
+        ],
+        "longestStraightCoastMacroCells": 1.5,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 58,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 1,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          62,
+          45,
+          27,
+          12
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.3118396609748375,
+        "inheritedInlandMeanSeamJump": 0.0074006206068931175,
+        "finalInlandSeamShare": 0.22400039840506158,
+        "finalInlandMeanSeamJump": 0.008573830954737896,
+        "inlandSlopeMedianP95": [
+          0.043844719892628906,
+          0.08889113711277771
+        ],
+        "longestStraightCoastMacroCells": 1.5,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 58,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 1,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          62,
+          45,
+          27,
+          12
+        ]
+      }
+    },
+    "4144686569": {
+      "changedLandWaterCells": 0,
+      "unchangedRegionalSeaDepths": true,
+      "unchangedFootprintsAndOrigins": true,
+      "unchangedRegionalNetwork": true,
+      "unchangedPlatePressureAndWetness": true,
+      "wetnessBeltTransitionMean": 0.038599059488480233,
+      "before": {
+        "inheritedInlandSeamShare": 0.9999778335601204,
+        "inheritedInlandMeanSeamJump": 0.013443326142548754,
+        "finalInlandSeamShare": 0.4768603249008241,
+        "finalInlandMeanSeamJump": 0.016063713901175048,
+        "inlandSlopeMedianP95": [
+          0.03527862625687887,
+          0.07302893899217609
+        ],
+        "longestStraightCoastMacroCells": 3.625,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 69,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 1,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          73,
+          62,
+          48,
+          24
+        ]
+      },
+      "after": {
+        "inheritedInlandSeamShare": 0.31175475621242577,
+        "inheritedInlandMeanSeamJump": 0.004822108446081929,
+        "finalInlandSeamShare": 0.210662816070571,
+        "finalInlandMeanSeamJump": 0.007510038253221437,
+        "inlandSlopeMedianP95": [
+          0.036246756024568505,
+          0.0767628319847224
+        ],
+        "longestStraightCoastMacroCells": 3.625,
+        "origins": {
+          "inherited": 3,
+          "volcanic_satellite": 69,
+          "fault_uplift": 0,
+          "fault_fragment": 0,
+          "erosional_fragment": 1,
+          "shelf_remnant": 0
+        },
+        "connectedCapacity": [
+          73,
+          62,
+          48,
+          24
+        ]
+      }
+    }
+  }
+}

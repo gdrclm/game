@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-26 for the island spatial measurement `15bfdbb`.
+Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-27 for regional slope reconstruction `0260b5d`.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -29,10 +29,12 @@ Current engineering work only. Past iterations and measurements are preserved in
 - [x] Mandatory CI at `c642b9b`: 49/49 worlds, deterministic generation, Phase 0 audit and fixed-input causal interventions. [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45853942907)
 - [x] F8-T prompt 02 regional environment: exact cell overlap of wind shelter and dry-land access to potential water sources, ordinary and low-season replenishment, and conserved allocated budget for sheltered land. Three accepted controls and one Phase 2 rejection measured, legacy projections and malformed input exercised, four independent holdout worlds passed. [Maps and evidence](review/f8t/local-water/island-overlap.md)
 - [x] Mandatory audit on `15bfdbb` passed locally with Node 22.23.5, 49/49 worlds, 24/24 checks and the Phase 0 audit. [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45859419936)
+- [x] F8-D prompt 03 inland slope seam: measured reduction on 14 paired worlds with the same island shapes, fracture and erosion provenance, registered sea paths and capacity counts. [Paired maps and measures](review/f8t/regional-relief-diversity.md)
+- [x] Mandatory audit at `0260b5d`: 49/49 worlds, 24/24 local checks, deterministic exports and the Phase 0 audit. [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45866373220)
 
 ## Active technical work (do not restart completed milestones)
 
-Prompt 01 and [prompt 02](review/f8t/local-water/island-overlap.md) have verified implementation checkpoints, not full closure of their parent tasks. Next execute [prompt 03 — physical diversity](NEXT_ENGINEERING_MILESTONE.md). Keep the remaining macro refuge and local environment work open; evidence from prompt 03 may support a bounded follow-up. Do not skip unresolved blockers in the later audit/acceptance stages.
+Prompts 01–03 have verified implementation checkpoints. Keep parent tasks open where their physical criteria still require evidence. [Bounded physical diversity work](NEXT_ENGINEERING_MILESTONE.md)
 
 - [ ] F8-T macro water closure: derive refuge persistence from spatial replenishment and macro wind shelter. Keep source access and delivery separate. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, exposure along paths, meaningful finite access (all 293 measured islands currently have full or zero reachability), actual water persistence and recovery timing require further physical evidence.
