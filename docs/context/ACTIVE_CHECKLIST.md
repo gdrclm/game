@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-27 for regional slope reconstruction `0260b5d`.
+Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-27 for the prompt 04 stress audit on pinned revision `0c11b75`.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -31,15 +31,18 @@ Current engineering work only. Past iterations and measurements are preserved in
 - [x] Mandatory audit on `15bfdbb` passed locally with Node 22.23.5, 49/49 worlds, 24/24 checks and the Phase 0 audit. [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45859419936)
 - [x] F8-D prompt 03 inland slope seam: measured reduction on 14 paired worlds with the same island shapes, fracture and erosion provenance, registered sea paths and capacity counts. [Paired maps and measures](review/f8t/regional-relief-diversity.md)
 - [x] Mandatory audit at `0260b5d`: 49/49 worlds, 24/24 local checks, deterministic exports and the Phase 0 audit. [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45866373220)
+- [x] F8-S prompt 04 pinned mandatory audit at `0c11b75`: 49/49 worlds, 24/24 checks, 1,031 Phase 0 seeds, Chromium Phase 0 5/5, gameplay 270/270 and game startup. [Reproduction and evidence](review/f8t/closure/prompt-04-stress-audit.md)
+- [x] F8-S prompt 04 fixed cohorts at `0c11b75`: 58/64 original, 60/64 independent, 7/7 edge and 4/11 additional controls. Export hashes and rejection reports reproduced. [Cohorts and remaining failures](review/f8t/closure/prompt-04-stress-audit.json)
+- [x] F8-T macro diagnosis: measure the joint wind shelter and low-season replenishment on the same signed macro relief cells. Fixed-replenishment wind reversal and four accepted recovery controls exercised. [Spatial measurements](review/f8t/closure/prompt-04-stress-audit.md#макровосстановление-и-укрытия)
 
 ## Active technical work (do not restart completed milestones)
 
-Prompts 01–03 have verified implementation checkpoints, not full closure of their parent tasks. Next execute [prompt 04 — stress and targeted stabilization](NEXT_ENGINEERING_MILESTONE.md). Do not repeat completed regional relief or island measurements. Preserve macro refuge, local environment and macro physical diversity blockers until evidence or explicit author policy resolves them.
+Prompts 01–03 have verified implementation checkpoints. Prompt 04 records all fixed cohorts and the remaining rejection families on one program revision. Macro refuge, local environment and macro physical diversity blockers still require evidence or explicit author policy. [Stress checkpoint](review/f8t/closure/prompt-04-stress-audit.md)
 
-- [ ] F8-T macro water closure: derive refuge persistence from spatial replenishment and macro wind shelter. Keep source access and delivery separate. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
+- [ ] F8-T macro water closure: establish physically measured refuge persistence under seasonal loss and repeated stress. Test fixed-total changes in the overlap of replenishment and wind shelter. Keep source access and delivery separate and retain both excess and weak recovery controls. [Open hypotheses and exact rejections](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, exposure along paths, meaningful finite access (all 293 measured islands currently have full or zero reachability), actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: investigate the six remaining original Phase 2 stress failures, additional controls 4144686569, 2666689910, 2030830666 and 1683167796, and independent holdout failures. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned 56/64 stress evidence](review/f8t/closure/highstand-scale-audit.json) · [Current Phase 2 failures](HIGH_REASONING_REVIEW_QUEUE.md)
+- [ ] F8-S: keep the rejection register and High follow-up open for macro recovery and sorted pressure/rhythm distributions. Record the author decision for physically single-continent worlds. Repeat the fixed cohorts after changes to macro pressure, recovery, terrain or climate. [Pinned failure register](review/f8t/closure/prompt-04-stress-audit.json) · [Review queue](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 
