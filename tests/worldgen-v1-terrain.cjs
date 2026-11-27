@@ -45,8 +45,25 @@ function verifyContinentalShorelineFixture(macro) {
     assert.equal(unsupported.percentile, 0.5, 'High water requires independently supported islands');
     const separated = values.map(value => value === 0.9 ? value : 0);
     assert.equal(macro.selectContinentalShoreline(separated, bounds, 0.5, collect).percentile, 0.5);
+
+    const narrowBounds = { width: 40, height: 25 };
+    const narrow = Array.from({ length: 1000 }, (_, cell) => {
+        const x = cell % narrowBounds.width;
+        const y = Math.floor(cell / narrowBounds.width);
+        if (x <= 16) return 0.95;
+        if (x >= 25 && x <= 29 && y >= 10 && y <= 14) return 0.8;
+        return x >= 17 && x <= 24 && y === 10 ? 0.7 : 0.1;
+    });
+    const selectNarrow = peaks => macro.selectContinentalShoreline(narrow, narrowBounds, 0.51, collect,
+        () => ({ hotspotChain: { distinctEmergenceCount: peaks } }));
+    const exact = selectNarrow(3);
+    assert.equal(exact.cutoff, 0.7);
+    assert.deepEqual(exact.attempts.at(-1).majorSizes, [425, 25]);
+    assert.equal(exact.attempts.at(-1).observedOrdinarySplit, true);
+    assert(exact.attempts.slice(0, -1).every(attempt => attempt.majorSizes.length < 2));
+    assert.equal(selectNarrow(2).percentile, 0.51, 'Exact ordinary fallback still needs volcanic support');
     return { saddleSeparatesInheritedContinentalBodies: true, higherSeaRequiresSupportedArchipelago: true,
-        ordinaryShorelinePreferred: true };
+        ordinaryShorelinePreferred: true, observesOrdinarySplitBetweenSampledLevels: true };
 }
 
 function verifySeaBoundaryFixture(macro) {

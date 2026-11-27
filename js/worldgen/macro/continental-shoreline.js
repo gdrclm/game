@@ -5,16 +5,21 @@
         return Math.max(12, Math.round(size * 0.025));
     }
 
+    const STANDARD_MIN_PERCENTILE = 0.30;
     const STANDARD_MAX_PERCENTILE = 0.81;
     const SEA_LEVEL_PERCENTILE_STEP = 0.025;
 
-    function findExposedContinentIntervals(values, bounds, minimumSize) {
+    function exposedCountAtPercentile(size, percentile) {
+        return size - 1 - Math.floor((size - 1) * percentile);
+    }
+
+    function findExposedContinentIntervals(values, bounds, minimumSize, lowerPercentile) {
         const cellCount = values.length;
         const roots = new Int32Array(cellCount).fill(-1);
         const sizes = new Int32Array(cellCount);
         const order = Array.from({ length: cellCount }, (_, cell) => cell)
             .sort((a, b) => values[b] - values[a] || a - b);
-        const limit = cellCount - 1 - Math.floor((cellCount - 1) * STANDARD_MAX_PERCENTILE);
+        const limit = exposedCountAtPercentile(cellCount, lowerPercentile);
         let majorBodyCount = 0;
         let interval;
         const intervals = [];
@@ -73,7 +78,7 @@
         }
         // Lower water can bring a submerged shelf above sea level while leaving
         // the intervening ocean intact. Include it if the earlier search runs out.
-        for (let percentile = initialPercentile - SEA_LEVEL_PERCENTILE_STEP; percentile >= 0.30; percentile -= SEA_LEVEL_PERCENTILE_STEP) {
+        for (let percentile = initialPercentile - SEA_LEVEL_PERCENTILE_STEP; percentile >= STANDARD_MIN_PERCENTILE; percentile -= SEA_LEVEL_PERCENTILE_STEP) {
             thresholds.push(percentile);
         }
         const attempts = [];
@@ -111,7 +116,7 @@
             // two inherited continental masses stand above a higher sea.
             // Retain an ordinary split whenever it exists. The highstand is
             // feasible only while two full continent footprints can fit.
-            const { order, intervals } = findExposedContinentIntervals(values, bounds, minimumSize);
+            const { order, intervals } = findExposedContinentIntervals(values, bounds, minimumSize, STANDARD_MAX_PERCENTILE);
             const stride = Math.max(1, Math.round(SEA_LEVEL_PERCENTILE_STEP * (values.length - 1)));
             for (const { highest, lowest } of intervals) {
                 for (let exposed = lowest; exposed >= highest; exposed = Math.max(highest, exposed - stride)) {
@@ -124,6 +129,24 @@
                     }
                     if (exposed === highest) break;
                 }
+            }
+
+            // The coarse ordinary scan can skip a narrow expression of the
+            // inherited split between two sampled levels. Keep existing
+            // supported shorelines in preference to this final fallback.
+            const ordinary = findExposedContinentIntervals(values, bounds, minimumSize, STANDARD_MIN_PERCENTILE);
+            const firstOrdinary = exposedCountAtPercentile(values.length, STANDARD_MAX_PERCENTILE) + 1;
+            const triedCutoffs = new Set(attempts.map(attempt => attempt.cutoff));
+            for (const { lowest } of ordinary.intervals) {
+                if (lowest < firstOrdinary) continue;
+                const cutoff = values[ordinary.order[lowest]];
+                if (triedCutoffs.has(cutoff)) continue;
+                const percentile = Math.max(STANDARD_MIN_PERCENTILE, (values.length - 1 - lowest) / (values.length - 1));
+                const { slice, attempt } = inspectLevel(percentile, cutoff);
+                attempt.observedOrdinarySplit = true;
+                if (attempt.majorSizes.length < 2) continue;
+                const supported = resolveSupportedChain(slice, attempt);
+                if (supported) return supported;
             }
         }
         return { ...(firstContinentalSlice || firstSlice), attempts };
