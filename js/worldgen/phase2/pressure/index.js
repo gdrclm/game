@@ -2960,11 +2960,7 @@
 
             return [fieldId, Object.freeze({
                 ...field,
-                value: roundValue(calibratedValue),
-                summary: Object.freeze({
-                    ...field.summary,
-                    mean: roundValue(calibratedValue)
-                }),
+                readabilityValue: roundValue(calibratedValue),
                 diagnostics: Object.freeze({
                     ...(isPlainObject(field.diagnostics) ? field.diagnostics : {}),
                     calibratedValue: roundValue(calibratedValue),

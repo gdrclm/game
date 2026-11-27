@@ -56,6 +56,56 @@ function verifyScarcityTiming(phase2) {
     return { fixedPressure, fixedSeason };
 }
 
+function verifyPathTiming(phase2) {
+    const run = (stormMean, cost = 0.5) => {
+        const route = { type: 'marine_assisted', seaRegionIds: ['sea'], baseCost: cost, fragility: 0.7, redundancy: 0.2 };
+        const inputBundle = { rootSupport: { marinePathWeather: [
+            { routeId: 'target', cellVisits: 4, stormMean, referenceStormMean: 0.5, seasonalityMean: 0.4 },
+            { routeId: 'peer', cellVisits: 4, stormMean: 0.5, referenceStormMean: 0.5, seasonalityMean: 0.4 }
+        ] }, recordCollections: { physical: { climateBands: [{ climateBandId: 'band', seaRegionIds: ['sea'] }] },
+            structural: { macroRoutes: [{ ...route, routeId: 'target' }, { ...route, routeId: 'peer' }], chokepoints: [] } } };
+        const domain = Object.fromEntries(['stormCadence', 'stormBurstClustering', 'calmToStormTransitionSharpness']
+            .map(id => [id, { perBandScores: [{ recordId: 'band', value: 0.55 }] }]));
+        return phase2.createNavigationWindowGenerator().run({ inputBundle, stormCadenceOutput: { domain } }).domain;
+    };
+    const calm = run(0), exposed = run(0.85), costly = run(0, 0.9);
+    const [calmRoute, calmPeer] = calm.blockedIntervalFrequency.perRouteScores;
+    const [stormRoute, stormPeer] = exposed.blockedIntervalFrequency.perRouteScores;
+    assert.equal(calmRoute.value, stormRoute.value);
+    assert.deepEqual(calmPeer, stormPeer);
+    assert.equal(calmRoute.pathTiming.value, 0);
+    assert(stormRoute.pathTiming.value > stormPeer.pathTiming.value);
+    assert.equal(calmPeer.pathTiming.value, calmPeer.value);
+    assert.equal(costly.blockedIntervalFrequency.perRouteScores[0].pathTiming.value, 0);
+    assert(calm.navigationWindowReliability.perRouteScores[0].pathTiming.value
+        > costly.navigationWindowReliability.perRouteScores[0].pathTiming.value);
+    return { sameRegionalFrequency: calmRoute.value, pathFrequencies: [calmRoute.pathTiming.value, stormRoute.pathTiming.value],
+        unchangedPeer: stormPeer.pathTiming.value };
+}
+
+function verifyIndependentSynthesis(phase2) {
+    const fields = row => Object.fromEntries(Object.entries(row).map(([key, mean]) => [key, { summary: { mean } }]));
+    const pressure = waterStress => phase2.createPressureSynthesis().run({ pressureDomainLayers: {
+        terrain: fields({ mobilityTerrainPenalty: 0.8, fragmentationBurden: 0.6 }),
+        travel: fields({ travelExposure: 0.55, routeReliabilityInverse: 0.45 }),
+        hydrology: fields({ waterStress, floodInstability: 0.46 }), food: fields({ foodStress: 0.7 })
+    } }).synthesized;
+    const rhythm = stormCadence => phase2.createEnvironmentalRhythmSynthesis().run({ rhythmDomainLayers: {
+        seasonality: fields({ seasonalityStrength: 0.45, annualSwingStrength: 0.52, environmentalCycleClarity: 0.67 }),
+        storms: fields({ stormCadence, stormBurstClustering: 0.36, calmToStormTransitionSharpness: 0.39 }),
+        navigation: fields({ navigationWindowReliability: 0.47, safeRouteIntervalStrength: 0.35 })
+    } }).synthesized;
+    const check = (low, high, stable, changed, mean) => {
+        assert.equal(mean(low[stable]), mean(high[stable]));
+        assert.notEqual(low[stable].readabilityValue, high[stable].readabilityValue);
+        assert(mean(high[changed]) > mean(low[changed]));
+        return { independentMean: mean(low[stable]), display: [low[stable].readabilityValue, high[stable].readabilityValue],
+            affected: [mean(low[changed]), mean(high[changed])] };
+    };
+    return { pressure: check(pressure(0.1), pressure(0.9), 'mobilityPressure', 'survivabilityPressure', x => x.value),
+        rhythm: check(rhythm(0.1), rhythm(0.9), 'seasonalityProfile', 'stormRhythm', x => x.summary.mean) };
+}
+
 function runCausalChecks(systems, canonical, saveStormPair) {
     const { worldgenMacro: macro, worldgenPhase2: phase2 } = systems;
     const { phase0Bundle, phase1SafeSummaryBundle } = canonical.phase0.outputs;
@@ -274,4 +324,4 @@ function runCausalChecks(systems, canonical, saveStormPair) {
     return result;
 }
 
-module.exports = { runCausalChecks, verifyNavigationTiming, verifyScarcityTiming };
+module.exports = { runCausalChecks, verifyNavigationTiming, verifyScarcityTiming, verifyPathTiming, verifyIndependentSynthesis };

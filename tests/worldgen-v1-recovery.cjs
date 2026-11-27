@@ -154,6 +154,22 @@ function verifySeasonalRecovery(phase2, canonical) {
     assert(Math.abs(absolute(reference).lowSeasonSupport / absolute(reference).ordinarySupport
         - context(reference).seasonalInflowFraction) < 1e-12);
 
+    // Change an unrelated wet region while holding the target's measured water and geography fixed.
+    const peerId = Object.keys(rootSupport.reliefWaterAccess).find(key => key !== id && rootSupport.reliefWaterAccess[key].landCellCount > 0);
+    const peer = rootSupport.reliefWaterAccess[peerId];
+    const peerWater = { ...rootSupport.reliefWaterAccess, [peerId]: { ...peer,
+        inputPotential: 2 * rootSupport.replenishmentReference * peer.landCellCount } };
+    const newReference = phase2.measureReplenishmentReference(peerWater);
+    const wetterPeer = run({ ...rootSupport, reliefWaterAccess: peerWater, replenishmentReference: newReference });
+    assert.equal(context(wetterPeer).meanInflowPerLandArea, context(reference).meanInflowPerLandArea);
+    assert.equal(context(wetterPeer).lowSeasonInflowPerLandArea, context(reference).lowSeasonInflowPerLandArea);
+    assert(absolute(wetterPeer).ordinarySupport < absolute(reference).ordinarySupport);
+    assert(absolute(wetterPeer).lowSeasonSupport < absolute(reference).lowSeasonSupport);
+    assert.equal(reentry(wetterPeer), reentry(reference));
+    for (const key of ['stabilizationInterval', 'reliefPersistence']) {
+        assert.equal(score(wetterPeer, key).value, score(reference, key).value);
+    }
+
     // Only the observed season changes. Source delivery, retention and pressure stay fixed.
     const dry = replaceWater({ lowInputPotential: 0 });
     assert.equal(context(dry).seasonalInflowFraction, 0);
@@ -261,6 +277,10 @@ function verifySeasonalRecovery(phase2, canonical) {
     assert.equal(score(legacyRefuge, 'recoveryTempo').value, score(reference, 'recoveryTempo').value);
     return { reliefRegionId: id, seasonalFraction: context(reference).seasonalInflowFraction,
         absoluteReference: replenishmentReference,
+        unrelatedWetRegion: { referenceDensities: [replenishmentReference, newReference],
+            unchangedOrdinaryDensity: context(reference).meanInflowPerLandArea,
+            ordinarySupport: [absolute(reference).ordinarySupport, absolute(wetterPeer).ordinarySupport],
+            lowSeasonSupport: [absolute(reference).lowSeasonSupport, absolute(wetterPeer).lowSeasonSupport] },
         tempoAtHalfInput: [score(reference, 'recoveryTempo').value, score(scaled, 'recoveryTempo').value],
         forgivenessAtHalfInput: [target.value, score(scaled, 'environmentalForgiveness').value],
         reentryContribution: reentry(reference),

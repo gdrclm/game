@@ -37,6 +37,10 @@
                 ...(includeCausalDiagnostics && { maritime: causalDiagnostics })
             });
             phase1.assertMacroGeographyPackage(macroGeographyPackage, { requireSemanticCompleteness: true });
+            if (macroGeographyPackage.marineGeometryVersion !== 1 || !Array.isArray(macroGeographyPackage.marineRouteSurvey?.weatherByRoute)) {
+                throw new Error('New Phase 1 export lacks verified marine route geometry.');
+            }
+            if (!macroGeographyPackage.plateContactProvenance) throw new Error('New Phase 1 export lacks plate contact provenance.');
             if (macroGeographyPackage.macroSeed !== macroGeographySeed
                 || macroGeographyPackage.validationReport.isValid !== true
                 || macroGeographyHandoffPackage.validationSummary.isUsableDownstream !== true) {

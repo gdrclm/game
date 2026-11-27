@@ -188,33 +188,128 @@
     }
 
     function buildMarineRouteGeometry(routes, graph, routeRecords) {
-        if (!routes?.length || !graph?.edges || !graph.nodes) return undefined;
+        if (!Array.isArray(routes) || !graph?.edges || !graph.nodes) return undefined;
         const published = new Set(routeRecords.map(row => row.routeId));
         const edges = new Map(graph.edges.map(edge => [edge.edgeId, edge]));
         const nodes = new Map(graph.nodes.map(node => [node.nodeId, node]));
         const result = [];
         for (const route of routes) {
             if (!published.has(route.routeId)) continue;
+            published.delete(route.routeId);
             const legs = [];
             for (const [index, edgeId] of route.edgePathIds.entries()) {
                 const edge = edges.get(edgeId);
-                if (!edge?.waterPathCellIndices?.length) continue;
+                if (!edge || (edge.edgeType === 'navigable_sea_lane' && !edge.waterPathCellIndices?.length)) {
+                    throw new Error(`[worldgen/macro] Missing source edge or water path for ${route.routeId}/${edgeId}.`);
+                }
+                if (!edge.waterPathCellIndices?.length) continue;
                 const forward = edge.fromNodeId === route.nodePathIds[index];
                 const from = nodes.get(forward ? edge.fromNodeId : edge.toNodeId);
                 const to = nodes.get(forward ? edge.toNodeId : edge.fromNodeId);
+                const water = edge.waterPathCellIndices;
+                if (from?.nodeId !== route.nodePathIds[index] || to?.nodeId !== route.nodePathIds[index + 1]
+                    || from?.waterCellIndex !== (forward ? water[0] : water.at(-1))
+                    || to?.waterCellIndex !== (forward ? water.at(-1) : water[0])) {
+                    throw new Error(`[worldgen/macro] Source water path has inconsistent terminals for ${route.routeId}/${edgeId}.`);
+                }
                 legs.push({
-                    fromLandCellIndex: from?.anchorCellIndex,
-                    toLandCellIndex: to?.anchorCellIndex,
-                    waterPathCellIndices: forward ? edge.waterPathCellIndices.slice() : edge.waterPathCellIndices.slice().reverse()
+                    fromLandCellIndex: from.anchorCellIndex,
+                    toLandCellIndex: to.anchorCellIndex,
+                    waterPathCellIndices: forward ? water.slice() : water.slice().reverse()
                 });
             }
             if (legs.length) result.push({ routeId: route.routeId, legs });
         }
+        if (published.size) throw new Error('[worldgen/macro] A published macro route has no source graph route.');
         return result;
     }
 
-    function validateMarineRouteGeometry({ marineRouteGeometry, macroRoutes, worldBounds }) {
-        if (marineRouteGeometry === undefined) return [];
+    function routeSurveyChecksum({ macroSeed, macroRoutes, marineRouteGeometry, worldBounds, marineRouteSurvey }) {
+        const payload = JSON.stringify([macroSeed, worldBounds.width, worldBounds.height,
+            macroRoutes.map(row => [row.routeId, row.type, row.fromRegion, row.toRegion]),
+            marineRouteGeometry.map(row => [row.routeId, row.legs.map(leg => [
+                leg.fromLandCellIndex, leg.toLandCellIndex, leg.waterPathCellIndices
+            ])]), marineRouteSurvey?.weatherByRoute?.map(row => [row.routeId, row.cellVisits, row.stormMean,
+                row.referenceStormMean, row.seasonalityMean])]);
+        let checksum = 2166136261;
+        for (let index = 0; index < payload.length; index += 1) {
+            checksum = Math.imul(checksum ^ payload.charCodeAt(index), 16777619) >>> 0;
+        }
+        return checksum;
+    }
+
+    function measureMarinePathWeather(geometry, signed, { storm, seasonality, seaClusters }) {
+        if (![storm, seasonality].every(values => values?.length === signed.length)) {
+            throw new Error('[worldgen/macro] Marine weather requires aligned storm and seasonality rasters.');
+        }
+        const regionOfCell = new Int32Array(signed.length).fill(-1);
+        const wholeWater = { sum: 0, count: 0 };
+        const regional = seaClusters.map(({ cellIndices }, index) => {
+            const row = { sum: 0, count: 0 };
+            for (const cell of cellIndices) {
+                if (signed[cell] > 0) continue;
+                regionOfCell[cell] = index;
+                row.count += 1;
+                row.sum += storm[cell];
+            }
+            return row;
+        });
+        for (let cell = 0; cell < signed.length; cell += 1) {
+            if (signed[cell] > 0) continue;
+            wholeWater.count += 1;
+            wholeWater.sum += storm[cell];
+        }
+        const round = value => Math.round(value * 1e6) / 1e6;
+        return geometry.map(({ routeId, legs }) => {
+            let cellVisits = 0, stormSum = 0, referenceStormSum = 0, seasonalitySum = 0;
+            for (const { waterPathCellIndices } of legs) {
+                for (const cell of waterPathCellIndices) {
+                    const reference = regional[regionOfCell[cell]] || wholeWater;
+                    cellVisits += 1;
+                    stormSum += storm[cell];
+                    referenceStormSum += reference.sum / reference.count;
+                    seasonalitySum += seasonality[cell];
+                }
+            }
+            return { routeId, cellVisits, stormMean: round(stormSum / cellVisits),
+                referenceStormMean: round(referenceStormSum / cellVisits), seasonalityMean: round(seasonalitySum / cellVisits) };
+        });
+    }
+
+    function surveyMarineRouteGeometry(geography, surface, routes, graph, weather) {
+        const errors = validateMarineRouteGeometry(geography);
+        const { marineRouteGeometry, worldBounds } = geography;
+        if (!Array.isArray(marineRouteGeometry)) errors.push('Marine survey requires the published geometry.');
+        const size = worldBounds?.width * worldBounds?.height;
+        if (!surface || surface.width !== worldBounds?.width || surface.height !== worldBounds?.height || surface.values?.length !== size) {
+            errors.push('Marine survey requires the authoritative signed macro surface.');
+        }
+        if (!errors.length) {
+            const expected = buildMarineRouteGeometry(routes, graph, geography.macroRoutes);
+            if (JSON.stringify(expected) !== JSON.stringify(marineRouteGeometry)) {
+                errors.push('Marine geometry must include every source graph leg in route order.');
+            }
+            for (const { routeId, legs } of marineRouteGeometry) {
+                if (legs.some(({ fromLandCellIndex, toLandCellIndex, waterPathCellIndices }) =>
+                    ![fromLandCellIndex, toLandCellIndex].every(cell => Number.isFinite(surface.values[cell]) && surface.values[cell] > 0)
+                    || !waterPathCellIndices.every(cell => Number.isFinite(surface.values[cell]) && surface.values[cell] <= 0))) {
+                    errors.push(`Marine route "${routeId}" crosses land or ends at a false landfall.`);
+                }
+            }
+        }
+        if (errors.length) throw new Error(`[worldgen/macro] ${errors.join(' ')}`);
+        const marineRouteSurvey = { version: 1, landWaterSource: 'finalRelativeElevationField',
+            ...(weather && { weatherByRoute: measureMarinePathWeather(marineRouteGeometry, surface.values, weather) }) };
+        return { ...marineRouteSurvey, checksum: routeSurveyChecksum({ ...geography, marineRouteSurvey }) };
+    }
+
+    function validateMarineRouteGeometry(geography) {
+        const { marineRouteGeometry, marineRouteSurvey, marineGeometryVersion, macroRoutes, worldBounds } = geography;
+        if (marineGeometryVersion !== undefined && (marineGeometryVersion !== 1 || marineRouteSurvey === undefined)) {
+            return ['A current marine geometry format requires its matching survey.'];
+        }
+        if (marineRouteSurvey !== undefined && marineGeometryVersion !== 1) return ['Marine route survey has no matching format version.'];
+        if (marineRouteGeometry === undefined && marineRouteSurvey === undefined) return [];
         const { width, height } = worldBounds || {};
         if (!Array.isArray(marineRouteGeometry) || !Number.isSafeInteger(width) || width <= 0
             || !Number.isSafeInteger(height) || height <= 0 || !Number.isSafeInteger(width * height)) {
@@ -239,9 +334,23 @@
             }
             seen.add(routeId);
         }
+        const weather = marineRouteSurvey?.weatherByRoute;
+        if (weather !== undefined && (!Array.isArray(weather) || weather.length !== marineRouteGeometry.length
+            || weather.some((row, index) => !row || row.routeId !== marineRouteGeometry[index]?.routeId
+                || !Array.isArray(marineRouteGeometry[index]?.legs)
+                || row.cellVisits !== marineRouteGeometry[index].legs.reduce((sum, leg) => sum + (leg?.waterPathCellIndices?.length || 0), 0)
+                || ![row.stormMean, row.referenceStormMean, row.seasonalityMean].every(value => Number.isFinite(value) && value >= 0 && value <= 1)))) {
+            errors.push('Marine weather survey must cover all published water legs.');
+        }
+        if (marineRouteSurvey !== undefined && (marineRouteSurvey?.version !== 1
+            || marineRouteSurvey.landWaterSource !== 'finalRelativeElevationField' || !Array.isArray(macroRoutes)
+            || macroRoutes.some(row => !row || typeof row.routeId !== 'string')
+            || (!errors.length && marineRouteSurvey.checksum !== routeSurveyChecksum(geography)))) {
+            errors.push('Marine route survey does not match the published route geometry and endpoints.');
+        }
         return errors;
     }
 
     Object.assign(macro, { buildMarineAccessEdges, findIslandPassages, measureChangedLanes, collectCorridorOutage,
-        buildMarineRouteGeometry, validateMarineRouteGeometry });
+        buildMarineRouteGeometry, surveyMarineRouteGeometry, validateMarineRouteGeometry });
 })();

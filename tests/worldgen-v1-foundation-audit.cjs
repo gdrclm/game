@@ -7,7 +7,8 @@ const { execFileSync } = require('node:child_process');
 const { mkdirSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
-const { runCausalChecks, verifyNavigationTiming, verifyScarcityTiming } = require('./worldgen-v1-causal.cjs');
+const { runCausalChecks, verifyNavigationTiming, verifyScarcityTiming, verifyPathTiming,
+    verifyIndependentSynthesis } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery, verifyMacroRefugeGeometry } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
@@ -16,7 +17,7 @@ const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixtur
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 const { verifyLocalWaterFixture, verifyWaterDeliveryFixture, inspectLocalWater, verifyIslandExposureFixture,
     verifyIslandOverlapFixture } = require('./worldgen-v1-local-water.cjs');
-const { verifyPlateContacts, inspectMarineRouteGeometry } = require('./worldgen-v1-geography.cjs');
+const { verifyPlateContacts, verifyMarineRouteSurvey, inspectMarineRouteGeometry } = require('./worldgen-v1-geography.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -38,14 +39,16 @@ const criticalImplementationRegression = [1665754063, 2666689910];
 const residualRecoveryRegression = [1240171611, 4286438917, 4144686569, 1683167796, 2248663653];
 const plateContactRegression = [1122193213, 3479992453, 3418526133];
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
-function stratifiedSeeds(namespace) {
-    return Array.from({ length: 64 }, (_, index) => {
+function stratifiedSeeds(namespace, count = 64) {
+    const span = 2 ** 32 / count;
+    return Array.from({ length: count }, (_, index) => {
         const digest = createHash('sha256').update(`${namespace}/${index}`).digest();
-        return index * 2 ** 26 + (digest.readUInt32BE() & (2 ** 26 - 1));
+        return index * span + (digest.readUInt32BE() & (span - 1));
     });
 }
 const stress = stratifiedSeeds('Paths/F8-S/2026-11-26');
 const finalHoldout = stratifiedSeeds('Paths/F8-Final/Independent-v1');
+const auditHoldout = stratifiedSeeds('Paths/F8/FinalAudit/Fresh-v1', 16);
 const previouslyKnown = new Set([...stress, ...originalRegionalRegression, ...knownPhysical, ...edges]);
 assert(finalHoldout.every(seed => !previouslyKnown.has(seed)), 'The new holdout must exclude previously tested seeds');
 assert.equal(new Set(regression).size, 31, 'Regression cohort must preserve all reviewed seeds');
@@ -55,7 +58,8 @@ assert.equal(new Set(originalRegionalRegression).size, 43, 'Preserve every manda
 const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression,
     'foundation-regression': foundationRegression, 'regional-regression': regionalRegression,
     'known-physical': knownPhysical, 'critical-implementation-regression': criticalImplementationRegression,
-    'residual-recovery-regression': residualRecoveryRegression, 'plate-contact-regression': plateContactRegression, edges,
+    'residual-recovery-regression': residualRecoveryRegression, 'plate-contact-regression': plateContactRegression,
+    'final-audit-holdout': auditHoldout, edges,
     ...Object.fromEntries([0, 1, 2, 3].flatMap(id => [
         [`stress-${id}`, stress.filter((_, index) => index % 4 === id)],
         [`final-holdout-${id}`, finalHoldout.filter((_, index) => index % 4 === id)]
@@ -141,6 +145,7 @@ check('Boundary-only water stays physical without becoming a macro sea', () => v
 check('Inland bottlenecks bind measured relief while retaining segment provenance', () => verifyInlandChokepointFixture(macro));
 check('High sea reaches measured continental saddles with supported offshore islands', () => verifyContinentalShorelineFixture(macro));
 check('Only shared plate faces transfer direct compression or divergence', () => verifyPlateContacts(macro));
+check('Marine route survey binds real land and water to the complete ordered source graph', () => verifyMarineRouteSurvey(macro));
 check('Final downhill routing and water receiver controls', () => verifyFinalDrainageFixture(macro));
 check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));
 check('Regional landfalls require open water', () => verifyRegionalNetworkFixture(macro));
@@ -153,6 +158,8 @@ check('Macro refuge overlap preserves fixed inflow, wind direction and drainage 
 check('Timing distinguishes static travel burden, storms and seasonal scarcity', () => ({
     navigation: verifyNavigationTiming(phase2), scarcity: verifyScarcityTiming(phase2)
 }));
+check('Measured marine path weather changes local timing independently of route costs and peers', () => verifyPathTiming(phase2));
+check('Physical synthesized pressure and rhythm axes are independent of presentation contrast', () => verifyIndependentSynthesis(phase2));
 check('Regional pressure and recovery follow independent water, shelter and movement measurements', () => verifyIslandExposureFixture(macro, phase2));
 check('Island water measurements conserve supply and count exact wind shelter and source overlap',
     () => verifyIslandOverlapFixture(macro, phase2));
@@ -261,6 +268,8 @@ function testHandoffs(result) {
     const { pressureSeed, rhythmSeed } = phase0Bundle.worldSubSeedMap;
     const args = { macroGeographyHandoffPackage: handoff, pressureSeed, rhythmSeed };
     const engine = phase2.createPhase2Engine();
+    const missingMarineLegs = { ...geography, marineRouteGeometry: [] };
+    assert.throws(() => engine.run({ ...args, macroGeographyPackage: missingMarineLegs }), /invalid_marine_route_geometry/);
     const coverage = structuredClone(geography.environmentalCoverage);
     const [climateId] = Object.keys(coverage.climateBands);
     coverage.climateBands[climateId].landCellCount = -1;
@@ -414,10 +423,16 @@ for (const seed of seeds) {
         assert(Object.values(determinism).every(Boolean), `Determinism failure for seed ${seed}`);
         const map = inspectGeometry(first);
         const geography = first.phase1.macroGeographyPackage;
-        const { marineRouteGeometry, ...previousGeography } = geography;
+        const { marineGeometryVersion, marineRouteSurvey, plateContactProvenance, ...geography04D } = geography;
+        const { marineRouteGeometry, ...previousGeography } = geography04D;
         report.seeds.push({
             seed, pass: true, macroSeed: geography.macroSeed, firstMs, repeatMs, hashes, determinism, map,
             phase1HashWithoutMarineRouteGeometry: hash({ ...first.phase1, macroGeographyPackage: previousGeography }),
+            phase1HashBeforeCausalAudit: hash({ ...first.phase1, macroGeographyPackage: geography04D }),
+            physicalDomainHashes: {
+                pressure: hash(first.phase2.pressureFieldPackage.domains),
+                recovery: hash(first.phase2.environmentalRhythmPackage.domains.recovery)
+            },
             terrain: inspectFinalTerrain(first),
             environment: inspectClimateAndPressure(first),
             regionalArchipelago: inspectRegionalArchipelago(first, macro),

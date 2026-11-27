@@ -59,6 +59,9 @@
         'environmentalCoverage',
         'regionalArchipelago',
         'marineRouteGeometry',
+        'marineGeometryVersion',
+        'marineRouteSurvey',
+        'plateContactProvenance',
         'debugArtifacts'
     ]);
     const ROOT_ARRAY_KEYS = Object.freeze([
@@ -343,6 +346,9 @@
             ...(normalizedInput.marineRouteGeometry !== undefined && {
                 marineRouteGeometry: cloneValue(normalizedInput.marineRouteGeometry)
             }),
+            ...(normalizedInput.marineGeometryVersion !== undefined && { marineGeometryVersion: normalizedInput.marineGeometryVersion }),
+            ...(normalizedInput.marineRouteSurvey !== undefined && { marineRouteSurvey: cloneValue(normalizedInput.marineRouteSurvey) }),
+            ...(normalizedInput.plateContactProvenance !== undefined && { plateContactProvenance: cloneValue(normalizedInput.plateContactProvenance) }),
             debugArtifacts: isPlainObject(normalizedInput.debugArtifacts)
                 ? cloneValue(normalizedInput.debugArtifacts)
                 : {},
@@ -443,6 +449,9 @@
                     optional: true,
                     description: 'Ordered measured marine legs of exported macro routes, with land and water cells in the macro raster.'
                 },
+                marineGeometryVersion: { type: 'integer', optional: true, description: 'Format version of the verified marine route evidence.' },
+                marineRouteSurvey: { type: 'object', optional: true, description: 'Integrity record for geometry validated against the source graph and signed surface.' },
+                plateContactProvenance: { type: 'object', optional: true, description: 'Contact model that produced the canonical surface and its selection evidence.' },
                 debugArtifacts: {
                     type: 'object',
                     optional: true,
@@ -744,6 +753,12 @@
         for (const error of macro.validateEnvironmentalCoverage?.(candidate) || []) pushError(errors, error);
         for (const error of macro.validateRegionalArchipelago?.(candidate.regionalArchipelago, candidate) || []) pushError(errors, error);
         for (const error of macro.validateMarineRouteGeometry?.(candidate) || []) pushError(errors, error);
+        const contact = candidate.plateContactProvenance;
+        if (contact !== undefined && (!isPlainObject(contact) || contact.selectionPolicy !== 'bounded_relief_support_v1'
+            || !['nearestSeedGraphV1', 'sharedPlateRasterFacesV1'].includes(contact.model)
+            || (contact.comparison !== undefined && contact.comparison?.selected !== contact.model))) {
+            pushError(errors, 'Plate contact provenance must match the model selected for the surface.');
+        }
 
         if (hasOwn(candidate, 'debugArtifacts') && !isPlainObject(candidate.debugArtifacts)) {
             pushError(errors, '"debugArtifacts" must be a plain object when present.');

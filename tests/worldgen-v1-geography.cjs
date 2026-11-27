@@ -31,6 +31,52 @@ function verifyPlateContacts(macro) {
     return { inheritedPairs: 3, sharedFaces: 2, motionReversesDeformation: true, stableOrder: true };
 }
 
+function verifyMarineRouteSurvey(macro) {
+    const worldBounds = { width: 4, height: 3 };
+    const surface = { ...worldBounds, values: Array(12).fill(-1) };
+    surface.values[4] = surface.values[7] = 1;
+    const graph = { nodes: [
+        { nodeId: 'a', anchorCellIndex: 4, waterCellIndex: 5 },
+        { nodeId: 'b', anchorCellIndex: 7, waterCellIndex: 6 }
+    ], edges: [{ edgeId: 'sea', edgeType: 'navigable_sea_lane', fromNodeId: 'a', toNodeId: 'b', waterPathCellIndices: [5, 6] },
+        { edgeId: 'land', edgeType: 'land_edge', fromNodeId: 'a', toNodeId: 'b' }] };
+    const routes = [
+        { routeId: 'maritime', nodePathIds: ['b', 'a', 'b'], edgePathIds: ['sea', 'sea'] },
+        { routeId: 'inland', nodePathIds: ['a', 'b'], edgePathIds: ['land'] }
+    ];
+    const macroRoutes = routes.map(({ routeId }) => ({ routeId }));
+    const marineRouteGeometry = macro.buildMarineRouteGeometry(routes, graph, macroRoutes);
+    const geography = { macroSeed: 17, worldBounds, macroRoutes, marineRouteGeometry };
+    const certify = (candidate, terrain = surface) => macro.surveyMarineRouteGeometry(candidate, terrain, routes, graph);
+    const marineRouteSurvey = certify(geography);
+    assert.deepEqual(marineRouteGeometry[0].legs[0].waterPathCellIndices, [6, 5]);
+    assert.equal(marineRouteGeometry.length, 1);
+    assert.deepEqual(macro.validateMarineRouteGeometry({ ...geography, marineGeometryVersion: 1, marineRouteSurvey }), []);
+
+    for (const cell of [4, 5]) {
+        const tampered = structuredClone(surface);
+        tampered.values[cell] *= -1;
+        assert.deepEqual(macro.validateMarineRouteGeometry(geography), []);
+        assert.throws(() => certify(geography, tampered), /crosses land or ends at a false landfall/);
+    }
+    const reversed = structuredClone(marineRouteGeometry);
+    reversed[0].legs.reverse();
+    const omittedLeg = [{ ...marineRouteGeometry[0], legs: marineRouteGeometry[0].legs.slice(0, 1) }];
+    const wrongRoute = [{ ...marineRouteGeometry[0], routeId: 'inland' }];
+    for (const malformed of [[], reversed, omittedLeg, wrongRoute]) {
+        assert.throws(() => certify({ ...geography, marineRouteGeometry: malformed }), /every source graph leg/);
+        assert(macro.validateMarineRouteGeometry({ ...geography, marineGeometryVersion: 1,
+            marineRouteSurvey, marineRouteGeometry: malformed }).length);
+    }
+    assert(macro.validateMarineRouteGeometry({ ...geography, marineGeometryVersion: 1 }).length);
+    const missingPath = structuredClone(graph);
+    delete missingPath.edges[0].waterPathCellIndices;
+    assert.throws(() => macro.buildMarineRouteGeometry(routes, missingPath, macroRoutes), /Missing source edge or water path/);
+    assert.equal(certify(structuredClone(geography)).checksum, marineRouteSurvey.checksum);
+    return { landCrossingBlocked: true, falseLandfallBlocked: true, sourceRowsAndLegsRequired: true,
+        reversedAndMisattributedRoutesRejected: true, legacyModeAccepted: true };
+}
+
 function inspectMarineRouteGeometry(result, macro, land) {
     const geography = result.phase1.macroGeographyPackage;
     const bundle = result.diagnostics.physicalWorldDebugBundle;
@@ -39,7 +85,7 @@ function inspectMarineRouteGeometry(result, macro, land) {
     const geometry = geography.marineRouteGeometry;
     assert(geometry?.length > 0 && Object.isFrozen(geometry[0].legs[0].waterPathCellIndices));
     assert.deepEqual(macro.validateMarineRouteGeometry(geography), []);
-    const { marineRouteGeometry, ...legacy } = geography;
+    const { marineRouteGeometry, marineRouteSurvey, marineGeometryVersion, ...legacy } = geography;
     assert.deepEqual(macro.validateMarineRouteGeometry(legacy), []);
     const malformed = structuredClone(marineRouteGeometry);
     malformed[0].legs[0].fromLandCellIndex = malformed[0].legs[0].waterPathCellIndices[0];
@@ -48,6 +94,9 @@ function inspectMarineRouteGeometry(result, macro, land) {
     const nodes = new Map(graph.nodes.map(node => [node.nodeId, node]));
     const edges = new Map(graph.edges.map(edge => [edge.edgeId, edge]));
     const published = new Map(geometry.map(row => [row.routeId, row.legs]));
+    const storm = bundle.fieldSnapshots.find(row => row.payload.fieldId === 'stormCorridorField').payload.values;
+    const surveyed = new Map(geography.marineRouteSurvey.weatherByRoute.map(row => [row.routeId, row]));
+    const phase2Timing = result.phase2.environmentalRhythmPackage.domains.navigation.blockedIntervalFrequency.perRouteScores;
     const waterCellsByRoute = new Map();
     for (const { routeId, edgePathIds, nodePathIds } of routes.candidateRoutes) {
         const seaLegs = edgePathIds.map((edgeId, index) => ({ edge: edges.get(edgeId), index }))
@@ -55,6 +104,7 @@ function inspectMarineRouteGeometry(result, macro, land) {
         assert.equal(published.get(routeId)?.length ?? 0, seaLegs.length, routeId);
         if (!seaLegs.length) continue;
         const water = new Set();
+        let weatherTotal = 0, visits = 0;
         for (const [legIndex, { edge, index }] of seaLegs.entries()) {
             const { fromLandCellIndex, toLandCellIndex, waterPathCellIndices } = published.get(routeId)[legIndex];
             assert.equal(fromLandCellIndex, nodes.get(nodePathIds[index]).anchorCellIndex);
@@ -66,8 +116,14 @@ function inspectMarineRouteGeometry(result, macro, land) {
             for (const cell of waterPathCellIndices) {
                 assert(!land(cell));
                 water.add(cell);
+                weatherTotal += storm[cell];
+                visits += 1;
             }
         }
+        const weather = surveyed.get(routeId);
+        assert.equal(weather.cellVisits, visits);
+        assert.equal(weather.stormMean, Math.round((weatherTotal / visits) * 1e6) / 1e6);
+        assert.equal(phase2Timing.find(row => row.recordId === routeId).pathTiming.stormMean, weather.stormMean);
         waterCellsByRoute.set(routeId, water);
     }
     // A cell outage affects every registered path using it, independently of route cost.
@@ -76,9 +132,10 @@ function inspectMarineRouteGeometry(result, macro, land) {
         for (const cell of cells) usesByCell.set(cell, (usesByCell.get(cell) || 0) + 1);
     }
     const partial = [...usesByCell].find(([, count]) => count > 1 && count < waterCellsByRoute.size);
-    return { routeCount: geometry.length, ...(partial && {
+    return { routeCount: geometry.length, stormRange: [Math.min(...[...surveyed.values()].map(row => row.stormMean)),
+        Math.max(...[...surveyed.values()].map(row => row.stormMean))], ...(partial && {
         sharedWaterCell: partial[0], usesThatCell: partial[1], otherPaths: waterCellsByRoute.size - partial[1]
     }) };
 }
 
-module.exports = { verifyPlateContacts, inspectMarineRouteGeometry };
+module.exports = { verifyPlateContacts, verifyMarineRouteSurvey, inspectMarineRouteGeometry };

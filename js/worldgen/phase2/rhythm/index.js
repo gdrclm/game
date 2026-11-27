@@ -1237,7 +1237,7 @@
         });
     }
 
-    function inferNavigationSignals(macroRoute = {}, context = {}) {
+    function inferNavigationSignals(macroRoute = {}, context = {}, pathWeather) {
         const routeType = normalizeString(macroRoute.type || macroRoute.routeType, '').toLowerCase();
         const reliefRegionIds = uniqueStrings(macroRoute.reliefRegionIds);
         const seaRegionIds = uniqueStrings(macroRoute.seaRegionIds);
@@ -1273,9 +1273,13 @@
         ));
         const maritimeRoute = routeType.includes('sea') || routeType.includes('naval') || seaRegionIds.length > 0;
         const chokepointDependence = clamp01(Math.min(1, chokepointIds.length / 2));
-        const meanStormCadence = meanByRecordIds(context.stormScores.stormCadence, climateBandIds);
-        const meanStormBurstClustering = meanByRecordIds(context.stormScores.stormBurstClustering, climateBandIds);
-        const meanStormTransitionSharpness = meanByRecordIds(context.stormScores.calmToStormTransitionSharpness, climateBandIds);
+        // The regional timing shapes already incorporate storm burden. Apply
+        // only the path's deviation relative to the water it actually crosses.
+        const exposureRatio = pathWeather ? (pathWeather.referenceStormMean > 0
+            ? pathWeather.stormMean / pathWeather.referenceStormMean : 0) : 1;
+        const meanStormCadence = clamp01(meanByRecordIds(context.stormScores.stormCadence, climateBandIds) * exposureRatio);
+        const meanStormBurstClustering = clamp01(meanByRecordIds(context.stormScores.stormBurstClustering, climateBandIds) * exposureRatio);
+        const meanStormTransitionSharpness = clamp01(meanByRecordIds(context.stormScores.calmToStormTransitionSharpness, climateBandIds) * exposureRatio);
         const controlValue = mean(linkedChokepoints.map((chokepoint) => clamp01(chokepoint.controlValue)));
         const bypassDifficulty = mean(linkedChokepoints.map((chokepoint) => clamp01(chokepoint.bypassDifficulty)));
         const collapseSensitivity = mean(linkedChokepoints.map((chokepoint) => clamp01(chokepoint.collapseSensitivity)));
@@ -1413,7 +1417,7 @@
         };
     }
 
-    function buildNavigationScoreEntry(macroRoute = {}, signalKey, value, signals = {}) {
+    function buildNavigationScoreEntry(macroRoute = {}, signalKey, value, signals = {}, pathTiming) {
         return Object.freeze({
             recordType: 'macroRoutes',
             recordId: normalizeString(macroRoute.routeId, ''),
@@ -1425,6 +1429,7 @@
             chokepointIds: uniqueStrings(macroRoute.chokepointIds),
             signalKey,
             value: roundValue(value),
+            ...(pathTiming && { pathTiming: Object.freeze(pathTiming) }),
             sourceTruth: Object.freeze({
                 baseCost: roundValue(clamp01(macroRoute.baseCost)),
                 fragility: roundValue(clamp01(macroRoute.fragility)),
@@ -1451,7 +1456,9 @@
     function buildNavigationRhythmField(fieldId, macroRoutes, context, signalKey, description, deterministicSeed) {
         const perRouteScores = macroRoutes.map((macroRoute) => {
             const signals = inferNavigationSignals(macroRoute, context);
-            return buildNavigationScoreEntry(macroRoute, signalKey, signals[signalKey], signals);
+            const pathWeather = context.pathWeather.get(macroRoute.routeId);
+            const pathTiming = pathWeather && { ...pathWeather, value: inferNavigationSignals(macroRoute, context, pathWeather)[signalKey] };
+            return buildNavigationScoreEntry(macroRoute, signalKey, signals[signalKey], signals, pathTiming);
         });
         const values = perRouteScores.map((entry) => entry.value);
 
@@ -2101,9 +2108,9 @@
 
             calibrated[fieldId] = Object.freeze({
                 ...field,
+                readabilityValue: roundValue(calibratedMean),
                 summary: Object.freeze({
                     ...field.summary,
-                    mean: roundValue(calibratedMean),
                     baseMean: roundValue(baseMean),
                     familyMean: roundValue(familyMean),
                     familySpread: roundValue(familySpread),
@@ -3183,6 +3190,8 @@
                     climateBandIdsByReliefRegion: buildClimateBandIdsByReliefRegion(climateBands),
                     climateBandIdsBySeaRegion: buildClimateBandIdsBySeaRegion(climateBands),
                     chokepointIndex: indexById(chokepoints, 'chokepointId'),
+                    pathWeather: new Map(((input.phase2InputBundle || input.inputBundle)?.rootSupport?.marinePathWeather || [])
+                        .map(row => [row.routeId, row])),
                     stormScores: {
                         stormCadence: createScoreMap((((stormCadenceOutput.domain || {}).stormCadence || {}).perBandScores)),
                         stormBurstClustering: createScoreMap((((stormCadenceOutput.domain || {}).stormBurstClustering || {}).perBandScores)),

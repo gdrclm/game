@@ -343,7 +343,7 @@
         return Object.keys(synthesized).map((fieldId) => ({
             domainId: 'synthesized',
             fieldId,
-            value: getPressureFieldMean(synthesized[fieldId])
+            value: synthesized[fieldId]?.readabilityValue ?? getPressureFieldMean(synthesized[fieldId])
         }));
     }
 
@@ -363,7 +363,7 @@
         return Object.keys(synthesized).map((fieldId) => ({
             domainId: 'synthesized',
             fieldId,
-            value: getPressureFieldMean(synthesized[fieldId])
+            value: synthesized[fieldId]?.readabilityValue ?? getPressureFieldMean(synthesized[fieldId])
         }));
     }
 
@@ -489,7 +489,7 @@
                 index[config.sourceRecordType][recordId].push({
                     domainId: config.domainId,
                     fieldId: config.fieldId,
-                    value: clamp01(scoreEntry.value)
+                    value: clamp01(scoreEntry.pathTiming?.value ?? scoreEntry.value)
                 });
             });
 

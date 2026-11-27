@@ -771,10 +771,22 @@
         const mountainSystems = buildMountainSystemRecords(input, reliefRegions);
         const volcanicZones = buildVolcanicZoneRecords(input, mountainSystems);
         const macroRoutes = buildMacroRouteRecords(input);
-        const marineRouteGeometry = macro.buildMarineRouteGeometry(
-            findInputIntermediateOutput(input, 'macroRoutes')?.candidateRoutes,
-            findInputIntermediateOutput(input, 'hybridConnectivityGraph'), macroRoutes
-        );
+        const sampledRoutes = findInputIntermediateOutput(input, 'macroRoutes')?.candidateRoutes;
+        const hybridGraph = findInputIntermediateOutput(input, 'hybridConnectivityGraph');
+        const marineRouteGeometry = macro.buildMarineRouteGeometry(sampledRoutes, hybridGraph, macroRoutes);
+        const weather = input.climateEnvelope?.outputs?.fields;
+        const marineRouteSurvey = marineRouteGeometry && macro.surveyMarineRouteGeometry({
+            macroSeed: normalizedSeed, worldBounds, macroRoutes, marineRouteGeometry
+        }, getNestedValue(input, 'marineCarving.outputs.fields.finalRelativeElevationField'), sampledRoutes, hybridGraph, weather && {
+            storm: weather.stormCorridorField?.values, seasonality: weather.seasonalityField?.values,
+            seaClusters: findInputIntermediateOutput(input, 'seaRegionClusters')?.seaRegionClusters || []
+        });
+        const contactModel = input.tectonicSkeleton?.outputs?.intermediateOutputs?.plateBoundaryClassification?.adjacencyModel;
+        const plateContactProvenance = contactModel && {
+            model: contactModel,
+            selectionPolicy: 'bounded_relief_support_v1',
+            ...(input.plateContactReliefComparison && { comparison: input.plateContactReliefComparison })
+        };
         const strategicRegions = buildStrategicRegionRecords(input);
         const coastalOpportunityMap = buildCoastalOpportunityPackageLayer(input);
         const isolatedZones = buildIsolatedZonePackageLayer(input);
@@ -799,6 +811,8 @@
             chokepoints,
             macroRoutes,
             marineRouteGeometry,
+            ...(marineRouteSurvey && { marineGeometryVersion: 1, marineRouteSurvey }),
+            plateContactProvenance,
             isolatedZones,
             strategicRegions,
             environmentalCoverage,

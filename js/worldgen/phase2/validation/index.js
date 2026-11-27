@@ -1390,6 +1390,9 @@
     }
 
     function getFieldMeanValue(fieldCandidate) {
+        // Existing readability, distribution and relevance gates operate on
+        // the presentation scale. Exported physical axes keep their own means.
+        if (Number.isFinite(fieldCandidate?.readabilityValue)) return fieldCandidate.readabilityValue;
         if (isPlainObject(fieldCandidate) && isPlainObject(fieldCandidate.summary)) {
             const summaryMean = Number(fieldCandidate.summary.mean);
             if (Number.isFinite(summaryMean)) {

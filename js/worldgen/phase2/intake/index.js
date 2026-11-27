@@ -802,6 +802,9 @@
         for (const error of window.Game.systems.worldgenMacro?.validateEnvironmentalCoverage?.(macroGeographyPackage) || []) {
             addIssue(issues, 'error', 'invalid_environmental_coverage', 'macroGeographyPackage.environmentalCoverage', error);
         }
+        for (const error of window.Game.systems.worldgenMacro?.validateMarineRouteGeometry?.(macroGeographyPackage) || []) {
+            addIssue(issues, 'error', 'invalid_marine_route_geometry', 'macroGeographyPackage.marineRouteGeometry', error);
+        }
 
         for (const error of window.Game.systems.worldgenMacro?.validateRegionalIslandEnvironment?.(macroGeographyPackage.regionalArchipelago, macroGeographyPackage) || []) {
             addIssue(issues, 'error', 'invalid_regional_island_environment', 'macroGeographyPackage.regionalArchipelago.islandEnvironment', error);
@@ -869,6 +872,9 @@
                 reliefWaterAccess: cloneValue(localWater.reliefRegions)
             }),
             ...(replenishmentReference !== undefined && { replenishmentReference }),
+            ...(macroGeographyPackage.marineRouteSurvey?.weatherByRoute && {
+                marinePathWeather: cloneValue(macroGeographyPackage.marineRouteSurvey.weatherByRoute)
+            }),
             ...(macroGeographyPackage.regionalArchipelago?.islandEnvironment && {
                 regionalIslandEnvironment: cloneValue(macroGeographyPackage.regionalArchipelago.islandEnvironment)
             }),
@@ -1089,6 +1095,17 @@
                 || replenishmentReference !== phase2.measureReplenishmentReference(reliefWaterAccess))) {
                 addIssue(issues, 'error', 'invalid_replenishment_reference', 'phase2InputBundle.rootSupport.replenishmentReference',
                     'The replenishment reference must match the measured ordinary input per land area.');
+            }
+            const weather = bundleCandidate.rootSupport.marinePathWeather;
+            if (weather !== undefined) {
+                const routes = bundleCandidate.recordCollections?.structural?.macroRoutes;
+                const ids = new Set(Array.isArray(routes) ? routes.map(row => row?.routeId) : []);
+                if (!Array.isArray(weather) || weather.some(row => !row || !ids.delete(row.routeId)
+                    || !Number.isSafeInteger(row.cellVisits) || row.cellVisits <= 0
+                    || ![row.stormMean, row.referenceStormMean, row.seasonalityMean].every(value => Number.isFinite(value) && value >= 0 && value <= 1))) {
+                    addIssue(issues, 'error', 'invalid_marine_path_weather', 'phase2InputBundle.rootSupport.marinePathWeather',
+                        'Marine path weather must cite a unique valid route and normalized surveyed measurements.');
+                }
             }
         }
 
