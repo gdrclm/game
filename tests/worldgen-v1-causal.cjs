@@ -10,6 +10,52 @@ function byRecord(rows, id) {
     return rows.find(row => row.recordId === id)?.value;
 }
 
+function verifyNavigationTiming(phase2) {
+    const run = (baseCost, storm) => {
+        const domain = Object.fromEntries(['stormCadence', 'stormBurstClustering', 'calmToStormTransitionSharpness']
+            .map(id => [id, { perBandScores: [{ recordId: 'band', value: storm }] }]));
+        const inputBundle = { recordCollections: {
+            physical: { climateBands: [{ climateBandId: 'band', reliefRegionIds: ['relief'] }] },
+            structural: { macroRoutes: [{ routeId: 'route', reliefRegionIds: ['relief'], type: 'land',
+                baseCost, fragility: 0.9, redundancy: 0.1 }], chokepoints: [] }
+        } };
+        return phase2.createNavigationWindowGenerator().run({ inputBundle, stormCadenceOutput: { domain } }).domain;
+    };
+    const reliability = domain => domain.navigationWindowReliability.summary.mean;
+    const frequency = domain => domain.blockedIntervalFrequency.summary.mean;
+    const [calmCheap, calmCostly] = [0.1, 0.9].map(cost => run(cost, 0));
+    const [stormCheap, stormCostly] = [0.1, 0.9].map(cost => run(cost, 0.8));
+    assert(reliability(calmCheap) > reliability(calmCostly));
+    assert(reliability(stormCheap) > reliability(stormCostly));
+    assert.deepEqual([frequency(calmCheap), frequency(calmCostly)], [0, 0]);
+    assert.equal(frequency(stormCheap), frequency(stormCostly));
+    assert(frequency(stormCheap) > 0);
+    return { calmCosts: [reliability(calmCheap), reliability(calmCostly)],
+        calmFrequency: frequency(calmCostly), stormFrequency: frequency(stormCostly) };
+}
+
+function verifyScarcityTiming(phase2) {
+    const inputBundle = { recordCollections: { physical: {
+        climateBands: [{ climateBandId: 'band', reliefRegionIds: ['relief'] }],
+        riverBasins: [{ riverBasinId: 'basin', reliefRegionIds: ['relief'] }]
+    } } };
+    const run = (season, burden) => {
+        const seasonality = Object.fromEntries(['seasonalityStrength', 'annualSwingStrength', 'environmentalCycleClarity']
+            .map(id => [id, { perBandScores: [{ recordId: 'band', value: season }] }]));
+        const hydrology = Object.fromEntries(['waterReliabilityInverse', 'waterStress', 'droughtPressure']
+            .map(id => [id, { perBasinScores: [{ recordId: 'basin', value: burden }] }]));
+        return phase2.createScarcityCadenceGenerator().run({ inputBundle,
+            seasonalityOutput: { domain: seasonality }, pressureSynthesisOutput: { domainLayers: { hydrology } }
+        }).domain;
+    };
+    const recurrence = domain => domain.shortageRecurrence.summary.mean;
+    const fixedPressure = [0.2, 0.8].map(season => recurrence(run(season, 0.5)));
+    const fixedSeason = [0.2, 0.8].map(burden => recurrence(run(0.5, burden)));
+    assert(fixedPressure[1] > fixedPressure[0]);
+    assert(fixedSeason[1] > fixedSeason[0]);
+    return { fixedPressure, fixedSeason };
+}
+
 function runCausalChecks(systems, canonical, saveStormPair) {
     const { worldgenMacro: macro, worldgenPhase2: phase2 } = systems;
     const { phase0Bundle, phase1SafeSummaryBundle } = canonical.phase0.outputs;
@@ -224,4 +270,4 @@ function runCausalChecks(systems, canonical, saveStormPair) {
     return result;
 }
 
-module.exports = { runCausalChecks };
+module.exports = { runCausalChecks, verifyNavigationTiming, verifyScarcityTiming };

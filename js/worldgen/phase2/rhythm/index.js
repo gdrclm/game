@@ -1353,9 +1353,13 @@
         const blockedIntervalBase = clamp01(
             (meanStormBurstClustering * 0.3)
             + (meanStormTransitionSharpness * 0.22)
-            + (chokepointTimingDependence * 0.24)
-            + (routeExposure * 0.14)
-            + (fragility * 0.1)
+            // Structure can amplify closures during adverse weather. Static
+            // travel cost does not supply a time-varying closure event.
+            + stormTimingDrag * (
+                (chokepointTimingDependence * 0.24)
+                + ((1 - redundancy) * 0.14)
+                + (fragility * 0.1)
+            )
         );
         const safeIntervalBase = clamp01(
             (navigationWindowBase * 0.48)
@@ -1374,14 +1378,10 @@
             * (1 - (timingArtifactSuppression * 0.12))
             + (routeCoherence * 0.08)
         );
-        const blockedIntervalFrequency = clamp01(
-            applyThresholdContrast(
-                blockedIntervalBase,
-                NAVIGATION_WINDOW_TIMING_POLICY.blockedThreshold,
-                NAVIGATION_WINDOW_TIMING_POLICY.blockedExponent
-            )
-            * (1 - (timingArtifactSuppression * 0.26))
-            + (chokepointTimingDependence * 0.04)
+        const blockedIntervalFrequency = applyThresholdContrast(
+            blockedIntervalBase,
+            NAVIGATION_WINDOW_TIMING_POLICY.blockedThreshold,
+            NAVIGATION_WINDOW_TIMING_POLICY.blockedExponent
         );
         const safeRouteIntervalStrength = clamp01(
             applyThresholdContrast(

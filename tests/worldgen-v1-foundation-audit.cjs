@@ -7,7 +7,7 @@ const { execFileSync } = require('node:child_process');
 const { mkdirSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
-const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
+const { runCausalChecks, verifyNavigationTiming, verifyScarcityTiming } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery, verifyMacroRefugeGeometry } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
@@ -143,6 +143,9 @@ check('Regional carrier capacity and complete raster-backed island geometry', ()
 check('Regional drainage conserves land and responds to wetness', () => verifyRegionalEnvironmentFixture(macro));
 check('Local water retains geometry, seasonal input, and travel evidence independently', () => verifyLocalWaterFixture(macro));
 check('Macro refuge overlap preserves fixed inflow, wind direction and drainage provenance', () => verifyMacroRefugeGeometry(macro));
+check('Timing distinguishes static travel burden, storms and seasonal scarcity', () => ({
+    navigation: verifyNavigationTiming(phase2), scarcity: verifyScarcityTiming(phase2)
+}));
 check('Regional pressure and recovery follow independent water, shelter and movement measurements', () => verifyIslandExposureFixture(macro, phase2));
 check('Island water measurements conserve supply and count exact wind shelter and source overlap',
     () => verifyIslandOverlapFixture(macro, phase2));
