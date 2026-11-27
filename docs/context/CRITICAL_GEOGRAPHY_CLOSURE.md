@@ -1,6 +1,6 @@
 # WorldGen V1 · 04-D · География и физические предпосылки истории
 
-Входной HEAD ветки `worldgen/v1-foundation-closure` — `27d58b1349d6daf55128d990084815c03e4533c7`. Базовая проверенная программа — `cc06a00`. Реализация 04-D — `3289ac96209fa31f4e6c270333f3b8718441d078`. Авторская установка о преемственности групп и территорий задаёт требования к физическим входам следующих фаз. [Исходный контракт 04-D](NEXT_ENGINEERING_MILESTONE.md) · [Авторская установка](SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md) · [Регрессии 04-C](CRITICAL_RESIDUAL_RECOVERY.md)
+Входной HEAD ветки `worldgen/v1-foundation-closure` — `27d58b1349d6daf55128d990084815c03e4533c7`. Базовая проверенная программа — `cc06a00`. Реализация 04-D — `3289ac96209fa31f4e6c270333f3b8718441d078`. Авторская установка о преемственности групп и территорий задаёт требования к физическим входам следующих фаз. [Исходный контракт 04-D](https://github.com/gdrclm/game/blob/27d58b1349d6daf55128d990084815c03e4533c7/docs/context/NEXT_ENGINEERING_MILESTONE.md) · [Авторская установка](SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md) · [Регрессии 04-C](CRITICAL_RESIDUAL_RECOVERY.md)
 
 ## Причина и исправление
 

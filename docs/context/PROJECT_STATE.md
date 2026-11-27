@@ -1,6 +1,6 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: 04-D geography (27 November 2026), branch `worldgen/v1-foundation-closure`. Program revision `3289ac96209fa31f4e6c270333f3b8718441d078`. [04-D evidence](CRITICAL_GEOGRAPHY_CLOSURE.md) · [04-C baseline](CRITICAL_RESIDUAL_RECOVERY.md)
+Current checkpoint: b843d70, 04-D geography (27 November 2026), branch `worldgen/v1-foundation-closure`. Program revision `3289ac96209fa31f4e6c270333f3b8718441d078`. [04-D evidence](CRITICAL_GEOGRAPHY_CLOSURE.md) · [04-C baseline](CRITICAL_RESIDUAL_RECOVERY.md)
 
 ## Current status
 
@@ -42,6 +42,6 @@ Macro contact/coastal artifacts, wind-band transitions, origin skew, water loss,
 
 ## Workflow
 
-The checkpoint remains scoped to Phase 0–2. Final F8/F9 acceptance requires author approval. [04-D acceptance criteria](NEXT_ENGINEERING_MILESTONE.md)
+04-D is verified on 3289ac9. [Independent static gap review](PHASE_1_2_REMAINING_GAPS.md) identifies four priority issues: conditional contact physics, incomplete canonical marine path validation, route weather aggregation and cross-axis summary calibration. Next [prompt 05 — independent causal audit and bounded corrections](NEXT_ENGINEERING_MILESTONE.md), High / Standard. Verify actual code and implement proven material corrections before author package 06; do not treat 173/173 as proof of physical sufficiency. The original 04-D task is historical (see commit 27d58b1). Final F8/F9 acceptance requires explicit author approval. No Phase 3 or merge.
 
 [Active checklist](ACTIVE_CHECKLIST.md) · [High queue](HIGH_REASONING_REVIEW_QUEUE.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md) · [Coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Physical plan](FOUNDATION_PHYSICAL_PLAN.md) · [Archipelago plan](FOUNDATION_ARCHIPELAGO_PLAN.md). Earlier revisions, detailed experiments and measurements are retained in linked reports and git, not repeated as current status.

@@ -48,12 +48,13 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
-The [04-D checkpoint](CRITICAL_GEOGRAPHY_CLOSURE.md) records the three restored Phase 1 cases, connected island capacity and the limits of physical evidence for future history. Keep 04-B through 04-D regression cohorts and the fixed exports in verification after relevant changes.
+The [04-D checkpoint](CRITICAL_GEOGRAPHY_CLOSURE.md) records all 173 fixed exports. Next [prompt 05](NEXT_ENGINEERING_MILESTONE.md) verifies and corrects the [independent static gap review](PHASE_1_2_REMAINING_GAPS.md). Priority subgates: G1 conditional contact model, G2 marine path integrity, R1 actual path weather exposure, R2 summary calibration coupling. These are evidence-led subgates, not independent progress percentage units. Preserve all prior cohorts and add a fresh predeclared holdout. Author package 06 remains deferred.
 
 - [ ] F8-T macro water closure: establish how coherent sheltered area, water loss and independent duration evidence determine actual refuge persistence. Preserve the verified local replenishment signal and keep source access and delivery separate. [Open hypotheses](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, practical access budgets applied to measured route geometry, actual water persistence and recovery timing require further physical evidence.
-- [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
+- [ ] F8-D: resolve or justify conditional contact model (G1), rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
 - [ ] F8-D: the V1 area rule accepts two new second landmasses with entirely oceanic plate labels. Continental crust composition, minimum playable island scale and diversity of origin remain under author review. [Implementation register](CRITICAL_GEOGRAPHY_CLOSURE.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md)
+- [ ] F8-C: verify canonical marine path completeness and physical integrity (G2), path-specific weather exposure (R1), and distinguish summary calibration from causal data (R2). Correct proven defects. [Static review](PHASE_1_2_REMAINING_GAPS.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 
