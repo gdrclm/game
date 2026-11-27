@@ -26,6 +26,29 @@
         };
     }
 
+    function measureReplenishmentReference(reliefWater) {
+        let highestOrdinaryDensity;
+        for (const row of Object.values(reliefWater)) {
+            if (!Number.isSafeInteger(row?.landCellCount) || row.landCellCount < 0
+                || !Number.isFinite(row.inputPotential) || row.inputPotential < 0) return undefined;
+            if (!row.landCellCount) continue;
+            const density = row.inputPotential / row.landCellCount;
+            highestOrdinaryDensity = Math.max(highestOrdinaryDensity ?? 0, density);
+        }
+        return highestOrdinaryDensity;
+    }
+
+    function describeAbsoluteReplenishment(water, referenceDensity) {
+        if (!water || !Number.isFinite(referenceDensity) || referenceDensity < 0) return undefined;
+        // Compare both seasons to the same ordinary capacity so that a
+        // reduction of measured supply is retained in the support share.
+        const capacityDensity = water.meanInflowPerLandArea + referenceDensity;
+        const relativeSupport = density => capacityDensity > 0 ? density / capacityDensity : 0;
+        return Object.freeze({ referenceDensity,
+            ordinarySupport: relativeSupport(water.meanInflowPerLandArea),
+            lowSeasonSupport: relativeSupport(water.lowSeasonInflowPerLandArea) });
+    }
+
     function describeReliefRefuge(coverage, reliefId) {
         const measured = coverage?.reliefRefuges?.regions[reliefId];
         const landCells = coverage?.reliefRegions[reliefId]?.landCellCount;
@@ -170,6 +193,8 @@
         getEnvironmentalCoverage,
         getReliefWaterAccess,
         describeReliefRecoveryWater,
+        measureReplenishmentReference,
+        describeAbsoluteReplenishment,
         describeReliefRefuge,
         meanCarrierScore,
         indexIsolationByRelief,

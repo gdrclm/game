@@ -25,6 +25,8 @@ jobs:
         run: node tests/worldgen-v1-foundation-audit.cjs --cohort regional-regression --causal --snapshots worldgen-observatory-data > worldgen-foundation-report.json
       - name: Verify restored recovery and rhythm regressions
         run: node tests/worldgen-v1-foundation-audit.cjs --cohort critical-implementation-regression > worldgen-critical-regression.json
+      - name: Verify absolute replenishment and residual recovery regressions
+        run: node tests/worldgen-v1-foundation-audit.cjs --cohort residual-recovery-regression > worldgen-residual-recovery.json
       - name: Upload diagnostic report
         if: always()
         uses: actions/upload-artifact@v4
@@ -33,5 +35,6 @@ jobs:
           path: |
             worldgen-foundation-report.json
             worldgen-critical-regression.json
+            worldgen-residual-recovery.json
             worldgen-seed-report.json
             worldgen-observatory-data/

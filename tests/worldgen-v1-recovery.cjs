@@ -144,6 +144,15 @@ function verifySeasonalRecovery(phase2, canonical) {
     });
     const score = (recovery, key) => recovery[key].perReliefScores.find(row => row.recordId === id);
     const context = recovery => score(recovery, 'environmentalForgiveness').supportContextSnapshot.localWater;
+    const reentry = recovery => score(recovery, 'recoveryTempo').supportContextSnapshot.tempoReentryContribution;
+    const absolute = recovery => context(recovery).replenishment;
+    assert.equal(absolute(reference).referenceDensity, rootSupport.replenishmentReference);
+    const tampered = phase2.validatePhase2InputBundle({ ...phase2InputBundle,
+        rootSupport: { ...rootSupport, replenishmentReference: rootSupport.replenishmentReference * 2 } });
+    assert(tampered.issues.some(issue => issue.code === 'invalid_replenishment_reference'));
+    assert(absolute(reference).ordinarySupport > absolute(reference).lowSeasonSupport);
+    assert(Math.abs(absolute(reference).lowSeasonSupport / absolute(reference).ordinarySupport
+        - context(reference).seasonalInflowFraction) < 1e-12);
 
     // Only the observed season changes. Source delivery, retention and pressure stay fixed.
     const dry = replaceWater({ lowInputPotential: 0 });
@@ -165,7 +174,7 @@ function verifySeasonalRecovery(phase2, canonical) {
     const longer = replaceWater({ meanDistance: measure.meanDistance + 1, meanAscent: measure.meanAscent + 0.05 });
     const storage = replaceWater({ storageSpace: measure.storageSpace + 0.1 });
     const scaled = replaceWater({ inputPotential: measure.inputPotential / 2, lowInputPotential: measure.lowInputPotential / 2 });
-    for (const candidate of [unreachable, longer, storage, scaled]) {
+    for (const candidate of [unreachable, longer, storage]) {
         for (const key of Object.keys(reference)) assert.equal(score(candidate, key).value, score(reference, key).value);
     }
     assert.equal(context(unreachable).sourceAccess.reachableLandFraction, 0);
@@ -173,6 +182,29 @@ function verifySeasonalRecovery(phase2, canonical) {
     assert(context(longer).sourceAccess.meanAscent > context(reference).sourceAccess.meanAscent);
     assert(context(storage).potentialRetention > context(reference).potentialRetention);
     assert.equal(context(scaled).meanInflowPerLandArea, context(reference).meanInflowPerLandArea / 2);
+    assert.equal(context(scaled).seasonalInflowFraction, context(reference).seasonalInflowFraction);
+    assert.equal(absolute(scaled).referenceDensity, absolute(reference).referenceDensity);
+    assert(absolute(scaled).ordinarySupport < absolute(reference).ordinarySupport);
+    assert(absolute(scaled).lowSeasonSupport < absolute(reference).lowSeasonSupport);
+    assert(score(scaled, 'recoveryTempo').value < score(reference, 'recoveryTempo').value);
+    assert(score(scaled, 'environmentalForgiveness').value < target.value);
+    assert.equal(reentry(scaled), reentry(reference));
+    for (const key of ['stabilizationInterval', 'reliefPersistence']) {
+        assert.equal(score(scaled, key).value, score(reference, key).value);
+    }
+    const noInput = replaceWater({ inputPotential: 0, lowInputPotential: 0 });
+    assert.equal(absolute(noInput).ordinarySupport, 0);
+    assert.equal(reentry(noInput), reentry(reference));
+    assert(reentry(noInput) > 0 && score(noInput, 'recoveryTempo').value >= reentry(noInput));
+    const pathExposure = run({ ...rootSupport, regionalIslandEnvironment: {
+        ...rootSupport.regionalIslandEnvironment, records: rootSupport.regionalIslandEnvironment.records.map(row =>
+            row.waterDelivery?.unshieldedDistance ? { ...row, waterDelivery: {
+                ...row.waterDelivery, unshieldedDistance: row.waterDelivery.distance
+            } } : row)
+    } });
+    assert(rootSupport.regionalIslandEnvironment.records.some(row =>
+        row.waterDelivery?.unshieldedDistance?.p90 < row.waterDelivery?.distance?.p90));
+    assert.deepEqual(pathExposure, reference);
 
     const { hydrology } = pressureFieldPackage.domains;
     const drought = hydrology.droughtPressure;
@@ -187,7 +219,7 @@ function verifySeasonalRecovery(phase2, canonical) {
     assert(lowRisk.scarcityDrag < highRisk.scarcityDrag);
     assert.equal(lowRisk.recoveryCapacity, highRisk.recoveryCapacity);
 
-    const { regionalIslandEnvironment, reliefWaterAccess, ...otherSupport } = rootSupport;
+    const { regionalIslandEnvironment, reliefWaterAccess, replenishmentReference, ...otherSupport } = rootSupport;
     // The fine island wind measure does not supply macro shelter truth.
     const windChanged = run({ ...rootSupport, regionalIslandEnvironment: {
         ...regionalIslandEnvironment,
@@ -204,9 +236,13 @@ function verifySeasonalRecovery(phase2, canonical) {
     assert.deepEqual(windChanged, reference);
     const legacy = run({ ...otherSupport, regionalIslandEnvironment });
     assert.equal(context(legacy), undefined);
-    assert(score(legacy, 'recoveryTempo').value <= score(reference, 'recoveryTempo').value);
     assert.equal(score(legacy, 'reliefPersistence').value, score(reference, 'reliefPersistence').value);
     assert(score(legacy, 'environmentalForgiveness').value >= target.value);
+    const priorWater = run({ ...otherSupport, regionalIslandEnvironment, reliefWaterAccess });
+    assert.equal(absolute(priorWater), undefined);
+    assert.equal(reentry(priorWater), undefined);
+    assert.equal(context(priorWater).tempoRunoffSupport,
+        score(priorWater, 'recoveryTempo').supportContextSnapshot.reliableRunoffSupport);
     const coverage = rootSupport.environmentalCoverage;
     const refuge = coverage.reliefRefuges.regions[id];
     assert(refuge.lowSeasonInput > 0 && measure.lowInputPotential > refuge.lowSeasonInput);
@@ -224,6 +260,10 @@ function verifySeasonalRecovery(phase2, canonical) {
     assert.equal(score(legacyRefuge, 'reliefPersistence').supportContextSnapshot.refuge, undefined);
     assert.equal(score(legacyRefuge, 'recoveryTempo').value, score(reference, 'recoveryTempo').value);
     return { reliefRegionId: id, seasonalFraction: context(reference).seasonalInflowFraction,
+        absoluteReference: replenishmentReference,
+        tempoAtHalfInput: [score(reference, 'recoveryTempo').value, score(scaled, 'recoveryTempo').value],
+        forgivenessAtHalfInput: [target.value, score(scaled, 'environmentalForgiveness').value],
+        reentryContribution: reentry(reference),
         persistenceAfterMovingLowSeasonInputOutOfShelter: [persistence(reference), persistence(shifted)],
         forgivenessAfterSeasonChange: [target.value, score(dry, 'environmentalForgiveness').value],
         scarcityDragWithDrought: [lowRisk.scarcityDrag, highRisk.scarcityDrag],

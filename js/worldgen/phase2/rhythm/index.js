@@ -2449,17 +2449,19 @@
             context.reliableRunoff, basinCells, riverBasinIds, spatial?.landCellCount
         ) ?? 0;
         const localWater = phase2.describeReliefRecoveryWater(context.reliefWater?.[reliefRegionId]);
+        const replenishment = phase2.describeAbsoluteReplenishment(localWater, context.replenishmentReference);
         const refuge = phase2.describeReliefRefuge(context.coverage, reliefRegionId);
         const ordinaryRunoffSupport = phase2.meanCarrierScore(
             context.ordinaryRunoff, basinCells, riverBasinIds, spatial?.landCellCount
         ) ?? 0;
-        // Repeated stress can span the observed low season. Use it as a ceiling
-        // on ordinary runoff, alongside the existing limit from basin conditions.
-        const seasonalRunoffCeiling = ordinaryRunoffSupport * (localWater?.seasonalInflowFraction ?? 0);
+        // In repeated stress the local water ceiling is the measured low
+        // input, with the existing basin risk acting as a separate limit.
+        const seasonalRunoffCeiling = replenishment?.lowSeasonSupport
+            ?? ordinaryRunoffSupport * (localWater?.seasonalInflowFraction ?? 0);
         const repeatedRunoffSupport = localWater ? Math.min(runoffSupport, seasonalRunoffCeiling) : runoffSupport;
         // With measured seasonal inflow, keep drought in the scarcity response
         // and the repeated-stress ceiling, without also penalizing tempo capacity.
-        const tempoRunoffSupport = localWater ? reliableRunoffSupport : runoffSupport;
+        const tempoRunoffSupport = replenishment?.ordinarySupport ?? (localWater ? reliableRunoffSupport : runoffSupport);
         const accessibleTerrain = 1 - clamp01(reliefRegion.ruggednessBias);
         // A general support window can remain even when local replenishment ceases.
         const localSupport = 0.25 * supportWindow + 0.75 * tempoRunoffSupport;
@@ -2496,11 +2498,13 @@
             RECOVERY_RELIEF_TIMING_POLICY.persistenceReliefThreshold,
             RECOVERY_RELIEF_TIMING_POLICY.reliefPocketExponent
         );
+        const mobilityReliefBonus = mobilityRelief * 0.05;
         const justifiedReliefBonus = Math.min(
             RECOVERY_RELIEF_TIMING_POLICY.localReliefBonusCap,
-            (reliefPocket * 0.08) + (mobilityRelief * 0.05) + (persistentReliefAnchor * 0.05)
+            (reliefPocket * 0.08) + mobilityReliefBonus + (persistentReliefAnchor * 0.05)
         );
 
+        const mobilityTempo = mobilityReentrySupport * 0.18;
         const recoveryTempo = clamp01(
             applyThresholdContrast(
                 supportWindow,
@@ -2508,10 +2512,13 @@
                 RECOVERY_RELIEF_TIMING_POLICY.recoveryExponent
             )
             * 0.72
-            + (mobilityReentrySupport * 0.18)
+            + mobilityTempo
             + ((1 - scarcityDrag) * 0.1)
             + justifiedReliefBonus
         );
+        // Route reentry and its route-specific bonus do not need local
+        // water. Regional terrain still limits work across the relief area.
+        const tempoReentry = replenishment ? mobilityTempo + mobilityReliefBonus : 0;
         const stabilizationInterval = clamp01(
             applyThresholdContrast(
                 stabilizationDrag,
@@ -2564,6 +2571,7 @@
             ...(refuge && { refuge }),
             ...(localWater && { localWater: Object.freeze({
                 ...localWater,
+                ...(replenishment && { replenishment }),
                 ordinaryRunoffSupport: roundValue(ordinaryRunoffSupport),
                 tempoRunoffSupport: roundValue(tempoRunoffSupport),
                 seasonalRunoffCeiling: roundValue(seasonalRunoffCeiling),
@@ -2572,6 +2580,7 @@
             accessibleTerrain: roundValue(accessibleTerrain),
             supportWindow: roundValue(supportWindow),
             recoveryCapacity: roundValue(recoveryCapacity),
+            ...(replenishment && { tempoReentryContribution: roundValue(accessibleTerrain * tempoReentry) }),
             mobilityReentrySupport: roundValue(mobilityReentrySupport),
             stabilizationDrag: roundValue(stabilizationDrag),
             scarcityDrag: roundValue(scarcityDrag),
@@ -2585,7 +2594,7 @@
             supportDelayBurden: roundValue(supportDelayBurden),
             ecologicalFragility: roundValue(ecologicalFragility),
             catastrophePressure: roundValue(catastrophePressure),
-            recoveryTempo: roundValue(recoveryTempo * recoveryCapacity),
+            recoveryTempo: roundValue((recoveryTempo - tempoReentry) * recoveryCapacity + accessibleTerrain * tempoReentry),
             stabilizationInterval: roundValue(stabilizationInterval),
             // Habitat can retain a refuge while delivery over the surrounding terrain remains slow.
             reliefPersistence: roundValue(reliefPersistence * persistentSupport),
@@ -2621,6 +2630,9 @@
                 accessibleTerrain: signals.accessibleTerrain || 0,
                 supportWindow: signals.supportWindow || 0,
                 recoveryCapacity: signals.recoveryCapacity || 0,
+                ...(signalKey === 'recoveryTempo' && signals.tempoReentryContribution !== undefined && {
+                    tempoReentryContribution: signals.tempoReentryContribution
+                }),
                 mobilityReentrySupport: signals.mobilityReentrySupport || 0,
                 stabilizationDrag: signals.stabilizationDrag || 0,
                 scarcityDrag: signals.scarcityDrag || 0,
@@ -2909,6 +2921,7 @@
                 const context = {
                     coverage: phase2.getEnvironmentalCoverage(input),
                     reliefWater: phase2.getReliefWaterAccess(input),
+                    replenishmentReference: (input.phase2InputBundle || input.inputBundle)?.rootSupport?.replenishmentReference,
                     climateBandIdsByReliefRegion: buildClimateBandIdsByReliefRegion(climateBands),
                     riverBasinIdsByReliefRegion: buildRiverBasinIdsByReliefRegion(riverBasins),
                     reliableRunoff,

@@ -201,6 +201,10 @@ function runCausalChecks(systems, canonical, saveStormPair) {
     assert(water(scarce) > water(supported), 'Smaller catchment did not impair water reliability');
     assert(runoff(scarce) < runoff(supported), 'More reliable water did not improve locally available runoff');
     assert(recovery(scarce) < recovery(supported), 'Reliable catchment did not support recovery');
+    const localReplenishment = output => reliefTempo(output).supportContextSnapshot.localWater.replenishment;
+    assert(localReplenishment(scarce));
+    assert.deepEqual(localReplenishment(scarce), localReplenishment(supported),
+        'Catchment scale cannot replace measured local replenishment');
     assert.deepEqual(scarce.pressureFieldPackage.domains.climate, supported.pressureFieldPackage.domains.climate);
     const bandFootprints = original.environmentalCoverage.climateBands;
     const food = (output, bandId) => byRecord(output.pressureFieldPackage.domains.food.foodStress.perBandScores, bandId);

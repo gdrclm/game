@@ -34,6 +34,7 @@ const originalRegionalRegression = foundationRegression.concat(2856344, 64030614
 const regionalRegression = originalRegionalRegression.concat(3840024598,
     3019978005, 2402593754, 82211472, 3338251652, 1715244351);
 const criticalImplementationRegression = [1665754063, 2666689910];
+const residualRecoveryRegression = [1240171611, 4286438917, 4144686569, 1683167796, 2248663653];
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 function stratifiedSeeds(namespace) {
     return Array.from({ length: 64 }, (_, index) => {
@@ -51,7 +52,8 @@ assert.equal(new Set(foundationRegression).size, 36, 'Foundation regression must
 assert.equal(new Set(originalRegionalRegression).size, 43, 'Preserve every mandatory regional regression');
 const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-regression': recoveryRegression,
     'foundation-regression': foundationRegression, 'regional-regression': regionalRegression,
-    'known-physical': knownPhysical, 'critical-implementation-regression': criticalImplementationRegression, edges,
+    'known-physical': knownPhysical, 'critical-implementation-regression': criticalImplementationRegression,
+    'residual-recovery-regression': residualRecoveryRegression, edges,
     ...Object.fromEntries([0, 1, 2, 3].flatMap(id => [
         [`stress-${id}`, stress.filter((_, index) => index % 4 === id)],
         [`final-holdout-${id}`, finalHoldout.filter((_, index) => index % 4 === id)]

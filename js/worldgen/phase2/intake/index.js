@@ -857,6 +857,7 @@
             throw new Error(`[worldgen/phase2] Invalid MacroGeographyHandoffPackage intake: ${detail}`);
         }
         const { localWater, ...environmentalCoverage } = macroGeographyPackage.environmentalCoverage || {};
+        const replenishmentReference = localWater && phase2.measureReplenishmentReference(localWater.reliefRegions);
         const rootSupport = {
             macroSeed: normalizeSeed(macroGeographyPackage.macroSeed),
             version: normalizeString(macroGeographyPackage.version),
@@ -867,6 +868,7 @@
             ...(localWater && {
                 reliefWaterAccess: cloneValue(localWater.reliefRegions)
             }),
+            ...(replenishmentReference !== undefined && { replenishmentReference }),
             ...(macroGeographyPackage.regionalArchipelago?.islandEnvironment && {
                 regionalIslandEnvironment: cloneValue(macroGeographyPackage.regionalArchipelago.islandEnvironment)
             }),
@@ -1081,6 +1083,13 @@
                     );
                 }
             });
+            const { replenishmentReference, reliefWaterAccess } = bundleCandidate.rootSupport;
+            if (replenishmentReference !== undefined && (!Number.isFinite(replenishmentReference)
+                || replenishmentReference < 0 || !isPlainObject(reliefWaterAccess)
+                || replenishmentReference !== phase2.measureReplenishmentReference(reliefWaterAccess))) {
+                addIssue(issues, 'error', 'invalid_replenishment_reference', 'phase2InputBundle.rootSupport.replenishmentReference',
+                    'The replenishment reference must match the measured ordinary input per land area.');
+            }
         }
 
         if (!isPlainObject(bundleCandidate.recordCollections)) {
