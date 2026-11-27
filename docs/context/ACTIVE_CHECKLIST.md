@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-27 for the 04-C recovery checkpoint.
+Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-27 for the 04-D geography checkpoint.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -41,15 +41,19 @@ Current engineering work only. Past iterations and measurements are preserved in
 - [x] 04-B verification on `a3df0d2`: 49/49 mandatory and 27/27 checks, 62/64 original stress, 61/64 independent, 7/7 edges, 6/11 additional. Preserve all 158 prior exports and restore seven cases. Browser and GitHub Actions pass. [Pinned verification](review/f8t/closure/prompt-04b-implementation-audit.json) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45952961529)
 - [x] 04-C absolute recharge: ordinary inflow supports ecological tempo and low-season inflow limits recurring stress on a common density scale. Route reentry keeps its separate physical support. Fixed inputs cover five restored recovery cases and preserve the pressure fields, stabilization timing and shelter-based persistence. [Recovery implementation and tests](CRITICAL_RESIDUAL_RECOVERY.md)
 - [x] 04-C verification on `cc06a00` exported 170/173 unique worlds and preserved Phase 0 and Phase 1 hashes for all 165 prior exports. Mandatory 49/49 and 27/27 checks, original stress 64/64, independent 62/64, edges 7/7, additional 8/11, and separate regressions 2/2 and 5/5. Deterministic repeats, browser and GitHub Actions passed. [Pinned verification](review/f8t/closure/prompt-04c-verification.json) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/45965882650)
+- [x] 04-D tectonic contacts: on otherwise single-body relief, generate a shared-face reading of the same plate positions and motions before hydrosphere. The three targeted worlds have a supported split, offshore chain and full exports. Preserve the three in the separate plate-contact regression cohort. [Plate measurements and maps](CRITICAL_GEOGRAPHY_CLOSURE.md)
+- [x] 04-D physical route continuity: export existing water paths and adjacent land cells by route ID. Tests compare each route with its source and real land/water raster. Physical overlap, repeated-stress support and route reopening keep their independent carriers. [Physical inputs for later phases](CRITICAL_GEOGRAPHY_CLOSURE.md#физические-данные-для-будущих-фаз)
+
+- [x] 04-D full verification on `3289ac9`: 173/173 unique exports, all 170 prior packages byte-identical apart from the new marine path field in Phase 1. Mandatory 49/49 with 28/28 checks, fixed stress 64/64 and 64/64, edges 7/7, additional 11/11, and separate controls 2/2, 5/5 and 3/3. Deterministic repeats, browser and GitHub Actions passed. [Pinned verification](review/f8t/closure/prompt-04d-verification.json)
 
 ## Active technical work (do not restart completed milestones)
 
-The [04-C checkpoint](CRITICAL_RESIDUAL_RECOVERY.md) resolves all five remaining Phase 2 export failures. Next execute [04-D — continental and archipelago robustness](NEXT_ENGINEERING_MILESTONE.md) before independent audit 05. Preserve the 170 prior exports. The three Phase 1 failures and physical approximation/author gates remain open.
+The [04-D checkpoint](CRITICAL_GEOGRAPHY_CLOSURE.md) records the three restored Phase 1 cases, connected island capacity and the limits of physical evidence for future history. Keep 04-B through 04-D regression cohorts and the fixed exports in verification after relevant changes.
 
 - [ ] F8-T macro water closure: establish how coherent sheltered area, water loss and independent duration evidence determine actual refuge persistence. Preserve the verified local replenishment signal and keep source access and delivery separate. [Open hypotheses](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, practical access budgets applied to measured route geometry, actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S / 04-D: investigate and correct physically supported causes of the three unsupported continental profiles; verify connected archipelago capacity separately from continent count. If current contract cannot be met, record evidence and explicit author-policy decision needed. Keep the five restored recovery controls in CI and repeat the fixed cohorts after relevant production changes. [Implementation register](CRITICAL_RESIDUAL_RECOVERY.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md)
+- [ ] F8-D: the V1 area rule accepts two new second landmasses with entirely oceanic plate labels. Continental crust composition, minimum playable island scale and diversity of origin remain under author review. [Implementation register](CRITICAL_GEOGRAPHY_CLOSURE.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 

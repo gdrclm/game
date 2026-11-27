@@ -1,6 +1,8 @@
 # Next engineering milestone — 04-D / continental and archipelago robustness
 
-Repository: gdrclm/game. Branch: worldgen/v1-foundation-closure. Verify actual HEAD. Evidence checkpoint af7b610, production cc06a00 (CI 45965882650 success). High / Standard recommended. Phase 0–2 only. Do not restart macro recovery, begin prompt 05, Phase 3, merge, deployment or author acceptance.
+Repository: gdrclm/game. Branch: worldgen/v1-foundation-closure. Verify actual HEAD. Phase 0–2 only. Do not restart macro recovery, begin prompt 05, Phase 3, merge, deployment or author acceptance.
+
+The 04-D implementation and full verification are complete on `3289ac9`, with 173/173 exports. The original task and acceptance criteria are retained below. The report records the three restored profiles, the physical inputs to later history and the remaining author decisions. [Evidence and maps](CRITICAL_GEOGRAPHY_CLOSURE.md)
 
 ## Read first
 
