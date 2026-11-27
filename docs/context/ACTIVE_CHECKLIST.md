@@ -44,12 +44,12 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
-The [04-C checkpoint](CRITICAL_RESIDUAL_RECOVERY.md) preserves the spatial refuge, navigation, continental search and local delivery work. Physical duration, exposure limits and the three unsupported continental profiles remain open under their existing evidence and policy gates.
+The [04-C checkpoint](CRITICAL_RESIDUAL_RECOVERY.md) resolves all five remaining Phase 2 export failures. Next execute [04-D — continental and archipelago robustness](NEXT_ENGINEERING_MILESTONE.md) before independent audit 05. Preserve the 170 prior exports. The three Phase 1 failures and physical approximation/author gates remain open.
 
 - [ ] F8-T macro water closure: establish how coherent sheltered area, water loss and independent duration evidence determine actual refuge persistence. Preserve the verified local replenishment signal and keep source access and delivery separate. [Open hypotheses](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, practical access budgets applied to measured route geometry, actual water persistence and recovery timing require further physical evidence.
 - [ ] F8-D: resolve or explain rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
-- [ ] F8-S: record explicit disposition of the three unsupported continental cases. Keep the five restored recovery controls in CI and repeat the fixed cohorts after relevant production changes. [Implementation register](CRITICAL_RESIDUAL_RECOVERY.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md)
+- [ ] F8-S / 04-D: investigate and correct physically supported causes of the three unsupported continental profiles; verify connected archipelago capacity separately from continent count. If current contract cannot be met, record evidence and explicit author-policy decision needed. Keep the five restored recovery controls in CI and repeat the fixed cohorts after relevant production changes. [Implementation register](CRITICAL_RESIDUAL_RECOVERY.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)
 - [ ] F9: final reconciliation of contracts, code, evidence and phase readiness. Explicit approval before Phase 3 or merge.
 
