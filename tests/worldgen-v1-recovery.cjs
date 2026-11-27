@@ -207,10 +207,46 @@ function verifySeasonalRecovery(phase2, canonical) {
     assert(score(legacy, 'recoveryTempo').value <= score(reference, 'recoveryTempo').value);
     assert.equal(score(legacy, 'reliefPersistence').value, score(reference, 'reliefPersistence').value);
     assert(score(legacy, 'environmentalForgiveness').value >= target.value);
+    const coverage = rootSupport.environmentalCoverage;
+    const refuge = coverage.reliefRefuges.regions[id];
+    assert(refuge.lowSeasonInput > 0 && measure.lowInputPotential > refuge.lowSeasonInput);
+    const shifted = run({ ...rootSupport, environmentalCoverage: { ...coverage, reliefRefuges: {
+        ...coverage.reliefRefuges, regions: { ...coverage.reliefRefuges.regions,
+            [id]: { ...refuge, lowSeasonInput: 0, wateredLandCells: 0, wateredPatchCount: 0, largestWateredPatch: 0 } }
+    } } });
+    const persistence = recovery => score(recovery, 'reliefPersistence').value;
+    assert(persistence(reference) > persistence(shifted) && persistence(shifted) > 0);
+    for (const key of ['recoveryTempo', 'stabilizationInterval', 'environmentalForgiveness']) {
+        assert.equal(score(shifted, key).value, score(reference, key).value);
+    }
+    const { reliefRefuges, ...legacyCoverage } = coverage;
+    const legacyRefuge = run({ ...rootSupport, environmentalCoverage: legacyCoverage });
+    assert.equal(score(legacyRefuge, 'reliefPersistence').supportContextSnapshot.refuge, undefined);
+    assert.equal(score(legacyRefuge, 'recoveryTempo').value, score(reference, 'recoveryTempo').value);
     return { reliefRegionId: id, seasonalFraction: context(reference).seasonalInflowFraction,
+        persistenceAfterMovingLowSeasonInputOutOfShelter: [persistence(reference), persistence(shifted)],
         forgivenessAfterSeasonChange: [target.value, score(dry, 'environmentalForgiveness').value],
         scarcityDragWithDrought: [lowRisk.scarcityDrag, highRisk.scarcityDrag],
         pressureHeldFixed: true, accessRetentionAndIslandWindIndependent: true, legacyInputAccepted: true };
 }
 
-module.exports = { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery };
+function verifyMacroRefugeGeometry(macro) {
+    const signed = [1, 0.8, 0.2, 0.9, 0.3];
+    const width = signed.length;
+    const relief = { byCell: signed.map(() => 'fixture'), byId: new Map([['fixture', {}]]) };
+    const measure = (direction, input, terminal = [0, 0, 0, 0, 4]) => macro.measureReliefRefuges({
+        signed, input, lowInput: input.map(value => value / 2), terminal
+    }, width, { xValues: signed.map(() => direction), yValues: signed.map(() => 0) }, relief).regions.fixture;
+    const intoShelter = measure(1, [0, 0.5, 0.5, 0, 0]);
+    const ontoOpenLand = measure(1, [0, 0, 0, 1, 0]);
+    const differentWind = measure(-1, [0, 0.5, 0.5, 0, 0]);
+    const splitDrainage = measure(1, [0, 0.5, 0.5, 0, 0], [0, 1, 2, 0, 4]);
+    assert.deepEqual([intoShelter.classifiedLandCells, intoShelter.shelteredLandCells], [4, 3]);
+    assert.deepEqual([intoShelter.lowSeasonInput, ontoOpenLand.lowSeasonInput, differentWind.lowSeasonInput], [0.5, 0, 0.25]);
+    assert.deepEqual([intoShelter.wateredPatchCount, intoShelter.largestWateredPatch], [1, 2]);
+    assert.deepEqual([splitDrainage.wateredPatchCount, splitDrainage.largestWateredPatch], [2, 1]);
+    assert.equal(splitDrainage.lowSeasonInput, intoShelter.lowSeasonInput);
+    return { intoShelter, ontoOpenLand, differentWind, splitDrainage };
+}
+
+module.exports = { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery, verifyMacroRefugeGeometry };

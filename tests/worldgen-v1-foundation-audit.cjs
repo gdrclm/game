@@ -9,7 +9,7 @@ const { join } = require('node:path');
 const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
 const { runCausalChecks } = require('./worldgen-v1-causal.cjs');
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
-const { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery } = require('./worldgen-v1-recovery.cjs');
+const { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery, verifyMacroRefugeGeometry } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
     verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture,
     verifyContinentalShorelineFixture } = require('./worldgen-v1-terrain.cjs');
@@ -142,6 +142,7 @@ check('Regional surface requires local physical support', () => verifyRegionalPr
 check('Regional carrier capacity and complete raster-backed island geometry', () => verifyRegionalCarrierFixture(macro));
 check('Regional drainage conserves land and responds to wetness', () => verifyRegionalEnvironmentFixture(macro));
 check('Local water retains geometry, seasonal input, and travel evidence independently', () => verifyLocalWaterFixture(macro));
+check('Macro refuge overlap preserves fixed inflow, wind direction and drainage provenance', () => verifyMacroRefugeGeometry(macro));
 check('Regional pressure and recovery follow independent water, shelter and movement measurements', () => verifyIslandExposureFixture(macro, phase2));
 check('Island water measurements conserve supply and count exact wind shelter and source overlap',
     () => verifyIslandOverlapFixture(macro, phase2));
@@ -253,6 +254,16 @@ function testHandoffs(result) {
     branchCoverage.localWater.branches[0].lowInputPotential = branchCoverage.localWater.branches[0].inputPotential + 1;
     assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, environmentalCoverage: branchCoverage } }),
         /invalid_environmental_coverage/);
+    const refugeCoverage = structuredClone(geography.environmentalCoverage);
+    const [refugeId] = Object.keys(refugeCoverage.reliefRefuges.regions);
+    const refuge = refugeCoverage.reliefRefuges.regions[refugeId];
+    refuge.lowSeasonInput = refuge.ordinaryInput + 1;
+    assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, environmentalCoverage: refugeCoverage } }),
+        /invalid_environmental_coverage/);
+    delete refugeCoverage.reliefRefuges;
+    assert(engine.run({ ...args, macroGeographyPackage: { ...geography, environmentalCoverage: refugeCoverage } })
+        .output.environmentalRhythmPackage.domains.recovery.reliefPersistence.perReliefScores
+        .every(row => row.supportContextSnapshot.refuge === undefined));
     assert.throws(() => engine.run({ ...args, macroGeographyPackage: { ...geography, continents: [] } }), /insufficient_required_root_records/);
     assert.throws(() => engine.run({
         ...args, macroGeographyPackage: { ...geography, validationReport: { ...geography.validationReport, isValid: false } }

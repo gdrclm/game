@@ -2449,6 +2449,7 @@
             context.reliableRunoff, basinCells, riverBasinIds, spatial?.landCellCount
         ) ?? 0;
         const localWater = phase2.describeReliefRecoveryWater(context.reliefWater?.[reliefRegionId]);
+        const refuge = phase2.describeReliefRefuge(context.coverage, reliefRegionId);
         const ordinaryRunoffSupport = phase2.meanCarrierScore(
             context.ordinaryRunoff, basinCells, riverBasinIds, spatial?.landCellCount
         ) ?? 0;
@@ -2462,7 +2463,7 @@
         const accessibleTerrain = 1 - clamp01(reliefRegion.ruggednessBias);
         // A general support window can remain even when local replenishment ceases.
         const localSupport = 0.25 * supportWindow + 0.75 * tempoRunoffSupport;
-        const persistentSupport = 0.25 * supportWindow + 0.75 * reliableRunoffSupport;
+        const persistentSupport = 0.25 * supportWindow + 0.75 * (refuge?.replenishedShelterSupport ?? reliableRunoffSupport);
         const repeatedSupport = 0.25 * supportWindow + 0.75 * repeatedRunoffSupport;
         const recoveryCapacity = accessibleTerrain * localSupport;
         const reliefPocket = applyThresholdContrast(
@@ -2560,6 +2561,7 @@
             landCellCount: spatial?.landCellCount ?? null,
             runoffSupport: roundValue(runoffSupport),
             reliableRunoffSupport: roundValue(reliableRunoffSupport),
+            ...(refuge && { refuge }),
             ...(localWater && { localWater: Object.freeze({
                 ...localWater,
                 ordinaryRunoffSupport: roundValue(ordinaryRunoffSupport),
@@ -2614,6 +2616,7 @@
                 landCellCount: signals.landCellCount ?? null,
                 runoffSupport: signals.runoffSupport || 0,
                 reliableRunoffSupport: signals.reliableRunoffSupport || 0,
+                ...(signalKey === 'reliefPersistence' && signals.refuge && { refuge: signals.refuge }),
                 ...(signals.localWater && { localWater: signals.localWater }),
                 accessibleTerrain: signals.accessibleTerrain || 0,
                 supportWindow: signals.supportWindow || 0,

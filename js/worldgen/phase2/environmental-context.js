@@ -26,6 +26,21 @@
         };
     }
 
+    function describeReliefRefuge(coverage, reliefId) {
+        const measured = coverage?.reliefRefuges?.regions[reliefId];
+        const landCells = coverage?.reliefRegions[reliefId]?.landCellCount;
+        if (!measured?.classifiedLandCells || !landCells) return undefined;
+        const { ordinaryInput, lowSeasonInput, shelteredLandCells } = measured;
+        const shelteredLandFraction = shelteredLandCells / landCells;
+        const lowSeasonFraction = ordinaryInput > 0 ? lowSeasonInput / ordinaryInput : null;
+        // Assess the share of local land with a sheltered replenishment
+        // opportunity and the share of its ordinary input still arriving in
+        // the low season. The general support window separately covers dry
+        // shelters; neither term converts potential into a duration.
+        return Object.freeze({ shelteredLandFraction, lowSeasonFraction,
+            replenishedShelterSupport: shelteredLandFraction * (lowSeasonFraction ?? 0) });
+    }
+
     function meanCarrierScore(scores, cells, fallbackIds = [], totalCells) {
         const carriers = cells ? Object.entries(cells) : fallbackIds.map(id => [id, 1]);
         let amount = 0;
@@ -155,6 +170,7 @@
         getEnvironmentalCoverage,
         getReliefWaterAccess,
         describeReliefRecoveryWater,
+        describeReliefRefuge,
         meanCarrierScore,
         indexIsolationByRelief,
         getReliefCarriers,

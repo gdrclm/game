@@ -761,7 +761,8 @@
             watersheds: findInputIntermediateOutput(input, 'watershedSegmentation')?.watersheds,
             climateBands,
             climateZones: findInputIntermediateOutput(input, 'climateZoneClassification')?.zoneSummaries,
-            localWater: input.localWater
+            localWater: input.localWater,
+            wind: getNestedValue(input, 'climateEnvelope.outputs.fields.prevailingWindField')
         });
         const chokepoints = findInputRecordArray(input, 'chokepoints').map((record) => createRecord('createChokepointRecordSkeleton', record));
         const continents = buildContinentRecords(input, reliefRegions, climateBands);
