@@ -18,7 +18,8 @@ const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixtur
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 const { verifyLocalWaterFixture, verifyWaterDeliveryFixture, inspectLocalWater, verifyIslandExposureFixture,
     verifyIslandOverlapFixture } = require('./worldgen-v1-local-water.cjs');
-const { verifyPlateContacts, verifyMarineRouteSurvey, inspectMarineRouteGeometry } = require('./worldgen-v1-geography.cjs');
+const { verifyPlateContacts, verifyContactDeformation, verifyMarineRouteSurvey,
+    inspectMarineRouteGeometry } = require('./worldgen-v1-geography.cjs');
 
 const canonical = [42, 137, 2026];
 const holdout = [4194307, 271828183, 698377633, 1258291229, 1908874353, 2576980379, 3405691582, 4286578687];
@@ -149,6 +150,7 @@ check('Isolated inland water retains measured climate and drainage without a mar
 check('Inland bottlenecks bind measured relief while retaining segment provenance', () => verifyInlandChokepointFixture(macro));
 check('High sea reaches measured continental saddles with supported offshore islands', () => verifyContinentalShorelineFixture(macro));
 check('Only shared plate faces transfer direct compression or divergence', () => verifyPlateContacts(macro));
+check('Contact-local deformation preserves distinct normal and shear mechanisms', () => verifyContactDeformation(macro));
 check('Marine route survey binds real land and water to the complete ordered source graph', () => verifyMarineRouteSurvey(macro));
 check('Final downhill routing and water receiver controls', () => verifyFinalDrainageFixture(macro));
 check('Saddles require both rising and falling transects', () => verifySaddleFixture(macro));

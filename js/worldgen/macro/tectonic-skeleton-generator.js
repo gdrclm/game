@@ -1962,7 +1962,38 @@
         };
     }
 
-    function generatePlateBoundaryClassification(input = {}, { useSharedFaces = false } = {}) {
+    function clipContactCarrier(boundary, plateSeeds, { width, height }) {
+        const [a, b] = boundary.plateIds.map(id => boundary.seedPoints[id]);
+        const x = (a.x + b.x) / 2;
+        const y = (a.y + b.y) / 2;
+        const distance = Math.hypot(b.x - a.x, b.y - a.y);
+        const tangentX = (a.y - b.y) / distance;
+        const tangentY = (b.x - a.x) / distance;
+        let start = -Infinity;
+        let end = Infinity;
+        function clip(normalX, normalY, bound) {
+            const slope = normalX * tangentX + normalY * tangentY;
+            const margin = bound - normalX * x - normalY * y;
+            if (slope > 0) end = Math.min(end, margin / slope);
+            else if (slope < 0) start = Math.max(start, margin / slope);
+            else if (margin < 0) end = -Infinity;
+        }
+
+        clip(-1, 0, 0.5);
+        clip(1, 0, width - 0.5);
+        clip(0, -1, 0.5);
+        clip(0, 1, height - 0.5);
+        for (const { plateId, seedPoint: c } of plateSeeds) {
+            if (boundary.plateIds.includes(plateId)) continue;
+            // On the pair's bisector, a third plate truncates contact where
+            // its squared distance becomes smaller than either plate's.
+            clip(2 * (c.x - a.x), 2 * (c.y - a.y), c.x ** 2 + c.y ** 2 - a.x ** 2 - a.y ** 2);
+        }
+        if (start >= end) return [];
+        return [start, end].map(offset => ({ x: x + offset * tangentX, y: y + offset * tangentY }));
+    }
+
+    function generatePlateBoundaryClassification(input = {}, { useSharedFaces = false, useContactCarrier = false } = {}) {
         const normalizedInput = normalizeInput(input);
         const plateSeedDistribution = resolvePlateSeedDistribution(input, normalizedInput);
         const plateMotionVectors = resolvePlateMotionVectors(input, normalizedInput, plateSeedDistribution);
@@ -1978,14 +2009,21 @@
             ? cloneValue(plateSeedDistribution.worldBounds)
             : cloneValue(normalizedInput.worldBounds);
         const worldDiagonal = getWorldDiagonal(worldBounds);
-        const boundaryGraph = useSharedFaces
+        const sharedFaces = useSharedFaces || useContactCarrier;
+        const boundaryGraph = sharedFaces
             ? { pairs: buildSharedFaceBoundaryPairs(plateSeeds, worldBounds) }
             : buildProximityBoundaryPairs(plateSeeds);
-        const boundaryClassifications = boundaryGraph.pairs.map((pair) => classifyBoundaryPair(
+        const classified = boundaryGraph.pairs.map((pair) => classifyBoundaryPair(
             pair,
             motionLookup,
             worldDiagonal
         ));
+        const boundaryClassifications = useContactCarrier ? classified.flatMap(boundary => {
+            const contactCarrier = clipContactCarrier(boundary, plateSeeds, worldBounds);
+            if (!contactCarrier.length) return [];
+            return [{ ...boundary, contactCarrier, futureSignals: { ...boundary.futureSignals,
+                upliftPotential: boundary.scores.collision, subsidencePotential: boundary.scores.divergence } }];
+        }) : classified;
 
         return {
             classificationId: 'plateBoundaryClassification',
@@ -2009,10 +2047,11 @@
             worldBounds,
             plateCount: plateSeeds.length,
             boundaryCount: boundaryClassifications.length,
-            adjacencyModel: useSharedFaces ? 'sharedPlateRasterFacesV1' : 'nearestSeedGraphV1',
+            adjacencyModel: sharedFaces ? 'sharedPlateRasterFacesV1' : 'nearestSeedGraphV1',
+            ...(useContactCarrier && { deformationCarrierModel: 'clippedSharedPlateContactV1' }),
             classificationModel: 'relativeMotionNormalTangentialV1',
             options: {
-                ...(!useSharedFaces && { neighborTarget: boundaryGraph.neighborTarget }),
+                ...(!sharedFaces && { neighborTarget: boundaryGraph.neighborTarget }),
                 boundaryTypes: BOUNDARY_TYPES.slice()
             },
             preparationTargets: [
@@ -2067,6 +2106,11 @@
             x: 0,
             y: 0
         };
+    }
+
+    function getDeformationSegment(boundary) {
+        const [a, b] = boundary.plateIds;
+        return boundary.contactCarrier || [getBoundarySeedPoint(boundary, a), getBoundarySeedPoint(boundary, b)];
     }
 
     function getBoundaryUpliftPotential(boundary) {
@@ -2443,8 +2487,7 @@
                 return;
             }
 
-            const startPoint = getBoundarySeedPoint(boundary, boundary.plateIds[0]);
-            const endPoint = getBoundarySeedPoint(boundary, boundary.plateIds[1]);
+            const [startPoint, endPoint] = getDeformationSegment(boundary);
             const minX = Math.max(0, Math.floor(Math.min(startPoint.x, endPoint.x) - influenceRadius));
             const maxX = Math.min(width - 1, Math.ceil(Math.max(startPoint.x, endPoint.x) + influenceRadius));
             const minY = Math.max(0, Math.floor(Math.min(startPoint.y, endPoint.y) - influenceRadius));
@@ -2538,8 +2581,7 @@
                 return;
             }
 
-            const startPoint = getBoundarySeedPoint(boundary, boundary.plateIds[0]);
-            const endPoint = getBoundarySeedPoint(boundary, boundary.plateIds[1]);
+            const [startPoint, endPoint] = getDeformationSegment(boundary);
             const minX = Math.max(0, Math.floor(Math.min(startPoint.x, endPoint.x) - influenceRadius));
             const maxX = Math.min(width - 1, Math.ceil(Math.max(startPoint.x, endPoint.x) + influenceRadius));
             const minY = Math.max(0, Math.floor(Math.min(startPoint.y, endPoint.y) - influenceRadius));
@@ -2678,8 +2720,7 @@
                 return;
             }
 
-            const startPoint = getBoundarySeedPoint(boundary, boundary.plateIds[0]);
-            const endPoint = getBoundarySeedPoint(boundary, boundary.plateIds[1]);
+            const [startPoint, endPoint] = getDeformationSegment(boundary);
             const minX = Math.max(0, Math.floor(Math.min(startPoint.x, endPoint.x) - influenceRadius));
             const maxX = Math.min(width - 1, Math.ceil(Math.max(startPoint.x, endPoint.x) + influenceRadius));
             const minY = Math.max(0, Math.floor(Math.min(startPoint.y, endPoint.y) - influenceRadius));
@@ -3335,13 +3376,13 @@
                 return;
             }
 
-            const startPoint = getBoundarySeedPoint(boundary, boundary.plateIds[0]);
-            const endPoint = getBoundarySeedPoint(boundary, boundary.plateIds[1]);
+            const [startPoint, endPoint] = getDeformationSegment(boundary);
             const midpoint = {
                 x: Math.round((startPoint.x + endPoint.x) / 2),
                 y: Math.round((startPoint.y + endPoint.y) / 2)
             };
             const upliftPotential = getBoundaryUpliftPotential(boundary);
+            if (boundary.contactCarrier && upliftPotential <= 0) return;
             const fracturePotential = getBoundaryFracturePotential(boundary);
             const subsidencePotential = getBoundarySubsidencePotential(boundary);
             const sampledUplift = readSerializedScalarFieldValue(upliftField, midpoint, upliftPotential);
@@ -5841,7 +5882,7 @@
         });
     }
 
-    function createTectonicSkeletonPipeline(input = {}, inheritedKinematics) {
+    function createTectonicSkeletonPipeline(input = {}, inheritedKinematics, useContactCarrier = false) {
         const normalizedInput = normalizeInput(input);
         const plateSeedDistribution = inheritedKinematics?.plateSeedDistribution || generatePlateSeedDistribution(normalizedInput);
         const plateMotionVectors = inheritedKinematics?.plateMotionVectors || generatePlateMotionVectors({
@@ -5852,7 +5893,7 @@
             ...normalizedInput,
             plateSeedDistribution,
             plateMotionVectors
-        }, { useSharedFaces: Boolean(inheritedKinematics) });
+        }, { useSharedFaces: Boolean(inheritedKinematics), useContactCarrier });
         const upliftField = generateUpliftField({
             ...normalizedInput,
             plateSeedDistribution,
@@ -6041,6 +6082,12 @@
         return createTectonicSkeletonPipeline(input, kinematics);
     }
 
+    // Explicit counterfactual entry point. Canonical V1 uses the verified
+    // inherited/shared-face geography policy until this carrier is qualified.
+    function generateContactDeformationTectonicSkeleton(input, inherited) {
+        return createTectonicSkeletonPipeline(input, inherited.outputs.intermediateOutputs, true);
+    }
+
     function getTectonicSkeletonGeneratorDescriptor() {
         return {
             moduleId: MODULE_ID,
@@ -6126,6 +6173,7 @@
         buildTectonicFieldSnapshots,
         createTectonicSkeletonPipeline,
         generateTectonicSkeleton,
-        generateSharedFaceTectonicSkeleton
+        generateSharedFaceTectonicSkeleton,
+        generateContactDeformationTectonicSkeleton
     });
 })();

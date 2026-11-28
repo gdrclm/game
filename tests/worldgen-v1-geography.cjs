@@ -31,6 +31,47 @@ function verifyPlateContacts(macro) {
     return { inheritedPairs: 3, sharedFaces: 2, motionReversesDeformation: true, stableOrder: true };
 }
 
+function verifyContactDeformation(macro) {
+    const worldBounds = { width: 33, height: 33 };
+    const plateSeeds = [6, 16, 26].map((x, index) => ({
+        plateId: `p${index + 1}`, plateClass: 'continental', seedPoint: { x, y: 16 }
+    }));
+    const generate = (normal, shear) => {
+        const input = { macroSeed: 42, worldBounds, plateSeedDistribution: { worldBounds, plateSeeds },
+            plateMotionVectors: { plateMotionVectors: plateSeeds.map(({ plateId }, index) => ({
+                plateId, motionVector: { x: (1 - index) * normal, y: (1 - index) * shear }
+            })) } };
+        const plateBoundaryClassification = macro.generatePlateBoundaryClassification(input, { useContactCarrier: true });
+        const sources = { ...input, plateBoundaryClassification };
+        const upliftField = macro.generateUpliftField(sources);
+        const subsidenceField = macro.generateSubsidenceField({ ...sources, upliftField });
+        const fractureMaskField = macro.generateFractureField({ ...sources, upliftField, subsidenceField });
+        const ridge = macro.generateRidgeDirectionField({ ...sources, upliftField, subsidenceField, fractureMaskField });
+        return { plateBoundaryClassification, uplift: upliftField.values, subsidence: subsidenceField.values,
+            fracture: fractureMaskField.values, ridge };
+    };
+    const convergence = generate(1, 0);
+    const divergence = generate(-1, 0);
+    const transform = generate(0, 1);
+    const at = (x, y) => y * worldBounds.width + x;
+    const observed = convergence.plateBoundaryClassification.boundaryClassifications;
+    assert.deepEqual(observed.map(row => row.plateIds), [['p1', 'p2'], ['p2', 'p3']]);
+    assert.deepEqual(observed[0].contactCarrier, [{ x: 11, y: -0.5 }, { x: 11, y: 32.5 }]);
+    for (const y of [4, 16, 28]) {
+        assert(convergence.uplift[at(11, y)] > 0 && convergence.uplift[at(6, y)] === 0);
+        assert(divergence.subsidence[at(11, y)] > 0 && divergence.subsidence[at(6, y)] === 0);
+        assert(transform.fracture[at(11, y)] > transform.fracture[at(6, y)]);
+        assert(convergence.ridge.yValues[at(11, y)] > 0 && convergence.ridge.xValues[at(11, y)] === 0);
+    }
+    assert(convergence.subsidence.every(value => value === 0));
+    assert(divergence.uplift.every(value => value === 0));
+    assert(transform.uplift.every(value => value === 0) && transform.subsidence.every(value => value === 0));
+    assert.equal(transform.ridge.ridgeLineCount, 0);
+    assert.deepEqual(generate(1, 0), convergence);
+    return { sharedGeometry: true, normalMotionReversesVerticalDeformation: true,
+        shearProducesFractureWithoutVerticalBias: true, ridgeFollowsContactTangent: true };
+}
+
 function verifyMarineRouteSurvey(macro) {
     const worldBounds = { width: 4, height: 3 };
     const surface = { ...worldBounds, values: Array(12).fill(-1) };
@@ -138,4 +179,4 @@ function inspectMarineRouteGeometry(result, macro, land) {
     }) };
 }
 
-module.exports = { verifyPlateContacts, verifyMarineRouteSurvey, inspectMarineRouteGeometry };
+module.exports = { verifyPlateContacts, verifyContactDeformation, verifyMarineRouteSurvey, inspectMarineRouteGeometry };
