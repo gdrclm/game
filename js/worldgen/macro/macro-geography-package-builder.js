@@ -537,7 +537,8 @@
         const macroCorridors = findInputIntermediateOutput(input, 'macroCorridors') || {};
         const chokepointLinks = findInputIntermediateOutput(input, 'chokepointRecords')?.recordLinks || [];
         const chokeByPassage = new Map(chokepointLinks.map(link => [link.sourceReferenceId, link.chokepointId]));
-        const passages = findInputIntermediateOutput(input, 'coastalAccessTopology')?.islandPassages || [];
+        const topology = findInputIntermediateOutput(input, 'coastalAccessTopology');
+        const passages = [...(topology?.islandPassages || []), ...(topology?.coastalInletPassages || [])];
         const crossings = new Map(passages.map(passage => [passage.passageId, new Set(passage.restrictedCellIndices)]));
         const graphEdges = findInputIntermediateOutput(input, 'hybridConnectivityGraph')?.edges || [];
         const edgesById = new Map(graphEdges.map(edge => [edge.edgeId, edge]));

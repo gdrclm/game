@@ -206,6 +206,27 @@ function inspectGeometry(result) {
         }
     }
     const coastalInlets = new Set(topology.coastalInletPassages || []);
+    if (coastalInlets.size) {
+        const { macroRoutes, marineRouteGeometry } = result.phase1.macroGeographyPackage;
+        const physicalRoutes = new Map(marineRouteGeometry.map(({ routeId, legs }) => [routeId,
+            legs.flatMap(leg => leg.waterPathCellIndices)]));
+        for (const route of macroRoutes) {
+            const path = physicalRoutes.get(route.routeId) || [];
+            const expected = new Map([...coastalInlets].flatMap(passage => {
+                const cut = new Set(passage.restrictedCellIndices);
+                const position = path.findIndex(cell => cut.has(cell));
+                const supported = corridors.macroCorridors.some(corridor => corridor.sourcePassageId === passage.passageId
+                    && corridor.dependenceSampleRows.some(sample => sample.routeId === route.routeId
+                        && (sample.blockedWithoutCorridor || sample.relativeDetourPenalty > 0)));
+                return position >= 0 && supported ? [[`chk_${passage.passageId}`, position]] : [];
+            }));
+            const actual = route.through.filter(id => id.startsWith('chk_coastal_inlet_'));
+            assert.deepEqual(actual.slice().sort(), [...expected.keys()].sort(),
+                `${route.routeId}: coastal inlets must match measured crossings with route impact`);
+            assert(actual.every((id, index) => index === 0 || expected.get(actual[index - 1]) <= expected.get(id)),
+                `${route.routeId}: coastal inlets must follow the route order`);
+        }
+    }
     const verifiedPassages = [...topology.islandPassages, ...coastalInlets].filter(passage =>
         passage.routeIds.every(id => routeIds.has(id)) && passage.shoreCellIndices.every(isLand)
         && !isLand(passage.cellIndex) && (passage.bypassTravelCells === null || passage.bypassTravelCells > passage.travelCells)
