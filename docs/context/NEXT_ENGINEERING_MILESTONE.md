@@ -2,6 +2,10 @@
 
 Repository: gdrclm/game. Branch: worldgen/v1-foundation-closure. Verify actual HEAD. Evidence HEAD 990e727; latest verified program 06738ab7a690c233b8ac4168a207e57ecd06bb05 (CI 46047096914 success). High / Standard. Phase 0–2 only; no Phase 3, author package 06, merge, deployment or author approval.
 
+## Verified 05-B checkpoint
+
+A and B are implemented and verified on `401422d` with 189/189 known exports. The contact-deformation prototype and its eight deterministic controls are documented. G1 remains open because the candidate loses the verified island fragment and reduces carrier capacity on a restored control. The current hybrid stays canonical. The work below records the original 05-B scope. Start any continuation from the closure report and open items in the high-reasoning queue. [Closure and evidence](FOUNDATION_RESIDUAL_GEOGRAPHY_CLOSURE.md)
+
 ## Read and baseline
 
 Read AGENTS.md, PLANS.md and docs/context/{PROJECT_STATE,ACTIVE_CHECKLIST,HIGH_REASONING_REVIEW_QUEUE,FOUNDATION_FINAL_CAUSAL_AUDIT,AUTHOR_REVIEW_QUEUE,SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY}.md. Inspect targeted source and tests. All previous 173 exports plus 14 of 16 new predeclared worlds pass: 187/189 unique. Mandatory 49/49 and 31/31 checks, restored cohorts 2+5+3, full fixed original and independent 64+64, edges 7, additional 11. The two rejects reproduce on 3289ac9, so not 05 regressions. Preserve G2, R1, R2 corrections; do not restart completed work or adjust recovery formula just to pass.

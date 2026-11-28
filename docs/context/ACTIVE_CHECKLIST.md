@@ -55,10 +55,13 @@ Current engineering work only. Past iterations and measurements are preserved in
 
 ## Active technical work (do not restart completed milestones)
 
-The [05 audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md) records repaired marine integrity, weather along actual paths and independent synthesized axes. Next [05-B — residual Phase 1 implementation](NEXT_ENGINEERING_MILESTONE.md). All 173 previous worlds and 14/16 fresh worlds pass (187/189 unique). Two pre-existing Phase 1 rejects and G1 remain. Actual water and timing limits stay visible.
+The 05-B checkpoint follows two source fixes and a bounded deformation experiment. [05-B closure](FOUNDATION_RESIDUAL_GEOGRAPHY_CLOSURE.md)
 
-- [ ] 05 G1: test a globally coherent deformation carrier that preserves the verified fragment on `2546155002` and recovery on `3479992453`. The canonical package exposes contact-model selection under current V1 policy. [Causal trace](FOUNDATION_FINAL_CAUSAL_AUDIT.md#g1--тектонические-контакты-и-носитель-деформации)
-- [ ] 05-B independent Phase 1 cases: trace climate support for enclosed one-cell `sea_02` on `813476365`, and compare physical route outages against chokepoint search coverage on `3224355349`. Both are reproducible on 04-D and 05. Implement supported fixes, preserve real enclosed water and do not create fake chokepoints. [Negative controls](FOUNDATION_FINAL_CAUSAL_AUDIT.md#два-отказа-независимой-выборки)
+- [x] 05-B A: preserve the signed isolated inland water at `813476365`, its local climate samples, catchments and ordinary/low-season source budgets. Closed-shore and boundary-water counterfactuals pass.
+- [x] 05-B B: measure the previously missed island transect and two continental inlets at `3224355349`. Original routes remain measured on the same surface. Require independent rerouting or disconnection evidence and open terminal access. Open-coast negative control passes.
+- [x] 05-B C experiment: implement and test a common clipped contact carrier, normal motion, shear and ridge orientation under fixed kinematics. Retain the diagnostic entry.
+- [ ] G1 canonical replacement: preserve proved island fragments, transport structure and recovery. The candidate loses `regional_island_1251_668` on `2546155002`. Retain the verified V1 hybrid at this checkpoint.
+- [x] 05-B pinned verification: 189/189 known exports, 187/187 prior exports, 49/49 mandatory worlds with 34/34 checks, deterministic repeats, Phase 0 audit, Chromium/runtime and CI. [Pinned evidence](review/f8t/closure/prompt-05b-residual-geography-verification.json)
 
 - [ ] F8-T macro water closure: establish how coherent sheltered area, water loss and independent duration evidence determine actual refuge persistence. Preserve the verified local replenishment signal and keep source access and delivery separate. [Open hypotheses](HIGH_REASONING_REVIEW_QUEUE.md)
 - [ ] F8-T local environment: storm attenuation, practical access budgets applied to measured route geometry, actual water persistence and recovery timing require further physical evidence.

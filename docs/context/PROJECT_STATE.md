@@ -1,19 +1,19 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: `990e727`, 05 causal audit (28 November 2026), branch `worldgen/v1-foundation-closure`. Verified program `06738ab7a690c233b8ac4168a207e57ecd06bb05`. [Causal audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md) · [CI](https://github.com/gdrclm/game/actions/runs/46047096914).
+Current checkpoint: 05-B residual geography (28 November 2026), branch `worldgen/v1-foundation-closure`. Program `401422dcf403d4493a583b4ac13b63468ae6fdfa`. [05-B closure](FOUNDATION_RESIDUAL_GEOGRAPHY_CLOSURE.md) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/46102149886).
 
 ## Current status
 
 | System | Confirmed | Open |
 |---|---|---|
 | Phase 0 | 1,031 seeds, 14 namespaces, deterministic export | Historical consumers |
-| Phase 1 | Signed relief, hydrology, source-checked marine path geometry, path-local weather measurements, contact-model provenance | Two independent Phase 1 rejects; unified deformation carrier; wind-band/coastal morphology |
+| Phase 1 | Signed relief, measured isolated inland water, source-checked routes and weather, physical passages, contact-model provenance | Unified deformation carrier, wind-band and coastal morphology |
 | Phase 2 | Raw numerical axes separate from presentation contrast; path-local navigation weather; separate static burden, recovery channels and refuge opportunity | Relative physical indices, actual water losses/duration, attenuation, practical access and synchronized closure chronology; no known Phase 2 rejection in tested valid-geography worlds |
 | V1 islands | Full footprints, stable IDs, origin, maritime connectivity, local environment | Author-approved playable scale and diversity; 30 roles remain distinct from physical candidate counts |
 
 ## Latest pinned verification
 
-On `06738ab` and Node 22.23.5, **187/189 distinct tested worlds export**: all 173 prior worlds and 14/16 new independent worlds. Both new rejects also fail on 04-D (3289ac9), not introduced in 05. Mandatory 49/49, 31/31 checks, fixed stress 64/64 + 64/64, edges 7/7, additional 11/11; separate restored controls 2/2, 5/5 and 3/3. Previous Phase 0 and Phase 1 hashes (excluding new additive evidence), macro recovery aggregates and regional carrier capacity remain unchanged across all 173 previous worlds. Full Phase 2 hash changes as intended. Deterministic repeats, browser Phase 0 5/5, runtime 270/270, game startup and CI passed. [Pinned machine evidence](review/f8t/closure/prompt-05-causal-verification.json). Fixed cohorts are development/regression controls, not proof of generalization to all seeds.
+Node 22.23.5 and `401422d`: **189/189 distinct exports, including 187/187 previously accepted**. Required cohort 49/49 and 34/34 checks, fixed stress 64/64 + 64/64, edges 7/7, additional 11/11, restored cohorts 2/2 + 5/5 + 3/3, held-out 05 worlds 16/16. Both new cases have a separate 2/2 CI regression. Deterministic repeats, Phase 0 audit, browser 5/5 and runtime 270/270, game boot and CI passed. Terrain and drainage summaries match in all 187 prior worlds. Island, carrier-capacity, local-water and marine-route summaries match in 186. On 1541067307 two isolated basins change coastal ranking and add routes while retaining all prior physical legs and protected fragments. New physical transport and inland-water evidence changes some pressure and recovery outputs through the existing Phase 2 layers. [Machine evidence](review/f8t/closure/prompt-05b-residual-geography-verification.json).
 
 ## Verified causal work
 
@@ -24,13 +24,13 @@ On `06738ab` and Node 22.23.5, **187/189 distinct tested worlds export**: all 17
 - 04-B exact macro and island shelter/replenishment, source allocation and measured water-delivery path distributions; duration/attenuation/practical human budgets not measured. [04-B evidence](CRITICAL_IMPLEMENTATION_CLOSURE.md).
 - 04-D shared-face alternative recovers three previous geography rejects with preserved 170 older exports; current hybrid conditional policy documented. [Geography evidence](CRITICAL_GEOGRAPHY_CLOSURE.md).
 
-## Remaining technical work — 05-B
+## 05-B outcome
 
-1. `813476365`: one enclosed water cell (sea_02), four neighboring land cells outside classified climate bands. Missing climate summary creates empty required sea-region climate references. Trace real basin/drainage and physical climate support; correct classification or binding without fabricated IDs or deleting water.
-2. `3224355349`: nine ports, ten routes, five corridors, zero chokepoint candidates. Compare actual topology and outage impact to search coverage. Fix missed physical candidates; if genuinely open network, absence is valid physical evidence but current minLength contract requires author decision. Do not manufacture a chokepoint.
-3. G1: correct globally coherent deformation support if supported. On seed 0, real shared contact 04–06 under old center-segment deformation joins two bodies; reversing only contact membership isolates the cause. Face-only uplift/subsidence experiments lose recovery on 3479992453 or 2546155002, actual fault fragment on 2546155002, or passage significance on 180816365. Preserve verified hybrid while testing coherent alternatives; do not declare global closure from provenance alone. [Audit](FOUNDATION_FINAL_CAUSAL_AUDIT.md).
+1. `813476365` now exports. Its enclosed water cell is a measured inland drainage receiver with a local climate sample and preserved catchment links.
+2. `3224355349` now exports. A longer island transect and two continental inlets are supported by raster outages on the original routes. The broader network can use other ports where the original marine lane is disconnected.
+3. G1 remains open. An explicit test carrier shares the clipped, observed plate contact across uplift, subsidence, fracture and ridge orientation. The eight controls export under the candidate. On `2546155002` the preserved fault-born fragment disappears, and the actual geometry changes on the other controls. Canonical V1 keeps the previously verified contact policy.
 
-[Next milestone 05-B](NEXT_ENGINEERING_MILESTONE.md), High / Standard, targets these three problems before author package 06. Do not repeat G2/R1/R2 or recovery work unless new concrete evidence demonstrates a defect. Preserve all 187 prior valid exports, run all 189 known seeds including two rejects, use actual maps and independent causal tests. No change of admissible-world rules without author approval.
+The isolated water and coastal inlet records carry physical evidence for future consumers. Current 05-B work ends at this checkpoint pending resolution or an explicit author policy for G1. [05-B closure](FOUNDATION_RESIDUAL_GEOGRAPHY_CLOSURE.md)
 
 ## Explicit limitations / author gates
 
