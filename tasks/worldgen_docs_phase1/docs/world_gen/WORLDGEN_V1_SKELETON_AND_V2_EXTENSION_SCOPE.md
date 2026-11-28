@@ -23,6 +23,8 @@ V1 must therefore answer two questions:
 
 V1 must preserve causal dependency, not full simulation density.
 
+A concrete author-directed future expansion is underwater content and mysteries after island realization. Extend existing phases with shared physical/historical provenance, not an independent underwater generator. Do not require this content for current V1 island closure or preassign a release version. [Underwater direction](../../../../docs/context/WORLDGEN_UNDERWATER_EXTENSION_DIRECTION.md).
+
 V1 extension points are not an exhaustive prediction of future requirements. Later V1 or V2 features may require improvements in already accepted earlier phases. Extend the causal owner with explicit compatibility/version and dependent regeneration; do not fabricate upstream facts in later wrappers. Freeze points apply to a particular world instance. [Author direction and phase evolution protocol](../../../../docs/context/WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md).
 
 ```text

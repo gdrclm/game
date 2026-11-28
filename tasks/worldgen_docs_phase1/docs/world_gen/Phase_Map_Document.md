@@ -75,6 +75,8 @@ Seed
 No lower phase is allowed to invent upstream history arbitrarily.  
 No late phase is allowed to silently overwrite frozen upstream causes.
 
+**Future underwater extension:** after the islands are ready, extend existing physical, historical and realization owners for underwater mysteries and consequences. Land and underwater spaces share one causal world. No separate phase sequence or immediate underwater implementation required. [Author direction](../../../../docs/context/WORLDGEN_UNDERWATER_EXTENSION_DIRECTION.md).
+
 **Development order is not generation order.** Author direction (2026-11-28): any earlier phase may be extended or corrected when later-phase development reveals a new requirement. Acceptance/freeze points protect a verified baseline and a particular generated world instance, not the source code of a phase forever. Changes belong to the causal owner, with explicit contract/version reconciliation, rebuilding affected downstream outputs and renewed affected acceptance checks. This is distinct from runtime feedback. [Phase evolution protocol](../../../../docs/context/WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md).
 
 ---

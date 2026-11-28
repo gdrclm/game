@@ -22,6 +22,8 @@ Read AGENTS.md, PLANS.md, [PROJECT_STATE.md](PROJECT_STATE.md), [ACTIVE_CHECKLIS
 ## Cross-phase evolution
 [WorldGen phase evolution protocol](WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md) — mandatory development direction when a later feature needs upstream changes. Read with AGENTS.md and PLANS.md; phase acceptance does not prohibit later improvements. Preserve causal generation and instance consistency.
 
+[Underwater extension direction](WORLDGEN_UNDERWATER_EXTENSION_DIRECTION.md) — future example of cross-phase evolution: underwater content shares the established world and historical facts; not current implementation scope.
+
 ## Conflict resolution
 Latest explicit author decision takes precedence for design, subject to documenting contract consequences; official contracts for interface semantics; executable tests and observed outputs for actual state. The older runtime roadmap has a separate phase numbering from WorldGen. Do not conflate them. Old prompt packs and completed checklists are not proof of runtime readiness. If a contradiction changes game design or historical causality, flag it instead of silently choosing. Existing GDD/craft docs may predate the diagnosis and worldgen expansion; keep relevant mechanics, don't assume all old final-goal language is current.
 

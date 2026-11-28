@@ -10,6 +10,7 @@ Labels: AUTHOR = explicit author direction in available discussion; CONTRACT = r
 | AUTHOR | Distinct personal, elite, institutional and population trajectories; small individual circumstances emerge from earlier physical and historical causes | Copy collective fate to all actors, preset cowardly ruler, invent personal lore at NPC realization |
 | AUTHOR | Independent detective pillar; separate early test slice | Reducing detective to survival modifiers or a collect-and-click quest |
 | AUTHOR | Any earlier phase remains extensible or correctable when later features reveal new requirements; closure is a verified baseline | Treat accepted phases as permanently untouchable; fabricate missing upstream facts in late consumers |
+| AUTHOR | After islands are ready, allow underwater exploration, mysteries and consequences to extend the same causal world through existing phases | Separate underwater history/geography with conflicting facts; require the entire underwater feature before current island completion |
 | CONTRACT | Full causal sequence 0–26 with bridge 17.5; reduce density in V1 | Skip religion, mentality, memory or history to get playable islands faster |
 | CONTRACT | Phase 17.5 translates established history into gameplay-facing biases | Late runtime invents why island/merchant/ruin exists |
 | CONTRACT | Social states via existing/scoped narrative channels, debug separately | Automatic liar/trust icons, hover overlays, new UX without approval |
@@ -35,3 +36,7 @@ Author clarification (2026-11-27): a leader may abandon a population that later 
 ## Author decision — reversible phase development (2026-11-28)
 
 Source: current project discussion. The author requires the ability to improve earlier phases while developing later phases and adding new features. This is a permanent development principle across 0–26, not permission to reverse generation causality or mutate a frozen world instance. [Phase evolution protocol](WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md) records the proposed engineering workflow and compatibility requirements. No specific versioning system, cache invalidation engine or save migration implementation is approved or claimed implemented by this decision.
+
+## Author direction — underwater extension (2026-11-28)
+
+The author identifies future underwater content, mysteries and consequences as a concrete test of reversible phase development after islands are ready. Preserve a path to extend existing causal owners without replacing the concept. [Underwater extension direction](WORLDGEN_UNDERWATER_EXTENSION_DIRECTION.md). Specific gameplay, simulation and rendering scope remain open; this does not add implementation to 05-B.
