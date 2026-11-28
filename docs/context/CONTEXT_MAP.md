@@ -19,6 +19,9 @@ Read AGENTS.md, PLANS.md, [PROJECT_STATE.md](PROJECT_STATE.md), [ACTIVE_CHECKLIS
 8. Experience: [Phase 17.5 bridge](../../tasks/worldgen_docs_phase1/docs/world_gen/ARCHIPELAGO_GAMEPLAY_PROJECTION_BRIDGE.md), [detective](../../tasks/worldgen_docs_phase1/docs/world_gen/DETECTIVE_MODE_V1_CORE_GAMEPLAY_RU.md), [disease island experience](../../docs/design/DISEASE_DIAGNOSIS_ISLAND_EXPERIENCE_RULES.md).
 9. Acceptance: [causal author protocol](../../tasks/worldgen_docs_phase1/docs/world_gen/WORLDGEN_V1_CAUSAL_AUTHOR_ACCEPTANCE.md), [physical visual register](../../tasks/worldgen_docs_phase1/docs/world_gen/WORLDGEN_V1_PHASE0_2_VISUAL_PRODUCTION_REGISTER.md), [UI boundary](../../tasks/worldgen_docs_phase1/docs/world_gen/WORLDGEN_V1_VISUAL_UI_BOUNDARY_AND_SOCIAL_MARKERS_CORRECTION.md), [visual register](../../tasks/worldgen_docs_phase1/docs/world_gen/WORLDGEN_V1_VISUAL_ASSET_REGISTER_0_TO_26.md).
 
+## Cross-phase evolution
+[WorldGen phase evolution protocol](WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md) — mandatory development direction when a later feature needs upstream changes. Read with AGENTS.md and PLANS.md; phase acceptance does not prohibit later improvements. Preserve causal generation and instance consistency.
+
 ## Conflict resolution
 Latest explicit author decision takes precedence for design, subject to documenting contract consequences; official contracts for interface semantics; executable tests and observed outputs for actual state. The older runtime roadmap has a separate phase numbering from WorldGen. Do not conflate them. Old prompt packs and completed checklists are not proof of runtime readiness. If a contradiction changes game design or historical causality, flag it instead of silently choosing. Existing GDD/craft docs may predate the diagnosis and worldgen expansion; keep relevant mechanics, don't assume all old final-goal language is current.
 

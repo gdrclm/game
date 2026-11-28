@@ -25,6 +25,10 @@ manual/visual test readiness
 
 ---
 
+# Cross-phase development rule
+
+When a later feature requires earlier physical, social or historical inputs, Codex must trace the causal owner and may reopen a bounded earlier milestone, even after acceptance. Record triggering feature, affected contracts and dependent outputs, implementation and regression plan, then resume the later phase. Avoid both premature exhaustive design and late-stage workarounds. [Phase evolution protocol](../../../../docs/context/WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md). Existing milestone and author gates remain in force.
+
 # Core Implementation Rule
 
 V1 implementation must use phase wrappers and shared engines.

@@ -22,6 +22,10 @@ See also `ROADMAP.md` for the staged migration plan and function-by-function spl
 5. Treat save shape changes as explicit, versioned migrations.
 6. Give gameplay entities stable ids such as `itemId`, `npcId`, `questId`, `dialogueId`, `shopId`, and `encounterId`.
 
+## WorldGen phase evolution
+
+WorldGen development can revisit any earlier phase when a later feature needs a new causal input. Generation order remains forward and world-instance freeze points remain valid. Use the [phase evolution protocol](docs/context/WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md) for owner-based contract changes, version/provenance, dependent rebuild and save compatibility. Do not silently mix incompatible packages or regenerate existing player worlds. Implementation details of versioning and invalidation are phased engineering work, not claimed existing infrastructure.
+
 ## Oversized file watch list
 
 - `js/ui/ui-system.js`

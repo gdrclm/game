@@ -40,4 +40,6 @@ Wind-field discontinuities (137 and 180816365), rectilinear contacts/coasts, ori
 
 F8/F9 still open. No Phase 3, historical generation, merge, deployment or author acceptance.
 
+Permanent author direction (2026-11-28): earlier phases remain open to future improvements driven by later features. Phase acceptance is a versioned baseline, not a permanent source-code freeze. Follow [phase evolution protocol](WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md). This does not change current 05-B scope or claim new implementation.
+
 [Checklist](ACTIVE_CHECKLIST.md) · [High queue](HIGH_REASONING_REVIEW_QUEUE.md) · [Physical coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). Historical checkpoints remain in reports and git.

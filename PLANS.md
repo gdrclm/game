@@ -15,3 +15,6 @@ Each plan records objective, non-goals, authoritative contract paths, baseline c
 
 ## Definition of done
 Technical completion and author approval are separate. For Phase 0–2, valid deterministic end-to-end packages, exercised counterfactuals and readable real maps are required. For later phases, the same causal facts must support coherent history and material consequences. At 17.5 evaluate gameplay projection; 18–25 evaluate realization; 26 evaluate actual sessions and regeneration. See WORLDGEN_V1_CAUSAL_AUTHOR_ACCEPTANCE.md in the Phase 1 docs. Do not mark an author gate accepted without actual author feedback.
+
+## Cross-phase evolution
+A new downstream requirement can reopen an accepted upstream phase without restarting unrelated work. Follow [the phase evolution protocol](docs/context/WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md): identify the causal owner and transitive consumers, pin a baseline, reconcile versions/contracts and compatibility, rebuild invalidated dependent outputs, verify the new feature and existing invariants, and renew affected review gates. Freeze points protect a world instance, not the generator's source code. Keep the current milestone scope explicit; do not use this rule as permission to start unrelated phases.

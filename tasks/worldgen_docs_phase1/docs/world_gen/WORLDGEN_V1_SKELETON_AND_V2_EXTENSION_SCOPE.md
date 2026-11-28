@@ -23,6 +23,8 @@ V1 must therefore answer two questions:
 
 V1 must preserve causal dependency, not full simulation density.
 
+V1 extension points are not an exhaustive prediction of future requirements. Later V1 or V2 features may require improvements in already accepted earlier phases. Extend the causal owner with explicit compatibility/version and dependent regeneration; do not fabricate upstream facts in later wrappers. Freeze points apply to a particular world instance. [Author direction and phase evolution protocol](../../../../docs/context/WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md).
+
 ```text
 Allowed V1 reduction:
 - fewer records
