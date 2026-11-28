@@ -39,7 +39,7 @@
             && hasOpenWaterNeighbor(mask, cell, blockedCells);
     }
 
-    function buildIslandPassageSections({ islands, approachShorelines }, mask) {
+    function buildIslandPassageSections({ islands, approachShorelines }, mask, activePathCells) {
         const { width, height, values, threshold } = mask;
         const maximumGap = Math.min(width, height) * 0.13;
         const shores = islands.map(island => ({
@@ -47,6 +47,11 @@
         }));
         const neighbors = shores.slice(1).map((to, index) => [shores[index], to]);
         for (const island of shores) for (const approach of approachShorelines || []) neighbors.push([island, approach]);
+        if (activePathCells) {
+            for (let index = 0; index < shores.length; index += 1) {
+                for (const other of shores.slice(index + 2)) neighbors.push([shores[index], other]);
+            }
+        }
         const apertures = [];
         const shoulderAllowance = gap => Math.max(2, gap * 2 / 3);
         for (const [from, to] of neighbors) {
@@ -57,15 +62,16 @@
                     const gap = macro.cellDistance(left, right, width);
                     // Survey the local throat and its shoulders. Wider throats permit
                     // a proportionally wider approach while narrow gaps allow for raster error.
-                    if (gap > Math.min(maximumGap, minimumGap + shoulderAllowance(minimumGap))) continue;
+                    if (gap > (activePathCells ? maximumGap : Math.min(maximumGap, minimumGap + shoulderAllowance(minimumGap)))) continue;
                     const cells = traceShoreTransect(left, right, width);
                     if (!cells.length || cells.some(cell => values[cell] >= threshold)) continue;
+                    if (activePathCells && !cells.some(cell => activePathCells.has(cell))) continue;
                     sections.push({ shoreCellIndices: [left, right], restrictedCellIndices: cells, gap });
                     minimumGap = Math.min(minimumGap, gap);
                 }
             }
             const seen = new Set();
-            const narrowSections = sections.filter(section => section.gap <= minimumGap + shoulderAllowance(minimumGap))
+            const narrowSections = sections.filter(section => activePathCells || section.gap <= minimumGap + shoulderAllowance(minimumGap))
                 .sort((a, b) => a.gap - b.gap || a.shoreCellIndices[0] - b.shoreCellIndices[0]
                     || a.shoreCellIndices[1] - b.shoreCellIndices[1])
                 .filter(section => {
@@ -79,5 +85,33 @@
         return apertures;
     }
 
-    Object.assign(macro, { buildIslandPassageSections, isOpenWaterTerminal });
+    function buildCoastalInletSections(continentBodies, mask, activePathCells) {
+        const { width, height, values, threshold } = mask;
+        const maximumGap = Math.min(width, height) * 0.13;
+        const stepLimit = Math.floor(maximumGap);
+        const sections = [];
+        for (const body of continentBodies) {
+            const continentId = body.recordDraft.continentId;
+            const shore = new Set(body.cellIndices.filter(cell => values[cell] >= threshold && hasOpenWaterNeighbor(mask, cell)));
+            for (const left of shore) {
+                const { x, y } = macro.cellPoint(left, width);
+                for (let dy = 0; dy <= stepLimit && y + dy < height; dy += 1) {
+                    for (let dx = dy ? -stepLimit : 1; dx <= stepLimit; dx += 1) {
+                        const right = left + dy * width + dx;
+                        if (x + dx < 0 || x + dx >= width || !shore.has(right)) continue;
+                        const gap = Math.hypot(dx, dy);
+                        if (gap > maximumGap) continue;
+                        const cells = traceShoreTransect(left, right, width);
+                        if (cells.some(cell => activePathCells.has(cell)) && cells.every(cell => values[cell] < threshold)) {
+                            sections.push({ continentId, shoreCellIndices: [left, right], restrictedCellIndices: cells, gap });
+                        }
+                    }
+                }
+            }
+        }
+        return sections.sort((a, b) => a.gap - b.gap || a.shoreCellIndices[0] - b.shoreCellIndices[0]
+            || a.shoreCellIndices[1] - b.shoreCellIndices[1]);
+    }
+
+    Object.assign(macro, { buildIslandPassageSections, buildCoastalInletSections, isOpenWaterTerminal });
 })();

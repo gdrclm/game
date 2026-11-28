@@ -52,7 +52,7 @@ function waterDistance(mask, start, target, blocked) {
 
 function inspectPassageEndpoints(topology, seaGraph, mask) {
     const byId=new Map((seaGraph.edges||[]).map(edge=>[edge.edgeId,edge]));
-    return (topology.islandPassages||[]).map(passage=>{
+    return [...(topology.islandPassages || []), ...(topology.coastalInletPassages || [])].map(passage=>{
         const path=byId.get(passage.seaEdgeId)?.waterPathCellIndices;
         const blocked=new Set(passage.restrictedCellIndices||[]);
         const terminals = path?.length > 1 ? [path[0], path.at(-1)] : [];
@@ -144,6 +144,39 @@ function verifyHotspotFixture(worldgenMacro) {
     return { flatPreservesDrift: true, tiltedShelfShiftsPeaks: bent.map(peak => peak.crossTrackShift) };
 }
 
+function verifyCoastalInletFixture(macro) {
+    const assert = require('node:assert/strict');
+    const width = 64;
+    const height = 48;
+    const cell = (x, y) => y * width + x;
+    const survey = open => {
+        const values = new Array(width * height).fill(0);
+        const land = [];
+        for (let y = 15; y <= 22; y += 1) {
+            for (let x = 20; x <= 24; x += 1) {
+                if (x !== 20 && x !== 24 && y !== 15) continue;
+                if (open && (x === 20 || (x === 21 && y === 15))) continue;
+                values[cell(x, y)] = 1;
+                land.push(cell(x, y));
+            }
+        }
+        const mask = { width, height, values, threshold: 0.5 };
+        const ports = [{ nodeId: 'inside', waterCellIndex: cell(22, 16), continentId: 'cont', seaRegionId: 'sea' },
+            { nodeId: 'outside', waterCellIndex: cell(22, 26), seaRegionId: 'sea' }];
+        const edges = macro.buildMarineAccessEdges(ports, mask, () => 'marine');
+        const [edge] = edges;
+        const routes = { candidateRoutes: [{ routeId: 'route', edgePathIds: [edge.edgeId] }] };
+        const bodies = [{ recordDraft: { continentId: 'cont' }, cellIndices: land }];
+        return macro.findCoastalInletPassages({ ports }, bodies, { edges }, routes, mask);
+    };
+    const [inlet] = survey(false);
+    assert(inlet);
+    assert.equal(inlet.bypassTravelCells, null);
+    assert.deepEqual(Array.from(inlet.routeIds), ['route']);
+    assert.equal(survey(true).length, 0, 'Redundant open coast cannot be classified as a separating inlet');
+    return { inletSeparatesReachableTerminals: true, redundantOpenCoastHasNoInlet: true };
+}
+
 function verifyCoastalAccessFixture(macro) {
     const assert = require('node:assert/strict');
     const values = new Array(20).fill(1);
@@ -165,7 +198,8 @@ function verifyCoastalAccessFixture(macro) {
     return { isolatedBorderWaterRejected: true };
 }
 
-module.exports={summarizeQuality,inspectPassageEndpoints,inspectLive,verifyPassageFixture,verifyHotspotFixture,verifyCoastalAccessFixture};
+module.exports={summarizeQuality,inspectPassageEndpoints,inspectLive,verifyPassageFixture,verifyHotspotFixture,verifyCoastalAccessFixture,
+    verifyCoastalInletFixture};
 if(require.main===module){
     const fs=require('node:fs');
     const args=process.argv.slice(2);

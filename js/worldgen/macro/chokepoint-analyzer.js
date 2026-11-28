@@ -654,6 +654,10 @@
             };
         });
 
+        const inlets = findInputIntermediateOutput(input, 'coastalAccessTopology')?.coastalInletPassages || [];
+        candidates.push(...buildMeasuredPassageCandidates(inlets,
+            findInputIntermediateOutput(input, 'macroCorridors'), resolveChokepointWorldBounds(input), 'coastal_inlet'));
+
         return {
             outputId: STRAIT_CANDIDATES_OUTPUT_ID,
             stageId: STRAIT_DETECTION_STAGE_ID,
@@ -673,8 +677,8 @@
             summary: {
                 straitPassageHintCount: straitPassages.length,
                 straitChokepointCandidateCount: candidates.length,
-                linkedSeaGraphCandidateCount: candidates.filter((candidate) => candidate.matchedSeaNodeIds.length > 0).length,
-                edgeBackedCandidateCount: candidates.filter((candidate) => candidate.supportingSeaEdgeCount > 0).length,
+                linkedSeaGraphCandidateCount: candidates.filter((candidate) => candidate.matchedSeaNodeIds?.length > 0).length,
+                edgeBackedCandidateCount: candidates.filter((candidate) => candidate.supportingSeaEdgeIds?.length > 0).length,
                 strongestControlValue: candidates.reduce((maxValue, candidate) => Math.max(maxValue, clampUnitInterval(candidate.controlValue, 0)), 0),
                 strongestTradeDependency: candidates.reduce((maxValue, candidate) => Math.max(maxValue, clampUnitInterval(candidate.tradeDependency, 0)), 0),
                 strongestBypassDifficulty: candidates.reduce((maxValue, candidate) => Math.max(maxValue, clampUnitInterval(candidate.bypassDifficulty, 0)), 0),
@@ -829,10 +833,10 @@
         };
     }
 
-    function buildMeasuredIslandPassageCandidates(topology, macroCorridors) {
-        const scale = Math.min(topology?.worldBounds?.width || 128, topology?.worldBounds?.height || 128);
+    function buildMeasuredPassageCandidates(passages, macroCorridors, bounds, type) {
+        const scale = Math.min(bounds?.width || 128, bounds?.height || 128);
         const corridorById = buildLookupById(macroCorridors?.macroCorridors, 'corridorId');
-        return (topology?.islandPassages || []).map(passage => {
+        return passages.map(passage => {
             const narrowness = clampUnitInterval(1 - passage.widthCells / (scale * 0.13), 0);
             const bypassDifficulty = passage.bypassTravelCells === null ? 1
                 : clampUnitInterval((passage.bypassTravelCells - passage.travelCells) / passage.travelCells, 0);
@@ -840,14 +844,18 @@
             const tradeDependency = roundValue(computeMean(linkedCorridors.map(corridor => corridor.routeDependenceScore)));
             const controlValue = roundValue(narrowness * 0.55 + bypassDifficulty * 0.25 + tradeDependency * 0.2);
             const collapseSensitivity = roundValue((bypassDifficulty + tradeDependency) / 2);
+            const stableMeasuredId = type === 'coastal_inlet' || passage.surveyMode === 'active_route_transect';
             return {
                 candidateId: passage.passageId,
-                sourceIslandGroupId: passage.islandGroupId,
+                ...(type === 'island_chain_lock' && { sourceIslandGroupId: passage.islandGroupId }),
+                ...(stableMeasuredId && { measuredSearch: true, recordDraft: { chokepointId: `chk_${passage.passageId}` } }),
                 sourcePassageId: passage.passageId,
                 cellIndex: passage.cellIndex,
                 widthCells: passage.widthCells,
-                chokepointType: 'island_chain_lock',
-                lockClass: classifyIslandChainLockClass(controlValue, tradeDependency, bypassDifficulty, collapseSensitivity),
+                chokepointType: type,
+                ...(type === 'island_chain_lock'
+                    ? { lockClass: classifyIslandChainLockClass(controlValue, tradeDependency, bypassDifficulty, collapseSensitivity) }
+                    : { chokepointClass: classifyStraitCandidateClass(controlValue, tradeDependency, bypassDifficulty, collapseSensitivity) }),
                 supportingMarineRouteIds: passage.routeIds,
                 supportingMarineCorridorIds: passage.corridorIds,
                 supportingSeaEdgeIds: [passage.seaEdgeId],
@@ -860,6 +868,10 @@
                 collapseSensitivity
             };
         });
+    }
+
+    function buildMeasuredIslandPassageCandidates(topology, macroCorridors) {
+        return buildMeasuredPassageCandidates(topology?.islandPassages || [], macroCorridors, topology?.worldBounds, 'island_chain_lock');
     }
 
     function buildIslandChainChokepointCandidates(input = {}, dependencyAvailability = {}) {
@@ -1555,7 +1567,8 @@
 
         familyRows.forEach((familyRow) => {
             familyRow.candidates
-                .sort((left, right) => normalizeString(left.candidateId, '').localeCompare(normalizeString(right.candidateId, '')))
+                .sort((left, right) => Number(Boolean(left.measuredSearch)) - Number(Boolean(right.measuredSearch))
+                    || normalizeString(left.candidateId, '').localeCompare(normalizeString(right.candidateId, '')))
                 .forEach((candidate, index) => {
                     const generatedRecordId = `${familyRow.generatedIdPrefix}${String(index + 1).padStart(3, '0')}`;
                     const recordInput = {
@@ -1624,6 +1637,7 @@
                     exportedRecordCount: chokepoints.length,
                     deferredDraftCount: deferredChokepointDrafts.length,
                     straitRecordCount: chokepoints.filter((record) => record.type === 'narrow_strait').length,
+                    coastalInletRecordCount: chokepoints.filter((record) => record.type === 'coastal_inlet').length,
                     islandChainRecordCount: chokepoints.filter((record) => record.type === 'island_chain_lock').length,
                     inlandBottleneckRecordCount: chokepoints.filter((record) => record.type === 'inland_bottleneck').length,
                     debugLinkCount: recordLinks.length

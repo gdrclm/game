@@ -2756,9 +2756,10 @@
         const mask = findInputField(input, 'coastJaggednessControlledLandWaterMaskField');
         const seaClusters = getSeaClusterList(findInputIntermediateOutput(input, 'seaRegionClusters') || {},
             findInputIntermediateOutput(input, 'seaNavigabilityTagging') || {});
+        const continentBodies = findInputIntermediateOutput(input, 'continentBodies')?.continentBodies || [];
         const accessTopology = macro.buildCoastalAccessTopology({
             mask,
-            continentBodies: findInputIntermediateOutput(input, 'continentBodies')?.continentBodies,
+            continentBodies,
             seaClusters,
             coastalOpportunity: findInputField(input, 'coastalOpportunityMap'),
             clusterProfiles: findInputIntermediateOutput(input, 'coastalOpportunityProfile')?.clusterProfiles || [],
@@ -2794,9 +2795,13 @@
         const islandPassages = macro.findIslandPassages(
             accessTopology, hybridConnectivityGraph, macroRoutes, mask
         );
-        const macroCorridors = buildMacroCorridors(macroRoutes, hybridConnectivityGraph, routeCostSurface, islandPassages,
+        const coastalInletPassages = macro.findCoastalInletPassages(
+            accessTopology, continentBodies, hybridConnectivityGraph, macroRoutes, mask
+        );
+        const passages = [...islandPassages, ...coastalInletPassages];
+        const macroCorridors = buildMacroCorridors(macroRoutes, hybridConnectivityGraph, routeCostSurface, passages,
             mask, buildStraitPressureContext(findInputIntermediateOutput(input, 'straitCarvingSummary') || {}));
-        for (const passage of islandPassages) {
+        for (const passage of passages) {
             passage.corridorIds = macroCorridors.macroCorridors
                 .filter(corridor => corridor.sourcePassageId === passage.passageId)
                 .map(corridor => corridor.corridorId);
@@ -2812,7 +2817,8 @@
                 fields: {},
                 intermediateOutputs: {
                     connectivityGraphBuildPlan,
-                    ...(accessTopology && { coastalAccessTopology: { ...accessTopology, islandPassages } }),
+                    ...(accessTopology && { coastalAccessTopology: { ...accessTopology, islandPassages,
+                        ...(coastalInletPassages.length && { coastalInletPassages }) } }),
                     landConnectivityGraph,
                     seaConnectivityGraph,
                     hybridConnectivityGraph,

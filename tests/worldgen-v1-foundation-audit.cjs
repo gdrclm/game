@@ -9,7 +9,8 @@ const { join } = require('node:path');
 const { loadWorldGen } = require('../js/worldgen/foundation/node.cjs');
 const { runCausalChecks, verifyNavigationTiming, verifyScarcityTiming, verifyPathTiming,
     verifyIndependentSynthesis } = require('./worldgen-v1-causal.cjs');
-const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
+const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture,
+    verifyCoastalInletFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery, verifyMacroRefugeGeometry } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
     verifySaddleFixture, verifySeaBoundaryFixture, verifyIsolatedInlandWaterFixture, verifyInlandChokepointFixture,
@@ -38,7 +39,7 @@ const regionalRegression = originalRegionalRegression.concat(3840024598,
 const criticalImplementationRegression = [1665754063, 2666689910];
 const residualRecoveryRegression = [1240171611, 4286438917, 4144686569, 1683167796, 2248663653];
 const plateContactRegression = [1122193213, 3479992453, 3418526133];
-const residualGeographyRegression = [813476365];
+const residualGeographyRegression = [813476365, 3224355349];
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 function stratifiedSeeds(namespace, count = 64) {
     const span = 2 ** 32 / count;
@@ -138,6 +139,7 @@ check('Phase 2 fixture harness', () => {
     return { smoke: result.smokeSuite.summary, regression: result.regressionSuite.summary };
 });
 check('Physical passage closure and terminal negative controls', () => verifyPassageFixture(macro));
+check('Measured coastal inlet disappears when an independent water connection is open', () => verifyCoastalInletFixture(macro));
 check('A coast node must enter a connected water segment', () => verifyCoastalAccessFixture(macro));
 check('Hotspot curvature follows shallow crust at fixed plate drift', () => verifyHotspotFixture(macro));
 check('Land-weighted pressure and local recovery timing', () => verifySpatialAggregation(phase2));
@@ -201,7 +203,8 @@ function inspectGeometry(result) {
             assert(Math.abs(sample.relativeDetourPenalty - expectedPenalty) <= 0.000500001, sample.routeId);
         }
     }
-    const verifiedPassages = topology.islandPassages.filter(passage =>
+    const coastalInlets = new Set(topology.coastalInletPassages || []);
+    const verifiedPassages = [...topology.islandPassages, ...coastalInlets].filter(passage =>
         passage.routeIds.every(id => routeIds.has(id)) && passage.shoreCellIndices.every(isLand)
         && !isLand(passage.cellIndex) && (passage.bypassTravelCells === null || passage.bypassTravelCells > passage.travelCells)
     );
@@ -215,10 +218,17 @@ function inspectGeometry(result) {
         }), passage.passageId);
         assert(passage.corridorIds.length > 0 && passage.corridorIds.every(id =>
             corridors.macroCorridors.find(corridor => corridor.corridorId === id)?.sourcePassageId === passage.passageId), passage.passageId);
-        assert(topology.islands.some(island => island.cellIndices.includes(shoreA)), passage.passageId);
-        assert(topology.islands.some(island => island.cellIndices.includes(shoreB) && !island.cellIndices.includes(shoreA))
-            || topology.approachShorelines.some(body => body.continentId === passage.shoreContinentId
-                && body.shoreCellIndices.includes(shoreB)), passage.passageId);
+        if (coastalInlets.has(passage)) {
+            const body = geometry(debug, 'continentBodies').continentBodies.find(row => row.recordDraft.continentId === passage.shoreContinentId);
+            assert(body?.cellIndices.includes(shoreA) && body.cellIndices.includes(shoreB), passage.passageId);
+            assert.equal(passage.bypassTravelCells, null, passage.passageId);
+            assert(result.phase1.macroGeographyPackage.chokepoints.some(row => row.chokepointId === `chk_${passage.passageId}`), passage.passageId);
+        } else {
+            assert(topology.islands.some(island => island.cellIndices.includes(shoreA)), passage.passageId);
+            assert(topology.islands.some(island => island.cellIndices.includes(shoreB) && !island.cellIndices.includes(shoreA))
+                || topology.approachShorelines.some(body => body.continentId === passage.shoreContinentId
+                    && body.shoreCellIndices.includes(shoreB)), passage.passageId);
+        }
     }
     assert(verifiedPassages.length >= 2, `Need two route-backed constrictions with measured detours, found ${verifiedPassages.length}`);
     assert(corridorSummary.brittleCorridorCount >= 1 && corridorSummary.redundantCorridorCount >= 1, 'Need brittle and redundant corridors');

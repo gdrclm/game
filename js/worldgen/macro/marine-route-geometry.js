@@ -98,9 +98,7 @@
         return changed;
     }
 
-    function findIslandPassages(topology, hybridGraph, routes, mask) {
-        if (!topology?.islandGroupId || topology.islands.length < 2) return [];
-        const terminals = topology.ports.map(port => port.waterCellIndex);
+    function indexRouteLanes(hybridGraph, routes) {
         const routesByEdge = new Map();
         for (const route of routes.candidateRoutes) {
             for (const edgeId of route.edgePathIds) {
@@ -109,10 +107,21 @@
             }
         }
         const activeLanes = hybridGraph.edges.filter(edge => edge.waterPathCellIndices && routesByEdge.has(edge.edgeId));
+        return { routesByEdge, activeLanes };
+    }
+
+    function findIslandPassages(topology, hybridGraph, routes, mask) {
+        if (!topology?.islandGroupId || topology.islands.length < 2) return [];
+        const terminals = topology.ports.map(port => port.waterCellIndex);
+        const { routesByEdge, activeLanes } = indexRouteLanes(hybridGraph, routes);
+        if (!activeLanes.length) return [];
         const apertures = macro.buildIslandPassageSections(topology, mask);
         const passages = [];
         const measuredSections = new Set();
-        for (const { from, to, sections } of apertures) {
+        const measuredApertures = new Set();
+        function measure({ from, to, sections }, requireDetourBeyondSection = false) {
+            const passageId = `island_passage_${from.peakCellIndex}_${to.peakCellIndex ?? to.continentId}`;
+            if (measuredApertures.has(passageId)) return;
             for (const section of sections) {
                 const sectionKey = section.restrictedCellIndices.slice().sort((a, b) => a - b).join(',');
                 if (measuredSections.has(sectionKey)) continue;
@@ -121,16 +130,21 @@
                 const changes = measureChangedLanes(mask, activeLanes, blocked);
                 const detours = activeLanes.filter(edge => {
                     const change = changes.get(edge.edgeId);
+                    // A section outside the surveyed throat must impose more
+                    // than the local cost of going around its own footprint.
+                    const minimumDetour = requireDetourBeyondSection ? section.restrictedCellIndices.length : 0;
                     return change?.endpointsAccessible
-                        && (!change.alternative || change.alternative.waterTravelCells > edge.waterTravelCells);
+                        && (!change.alternative || change.alternative.waterTravelCells - edge.waterTravelCells > minimumDetour);
                 }).sort((a, b) => detourFraction(b, changes) - detourFraction(a, changes) || a.edgeId.localeCompare(b.edgeId));
                 if (!detours.length) continue;
                 measuredSections.add(sectionKey);
+                measuredApertures.add(passageId);
                 const lane = detours[0];
                 const passagePath = lane.waterPathCellIndices;
                 const alternative = changes.get(lane.edgeId).alternative;
                 passages.push({
-                    passageId: `island_passage_${from.peakCellIndex}_${to.peakCellIndex ?? to.continentId}`,
+                    passageId,
+                    ...(requireDetourBeyondSection && { surveyMode: 'active_route_transect' }),
                     islandGroupId: topology.islandGroupId,
                     islandIds: [from.islandId, to.islandId].filter(Boolean),
                     ...(to.continentId && { shoreContinentId: to.continentId }),
@@ -148,15 +162,62 @@
                     affectedHybridEdgeIds: [...changes.keys()],
                     routeIds: [...new Set([...changes.keys()].flatMap(id => routesByEdge.get(id)))].sort()
                 });
-                break;
+                return;
             }
         }
+        apertures.forEach(aperture => measure(aperture));
+        const activePathCells = new Set(activeLanes.flatMap(edge => edge.waterPathCellIndices));
+        for (const aperture of macro.buildIslandPassageSections(topology, mask, activePathCells)) measure(aperture, true);
         return passages;
     }
 
     function detourFraction(edge, changes) {
         const alternative = changes.get(edge.edgeId).alternative;
         return alternative ? (alternative.waterTravelCells - edge.waterTravelCells) / edge.waterTravelCells : Infinity;
+    }
+
+    function findCoastalInletPassages(topology, continentBodies, hybridGraph, routes, mask) {
+        if (!topology || !mask) return [];
+        const { routesByEdge, activeLanes } = indexRouteLanes(hybridGraph, routes);
+        if (!activeLanes.length) return [];
+        const activePathCells = new Set(activeLanes.flatMap(edge => edge.waterPathCellIndices));
+        const ports = new Map(topology.ports.map(port => [port.waterCellIndex, port]));
+        const terminals = [...ports.keys()];
+        const sections = macro.buildCoastalInletSections(continentBodies, mask, activePathCells);
+        const passages = [];
+        const measuredLosses = new Set();
+        for (const section of sections) {
+            const blocked = new Set(section.restrictedCellIndices);
+            if (terminals.some(cell => !macro.isOpenWaterTerminal(mask, cell, blocked))) continue;
+            const changes = measureChangedLanes(mask, activeLanes, blocked);
+            const disconnected = activeLanes.filter(edge => changes.has(edge.edgeId) && !changes.get(edge.edgeId).alternative);
+            const lane = disconnected.find(({ waterPathCellIndices: path }) => [path[0], path.at(-1)]
+                .some(cell => ports.get(cell)?.continentId === section.continentId));
+            if (!lane) continue;
+            // Successive cuts across the same mouth can separate the same terminal pairs.
+            const lossKey = disconnected.map(edge => edge.edgeId).sort().join(',');
+            if (measuredLosses.has(lossKey)) continue;
+            measuredLosses.add(lossKey);
+            const path = lane.waterPathCellIndices;
+            const terminalCellIndices = [path[0], path.at(-1)];
+            passages.push({
+                passageId: `coastal_inlet_${section.shoreCellIndices.join('_')}`,
+                shoreContinentId: section.continentId,
+                widthCells: Math.max(1, section.gap - 1),
+                shoreCellIndices: section.shoreCellIndices,
+                cellIndex: path.find(cell => blocked.has(cell)),
+                restrictedCellIndices: section.restrictedCellIndices,
+                travelCells: lane.waterTravelCells,
+                bypassTravelCells: null,
+                terminalCellIndices,
+                seaRegionIds: [...new Set(terminalCellIndices.map(cell => ports.get(cell)?.seaRegionId).filter(Boolean))],
+                seaEdgeId: lane.sourceGraphEdgeId,
+                hybridEdgeId: lane.edgeId,
+                affectedHybridEdgeIds: disconnected.map(edge => edge.edgeId),
+                routeIds: [...new Set(disconnected.flatMap(edge => routesByEdge.get(edge.edgeId)))].sort()
+            });
+        }
+        return passages;
     }
 
     function collectCorridorOutage(edges, corridorEdgeIds, mask) {
@@ -351,6 +412,6 @@
         return errors;
     }
 
-    Object.assign(macro, { buildMarineAccessEdges, findIslandPassages, measureChangedLanes, collectCorridorOutage,
+    Object.assign(macro, { buildMarineAccessEdges, findIslandPassages, findCoastalInletPassages, measureChangedLanes, collectCorridorOutage,
         buildMarineRouteGeometry, surveyMarineRouteGeometry, validateMarineRouteGeometry });
 })();
