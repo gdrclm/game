@@ -562,6 +562,8 @@ Persist history into minds, myths, and social dispositions.
 ### Notes
 Without this phase, history disappears after it happens.
 
+Author direction: earlier physical landscape states and tectonic changes may leave material and historical consequences and later accounts, including legends. Distinguish actual time-indexed physical states from computational intermediate fields, human-era events from prehuman geology, and knowledge from physical truth. Use the geography of the event's time. Extend causal owners when needed; do not invent the physical past in memory or realization phases. [Landscape history and memory](../../../../docs/context/WORLDGEN_LANDSCAPE_HISTORY_AND_MEMORY.md). No full temporal geology implementation required in the current milestone.
+
 ---
 
 ## PHASE 13 — GLOBAL TRAGEDY GENERATOR

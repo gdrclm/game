@@ -853,6 +853,10 @@ reformDebates: []
 
 ---
 
+# Cross-phase author direction — landscape history and memory
+
+Future extensions must allow prior physical landscape states and tectonic changes to generate historically valid consequences and fallible intergenerational knowledge. Separate time-indexed physical facts, historical events, material traces and accounts. No human eyewitnesses before human existence; a legend does not prove a geological event. Phase 12 may inherit accounts of natural changes through established historical and cultural sources; exact temporal/record contracts remain to be designed at their causal owners. Do not require a predetermined legend or full geological simulation in current Phase 0–2. [Author direction](../../../../docs/context/WORLDGEN_LANDSCAPE_HISTORY_AND_MEMORY.md).
+
 # Phase 12 — Memory, Trauma and Drift Wrapper
 
 ## V1 minimum generator

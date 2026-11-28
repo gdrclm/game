@@ -11,6 +11,7 @@ Labels: AUTHOR = explicit author direction in available discussion; CONTRACT = r
 | AUTHOR | Independent detective pillar; separate early test slice | Reducing detective to survival modifiers or a collect-and-click quest |
 | AUTHOR | Any earlier phase remains extensible or correctable when later features reveal new requirements; closure is a verified baseline | Treat accepted phases as permanently untouchable; fabricate missing upstream facts in late consumers |
 | AUTHOR | After islands are ready, allow underwater exploration, mysteries and consequences to extend the same causal world through existing phases | Separate underwater history/geography with conflicting facts; require the entire underwater feature before current island completion |
+| AUTHOR | Earlier physical landscape states and tectonic changes can leave causal material, historical and cultural traces across generations | Static-only conceptual world, fabricated prehistoric witnesses, legends treated as canonical physical truth |
 | CONTRACT | Full causal sequence 0–26 with bridge 17.5; reduce density in V1 | Skip religion, mentality, memory or history to get playable islands faster |
 | CONTRACT | Phase 17.5 translates established history into gameplay-facing biases | Late runtime invents why island/merchant/ruin exists |
 | CONTRACT | Social states via existing/scoped narrative channels, debug separately | Automatic liar/trust icons, hover overlays, new UX without approval |
@@ -40,3 +41,7 @@ Source: current project discussion. The author requires the ability to improve e
 ## Author direction — underwater extension (2026-11-28)
 
 The author identifies future underwater content, mysteries and consequences as a concrete test of reversible phase development after islands are ready. Preserve a path to extend existing causal owners without replacing the concept. [Underwater extension direction](WORLDGEN_UNDERWATER_EXTENSION_DIRECTION.md). Specific gameplay, simulation and rendering scope remain open; this does not add implementation to 05-B.
+
+## Author direction — landscape history and memory (2026-11-28)
+
+The author requires the possibility of earlier heights, crust states and tectonic changes whose consequences and accounts can reach later generations as legends and other memory. [Landscape history and memory](WORLDGEN_LANDSCAPE_HISTORY_AND_MEMORY.md). Separate physical chronology, historical consequences, material traces and fallible knowledge; prehistoric events cannot have human eyewitnesses. Specific temporal model and schemas remain open. Current 05-B scope unchanged.

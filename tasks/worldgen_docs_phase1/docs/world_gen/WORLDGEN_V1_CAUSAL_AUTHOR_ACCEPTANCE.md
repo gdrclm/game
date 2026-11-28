@@ -68,3 +68,7 @@ Also verify distinct actor and community trajectories: a physically supported re
 ## Reopened phase acceptance
 
 Earlier phase approval is relative to its checked baseline. For a later-feature-driven change, re-exercise the affected causal and author criteria and downstream consumers; retain unchanged approvals/evidence where applicable. Compare old/new revisions with fixed seeds, preserve unchanged invariants, and explicitly explain intentional output changes and save compatibility. Do not silently regenerate an existing player world. [Phase evolution protocol](../../../../docs/context/WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md).
+
+## Landscape history and memory acceptance (future extensions)
+
+Apply [author direction](../../../../docs/context/WORLDGEN_LANDSCAPE_HISTORY_AND_MEMORY.md): distinguish actual previous physical states and transitions from algorithmic intermediate states, verify temporal feasibility of settlements and routes, and test cultural-memory variation while physical history remains fixed. Include forgotten events, unverified legends, no human witnesses to prehuman events and material traces on land or underwater. These are proposed future tests, not new mandatory outcomes or current 05-B implementation.
