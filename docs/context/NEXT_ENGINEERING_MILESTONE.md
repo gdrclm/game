@@ -1,6 +1,10 @@
 # Next engineering milestone — 05-C / gameplay-facing foundation sufficiency
 
-Repository gdrclm/game; branch worldgen/v1-foundation-closure. Verify HEAD. Pinned verified program 401422dcf403d4493a583b4ac13b63468ae6fdfa, CI 46102149886. Evidence 22c6573. Recommended High / Standard. Phase 0–2 only. No Phase 3, history generation, merge, deployment, or inferred author acceptance.
+Repository gdrclm/game; branch worldgen/v1-foundation-closure. Verify HEAD. 05-B comparison baseline 401422dcf403d4493a583b4ac13b63468ae6fdfa, CI 46102149886, evidence 22c6573. Recommended High / Standard. Phase 0–2 only. No Phase 3, history generation, merge, deployment, or inferred author acceptance.
+
+## Verified 05-C checkpoint
+
+Program `9e1585c` restores measured coastal inlet references on crossing routes. All 189 known worlds export with the existing physical summaries. The fresh audit is 14/16. Both failures reproduce on 05-B and remain open as world admission questions. The documented comparison retains the canonical contact hybrid and leaves the V1 policy and playable scale open. The charter below records the original 05-C scope. [Checkpoint](FOUNDATION_GAMEPLAY_SUFFICIENCY_REVIEW.md)
 
 ## Read first
 

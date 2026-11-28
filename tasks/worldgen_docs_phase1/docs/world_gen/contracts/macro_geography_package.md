@@ -47,11 +47,14 @@
 - `validationReport`
 
 ## Optional but recommended
-- `climateBands`
+- `worldBounds`
 - `coastalOpportunityMap`
 - `isolatedZones`
 - `environmentalCoverage`
 - `regionalArchipelago`
+- `isolatedInlandWater`
+- `marineRouteGeometry`, `marineGeometryVersion` and `marineRouteSurvey`
+- `plateContactProvenance`
 - `debugArtifacts`
 
 ## Physical outputs
@@ -111,6 +114,16 @@ Optional `environmentalCoverage.localWater` version `1` publishes the terminal b
 
 `inputPotential` sums the upstream wetness index times sample area. `lowInputPotential` attenuates the source at each sample by its seasonality index and is a sensitivity bound. An inland depression may record its first edge spill elevation and `storageSpace` under that sill, in normalized elevation times macro-cell area. Water already above sea level, lake levels, infiltration, potability and permeability require further sources. `reliefRegions` summarizes local source cells and reachable land. A source is a confluence of at least two positive feeder flows or a depression with both input and sill space. Access follows cardinal dry-land steps to the nearest source, preferring lower cumulative ascent among equally short paths. `meanDistance` in macro-cell lengths and `meanAscent` in normalized elevation are null if the carrier cannot reach a source.
 
+`isolatedInlandWater[]`, when present, preserves a closed one-cell drainage receiver with no cardinal water edge. Each row links the flood-fill `sourceBasinId`, the final signed-water `cellIndex` and the catchment IDs of its measured drainage outlets. `waterClimate` and `shoreClimate` sample the canonical normalized climate fields at the basin and its four cardinal banks. These samples are independent of regional climate-band assignment. The cells remain part of the signed surface and drainage inventory.
+
+### Physical route evidence and contact provenance
+
+New foundation exports use `marineGeometryVersion: 1`. `marineRouteGeometry` retains the ordered water legs of each sampled route with the adjacent landfalls in macro-cell indexes. Assembly verifies the legs against the source graph and the final signed surface. `marineRouteSurvey.weatherByRoute` carries `cellVisits`, `stormMean`, `referenceStormMean` and `seasonalityMean` on their model scales. `referenceStormMean` summarizes the water regions actually traversed. The survey checksum verifies consistency at intake. Earlier roots may lack this versioned evidence.
+
+`macroRoutes[].through` inserts a measured island passage or coastal inlet by its first crossing along the sampled route when that crossing is on the water path and the corresponding corridor closure raises total route cost or blocks that route. A water leg can be physically disconnected while the full route still has an alternative through another port. The waypoint sequence states the measured dependence. It supplies no calendar or navigation rule for a particular vessel.
+
+`plateContactProvenance` records the selected contact model and the bounded relief-support selection policy. It identifies the source of the resulting surface for comparison and replay. Its values do not assign crust composition or represent historical stages.
+
 ### Regional archipelago
 
 `regionalArchipelago` version `1` is a prehistorical refinement of an existing `ArchipelagoRegionRecord`. It includes the parent ID, source hotspot, macro-island identities, namespace-derived regional seed, crop origin in macro cells and grid subdivision. Height and depth use the same normalized sea-level datum as `finalRelativeElevationField`. Footprint area and shoreline length use macro-cell units.
@@ -128,6 +141,8 @@ An island generated through fault uplift has newly raised land. If fault displac
 `islandEnvironment.records[]` may carry the access summary as `waterAccess`, plus seasonal input and spill measurements on the island's own `catchments[]`. Area uses the squared regional subdivision and distance uses the linear subdivision. Routing and storage use regional heights and a land path cannot connect separate islands. The macro and regional measurements use the same routing rules on their respective surfaces.
 
 For reachable land, `meanSourceFlow` and `meanSourceLowFlow` describe the actual downstream accumulation at the nearest source, averaged over the land served by each source. These differ from precipitation received directly in the record's footprint. The route distances, route ascent and low-flow sensitivity stay separate.
+
+`waterDelivery` gives p50, p90 and maximum distance and ascent on the measured dry paths to water, and unshielded distance when measured. Distance is in macro-cell lengths, ascent is in normalized elevation. `shelteredWaterAccess` measures the same source and access variables over the exact sheltered subset of the regional grid. Shelter is geometric upwind support. Quantiles are null without reachable land.
 
 `physicalSetting` gives per-island ranges of temperature, cold load, wetness, storm pressure and seasonality. The thermal estimate applies a provisional linear response to the signed height change from the inherited regional surface, using the elevation and cold-load weights of the macro temperature envelope. The wetness, storm and seasonality ranges sample the inherited macro fields. Terrain shelter is the maximum rising slope in the local upwind direction within one macro cell, aggregated over the island. The transport fields identify the real open-water landfall, count measured marine links and measure the inland path and ascent back to the landfall. A missing landfall gives null route statistics. These quantities describe physical prerequisites in independent units.
 

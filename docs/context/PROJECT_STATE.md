@@ -1,6 +1,6 @@
 # Project state · Paths WorldGen V1
 
-Current checkpoint: 05-B residual geography (28 November 2026), branch `worldgen/v1-foundation-closure`. Program `401422dcf403d4493a583b4ac13b63468ae6fdfa`. [05-B closure](FOUNDATION_RESIDUAL_GEOGRAPHY_CLOSURE.md) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/46102149886).
+Current checkpoint: 05-C gameplay-facing sufficiency (28 November 2026), branch `worldgen/v1-foundation-closure`. Tested program `9e1585c0751bc3de32e68cb4beedcef4cc529317`. [05-C sufficiency review](FOUNDATION_GAMEPLAY_SUFFICIENCY_REVIEW.md) · [GitHub Actions](https://github.com/gdrclm/game/actions/runs/46113026911).
 
 ## Current status
 
@@ -13,7 +13,7 @@ Current checkpoint: 05-B residual geography (28 November 2026), branch `worldgen
 
 ## Latest pinned verification
 
-Node 22.23.5 and `401422d`: **189/189 distinct exports, including 187/187 previously accepted**. Required cohort 49/49 and 34/34 checks, fixed stress 64/64 + 64/64, edges 7/7, additional 11/11, restored cohorts 2/2 + 5/5 + 3/3, held-out 05 worlds 16/16. Both new cases have a separate 2/2 CI regression. Deterministic repeats, Phase 0 audit, browser 5/5 and runtime 270/270, game boot and CI passed. Terrain and drainage summaries match in all 187 prior worlds. Island, carrier-capacity, local-water and marine-route summaries match in 186. On 1541067307 two isolated basins change coastal ranking and add routes while retaining all prior physical legs and protected fragments. New physical transport and inland-water evidence changes some pressure and recovery outputs through the existing Phase 2 layers. [Machine evidence](review/f8t/closure/prompt-05b-residual-geography-verification.json).
+On `9e1585c` and Node 22.23.5: 189/189 known exports, 49/49 mandatory and 34/34 checks. Both stress groups, edges, additional controls and restored cohorts pass. Fresh independent verification: 14/16. Deterministic repeats, Phase 0 audit, browser 5/5 and runtime 270/270, game boot and CI pass. Relative to 05-B, physical summaries and source measurements agree on all known worlds. Route references update dependent Phase 2 results, with phase hashes changed for 132 Phase 1 and 132 Phase 2 worlds. [Machine evidence](review/f8t/closure/prompt-05c-gameplay-sufficiency-verification.json). Two unchanged 05-B Phase 1 rejections require world admission policy: `650853426` has no mountain system; `4267626835` has neither an observed archipelago nor a measured narrow passage on its sampled route.
 
 ## Verified causal work
 
@@ -30,20 +30,22 @@ Node 22.23.5 and `401422d`: **189/189 distinct exports, including 187/187 previo
 2. `3224355349` now exports. A longer island transect and two continental inlets are supported by raster outages on the original routes. The broader network can use other ports where the original marine lane is disconnected.
 3. G1 remains open. An explicit test carrier shares the clipped, observed plate contact across uplift, subsidence, fracture and ridge orientation. The eight controls export under the candidate. On `2546155002` the preserved fault-born fragment disappears, and the actual geometry changes on the other controls. Canonical V1 keeps the previously verified contact policy.
 
-The isolated water and coastal inlet records carry physical evidence for future consumers. Current 05-B work ends at this checkpoint pending resolution or an explicit author policy for G1.
+The isolated water and coastal inlet records carry physical evidence for future consumers. The 05-B results preserve the hybrid pending resolution or an explicit author policy for G1.
 
-## Next: 05-C gameplay-facing sufficiency
+## 05-C outcome
 
-Author direction: conditional coherent physical models are acceptable; detail must support strategic, historical, resource or detective consequences, essential invariants or justified extension. Deep excavation/geological investigation is not a current gameplay pillar. Existing 189/189 evidence remains pinned, not a fresh run. [Scope](WORLDGEN_GAMEPLAY_PHYSICAL_SUFFICIENCY.md) · [Next task](NEXT_ENGINEERING_MILESTONE.md). Reassess G1, rectilinear features, wind discontinuities and origin diversity by functional effects; preserve existing hybrid pending evidence/explicit policy. Water losses, absolute retention time, attenuation, full erosion and other unsupported physical depth are deferred unless a concrete critical need is established. Playable scale and continental criteria remain open. No F8/F9 acceptance. [05-B closure](FOUNDATION_RESIDUAL_GEOGRAPHY_CLOSURE.md)
+- Verified inlet-based route dependencies now reach Phase 2 and the canonical route sequence. On `3224355349`, eight links are restored across seven routes, and removing only the new links reproduces the previous Phase 2 package.
+- Reused the 05-B contact experiment and measured eight geography pairs for functional tradeoffs. The candidate reduces large-island capacity on `1122193213`, changes real alternatives and loses the protected fragment on `2546155002`. The hybrid remains canonical and G1 stays open pending evidence or explicit policy.
+- Wind-band sensitivity has measurable effects on the local sheltered and replenished footprint, with fixed water access and navigation scores in the examined controls. Conditional physical models support the agreed Phase 1–2 scope. Playable scale, continent criteria and acceptance of tectonic approximations stay open. [05-C sufficiency review](FOUNDATION_GAMEPLAY_SUFFICIENCY_REVIEW.md)
 
 ## Explicit limitations / author gates
 
-Physical capacity in 173 prior worlds remains 173/173 at area >=0.25 macrocell, 162/173 at >=0.5 and 64/173 at >=1.0. 3479992453 has 40/16 candidates at 0.25/0.5. Three restored archipelagos have 216/225 volcanic satellites. Two second large land bodies lie on oceanic-labelled plates; current contract is area-based, not crust composition. Playable area, diversity and admissible geography need author decision.
+In the 189 known worlds, at least 30 connected physical bodies are available in 189 at 0.125 and 0.25 macro-cell area, 174 at 0.5 and 68 at 1.0. 3479992453 has 40/16 candidates at 0.25/0.5. Three restored archipelagos have 216/225 volcanic satellites. Two second large land bodies lie on oceanic-labelled plates; current contract is area-based, not crust composition. Playable area, diversity and admissible geography need author decision.
 
 Wind-field discontinuities (137 and 180816365), rectilinear contacts/coasts, origin skew, geometric shelter vs attenuation and potential storage vs duration remain documented V1 approximations or future improvements; material downstream bias must not be dismissed merely because CI passes. Ship abilities, settlement budgets, actual migrations, alliances, individual outcomes and synchronized historical state belong to later phases. [Author direction](SETTLEMENT_MIGRATION_AND_TERRITORIAL_CONTINUITY.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md).
 
 F8/F9 still open. No Phase 3, historical generation, merge, deployment or author acceptance.
 
-Permanent author direction (2026-11-28): earlier phases remain open to future improvements driven by later features. Phase acceptance is a versioned baseline, not a permanent source-code freeze. Follow [phase evolution protocol](WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md). This does not change current 05-B scope or claim new implementation.
+Permanent author direction (2026-11-28): earlier phases remain open to future improvements driven by later features. Phase acceptance is a versioned baseline, not a permanent source-code freeze. Follow [phase evolution protocol](WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md). The 05-C milestone applied this principle at the originating physical and package boundaries.
 
 [Checklist](ACTIVE_CHECKLIST.md) · [High queue](HIGH_REASONING_REVIEW_QUEUE.md) · [Physical coverage](FOUNDATION_PHYSICAL_COVERAGE.md) · [Global goal](WORLDGEN_PHASE0_2_GLOBAL_GOAL.md). Historical checkpoints remain in reports and git.

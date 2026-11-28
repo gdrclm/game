@@ -228,12 +228,20 @@ continent references. Routes use the canonical waypoint sequence in
 `macroRoutes[].through`. Record binding resolves relief, sea, and measured
 chokepoint references for travel exposure, navigation windows, and recovery.
 A measured chokepoint enters the sequence when the sampled route crosses its
-aperture and closing it increases the cost or breaks that route.
+aperture and closing it increases the cost or breaks that route. This rule
+covers island passages and continental inlets. When a route carries verified
+weather measurements, the navigation scores can also carry `pathTiming` based
+on the measured trajectory relative to its measured sea-region background.
+The route's structural burden, weather at the trajectory and timing index have
+separate meanings.
 
 Pressure and rhythm packages may carry `summaryMetadata.pressure` or
 `summaryMetadata.rhythm` respectively. The generator records the field IDs
 used by its summaries. Every exported regional summary retains the source
 package and canonical record ID.
+The synthesized numerical pressure and rhythm values use their own components.
+Cross-axis presentation contrast is available as `readabilityValue` and serves
+readability checks and presentation ranking.
 
 The capacity for recovery uses the accessible fraction of the relief and the
 freshwater support of its attached catchments. Catchment area limits the
@@ -248,7 +256,7 @@ Phase 2 intake carries the validated Phase 1 `regionalArchipelago.islandEnvironm
 - `localRecovery.lowSeasonAllocatedSupplyPerLandArea` normalizes the conserved low-season budget over all island land. Phase 1's optional `shelteredWaterAccess` summarizes the same water measurements over the cells measured as wind-sheltered. Its `reachableCellCount` is the joint count on the regional grid. Allocation to the subset uses the full dry-land service area of each source.
 - `windShelteredLandWithSourceAccess.exactLandCells` gives the measured overlap when present. The two compatible bounds then equal this count. Earlier packages without the subset keep their bounds from the two marginal counts. `habitatInflowPerLandArea` normalizes ordinary and low-season input for the whole island and sheltered land, using `cellAreaInMacroCells`. `lowSeasonAllocatedSupplyPerShelteredLandArea` uses the budget allocated to reachable sheltered cells divided by all sheltered area. A measured empty sheltered area has null densities.
 
-Local fields use the island's own measurements regardless of its climate-band coverage. Missing measurements omit the dependent fields. The joint count describes the location from which the dry-land path starts. Geometry, storage capacity, landfall and sea links remain physical context. Potability, storage duration, attenuation on sheltered land, the exposure of the path to the source, and the amount of incoming external supply require additional evidence. The local interpretation is separate in scale from the synthesized macro recovery profile.
+Local fields use the island's own measurements regardless of its climate-band coverage. Missing measurements omit the dependent fields. The joint count describes the location from which the dry-land path starts. Geometry, storage capacity, landfall and sea links remain physical context. `waterDelivery.unshieldedDistance`, where measured, gives geometric path exposure in macro-cell lengths. Potability, storage duration, wind attenuation, accumulated exposure during actual travel and incoming external supply require additional evidence. The local interpretation is separate in scale from the synthesized macro recovery profile.
 
 New inputs can carry validated `reliefWaterAccess` from Phase 1 `environmentalCoverage.localWater.reliefRegions`. The gated export carries these summaries and the island projection includes `waterAccess` when present. Full macro branch records stay in the Phase 1 source. Precipitation proxy, low-season sensitivity, sill space, reachable area, route length and ascent remain distinct measurements. The ratio of the two measured inflows constrains the hydrological contribution to recovery under repeated stress in each relief region. The existing pressure model continues to use the basin layer. When measured inflow is available, recovery tempo uses basin structural reliability for capacity and retains drought in its scarcity response. Earlier inputs without relief water observations retain the previous basin interpretation.
 
