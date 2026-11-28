@@ -77,6 +77,8 @@ No late phase is allowed to silently overwrite frozen upstream causes.
 
 **Future underwater extension:** after the islands are ready, extend existing physical, historical and realization owners for underwater mysteries and consequences. Land and underwater spaces share one causal world. No separate phase sequence or immediate underwater implementation required. [Author direction](../../../../docs/context/WORLDGEN_UNDERWATER_EXTENSION_DIRECTION.md).
 
+**Numerical causal foundation:** Paths is a turn-based detective strategy. Precise independently meaningful physical inputs are reusable across future gameplay systems, not merely visual/lore support. Preserve source measurements, scale, provenance and distinguish physical quantities from derived scores or gameplay costs. [Author clarification](../../../../docs/context/WORLDGEN_NUMERICAL_CAUSAL_FOUNDATION.md).
+
 **Development order is not generation order.** Author direction (2026-11-28): any earlier phase may be extended or corrected when later-phase development reveals a new requirement. Acceptance/freeze points protect a verified baseline and a particular generated world instance, not the source code of a phase forever. Changes belong to the causal owner, with explicit contract/version reconciliation, rebuilding affected downstream outputs and renewed affected acceptance checks. This is distinct from runtime feedback. [Phase evolution protocol](../../../../docs/context/WORLDGEN_PHASE_EVOLUTION_PROTOCOL.md).
 
 ---

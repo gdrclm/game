@@ -26,6 +26,8 @@ Read AGENTS.md, PLANS.md, [PROJECT_STATE.md](PROJECT_STATE.md), [ACTIVE_CHECKLIS
 
 [Landscape history and memory](WORLDGEN_LANDSCAPE_HISTORY_AND_MEMORY.md) — author direction for past physical states, tectonic transitions, historical consequences and fallible intergenerational knowledge. Required when designing historical memory or temporal geography extensions; not current implementation scope.
 
+[Numerical causal foundation](WORLDGEN_NUMERICAL_CAUSAL_FOUNDATION.md) — turn-based detective strategy quality principle; preserve useful independent physical measurements, semantics and provenance for future gameplay consumers.
+
 ## Conflict resolution
 Latest explicit author decision takes precedence for design, subject to documenting contract consequences; official contracts for interface semantics; executable tests and observed outputs for actual state. The older runtime roadmap has a separate phase numbering from WorldGen. Do not conflate them. Old prompt packs and completed checklists are not proof of runtime readiness. If a contradiction changes game design or historical causality, flag it instead of silently choosing. Existing GDD/craft docs may predate the diagnosis and worldgen expansion; keep relevant mechanics, don't assume all old final-goal language is current.
 

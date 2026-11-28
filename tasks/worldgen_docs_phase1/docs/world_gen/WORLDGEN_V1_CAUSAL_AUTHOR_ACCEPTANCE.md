@@ -72,3 +72,7 @@ Earlier phase approval is relative to its checked baseline. For a later-feature-
 ## Landscape history and memory acceptance (future extensions)
 
 Apply [author direction](../../../../docs/context/WORLDGEN_LANDSCAPE_HISTORY_AND_MEMORY.md): distinguish actual previous physical states and transitions from algorithmic intermediate states, verify temporal feasibility of settlements and routes, and test cultural-memory variation while physical history remains fixed. Include forgotten events, unverified legends, no human witnesses to prehuman events and material traces on land or underwater. These are proposed future tests, not new mandatory outcomes or current 05-B implementation.
+
+## Numerical causal foundation and future gameplay consumers
+
+Apply [author direction](../../../../docs/context/WORLDGEN_NUMERICAL_CAUSAL_FOUNDATION.md). Evaluate physical detail for turn-based strategic and detective use, not only visual naturalness or export success. Verify units/normalization, scale, provenance, independent input effects and meaningful resolution. Distinguish model precision from empirical accuracy and source quantities from gameplay costs/presentation. When consumers exist, exercise controlled gameplay effects; before then label potential use explicitly. Do not add unapproved gameplay mechanics to Phase 0–2 or discard useful data merely because a later consumer is absent.

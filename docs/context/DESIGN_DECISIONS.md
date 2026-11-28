@@ -12,6 +12,7 @@ Labels: AUTHOR = explicit author direction in available discussion; CONTRACT = r
 | AUTHOR | Any earlier phase remains extensible or correctable when later features reveal new requirements; closure is a verified baseline | Treat accepted phases as permanently untouchable; fabricate missing upstream facts in late consumers |
 | AUTHOR | After islands are ready, allow underwater exploration, mysteries and consequences to extend the same causal world through existing phases | Separate underwater history/geography with conflicting facts; require the entire underwater feature before current island completion |
 | AUTHOR | Earlier physical landscape states and tectonic changes can leave causal material, historical and cultural traces across generations | Static-only conceptual world, fabricated prehistoric witnesses, legends treated as canonical physical truth |
+| AUTHOR | Turn-based detective strategy; high-precision independently meaningful physical inputs enable future gameplay systems | Reduce physical detail to decorative map/lore or replace useful source measurements with coarse labels solely because consumers are not yet implemented |
 | CONTRACT | Full causal sequence 0–26 with bridge 17.5; reduce density in V1 | Skip religion, mentality, memory or history to get playable islands faster |
 | CONTRACT | Phase 17.5 translates established history into gameplay-facing biases | Late runtime invents why island/merchant/ruin exists |
 | CONTRACT | Social states via existing/scoped narrative channels, debug separately | Automatic liar/trust icons, hover overlays, new UX without approval |
@@ -45,3 +46,7 @@ The author identifies future underwater content, mysteries and consequences as a
 ## Author direction — landscape history and memory (2026-11-28)
 
 The author requires the possibility of earlier heights, crust states and tectonic changes whose consequences and accounts can reach later generations as legends and other memory. [Landscape history and memory](WORLDGEN_LANDSCAPE_HISTORY_AND_MEMORY.md). Separate physical chronology, historical consequences, material traces and fallible knowledge; prehistoric events cannot have human eyewitnesses. Specific temporal model and schemas remain open. Current 05-B scope unchanged.
+
+## Author clarification — numerical causal foundation (2026-11-28)
+
+The author emphasizes turn-based detective strategy and the value of highly precise indicators for later gameplay systems. Evaluate physical detail as reusable quantitative input, not solely landscape appearance or narrative flavor. [Numerical causal foundation](WORLDGEN_NUMERICAL_CAUSAL_FOUNDATION.md). Exact units, formulas, resolution, tolerance and player-facing mechanics remain open; this clarification does not add current runtime implementation or waive technical gates.
