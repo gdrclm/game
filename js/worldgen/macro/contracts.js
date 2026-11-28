@@ -57,6 +57,7 @@
         'worldBounds',
         ...STRATEGIC_OPTIONAL_ARRAY_KEYS,
         'environmentalCoverage',
+        'isolatedInlandWater',
         'regionalArchipelago',
         'marineRouteGeometry',
         'marineGeometryVersion',
@@ -340,6 +341,9 @@
             ...(normalizedInput.environmentalCoverage !== undefined && {
                 environmentalCoverage: cloneValue(normalizedInput.environmentalCoverage)
             }),
+            ...(normalizedInput.isolatedInlandWater !== undefined && {
+                isolatedInlandWater: normalizeArray(normalizedInput.isolatedInlandWater)
+            }),
             ...(normalizedInput.regionalArchipelago !== undefined && {
                 regionalArchipelago: cloneValue(normalizedInput.regionalArchipelago)
             }),
@@ -449,6 +453,7 @@
                     optional: true,
                     description: 'Ordered measured marine legs of exported macro routes, with land and water cells in the macro raster.'
                 },
+                isolatedInlandWater: { type: 'array', optional: true, description: 'Closed drainage receivers without a water-to-water edge, with local climate samples and catchment links.' },
                 marineGeometryVersion: { type: 'integer', optional: true, description: 'Format version of the verified marine route evidence.' },
                 marineRouteSurvey: { type: 'object', optional: true, description: 'Integrity record for geometry validated against the source graph and signed surface.' },
                 plateContactProvenance: { type: 'object', optional: true, description: 'Contact model that produced the canonical surface and its selection evidence.' },

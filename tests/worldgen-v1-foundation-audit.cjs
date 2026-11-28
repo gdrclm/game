@@ -12,7 +12,7 @@ const { runCausalChecks, verifyNavigationTiming, verifyScarcityTiming, verifyPat
 const { inspectPassageEndpoints, verifyPassageFixture, verifyHotspotFixture, verifyCoastalAccessFixture } = require('./worldgen-v1-quality.cjs');
 const { verifySpatialAggregation, verifyLocalRecovery, verifySeasonalRecovery, verifyMacroRefugeGeometry } = require('./worldgen-v1-recovery.cjs');
 const { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
-    verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture,
+    verifySaddleFixture, verifySeaBoundaryFixture, verifyIsolatedInlandWaterFixture, verifyInlandChokepointFixture,
     verifyContinentalShorelineFixture } = require('./worldgen-v1-terrain.cjs');
 const { inspectRegionalArchipelago, verifyRegionalNetworkFixture, verifyRegionalProcessFixture, verifyRegionalCarrierFixture, verifyRegionalEnvironmentFixture } = require('./worldgen-v1-regional-archipelago.cjs');
 const { verifyLocalWaterFixture, verifyWaterDeliveryFixture, inspectLocalWater, verifyIslandExposureFixture,
@@ -38,6 +38,7 @@ const regionalRegression = originalRegionalRegression.concat(3840024598,
 const criticalImplementationRegression = [1665754063, 2666689910];
 const residualRecoveryRegression = [1240171611, 4286438917, 4144686569, 1683167796, 2248663653];
 const plateContactRegression = [1122193213, 3479992453, 3418526133];
+const residualGeographyRegression = [813476365];
 const edges = [0, 1, 2, 2147483647, 2147483648, 4294967294, 4294967295];
 function stratifiedSeeds(namespace, count = 64) {
     const span = 2 ** 32 / count;
@@ -59,7 +60,7 @@ const cohorts = { canonical, holdout, expanded, all, f8q, regression, 'recovery-
     'foundation-regression': foundationRegression, 'regional-regression': regionalRegression,
     'known-physical': knownPhysical, 'critical-implementation-regression': criticalImplementationRegression,
     'residual-recovery-regression': residualRecoveryRegression, 'plate-contact-regression': plateContactRegression,
-    'final-audit-holdout': auditHoldout, edges,
+    'final-audit-holdout': auditHoldout, 'residual-geography-regression': residualGeographyRegression, edges,
     ...Object.fromEntries([0, 1, 2, 3].flatMap(id => [
         [`stress-${id}`, stress.filter((_, index) => index % 4 === id)],
         [`final-holdout-${id}`, finalHoldout.filter((_, index) => index % 4 === id)]
@@ -142,6 +143,7 @@ check('Hotspot curvature follows shallow crust at fixed plate drift', () => veri
 check('Land-weighted pressure and local recovery timing', () => verifySpatialAggregation(phase2));
 check('Signed final terrain and carved-bed controls', () => verifyFinalTerrainFixture(macro));
 check('Boundary-only water stays physical without becoming a macro sea', () => verifySeaBoundaryFixture(macro));
+check('Isolated inland water retains measured climate and drainage without a marine edge', () => verifyIsolatedInlandWaterFixture(macro));
 check('Inland bottlenecks bind measured relief while retaining segment provenance', () => verifyInlandChokepointFixture(macro));
 check('High sea reaches measured continental saddles with supported offshore islands', () => verifyContinentalShorelineFixture(macro));
 check('Only shared plate faces transfer direct compression or divergence', () => verifyPlateContacts(macro));

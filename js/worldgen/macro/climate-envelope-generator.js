@@ -4582,6 +4582,30 @@
         };
     }
 
+    function describeIsolatedInlandWater(receivers, surface, climate, drainage) {
+        if (!receivers?.length || !surface || !climate || !drainage) return [];
+        const { width, height, values: bed } = surface;
+        const samples = ['temperatureColdLoadField', 'wetnessField', 'seasonalityField', 'stormCorridorField'];
+        return receivers.flatMap(({ sourceBasinId, cellIndex }) => {
+            const x = cellIndex % width;
+            const y = Math.floor(cellIndex / width);
+            if (x <= 0 || x >= width - 1 || y <= 0 || y >= height - 1 || !(bed[cellIndex] < 0)) return [];
+            const shoreCellIndices = [cellIndex - width, cellIndex - 1, cellIndex + 1, cellIndex + width];
+            if (!shoreCellIndices.every(cell => bed[cell] > 0)) return [];
+            const at = cell => Object.fromEntries(samples.map(fieldId => [fieldId, climate[fieldId].values[cell]]));
+            return [{
+                sourceBasinId,
+                cellIndex,
+                receiver: 'inland_water',
+                waterClimate: at(cellIndex),
+                shoreClimate: shoreCellIndices.map(cell => ({ cellIndex: cell, climate: at(cell) })),
+                drainageCatchmentIds: drainage.outlets.filter(outlet => outlet.receiver === 'inland_water'
+                    && outlet.receivingCellIndex === cellIndex)
+                    .map(outlet => outlet.catchmentId)
+            }];
+        });
+    }
+
     function createEmptyClimateEnvelopeOutputs() {
         return {
             fields: {},
@@ -5776,6 +5800,7 @@
         generateCoastalDecayBurdenField,
         generateSeasonalityField,
         generateClimateZoneClassification,
+        describeIsolatedInlandWater,
         generateClimateBandRecords,
         generateRegionalClimateSummaries,
         generateClimateStressField,

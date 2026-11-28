@@ -775,11 +775,15 @@
         const hybridGraph = findInputIntermediateOutput(input, 'hybridConnectivityGraph');
         const marineRouteGeometry = macro.buildMarineRouteGeometry(sampledRoutes, hybridGraph, macroRoutes);
         const weather = input.climateEnvelope?.outputs?.fields;
+        const surface = getNestedValue(input, 'marineCarving.outputs.fields.finalRelativeElevationField');
+        const seaClusters = findInputIntermediateOutput(input, 'seaRegionClusters');
+        const isolatedInlandWater = macro.describeIsolatedInlandWater(
+            seaClusters?.isolatedInlandWater, surface, weather, input.finalDrainage);
         const marineRouteSurvey = marineRouteGeometry && macro.surveyMarineRouteGeometry({
             macroSeed: normalizedSeed, worldBounds, macroRoutes, marineRouteGeometry
-        }, getNestedValue(input, 'marineCarving.outputs.fields.finalRelativeElevationField'), sampledRoutes, hybridGraph, weather && {
+        }, surface, sampledRoutes, hybridGraph, weather && {
             storm: weather.stormCorridorField?.values, seasonality: weather.seasonalityField?.values,
-            seaClusters: findInputIntermediateOutput(input, 'seaRegionClusters')?.seaRegionClusters || []
+            seaClusters: seaClusters?.seaRegionClusters || []
         });
         const contactModel = input.tectonicSkeleton?.outputs?.intermediateOutputs?.plateBoundaryClassification?.adjacencyModel;
         const plateContactProvenance = contactModel && {
@@ -801,6 +805,7 @@
             plates,
             continents,
             seaRegions,
+            ...(isolatedInlandWater.length && { isolatedInlandWater }),
             mountainSystems,
             volcanicZones,
             riverBasins,

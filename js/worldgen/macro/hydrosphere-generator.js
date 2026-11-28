@@ -1014,9 +1014,16 @@
             ? oceanBasinFloodFill.waterBasins
             : [];
         const boundaryOnlyWater = [];
+        const isolatedInlandWater = [];
         const { width, height } = worldBounds;
         const seaRegionClusters = waterBasins.flatMap((basin, basinIndex) => {
             const cellIndices = Array.isArray(basin.cellIndices) ? basin.cellIndices : [];
+            // A closed component with no water-to-water edge is a drainage
+            // receiver at this resolution. It cannot carry a marine segment.
+            if (basin.basinKind === 'enclosed_water' && cellIndices.length === 1) {
+                isolatedInlandWater.push({ sourceBasinId: basin.basinId, cellIndex: cellIndices[0] });
+                return [];
+            }
             const hasInterior = cellIndices.some(cell => {
                 const x = cell % width;
                 const y = Math.floor(cell / width);
@@ -1095,6 +1102,7 @@
                 sourceBasinCount: waterBasins.length,
                 seaRegionClusters,
                 boundaryOnlyWater,
+                ...(isolatedInlandWater.length && { isolatedInlandWater }),
                 summary: {
                     openOceanClusterCount,
                     enclosedWaterClusterCount,

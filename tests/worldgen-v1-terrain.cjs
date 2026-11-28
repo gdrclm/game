@@ -70,7 +70,7 @@ function verifySeaBoundaryFixture(macro) {
     const width = 7;
     const height = 5;
     const values = new Array(width * height).fill(1);
-    for (const cell of [0, 1, 6, 13, 20, 19, 16]) values[cell] = 0;
+    for (const cell of [0, 1, 6, 13, 20, 19, 16, 17]) values[cell] = 0;
     const input = { worldBounds: { width, height },
         fields: { landmassCleanupMaskField: { fieldId: 'landmassCleanupMaskField', width, height, values } } };
     const flood = macro.generateOceanBasinFloodFill(input);
@@ -82,6 +82,37 @@ function verifySeaBoundaryFixture(macro) {
     assert(clusters.seaRegionClusters.some(row => row.basinKind === 'open_ocean' && row.cellIndices.includes(19)));
     return { boundaryWaterRetainedInFloodFill: true, observedInteriorRequiredForOpenSea: true,
         enclosedWaterUnaffected: true };
+}
+
+function verifyIsolatedInlandWaterFixture(macro) {
+    const width = 7;
+    const height = 5;
+    const values = new Array(width * height).fill(1);
+    for (const cell of [0, 14, 16, 18]) values[cell] = 0;
+    const landMask = { fieldId: 'landmassCleanupMaskField', width, height, values };
+    const input = { worldBounds: { width, height }, fields: { landmassCleanupMaskField: landMask } };
+    const flooded = macro.generateOceanBasinFloodFill(input);
+    const clusters = macro.generateSeaRegionClusters(input);
+    assert.deepEqual(Array.from(clusters.isolatedInlandWater, row => row.cellIndex), [16, 18]);
+    assert(flooded.waterBasins.some(basin => basin.basinKind === 'enclosed_water' && basin.cellIndices.includes(16)));
+    assert(clusters.boundaryOnlyWater.some(basin => basin.cellIndices.includes(0)));
+    const signed = { width, height, values: values.map(land => land ? 0.1 : -0.1) };
+    const climate = Object.fromEntries(['temperatureColdLoadField', 'wetnessField', 'seasonalityField', 'stormCorridorField']
+        .map((fieldId, index) => [fieldId, { values: values.map((_, cell) => (cell + index) / values.length) }]));
+    const drainage = { outlets: [{ receiver: 'inland_water', receivingCellIndex: 16, catchmentId: 'catchment_a' },
+        { receiver: 'inland_water', receivingCellIndex: 18, catchmentId: 'catchment_b' }] };
+    const describe = () => macro.describeIsolatedInlandWater(clusters.isolatedInlandWater, signed, climate, drainage);
+    const [basin] = describe();
+    assert.deepEqual(Array.from(basin.drainageCatchmentIds), ['catchment_a']);
+    assert.deepEqual(Array.from(basin.shoreClimate, row => row.cellIndex), [9, 15, 17, 23]);
+    assert.equal(basin.waterClimate.temperatureColdLoadField, 16 / values.length);
+    const second = describe()[1];
+    climate.wetnessField.values[16] = 0.97;
+    assert.equal(describe()[0].waterClimate.wetnessField, 0.97);
+    assert.deepEqual(describe()[1], second);
+    signed.values[9] = -0.1;
+    assert.deepEqual(Array.from(describe(), row => row.cellIndex), [18], 'Loss of the closed shore removes the isolated binding');
+    return { waterFootprintRetained: true, localClimateWithoutReliefBands: true, rejectsConnectedOrBoundaryWater: true };
 }
 
 function verifyInlandChokepointFixture(macro) {
@@ -270,4 +301,5 @@ function inspectClimateAndPressure(result) {
 }
 
 module.exports = { inspectClimateAndPressure, inspectFinalTerrain, verifyFinalTerrainFixture, verifyFinalDrainageFixture,
-    verifySaddleFixture, verifySeaBoundaryFixture, verifyInlandChokepointFixture, verifyContinentalShorelineFixture };
+    verifySaddleFixture, verifySeaBoundaryFixture, verifyIsolatedInlandWaterFixture, verifyInlandChokepointFixture,
+    verifyContinentalShorelineFixture };

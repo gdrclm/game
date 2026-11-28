@@ -29,6 +29,8 @@ jobs:
         run: node tests/worldgen-v1-foundation-audit.cjs --cohort residual-recovery-regression > worldgen-residual-recovery.json
       - name: Verify continental support and marine geometry
         run: node tests/worldgen-v1-foundation-audit.cjs --cohort plate-contact-regression > worldgen-plate-contact.json
+      - name: Verify residual Phase 1 geography regressions
+        run: node tests/worldgen-v1-foundation-audit.cjs --cohort residual-geography-regression > worldgen-residual-geography.json
       - name: Upload diagnostic report
         if: always()
         uses: actions/upload-artifact@v4
@@ -39,5 +41,6 @@ jobs:
             worldgen-critical-regression.json
             worldgen-residual-recovery.json
             worldgen-plate-contact.json
+            worldgen-residual-geography.json
             worldgen-seed-report.json
             worldgen-observatory-data/
