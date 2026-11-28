@@ -28,6 +28,8 @@ Read AGENTS.md, PLANS.md, [PROJECT_STATE.md](PROJECT_STATE.md), [ACTIVE_CHECKLIS
 
 [Numerical causal foundation](WORLDGEN_NUMERICAL_CAUSAL_FOUNDATION.md) — turn-based detective strategy quality principle; preserve useful independent physical measurements, semantics and provenance for future gameplay consumers.
 
+[Gameplay-facing physical sufficiency](WORLDGEN_GAMEPLAY_PHYSICAL_SUFFICIENCY.md) — author-approved prioritization of conditional physical models and current Phase 1–2 scope, grounded in detective tutorial, island diagnosis rules, GDD and Phase 17.5. Read before additional physics work.
+
 ## Conflict resolution
 Latest explicit author decision takes precedence for design, subject to documenting contract consequences; official contracts for interface semantics; executable tests and observed outputs for actual state. The older runtime roadmap has a separate phase numbering from WorldGen. Do not conflate them. Old prompt packs and completed checklists are not proof of runtime readiness. If a contradiction changes game design or historical causality, flag it instead of silently choosing. Existing GDD/craft docs may predate the diagnosis and worldgen expansion; keep relevant mechanics, don't assume all old final-goal language is current.
 

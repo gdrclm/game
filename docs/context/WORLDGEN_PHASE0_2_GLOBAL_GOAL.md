@@ -7,6 +7,10 @@ Current findings and tested revisions are tracked in [PROJECT_STATE.md](PROJECT_
 ## Objective and scope
 Deliver a causally coherent, physically expressive, deterministic macro-world foundation ready for author review and subsequent Phase 3–17 historical generators. Work autonomously through Phase 0, Phase 1 and Phase 2 only. Do not implement Phase 3, final terrain tiles, culture/history, NPCs, tragedy, or integrate into the player runtime. Phase 17.5 remains the gameplay projection boundary. Preserve V1 causal structure without attempting a full scientific earth simulator. Respect AGENTS.md, PLANS.md, CONTEXT_MAP.md, PATHS_AUTHORIAL_VISION.md, DESIGN_DECISIONS.md and phase contracts. Existing F1–F7 and F8-Q results are regressions to preserve, not tasks to restart.
 
+## Scope clarification (2026-11-28)
+
+Apply [gameplay-facing physical sufficiency](WORLDGEN_GAMEPLAY_PHYSICAL_SUFFICIENCY.md) to all remaining tasks. Conditional coherent quantities are sufficient when they preserve meaningful differences; further erosion, tectonic, atmospheric or water-process depth is not mandatory without a concrete consumer or proven critical causal need. Existing checks/data remain; no author gate waived. The latest 05-B checkpoint and next 05-C task take precedence over historical baseline tasks below.
+
 ## Execution protocol
 Read current PROJECT_STATE.md, ACTIVE_CHECKLIST.md, FOUNDATION_RECOVERY_CLOSURE.md, FOUNDATION_QUALITY_REVIEW.md, F8-Q review, relevant phase field/pipeline/validation/contracts, code and tests. Plan independently and execute immediately. Work in bounded milestones: baseline → inspect → hypothesize → modify → run targeted tests → generate real worlds → inspect → correct → regressions. Commit verified checkpoints; update current plan/checklist/state with exact results. No routine author questions. If a design decision exceeds the agreed scope, record alternatives and proceed with independent work; do not silently change canon. If time/resources end, leave a reproducible checkpoint, honest incomplete status and next safe action. Do not claim overnight duration is guaranteed.
 

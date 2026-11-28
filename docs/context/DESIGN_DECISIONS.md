@@ -13,6 +13,7 @@ Labels: AUTHOR = explicit author direction in available discussion; CONTRACT = r
 | AUTHOR | After islands are ready, allow underwater exploration, mysteries and consequences to extend the same causal world through existing phases | Separate underwater history/geography with conflicting facts; require the entire underwater feature before current island completion |
 | AUTHOR | Earlier physical landscape states and tectonic changes can leave causal material, historical and cultural traces across generations | Static-only conceptual world, fabricated prehistoric witnesses, legends treated as canonical physical truth |
 | AUTHOR | Turn-based detective strategy; high-precision independently meaningful physical inputs enable future gameplay systems | Reduce physical detail to decorative map/lore or replace useful source measurements with coarse labels solely because consumers are not yet implemented |
+| AUTHOR | Gameplay-facing physical sufficiency: coherent conditional numerical models, deep strategic/historical consequences, limited erosion detail | Scientific realism as an independent goal; deep realistic excavation/geological investigation as a current pillar; loss of useful causal data |
 | CONTRACT | Full causal sequence 0–26 with bridge 17.5; reduce density in V1 | Skip religion, mentality, memory or history to get playable islands faster |
 | CONTRACT | Phase 17.5 translates established history into gameplay-facing biases | Late runtime invents why island/merchant/ruin exists |
 | CONTRACT | Social states via existing/scoped narrative channels, debug separately | Automatic liar/trust icons, hover overlays, new UX without approval |
@@ -50,3 +51,7 @@ The author requires the possibility of earlier heights, crust states and tectoni
 ## Author clarification — numerical causal foundation (2026-11-28)
 
 The author emphasizes turn-based detective strategy and the value of highly precise indicators for later gameplay systems. Evaluate physical detail as reusable quantitative input, not solely landscape appearance or narrative flavor. [Numerical causal foundation](WORLDGEN_NUMERICAL_CAUSAL_FOUNDATION.md). Exact units, formulas, resolution, tolerance and player-facing mechanics remain open; this clarification does not add current runtime implementation or waive technical gates.
+
+## Author clarification — gameplay-facing physical sufficiency (2026-11-28)
+
+The author accepts conditional physical quantities in a 2D game, rejects deep realistic excavation/geological investigation as the intended gameplay direction, and requested recording the gameplay-based Phase 1–2 prioritization. [Scope and working criteria](WORLDGEN_GAMEPLAY_PHYSICAL_SUFFICIENCY.md). Preserve numerical causality and existing data; defer unsupported simulation depth. Does not approve the existing hybrid, change continent or island scale contracts, or grant F8/F9 acceptance.

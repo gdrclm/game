@@ -1,6 +1,6 @@
 # Active checklist — WorldGen V1 Foundation Closure
 
-Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-28 for the 05 causal audit.
+Current engineering work only. Past iterations and measurements are preserved in git and the linked reports. Updated 2026-11-28 for the 05-B checkpoint and 05-C scope clarification.
 
 ## Confirmed
 - [x] F1–F7: official Phase 0 intake, Phase 1 geography and physical links, Phase 2 export, deterministic orchestration, fail-closed contracts and original review packet. [Evidence](review/README.md)
@@ -60,12 +60,12 @@ The 05-B checkpoint follows two source fixes and a bounded deformation experimen
 - [x] 05-B A: preserve the signed isolated inland water at `813476365`, its local climate samples, catchments and ordinary/low-season source budgets. Closed-shore and boundary-water counterfactuals pass.
 - [x] 05-B B: measure the previously missed island transect and two continental inlets at `3224355349`. Original routes remain measured on the same surface. Require independent rerouting or disconnection evidence and open terminal access. Open-coast negative control passes.
 - [x] 05-B C experiment: implement and test a common clipped contact carrier, normal motion, shear and ridge orientation under fixed kinematics. Retain the diagnostic entry.
-- [ ] G1 canonical replacement: preserve proved island fragments, transport structure and recovery. The candidate loses `regional_island_1251_668` on `2546155002`. Retain the verified V1 hybrid at this checkpoint.
+- [ ] G1 / 05-C: compare existing hybrid and 05-B experimental contact carrier by demonstrated downstream physical utility and losses. Candidate loses `regional_island_1251_668` on `2546155002` and reduces connected capacity at >=1.0 from 36 to 25 on `1122193213`. Preserve controls and canonical hybrid unless a justified replacement is verified or an explicit V1 policy is approved. No scientific precision for its own sake.
 - [x] 05-B pinned verification: 189/189 known exports, 187/187 prior exports, 49/49 mandatory worlds with 34/34 checks, deterministic repeats, Phase 0 audit, Chromium/runtime and CI. [Pinned evidence](review/f8t/closure/prompt-05b-residual-geography-verification.json)
 
-- [ ] F8-T macro water closure: establish how coherent sheltered area, water loss and independent duration evidence determine actual refuge persistence. Preserve the verified local replenishment signal and keep source access and delivery separate. [Open hypotheses](HIGH_REASONING_REVIEW_QUEUE.md)
-- [ ] F8-T local environment: storm attenuation, practical access budgets applied to measured route geometry, actual water persistence and recovery timing require further physical evidence.
-- [ ] F8-D: resolve or justify conditional contact model (G1), rectilinear tectonic/coastal features and narrow origin distributions; preserve actual regional fragments and measured marine paths. Test candidate atmospheric changes only against full causal/transport controls.
+- [ ] 05-C: confirm sufficient independent existing water, shelter, route and recovery carriers for current scope. Actual attenuation, loss, retention duration, practical access budgets and recovery timing remain documented limitations, deferred unless a specific critical causal/contract need is shown. Preserve measured source access and delivery. [Scope](WORLDGEN_GAMEPLAY_PHYSICAL_SUFFICIENCY.md).
+- [ ] F8-D / 05-C: quantify meaningful functional effects of rectilinear morphology, wind-band discontinuities and origin skew on terrain diversity, pathways, climate and water; correct demonstrated defects, defer unsupported refinements. Preserve verified process controls; no quotas.
+- [ ] 05-C: produce FOUNDATION_GAMEPLAY_SUFFICIENCY_REVIEW.md with real metrics/maps, precise dispositions and author decisions; [current task](NEXT_ENGINEERING_MILESTONE.md).
 - [ ] F8-D: the V1 area rule accepts two new second landmasses with entirely oceanic plate labels. Continental crust composition, minimum playable island scale and diversity of origin remain under author review. [Implementation register](CRITICAL_GEOGRAPHY_CLOSURE.md) · [Author queue](AUTHOR_REVIEW_QUEUE.md)
 
 - [ ] F8: author approval of physical coherence, scale of playable islands and explicit design decisions. [Queue](AUTHOR_REVIEW_QUEUE.md)

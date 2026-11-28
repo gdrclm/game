@@ -30,7 +30,11 @@ Node 22.23.5 and `401422d`: **189/189 distinct exports, including 187/187 previo
 2. `3224355349` now exports. A longer island transect and two continental inlets are supported by raster outages on the original routes. The broader network can use other ports where the original marine lane is disconnected.
 3. G1 remains open. An explicit test carrier shares the clipped, observed plate contact across uplift, subsidence, fracture and ridge orientation. The eight controls export under the candidate. On `2546155002` the preserved fault-born fragment disappears, and the actual geometry changes on the other controls. Canonical V1 keeps the previously verified contact policy.
 
-The isolated water and coastal inlet records carry physical evidence for future consumers. Current 05-B work ends at this checkpoint pending resolution or an explicit author policy for G1. [05-B closure](FOUNDATION_RESIDUAL_GEOGRAPHY_CLOSURE.md)
+The isolated water and coastal inlet records carry physical evidence for future consumers. Current 05-B work ends at this checkpoint pending resolution or an explicit author policy for G1.
+
+## Next: 05-C gameplay-facing sufficiency
+
+Author direction: conditional coherent physical models are acceptable; detail must support strategic, historical, resource or detective consequences, essential invariants or justified extension. Deep excavation/geological investigation is not a current gameplay pillar. Existing 189/189 evidence remains pinned, not a fresh run. [Scope](WORLDGEN_GAMEPLAY_PHYSICAL_SUFFICIENCY.md) · [Next task](NEXT_ENGINEERING_MILESTONE.md). Reassess G1, rectilinear features, wind discontinuities and origin diversity by functional effects; preserve existing hybrid pending evidence/explicit policy. Water losses, absolute retention time, attenuation, full erosion and other unsupported physical depth are deferred unless a concrete critical need is established. Playable scale and continental criteria remain open. No F8/F9 acceptance. [05-B closure](FOUNDATION_RESIDUAL_GEOGRAPHY_CLOSURE.md)
 
 ## Explicit limitations / author gates
 

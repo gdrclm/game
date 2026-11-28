@@ -76,3 +76,7 @@ Apply [author direction](../../../../docs/context/WORLDGEN_LANDSCAPE_HISTORY_AND
 ## Numerical causal foundation and future gameplay consumers
 
 Apply [author direction](../../../../docs/context/WORLDGEN_NUMERICAL_CAUSAL_FOUNDATION.md). Evaluate physical detail for turn-based strategic and detective use, not only visual naturalness or export success. Verify units/normalization, scale, provenance, independent input effects and meaningful resolution. Distinguish model precision from empirical accuracy and source quantities from gameplay costs/presentation. When consumers exist, exercise controlled gameplay effects; before then label potential use explicitly. Do not add unapproved gameplay mechanics to Phase 0–2 or discard useful data merely because a later consumer is absent.
+
+## Gameplay-facing physical sufficiency (author direction, 2026-11-28)
+
+Apply [scope and criteria](../../../../docs/context/WORLDGEN_GAMEPLAY_PHYSICAL_SUFFICIENCY.md). Assess meaningful route, resource, physical, strategic and history-facing differences rather than scientific realism alone. Conditional coherent values are allowed; preserve independent data and contract invariants. Deep excavation/geological investigation is not a current pillar. Deferring additional physics does not waive demonstrated critical defects or author gates. Reopen causal owners when future consumers require them.
